@@ -1,0 +1,43 @@
+plugins {
+    id 'java-library'
+    id 'org.openapi.generator'
+}
+
+dependencies {
+    implementation project(':barter-common')
+
+    api 'org.springframework:spring-web:6.2.7'
+    api 'org.springframework:spring-context:6.2.7'
+    api 'jakarta.validation:jakarta.validation-api:3.0.2'
+    api 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+    api 'jakarta.servlet:jakarta.servlet-api:6.0.0'
+    api 'io.swagger.core.v3:swagger-annotations:2.2.28'
+    api 'com.fasterxml.jackson.core:jackson-annotations:2.19.0'
+}
+
+openApiGenerate {
+    generatorName = 'spring'
+    inputSpec = "$projectDir/src/main/resources/openapi/openapi.yaml"
+    outputDir = "$buildDir/generated/openapi"
+    apiPackage = 'com.barterplatform.api.controller'
+    modelPackage = 'com.barterplatform.api.model'
+    invokerPackage = 'com.barterplatform.api.invoker'
+    generateModelTests = false
+    generateApiTests = false
+    configOptions = [
+        interfaceOnly       : 'true',
+        useSpringBoot3      : 'true',
+        useJakartaEe        : 'true',
+        useTags             : 'true',
+        openApiNullable     : 'false',
+        delegatePattern     : 'false',
+        hideGenerationTimestamp: 'true'
+    ]
+}
+
+sourceSets.main.java.srcDir "$buildDir/generated/openapi/src/main/java"
+
+tasks.named('compileJava') {
+    dependsOn tasks.named('openApiGenerate')
+}
+

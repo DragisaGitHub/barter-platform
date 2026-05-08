@@ -1,0 +1,102 @@
+register:
+  post:
+    tags:
+      - Auth
+    operationId: registerUser
+    summary: Register a new user account
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/RegisterUserRequest'
+    responses:
+      '201':
+        description: User registered successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/CurrentUserResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+login:
+  post:
+    tags:
+      - Auth
+    operationId: login
+    summary: Authenticate a user and issue tokens
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/LoginRequest'
+    responses:
+      '200':
+        description: Authentication successful
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/TokenResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+refresh:
+  post:
+    tags:
+      - Auth
+    operationId: refreshToken
+    summary: Refresh an access token
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/RefreshTokenRequest'
+    responses:
+      '200':
+        description: Token refreshed successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/TokenResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+logout:
+  post:
+    tags:
+      - Auth
+    operationId: logout
+    summary: Revoke the current session
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/RefreshTokenRequest'
+    responses:
+      '204':
+        description: Logout successful
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+me:
+  get:
+    tags:
+      - Auth
+    operationId: getCurrentUser
+    summary: Get the currently authenticated user
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Current user returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/CurrentUserResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+

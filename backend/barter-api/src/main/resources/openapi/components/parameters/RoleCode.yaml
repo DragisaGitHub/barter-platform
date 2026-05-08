@@ -1,0 +1,8 @@
+RoleCodeParameter:
+  name: code
+  in: path
+  required: true
+  description: Role code.
+  schema:
+    $ref: '../../openapi.yaml#/components/schemas/RoleCode'
+

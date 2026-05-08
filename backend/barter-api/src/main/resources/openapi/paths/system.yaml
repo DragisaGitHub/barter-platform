@@ -1,0 +1,17 @@
+get:
+  tags:
+    - System
+  operationId: ping
+  summary: Placeholder ping endpoint
+  security:
+    - bearerJwt: []
+  responses:
+    '200':
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/PingResponse.yaml'
+    '401':
+      description: Unauthorized
+

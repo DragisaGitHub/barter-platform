@@ -1,0 +1,9 @@
+UserUuid:
+  name: userUuid
+  in: path
+  required: true
+  description: Public user UUID.
+  schema:
+    type: string
+    format: uuid
+

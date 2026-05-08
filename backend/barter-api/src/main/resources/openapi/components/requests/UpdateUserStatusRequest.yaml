@@ -1,0 +1,13 @@
+type: object
+additionalProperties: false
+required:
+  - status
+properties:
+  status:
+    $ref: '../schemas/UserStatus.yaml'
+  reason:
+    type: string
+    maxLength: 500
+    nullable: true
+    description: Optional moderation reason for the status change.
+

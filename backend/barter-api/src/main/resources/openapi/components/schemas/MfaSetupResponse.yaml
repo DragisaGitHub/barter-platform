@@ -1,0 +1,14 @@
+type: object
+additionalProperties: false
+required:
+  - qrCodeDataUri
+  - provisioningUri
+properties:
+  qrCodeDataUri:
+    type: string
+    description: Base64-encoded QR code data URI for MFA setup.
+  provisioningUri:
+    type: string
+    format: uri
+    description: Provisioning URI for authenticator apps.
+

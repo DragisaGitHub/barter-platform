@@ -1,0 +1,45 @@
+plugins {
+    id 'org.springframework.boot' version '3.5.0' apply false
+    id 'io.spring.dependency-management' version '1.1.7' apply false
+    id 'org.openapi.generator' version '7.14.0' apply false
+}
+
+allprojects {
+    group = 'com.barterplatform'
+    version = '0.0.1-SNAPSHOT'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+ext {
+    mapstructVersion = '1.6.3'
+    junitJupiterVersion = '5.10.2'
+}
+
+subprojects {
+    apply plugin: 'java'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs += [
+                '-parameters'
+        ]
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+    }
+
+    dependencies {
+        testImplementation "org.junit.jupiter:junit-jupiter:${rootProject.ext.junitJupiterVersion}"
+    }
+}
+

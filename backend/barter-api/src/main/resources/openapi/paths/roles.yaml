@@ -1,0 +1,49 @@
+list:
+  get:
+    tags:
+      - Roles
+    operationId: listRoles
+    summary: List available roles
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Roles returned successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas/RoleResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+byCode:
+  get:
+    tags:
+      - Roles
+    operationId: getRoleByCode
+    summary: Get a role by code
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/RoleCodeParameter'
+    responses:
+      '200':
+        description: Role returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/RoleResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+

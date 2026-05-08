@@ -1,0 +1,156 @@
+openapi: 3.0.3
+info:
+  title: Barter Platform API
+  version: 0.1.0
+servers:
+  - url: /api/v1
+tags:
+  - name: Auth
+    description: Authentication and session management operations
+  - name: Users
+    description: User management operations
+  - name: Roles
+    description: Role lookup operations
+  - name: Permissions
+    description: Permission lookup operations
+  - name: Mfa
+    description: Multi-factor authentication operations
+  - name: OAuth
+    description: OAuth provider and account operations
+  - name: System
+    description: Placeholder system operations for generator validation
+paths:
+  /auth/register:
+    $ref: './paths/auth.yaml#/register'
+  /auth/login:
+    $ref: './paths/auth.yaml#/login'
+  /auth/refresh:
+    $ref: './paths/auth.yaml#/refresh'
+  /auth/logout:
+    $ref: './paths/auth.yaml#/logout'
+  /auth/me:
+    $ref: './paths/auth.yaml#/me'
+  /users:
+    $ref: './paths/users.yaml#/list'
+  /users/{userUuid}:
+    $ref: './paths/users.yaml#/byUuid'
+  /users/{userUuid}/status:
+    $ref: './paths/users.yaml#/status'
+  /roles:
+    $ref: './paths/roles.yaml#/list'
+  /roles/{code}:
+    $ref: './paths/roles.yaml#/byCode'
+  /permissions:
+    $ref: './paths/permissions.yaml#/list'
+  /mfa/settings:
+    $ref: './paths/mfa.yaml#/settings'
+  /mfa/setup:
+    $ref: './paths/mfa.yaml#/setup'
+  /mfa/verify:
+    $ref: './paths/mfa.yaml#/verify'
+  /mfa/disable:
+    $ref: './paths/mfa.yaml#/disable'
+  /mfa/recovery-codes:
+    $ref: './paths/mfa.yaml#/recoveryCodes'
+  /oauth/providers:
+    $ref: './paths/oauth.yaml#/providers'
+  /oauth/accounts:
+    $ref: './paths/oauth.yaml#/accounts'
+  /ping:
+    $ref: './paths/system.yaml'
+components:
+  securitySchemes:
+    bearerJwt:
+      $ref: './components/security/bearer-jwt.yaml'
+  schemas:
+    PingResponse:
+      $ref: './components/schemas/PingResponse.yaml'
+    FieldErrorResponse:
+      $ref: './components/schemas/FieldErrorResponse.yaml'
+    ErrorResponse:
+      $ref: './components/schemas/ErrorResponse.yaml'
+    PageMetadata:
+      $ref: './components/schemas/PageMetadata.yaml'
+    UserStatus:
+      $ref: './components/schemas/UserStatus.yaml'
+    RoleCode:
+      $ref: './components/schemas/RoleCode.yaml'
+    PermissionCode:
+      $ref: './components/schemas/PermissionCode.yaml'
+    OAuthProvider:
+      $ref: './components/schemas/OAuthProvider.yaml'
+    RoleResponse:
+      $ref: './components/schemas/RoleResponse.yaml'
+    PermissionResponse:
+      $ref: './components/schemas/PermissionResponse.yaml'
+    UserSummaryResponse:
+      $ref: './components/schemas/UserSummaryResponse.yaml'
+    UserPagedResponse:
+      $ref: './components/schemas/UserPagedResponse.yaml'
+    UserResponse:
+      $ref: './components/schemas/UserResponse.yaml'
+    OAuthProviderResponse:
+      $ref: './components/schemas/OAuthProviderResponse.yaml'
+    OAuthAccountResponse:
+      $ref: './components/schemas/OAuthAccountResponse.yaml'
+    MfaSettingsResponse:
+      $ref: './components/schemas/MfaSettingsResponse.yaml'
+    MfaSetupResponse:
+      $ref: './components/schemas/MfaSetupResponse.yaml'
+    MfaRecoveryCodeResponse:
+      $ref: './components/schemas/MfaRecoveryCodeResponse.yaml'
+    CurrentUserResponse:
+      $ref: './components/schemas/CurrentUserResponse.yaml'
+    TokenResponse:
+      $ref: './components/schemas/TokenResponse.yaml'
+  requestBodies:
+    RegisterUserRequest:
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/RegisterUserRequest.yaml'
+    LoginRequest:
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/LoginRequest.yaml'
+    RefreshTokenRequest:
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/RefreshTokenRequest.yaml'
+    UpdateUserStatusRequest:
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/UpdateUserStatusRequest.yaml'
+    MfaVerifyRequest:
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/MfaVerifyRequest.yaml'
+  parameters:
+    Page:
+      $ref: './components/parameters/Page.yaml#/Page'
+    Size:
+      $ref: './components/parameters/Size.yaml#/Size'
+    Sort:
+      $ref: './components/parameters/Sort.yaml#/Sort'
+    UserUuid:
+      $ref: './components/parameters/UserUuid.yaml#/UserUuid'
+    RoleCodeParameter:
+      $ref: './components/parameters/RoleCode.yaml#/RoleCodeParameter'
+  responses:
+    BadRequest:
+      $ref: './components/responses/BadRequest.yaml'
+    Unauthorized:
+      $ref: './components/responses/Unauthorized.yaml'
+    Forbidden:
+      $ref: './components/responses/Forbidden.yaml'
+    NotFound:
+      $ref: './components/responses/NotFound.yaml'
+    Conflict:
+      $ref: './components/responses/Conflict.yaml'
+    InternalServerError:
+      $ref: './components/responses/InternalServerError.yaml'
+

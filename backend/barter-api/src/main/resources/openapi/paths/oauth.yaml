@@ -1,0 +1,47 @@
+providers:
+  get:
+    tags:
+      - OAuth
+    operationId: listOAuthProviders
+    summary: List supported OAuth providers
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: OAuth providers returned successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas/OAuthProviderResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+accounts:
+  get:
+    tags:
+      - OAuth
+    operationId: listOAuthAccounts
+    summary: List linked OAuth accounts for the current user
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: OAuth accounts returned successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../components/schemas/OAuthAccountResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+

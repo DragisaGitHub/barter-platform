@@ -1,0 +1,36 @@
+type: object
+additionalProperties: false
+required:
+  - accessToken
+  - refreshToken
+  - tokenType
+  - expiresIn
+  - user
+properties:
+  accessToken:
+    type: string
+    minLength: 1
+  refreshToken:
+    type: string
+    minLength: 1
+  tokenType:
+    type: string
+    enum:
+      - Bearer
+    default: Bearer
+  expiresIn:
+    type: integer
+    format: int64
+    minimum: 1
+  refreshExpiresIn:
+    type: integer
+    format: int64
+    minimum: 1
+    nullable: true
+  scope:
+    type: array
+    items:
+      type: string
+  user:
+    $ref: './CurrentUserResponse.yaml'
+

@@ -1,0 +1,57 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - username
+  - email
+  - status
+  - emailVerified
+  - mfaEnabled
+  - roles
+  - permissions
+  - oauthAccounts
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  username:
+    type: string
+    minLength: 3
+    maxLength: 80
+  email:
+    type: string
+    format: email
+    maxLength: 255
+  status:
+    $ref: './UserStatus.yaml'
+  emailVerified:
+    type: boolean
+  mfaEnabled:
+    type: boolean
+  lastLoginAt:
+    type: string
+    format: date-time
+    nullable: true
+  roles:
+    type: array
+    items:
+      $ref: './RoleResponse.yaml'
+  permissions:
+    type: array
+    items:
+      $ref: './PermissionResponse.yaml'
+  oauthAccounts:
+    type: array
+    items:
+      $ref: './OAuthAccountResponse.yaml'
+  mfaSettings:
+    $ref: './MfaSettingsResponse.yaml'
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    nullable: true
+

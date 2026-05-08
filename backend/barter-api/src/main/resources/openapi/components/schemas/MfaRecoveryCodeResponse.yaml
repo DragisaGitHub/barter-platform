@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+required:
+  - recoveryCodes
+  - generatedAt
+properties:
+  recoveryCodes:
+    type: array
+    minItems: 1
+    items:
+      type: string
+      minLength: 8
+      maxLength: 32
+  generatedAt:
+    type: string
+    format: date-time
+

@@ -1,0 +1,29 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - provider
+  - linkedAt
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  provider:
+    $ref: './OAuthProvider.yaml'
+  providerEmail:
+    type: string
+    format: email
+    maxLength: 255
+    nullable: true
+  linkedAt:
+    type: string
+    format: date-time
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    nullable: true
+

@@ -1,0 +1,8 @@
+rootProject.name = 'barter-backend'
+
+include 'barter-api'
+include 'barter-domain'
+include 'barter-application'
+include 'barter-infrastructure'
+include 'barter-web'
+include 'barter-common'

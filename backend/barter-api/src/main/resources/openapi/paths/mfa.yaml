@@ -1,0 +1,108 @@
+settings:
+  get:
+    tags:
+      - Mfa
+    operationId: getMfaSettings
+    summary: Get MFA settings for the current user
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: MFA settings returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/MfaSettingsResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+setup:
+  post:
+    tags:
+      - Mfa
+    operationId: setupMfa
+    summary: Start MFA setup for the current user
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: MFA setup generated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/MfaSetupResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+verify:
+  post:
+    tags:
+      - Mfa
+    operationId: verifyMfa
+    summary: Verify MFA setup or a recovery code
+    security:
+      - bearerJwt: []
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/MfaVerifyRequest'
+    responses:
+      '200':
+        description: MFA verified successfully and recovery codes returned
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/MfaRecoveryCodeResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+disable:
+  post:
+    tags:
+      - Mfa
+    operationId: disableMfa
+    summary: Disable MFA for the current user
+    security:
+      - bearerJwt: []
+    responses:
+      '204':
+        description: MFA disabled successfully
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+recoveryCodes:
+  get:
+    tags:
+      - Mfa
+    operationId: getMfaRecoveryCodes
+    summary: Get MFA recovery codes for the current user
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Recovery codes returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/MfaRecoveryCodeResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+

@@ -1,0 +1,24 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - enabled
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  enabled:
+    type: boolean
+  configuredAt:
+    type: string
+    format: date-time
+    nullable: true
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    nullable: true
+

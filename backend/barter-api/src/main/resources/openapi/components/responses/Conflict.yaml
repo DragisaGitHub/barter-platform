@@ -1,0 +1,6 @@
+description: Conflict
+content:
+  application/json:
+    schema:
+      $ref: '../../openapi.yaml#/components/schemas/ErrorResponse'
+

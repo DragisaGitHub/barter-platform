@@ -1,0 +1,18 @@
+type: object
+additionalProperties: false
+required:
+  - code
+properties:
+  code:
+    type: string
+    minLength: 6
+    maxLength: 8
+    pattern: '^[0-9]{6,8}$'
+    description: One-time MFA verification code.
+  recoveryCode:
+    type: string
+    minLength: 8
+    maxLength: 32
+    nullable: true
+    description: Optional recovery code to use instead of the TOTP code.
+

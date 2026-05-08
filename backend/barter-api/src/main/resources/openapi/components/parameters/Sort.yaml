@@ -1,0 +1,9 @@
+Sort:
+  name: sort
+  in: query
+  required: false
+  description: Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`.
+  schema:
+    type: string
+    example: createdAt,desc
+

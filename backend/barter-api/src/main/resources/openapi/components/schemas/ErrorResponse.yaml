@@ -1,0 +1,30 @@
+type: object
+additionalProperties: false
+required:
+  - timestamp
+  - status
+  - error
+  - code
+  - message
+  - path
+  - fieldErrors
+properties:
+  timestamp:
+    type: string
+    format: date-time
+  status:
+    type: integer
+    format: int32
+  error:
+    type: string
+  code:
+    type: string
+  message:
+    type: string
+  path:
+    type: string
+  fieldErrors:
+    type: array
+    items:
+      $ref: '../../openapi.yaml#/components/schemas/FieldErrorResponse'
+

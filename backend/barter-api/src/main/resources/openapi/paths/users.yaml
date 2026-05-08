@@ -1,0 +1,78 @@
+list:
+  get:
+    tags:
+      - Users
+    operationId: listUsers
+    summary: List platform users
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+    responses:
+      '200':
+        description: Users returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/UserPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+byUuid:
+  get:
+    tags:
+      - Users
+    operationId: getUserByUuid
+    summary: Get a user by UUID
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/UserUuid'
+    responses:
+      '200':
+        description: User returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/UserResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+status:
+  patch:
+    tags:
+      - Users
+    operationId: updateUserStatus
+    summary: Update a user's status
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/UserUuid'
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/UpdateUserStatusRequest'
+    responses:
+      '200':
+        description: User status updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/UserResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+

@@ -1,0 +1,12 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api 'jakarta.persistence:jakarta.persistence-api:3.1.0'
+    api 'org.springframework:spring-web:7.0.7'
+
+    compileOnly 'org.projectlombok:lombok:1.18.36'
+    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+}
+

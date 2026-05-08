@@ -1,0 +1,8 @@
+type: string
+enum:
+  - PENDING_VERIFICATION
+  - ACTIVE
+  - SUSPENDED
+  - BANNED
+  - DELETED
+

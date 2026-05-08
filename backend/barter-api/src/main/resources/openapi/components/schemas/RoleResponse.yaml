@@ -1,0 +1,28 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - code
+  - name
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  code:
+    $ref: './RoleCode.yaml'
+  name:
+    type: string
+    maxLength: 120
+  description:
+    type: string
+    maxLength: 2000
+    nullable: true
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    nullable: true
+

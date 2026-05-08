@@ -1,0 +1,16 @@
+type: object
+additionalProperties: false
+required:
+  - provider
+  - displayName
+properties:
+  provider:
+    $ref: './OAuthProvider.yaml'
+  displayName:
+    type: string
+    maxLength: 120
+  authorizationUrl:
+    type: string
+    format: uri
+    nullable: true
+

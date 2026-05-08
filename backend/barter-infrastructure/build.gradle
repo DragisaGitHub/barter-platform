@@ -1,0 +1,11 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api 'org.springframework.data:spring-data-jpa:3.5.0'
+
+    implementation project(':barter-domain')
+    implementation project(':barter-common')
+}
+
