@@ -65,3 +65,33 @@ Application config:
 Do not commit local environment secrets.
 
 Use .env files for local-only configuration when needed.
+
+## Initial Admin Bootstrap
+
+An initial admin user can be created automatically on application startup.
+This is disabled by default and intended for local/dev/staging environments only.
+
+### Environment Variables
+
+| Variable                          | Description               | Required when enabled |
+|-----------------------------------|---------------------------|-----------------------|
+| `BARTER_BOOTSTRAP_ADMIN_ENABLED`  | Enable admin bootstrap    | Yes (`true`)          |
+| `BARTER_BOOTSTRAP_ADMIN_USERNAME` | Admin username            | Yes                   |
+| `BARTER_BOOTSTRAP_ADMIN_EMAIL`    | Admin email               | Yes                   |
+| `BARTER_BOOTSTRAP_ADMIN_PASSWORD` | Admin password            | Yes                   |
+
+### Example .env (do not commit)
+
+```
+BARTER_BOOTSTRAP_ADMIN_ENABLED=true
+BARTER_BOOTSTRAP_ADMIN_USERNAME=admin
+BARTER_BOOTSTRAP_ADMIN_EMAIL=admin@localhost
+BARTER_BOOTSTRAP_ADMIN_PASSWORD=change-me-in-production
+```
+
+### Behavior
+
+- Disabled by default (`false`).
+- When enabled, the admin user is created only if no user with the same email or username exists.
+- The password is never logged.
+- The ADMIN role must already exist in the database (loaded via seed/migration data).
