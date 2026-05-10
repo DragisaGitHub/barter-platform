@@ -14,6 +14,11 @@ import { UserDetailPage } from "../features/admin/UserDetailPage";
 import { RolesPage } from "../features/admin/RolesPage";
 import { PermissionsPage } from "../features/admin/PermissionsPage";
 import { SystemPage } from "../features/admin/SystemPage";
+import { MarketplacePage } from "../features/catalog/MarketplacePage";
+import { ItemDetailPage } from "../features/catalog/ItemDetailPage";
+import { MyItemsPage } from "../features/catalog/MyItemsPage";
+import { CreateItemPage } from "../features/catalog/CreateItemPage";
+import { EditItemPage } from "../features/catalog/EditItemPage";
 
 export const router = createBrowserRouter([
   {
@@ -46,12 +51,23 @@ export const router = createBrowserRouter([
       },
       {
         path: "/marketplace",
-        element: (
-          <PlaceholderPage
-            title="Marketplace"
-            description="Browse available items and services for trade."
-          />
-        ),
+        element: <MarketplacePage />,
+      },
+      {
+        path: "/marketplace/items/:uuid",
+        element: <ItemDetailPage />,
+      },
+      {
+        path: "/my-items",
+        element: <MyItemsPage />,
+      },
+      {
+        path: "/my-items/new",
+        element: <CreateItemPage />,
+      },
+      {
+        path: "/my-items/:uuid/edit",
+        element: <EditItemPage />,
       },
       {
         path: "/offers",

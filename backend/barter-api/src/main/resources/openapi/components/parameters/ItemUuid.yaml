@@ -1,0 +1,9 @@
+ItemUuid:
+  name: itemUuid
+  in: path
+  required: true
+  description: Public item UUID.
+  schema:
+    type: string
+    format: uuid
+

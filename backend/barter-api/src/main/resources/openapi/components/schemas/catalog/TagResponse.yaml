@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - name
+  - slug
+properties:
+  uuid:
+    type: string
+    format: uuid
+  name:
+    type: string
+    maxLength: 80
+  slug:
+    type: string
+    maxLength: 80
+

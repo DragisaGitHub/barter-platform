@@ -1,0 +1,240 @@
+categories:
+  get:
+    tags:
+      - Catalog
+    operationId: listCategories
+    summary: List all categories
+    responses:
+      '200':
+        description: Categories returned successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../openapi.yaml#/components/schemas/CategoryResponse'
+
+tags:
+  get:
+    tags:
+      - Catalog
+    operationId: listTags
+    summary: List all tags
+    responses:
+      '200':
+        description: Tags returned successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../openapi.yaml#/components/schemas/TagResponse'
+
+items:
+  get:
+    tags:
+      - Catalog
+    operationId: searchItems
+    summary: Search and browse items
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: q
+        in: query
+        required: false
+        description: Free-text search on item title.
+        schema:
+          type: string
+          maxLength: 255
+      - name: categoryUuid
+        in: query
+        required: false
+        description: Filter by category UUID.
+        schema:
+          type: string
+          format: uuid
+      - name: tagUuids
+        in: query
+        required: false
+        description: Filter by one or more tag UUIDs.
+        schema:
+          type: array
+          items:
+            type: string
+            format: uuid
+        explode: true
+      - name: status
+        in: query
+        required: false
+        description: Filter by item status. Public search defaults to ACTIVE only.
+        schema:
+          $ref: '../components/schemas/catalog/ItemStatus.yaml'
+      - name: condition
+        in: query
+        required: false
+        description: Filter by item condition.
+        schema:
+          $ref: '../components/schemas/catalog/ItemCondition.yaml'
+    responses:
+      '200':
+        description: Items returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+  post:
+    tags:
+      - Catalog
+    operationId: createItem
+    summary: Create a new item listing
+    security:
+      - bearerJwt: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CreateItemRequest'
+    responses:
+      '201':
+        description: Item created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemDetailResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
+itemsMine:
+  get:
+    tags:
+      - Catalog
+    operationId: listMyItems
+    summary: List items owned by the authenticated user
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: status
+        in: query
+        required: false
+        description: Filter own items by status.
+        schema:
+          $ref: '../components/schemas/catalog/ItemStatus.yaml'
+    responses:
+      '200':
+        description: Own items returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemPagedResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+
+itemByUuid:
+  get:
+    tags:
+      - Catalog
+    operationId: getItemByUuid
+    summary: Get item detail by UUID
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    responses:
+      '200':
+        description: Item returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemDetailResponse'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+  patch:
+    tags:
+      - Catalog
+    operationId: updateItem
+    summary: Update an owned item listing
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/UpdateItemRequest'
+    responses:
+      '200':
+        description: Item updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemDetailResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+  delete:
+    tags:
+      - Catalog
+    operationId: removeItem
+    summary: Soft-remove an item (moderator/admin)
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    responses:
+      '204':
+        description: Item removed successfully
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+itemArchive:
+  post:
+    tags:
+      - Catalog
+    operationId: archiveItem
+    summary: Archive an owned item
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    requestBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/ArchiveItemRequest'
+    responses:
+      '200':
+        description: Item archived successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemDetailResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+

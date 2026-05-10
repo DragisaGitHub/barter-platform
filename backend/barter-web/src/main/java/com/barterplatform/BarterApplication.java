@@ -8,8 +8,14 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 @SpringBootApplication(scanBasePackages = "com.barterplatform")
-@EntityScan(basePackages = "com.barterplatform.domain.identity.entity")
-@EnableJpaRepositories(basePackages = "com.barterplatform.infrastructure.identity.repository")
+@EntityScan(basePackages = {
+        "com.barterplatform.domain.identity.entity",
+        "com.barterplatform.domain.catalog.entity"
+})
+@EnableJpaRepositories(basePackages = {
+        "com.barterplatform.infrastructure.identity.repository",
+        "com.barterplatform.infrastructure.catalog.repository"
+})
 @EnableConfigurationProperties(AdminBootstrapProperties.class)
 public class BarterApplication {
 

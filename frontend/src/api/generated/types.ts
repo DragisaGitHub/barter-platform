@@ -42,3 +42,22 @@ export type RefreshRequest = components["schemas"]["RefreshTokenRequest"];
 export type LogoutRequest = components["schemas"]["RefreshTokenRequest"];
 export type UpdateStatusRequest = components["schemas"]["UpdateUserStatusRequest"];
 export type MfaVerifyRequest = components["schemas"]["MfaVerifyRequest"];
+
+// ─── Catalog Enums ──────────────────────────────────────────────────────────
+
+export type ItemStatus = components["schemas"]["ItemStatus"];
+export type ItemCondition = components["schemas"]["ItemCondition"];
+
+// ─── Catalog Response DTOs ──────────────────────────────────────────────────
+
+export type CategoryResponse = components["schemas"]["CategoryResponse"];
+export type TagResponse = components["schemas"]["TagResponse"];
+export type ItemSummaryResponse = components["schemas"]["ItemSummaryResponse"];
+export type ItemDetailResponse = components["schemas"]["ItemDetailResponse"];
+export type ItemPagedResponse = components["schemas"]["ItemPagedResponse"];
+
+// ─── Catalog Request DTOs ───────────────────────────────────────────────────
+
+export type CreateItemRequest = components["schemas"]["CreateItemRequest"];
+export type UpdateItemRequest = components["schemas"]["UpdateItemRequest"];
+export type ArchiveItemRequest = components["schemas"]["ArchiveItemRequest"];

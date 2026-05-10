@@ -3,6 +3,7 @@ import {
   LayoutDashboard,
   Store,
   Package,
+  List,
   MessageSquare,
   User,
   Shield,
@@ -34,6 +35,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navItems: NavItem[] = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/marketplace", icon: Store, label: "Marketplace" },
+    { to: "/my-items", icon: List, label: "My Items" },
     { to: "/offers", icon: Package, label: "My Offers" },
     { to: "/messages", icon: MessageSquare, label: "Messages" },
     { to: "/profile", icon: User, label: "Profile" },

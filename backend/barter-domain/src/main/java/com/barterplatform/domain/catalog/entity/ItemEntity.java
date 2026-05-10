@@ -1,0 +1,50 @@
+package com.barterplatform.domain.catalog.entity;
+
+import com.barterplatform.common.persistence.AuditableEntity;
+import com.barterplatform.domain.catalog.enums.ItemCondition;
+import com.barterplatform.domain.catalog.enums.ItemStatus;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
+import java.time.OffsetDateTime;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+@Entity
+@Table(name = "items")
+public class ItemEntity extends AuditableEntity {
+
+    @Column(name = "owner_id", nullable = false)
+    private Long ownerId;
+
+    @Column(name = "category_id", nullable = false)
+    private Long categoryId;
+
+    @Column(name = "title", nullable = false, length = 200)
+    private String title;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false, length = 40)
+    private ItemStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "condition", nullable = false, length = 40)
+    private ItemCondition condition;
+
+    @Column(name = "archived_at")
+    private OffsetDateTime archivedAt;
+
+    @Column(name = "removed_at")
+    private OffsetDateTime removedAt;
+
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
+}
+

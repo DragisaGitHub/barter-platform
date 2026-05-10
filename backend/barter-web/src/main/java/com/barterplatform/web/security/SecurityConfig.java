@@ -59,7 +59,15 @@ public class SecurityConfig {
                                 "/api/v1/auth/logout").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/ping",
-                                "/api/v1/ping").permitAll()
+                                "/api/v1/ping",
+                                "/catalog/categories",
+                                "/catalog/tags",
+                                "/catalog/items",
+                                "/catalog/items/*",
+                                "/api/v1/catalog/categories",
+                                "/api/v1/catalog/tags",
+                                "/api/v1/catalog/items",
+                                "/api/v1/catalog/items/*").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
