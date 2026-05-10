@@ -1,0 +1,24 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - name
+  - slug
+  - sortOrder
+properties:
+  uuid:
+    type: string
+    format: uuid
+  name:
+    type: string
+    maxLength: 120
+  slug:
+    type: string
+    maxLength: 120
+  description:
+    type: string
+    nullable: true
+  sortOrder:
+    type: integer
+    format: int32
+

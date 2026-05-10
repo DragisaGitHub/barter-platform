@@ -1,0 +1,23 @@
+type: object
+additionalProperties: false
+properties:
+  title:
+    type: string
+    minLength: 1
+    maxLength: 255
+  description:
+    type: string
+  categoryUuid:
+    type: string
+    format: uuid
+  tagUuids:
+    type: array
+    items:
+      type: string
+      format: uuid
+  condition:
+    $ref: '../../../openapi.yaml#/components/schemas/ItemCondition'
+  status:
+    $ref: '../../../openapi.yaml#/components/schemas/ItemStatus'
+    description: Only DRAFT and ACTIVE transitions are allowed by the owner.
+

@@ -1,0 +1,8 @@
+type: string
+enum:
+  - NEW
+  - LIKE_NEW
+  - GOOD
+  - USED
+  - FOR_PARTS
+

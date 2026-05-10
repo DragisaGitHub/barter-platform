@@ -19,6 +19,8 @@ tags:
     description: OAuth provider and account operations
   - name: System
     description: Placeholder system operations for generator validation
+  - name: Catalog
+    description: Catalog browsing, item listings, and item management
 paths:
   /auth/register:
     $ref: './paths/auth.yaml#/register'
@@ -56,6 +58,18 @@ paths:
     $ref: './paths/oauth.yaml#/providers'
   /oauth/accounts:
     $ref: './paths/oauth.yaml#/accounts'
+  /catalog/categories:
+    $ref: './paths/catalog.yaml#/categories'
+  /catalog/tags:
+    $ref: './paths/catalog.yaml#/tags'
+  /catalog/items:
+    $ref: './paths/catalog.yaml#/items'
+  /catalog/items/mine:
+    $ref: './paths/catalog.yaml#/itemsMine'
+  /catalog/items/{itemUuid}:
+    $ref: './paths/catalog.yaml#/itemByUuid'
+  /catalog/items/{itemUuid}/archive:
+    $ref: './paths/catalog.yaml#/itemArchive'
   /ping:
     $ref: './paths/system.yaml'
 components:
@@ -103,6 +117,26 @@ components:
       $ref: './components/schemas/CurrentUserResponse.yaml'
     TokenResponse:
       $ref: './components/schemas/TokenResponse.yaml'
+    ItemStatus:
+      $ref: './components/schemas/catalog/ItemStatus.yaml'
+    ItemCondition:
+      $ref: './components/schemas/catalog/ItemCondition.yaml'
+    CategoryResponse:
+      $ref: './components/schemas/catalog/CategoryResponse.yaml'
+    TagResponse:
+      $ref: './components/schemas/catalog/TagResponse.yaml'
+    ItemSummaryResponse:
+      $ref: './components/schemas/catalog/ItemSummaryResponse.yaml'
+    ItemDetailResponse:
+      $ref: './components/schemas/catalog/ItemDetailResponse.yaml'
+    ItemPagedResponse:
+      $ref: './components/schemas/catalog/ItemPagedResponse.yaml'
+    CreateItemRequest:
+      $ref: './components/schemas/catalog/CreateItemRequest.yaml'
+    UpdateItemRequest:
+      $ref: './components/schemas/catalog/UpdateItemRequest.yaml'
+    ArchiveItemRequest:
+      $ref: './components/schemas/catalog/ArchiveItemRequest.yaml'
   requestBodies:
     RegisterUserRequest:
       content:
@@ -140,6 +174,8 @@ components:
       $ref: './components/parameters/UserUuid.yaml#/UserUuid'
     RoleCodeParameter:
       $ref: './components/parameters/RoleCode.yaml#/RoleCodeParameter'
+    ItemUuid:
+      $ref: './components/parameters/ItemUuid.yaml#/ItemUuid'
   responses:
     BadRequest:
       $ref: './components/responses/BadRequest.yaml'

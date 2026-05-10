@@ -310,6 +310,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalog/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all categories */
+        get: operations["listCategories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List all tags */
+        get: operations["listTags"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search and browse items */
+        get: operations["searchItems"];
+        put?: never;
+        /** Create a new item listing */
+        post: operations["createItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog/items/mine": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List items owned by the authenticated user */
+        get: operations["listMyItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog/items/{itemUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get item detail by UUID */
+        get: operations["getItemByUuid"];
+        put?: never;
+        post?: never;
+        /** Soft-remove an item (moderator/admin) */
+        delete: operations["removeItem"];
+        options?: never;
+        head?: never;
+        /** Update an owned item listing */
+        patch: operations["updateItem"];
+        trace?: never;
+    };
+    "/catalog/items/{itemUuid}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive an owned item */
+        post: operations["archiveItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ping": {
         parameters: {
             query?: never;
@@ -522,6 +627,95 @@ export interface components {
             scope?: string[];
             user: components["schemas"]["CurrentUserResponse"];
         };
+        /** @enum {string} */
+        ItemStatus: "DRAFT" | "ACTIVE" | "RESERVED" | "ARCHIVED" | "REMOVED";
+        /** @enum {string} */
+        ItemCondition: "NEW" | "LIKE_NEW" | "GOOD" | "USED" | "FOR_PARTS";
+        CategoryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            name: string;
+            slug: string;
+            description?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
+        };
+        TagResponse: {
+            /** Format: uuid */
+            uuid: string;
+            name: string;
+            slug: string;
+        };
+        ItemSummaryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            title: string;
+            status: components["schemas"]["ItemStatus"];
+            condition: components["schemas"]["ItemCondition"];
+            /** Format: uuid */
+            categoryUuid: string;
+            categoryName: string;
+            /** Format: uuid */
+            ownerUuid: string;
+            ownerUsername: string;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        ItemDetailResponse: {
+            /** Format: uuid */
+            uuid: string;
+            title: string;
+            description?: string | null;
+            status: components["schemas"]["ItemStatus"];
+            condition: components["schemas"]["ItemCondition"];
+            category: components["schemas"]["CategoryResponse"];
+            tags: components["schemas"]["TagResponse"][];
+            /** Format: uuid */
+            ownerUuid: string;
+            ownerUsername: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+        };
+        ItemPagedResponse: {
+            content: components["schemas"]["ItemSummaryResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort: string;
+        };
+        CreateItemRequest: {
+            title: string;
+            description?: string;
+            /** Format: uuid */
+            categoryUuid: string;
+            tagUuids?: string[];
+            condition: components["schemas"]["ItemCondition"];
+            /** @description Optional initial status. Defaults to DRAFT if omitted. */
+            status?: components["schemas"]["ItemStatus"];
+        };
+        UpdateItemRequest: {
+            title?: string;
+            description?: string;
+            /** Format: uuid */
+            categoryUuid?: string;
+            tagUuids?: string[];
+            condition?: components["schemas"]["ItemCondition"];
+            /** @description Only DRAFT and ACTIVE transitions are allowed by the owner. */
+            status?: components["schemas"]["ItemStatus"];
+        };
+        ArchiveItemRequest: {
+            /** @description Optional reason for archiving the item. */
+            reason?: string;
+        };
         RegisterUserRequest: {
             /** @example alex99 */
             username: string;
@@ -627,6 +821,8 @@ export interface components {
         UserUuid: string;
         /** @description Role code. */
         RoleCodeParameter: components["schemas"]["RoleCode"];
+        /** @description Public item UUID. */
+        ItemUuid: string;
     };
     requestBodies: {
         RegisterUserRequest: {
@@ -1114,6 +1310,251 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+        };
+    };
+    listCategories: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Categories returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryResponse"][];
+                };
+            };
+        };
+    };
+    listTags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tags returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TagResponse"][];
+                };
+            };
+        };
+    };
+    searchItems: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Free-text search on item title. */
+                q?: string;
+                /** @description Filter by category UUID. */
+                categoryUuid?: string;
+                /** @description Filter by one or more tag UUIDs. */
+                tagUuids?: string[];
+                /** @description Filter by item status. Public search defaults to ACTIVE only. */
+                status?: components["schemas"]["ItemStatus"];
+                /** @description Filter by item condition. */
+                condition?: components["schemas"]["ItemCondition"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Items returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemPagedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    createItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Item created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemDetailResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    listMyItems: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Filter own items by status. */
+                status?: components["schemas"]["ItemStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Own items returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemPagedResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getItemByUuid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Item returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemDetailResponse"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    removeItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Item removed successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Item updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemDetailResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    archiveItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ArchiveItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Item archived successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemDetailResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     ping: {

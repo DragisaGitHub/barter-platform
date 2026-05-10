@@ -1,0 +1,8 @@
+type: object
+additionalProperties: false
+properties:
+  reason:
+    type: string
+    maxLength: 500
+    description: Optional reason for archiving the item.
+

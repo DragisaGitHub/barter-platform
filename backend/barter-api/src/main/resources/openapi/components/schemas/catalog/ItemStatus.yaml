@@ -1,0 +1,8 @@
+type: string
+enum:
+  - DRAFT
+  - ACTIVE
+  - RESERVED
+  - ARCHIVED
+  - REMOVED
+
