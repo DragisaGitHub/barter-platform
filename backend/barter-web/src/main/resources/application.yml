@@ -18,4 +18,10 @@ barter:
     secret: ${JWT_SECRET:default-dev-secret-key-that-is-at-least-32-bytes-long!!}
     access-token-expiration-minutes: ${JWT_ACCESS_EXPIRATION_MINUTES:30}
     refresh-token-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}
+  bootstrap:
+    admin:
+      enabled: ${BARTER_BOOTSTRAP_ADMIN_ENABLED:false}
+      username: ${BARTER_BOOTSTRAP_ADMIN_USERNAME:}
+      email: ${BARTER_BOOTSTRAP_ADMIN_EMAIL:}
+      password: ${BARTER_BOOTSTRAP_ADMIN_PASSWORD:}
 
