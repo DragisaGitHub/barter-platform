@@ -19,6 +19,9 @@ import { ItemDetailPage } from "../features/catalog/ItemDetailPage";
 import { MyItemsPage } from "../features/catalog/MyItemsPage";
 import { CreateItemPage } from "../features/catalog/CreateItemPage";
 import { EditItemPage } from "../features/catalog/EditItemPage";
+import { IncomingOffersPage } from "../features/trade/IncomingOffersPage";
+import { SentOffersPage } from "../features/trade/SentOffersPage";
+import { TradeOfferDetailPage } from "../features/trade/TradeOfferDetailPage";
 
 export const router = createBrowserRouter([
   {
@@ -70,13 +73,16 @@ export const router = createBrowserRouter([
         element: <EditItemPage />,
       },
       {
-        path: "/offers",
-        element: (
-          <PlaceholderPage
-            title="My Offers"
-            description="Manage your active listings and trade offers."
-          />
-        ),
+        path: "/offers/incoming",
+        element: <IncomingOffersPage />,
+      },
+      {
+        path: "/offers/sent",
+        element: <SentOffersPage />,
+      },
+      {
+        path: "/offers/:uuid",
+        element: <TradeOfferDetailPage />,
       },
       {
         path: "/messages",

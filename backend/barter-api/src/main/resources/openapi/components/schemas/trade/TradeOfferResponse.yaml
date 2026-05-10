@@ -1,0 +1,39 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - status
+  - sender
+  - receiver
+  - senderItem
+  - receiverItem
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  status:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeOfferStatus'
+  message:
+    type: string
+    nullable: true
+  sender:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeOfferUserSummary'
+  receiver:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeOfferUserSummary'
+  senderItem:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeOfferItemSummary'
+  receiverItem:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeOfferItemSummary'
+  createdAt:
+    type: string
+    format: date-time
+  respondedAt:
+    type: string
+    format: date-time
+    nullable: true
+  expiresAt:
+    type: string
+    format: date-time
+    nullable: true
+

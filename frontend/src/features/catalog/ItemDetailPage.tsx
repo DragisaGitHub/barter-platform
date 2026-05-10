@@ -1,15 +1,20 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { ArrowLeft, Package } from "lucide-react";
+import { ArrowLeft, ArrowRightLeft, Package } from "lucide-react";
 import { useItemDetail } from "./useCatalog";
 import { ItemStatusBadge, ItemConditionBadge } from "./ItemBadges";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Spinner } from "../../components/ui/Spinner";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { SendOfferModal } from "../trade/SendOfferModal";
+import { useAuth } from "../../auth/AuthContext";
 
 export function ItemDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
   const { data: item, isLoading, isError } = useItemDetail(uuid ?? "");
+  const { user, isAuthenticated } = useAuth();
+  const [showOfferModal, setShowOfferModal] = useState(false);
 
   if (isLoading) {
     return (
@@ -112,8 +117,28 @@ export function ItemDetailPage() {
               </p>
             </div>
           )}
+
+          {/* Propose Trade button - only for authenticated users viewing someone else's ACTIVE item */}
+          {isAuthenticated &&
+            item.status === "ACTIVE" &&
+            user?.username !== item.ownerUsername && (
+              <div className="mt-6">
+                <Button onClick={() => setShowOfferModal(true)}>
+                  <ArrowRightLeft className="size-4" />
+                  Propose Trade
+                </Button>
+              </div>
+            )}
         </div>
       </div>
+
+      {item && (
+        <SendOfferModal
+          isOpen={showOfferModal}
+          onClose={() => setShowOfferModal(false)}
+          receiverItem={item}
+        />
+      )}
     </div>
   );
 }

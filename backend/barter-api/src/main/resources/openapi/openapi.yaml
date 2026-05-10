@@ -21,6 +21,8 @@ tags:
     description: Placeholder system operations for generator validation
   - name: Catalog
     description: Catalog browsing, item listings, and item management
+  - name: TradeOffers
+    description: Trade offer creation, listing, and lifecycle management
 paths:
   /auth/register:
     $ref: './paths/auth.yaml#/register'
@@ -70,6 +72,20 @@ paths:
     $ref: './paths/catalog.yaml#/itemByUuid'
   /catalog/items/{itemUuid}/archive:
     $ref: './paths/catalog.yaml#/itemArchive'
+  /trade-offers:
+    $ref: './paths/trade-offers.yaml#/create'
+  /trade-offers/incoming:
+    $ref: './paths/trade-offers.yaml#/incoming'
+  /trade-offers/sent:
+    $ref: './paths/trade-offers.yaml#/sent'
+  /trade-offers/{tradeOfferUuid}:
+    $ref: './paths/trade-offers.yaml#/byUuid'
+  /trade-offers/{tradeOfferUuid}/accept:
+    $ref: './paths/trade-offers.yaml#/accept'
+  /trade-offers/{tradeOfferUuid}/reject:
+    $ref: './paths/trade-offers.yaml#/reject'
+  /trade-offers/{tradeOfferUuid}/cancel:
+    $ref: './paths/trade-offers.yaml#/cancel'
   /ping:
     $ref: './paths/system.yaml'
 components:
@@ -137,6 +153,20 @@ components:
       $ref: './components/schemas/catalog/UpdateItemRequest.yaml'
     ArchiveItemRequest:
       $ref: './components/schemas/catalog/ArchiveItemRequest.yaml'
+    TradeOfferStatus:
+      $ref: './components/schemas/trade/TradeOfferStatus.yaml'
+    CreateTradeOfferRequest:
+      $ref: './components/schemas/trade/CreateTradeOfferRequest.yaml'
+    TradeOfferUserSummary:
+      $ref: './components/schemas/trade/TradeOfferUserSummary.yaml'
+    TradeOfferItemSummary:
+      $ref: './components/schemas/trade/TradeOfferItemSummary.yaml'
+    TradeOfferSummaryResponse:
+      $ref: './components/schemas/trade/TradeOfferSummaryResponse.yaml'
+    TradeOfferResponse:
+      $ref: './components/schemas/trade/TradeOfferResponse.yaml'
+    TradeOfferPagedResponse:
+      $ref: './components/schemas/trade/TradeOfferPagedResponse.yaml'
   requestBodies:
     RegisterUserRequest:
       content:
@@ -176,6 +206,8 @@ components:
       $ref: './components/parameters/RoleCode.yaml#/RoleCodeParameter'
     ItemUuid:
       $ref: './components/parameters/ItemUuid.yaml#/ItemUuid'
+    TradeOfferUuid:
+      $ref: './components/parameters/trade/TradeOfferUuid.yaml#/TradeOfferUuid'
   responses:
     BadRequest:
       $ref: './components/responses/BadRequest.yaml'

@@ -1,0 +1,19 @@
+type: object
+additionalProperties: false
+required:
+  - senderItemUuid
+  - receiverItemUuid
+properties:
+  senderItemUuid:
+    type: string
+    format: uuid
+    description: UUID of the item offered by the sender. Must belong to the authenticated user.
+  receiverItemUuid:
+    type: string
+    format: uuid
+    description: UUID of the item the sender wants in return. Derives the receiver user.
+  message:
+    type: string
+    maxLength: 1000
+    description: Optional message from sender to receiver.
+

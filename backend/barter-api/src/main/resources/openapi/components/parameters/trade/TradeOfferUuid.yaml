@@ -1,0 +1,9 @@
+TradeOfferUuid:
+  name: tradeOfferUuid
+  in: path
+  required: true
+  description: Public trade offer UUID.
+  schema:
+    type: string
+    format: uuid
+

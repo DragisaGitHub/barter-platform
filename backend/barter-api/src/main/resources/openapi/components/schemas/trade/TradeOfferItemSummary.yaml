@@ -1,0 +1,22 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - title
+  - status
+  - condition
+  - categoryName
+properties:
+  uuid:
+    type: string
+    format: uuid
+  title:
+    type: string
+    maxLength: 255
+  status:
+    $ref: '../../../openapi.yaml#/components/schemas/ItemStatus'
+  condition:
+    $ref: '../../../openapi.yaml#/components/schemas/ItemCondition'
+  categoryName:
+    type: string
+

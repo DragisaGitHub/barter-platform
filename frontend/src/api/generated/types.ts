@@ -61,3 +61,19 @@ export type ItemPagedResponse = components["schemas"]["ItemPagedResponse"];
 export type CreateItemRequest = components["schemas"]["CreateItemRequest"];
 export type UpdateItemRequest = components["schemas"]["UpdateItemRequest"];
 export type ArchiveItemRequest = components["schemas"]["ArchiveItemRequest"];
+
+// ─── Trade Offer Enums ──────────────────────────────────────────────────────
+
+export type TradeOfferStatus = components["schemas"]["TradeOfferStatus"];
+
+// ─── Trade Offer Response DTOs ──────────────────────────────────────────────
+
+export type TradeOfferUserSummary = components["schemas"]["TradeOfferUserSummary"];
+export type TradeOfferItemSummary = components["schemas"]["TradeOfferItemSummary"];
+export type TradeOfferSummaryResponse = components["schemas"]["TradeOfferSummaryResponse"];
+export type TradeOfferResponse = components["schemas"]["TradeOfferResponse"];
+export type TradeOfferPagedResponse = components["schemas"]["TradeOfferPagedResponse"];
+
+// ─── Trade Offer Request DTOs ───────────────────────────────────────────────
+
+export type CreateTradeOfferRequest = components["schemas"]["CreateTradeOfferRequest"];
