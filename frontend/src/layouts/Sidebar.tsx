@@ -2,7 +2,8 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Store,
-  Package,
+  Inbox,
+  Send,
   List,
   MessageSquare,
   User,
@@ -14,7 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
-import { cn } from "../utils";
+import { cn } from "@/utils";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -36,7 +37,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/marketplace", icon: Store, label: "Marketplace" },
     { to: "/my-items", icon: List, label: "My Items" },
-    { to: "/offers", icon: Package, label: "My Offers" },
+    { to: "/offers/incoming", icon: Inbox, label: "Incoming Offers" },
+    { to: "/offers/sent", icon: Send, label: "Sent Offers" },
     { to: "/messages", icon: MessageSquare, label: "Messages" },
     { to: "/profile", icon: User, label: "Profile" },
   ];

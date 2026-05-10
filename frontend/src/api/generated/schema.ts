@@ -415,6 +415,128 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/trade-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a new trade offer */
+        post: operations["createTradeOffer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trade-offers/incoming": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List trade offers received by the authenticated user */
+        get: operations["listIncomingTradeOffers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trade-offers/sent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List trade offers sent by the authenticated user */
+        get: operations["listSentTradeOffers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trade-offers/{tradeOfferUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get trade offer detail by UUID */
+        get: operations["getTradeOfferByUuid"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trade-offers/{tradeOfferUuid}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept a pending trade offer (receiver only)
+         * @description Accepts a pending trade offer. Only the receiver can accept. On acceptance, both traded items are archived and all other PENDING offers involving either item are automatically rejected.
+         */
+        post: operations["acceptTradeOffer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trade-offers/{tradeOfferUuid}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject a pending trade offer (receiver only) */
+        post: operations["rejectTradeOffer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trade-offers/{tradeOfferUuid}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel a pending trade offer (sender only) */
+        post: operations["cancelTradeOffer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ping": {
         parameters: {
             query?: never;
@@ -716,6 +838,79 @@ export interface components {
             /** @description Optional reason for archiving the item. */
             reason?: string;
         };
+        /** @enum {string} */
+        TradeOfferStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "EXPIRED";
+        CreateTradeOfferRequest: {
+            /**
+             * Format: uuid
+             * @description UUID of the item offered by the sender. Must belong to the authenticated user.
+             */
+            senderItemUuid: string;
+            /**
+             * Format: uuid
+             * @description UUID of the item the sender wants in return. Derives the receiver user.
+             */
+            receiverItemUuid: string;
+            /** @description Optional message from sender to receiver. */
+            message?: string;
+        };
+        TradeOfferUserSummary: {
+            /** Format: uuid */
+            uuid: string;
+            username: string;
+        };
+        TradeOfferItemSummary: {
+            /** Format: uuid */
+            uuid: string;
+            title: string;
+            status: components["schemas"]["ItemStatus"];
+            condition: components["schemas"]["ItemCondition"];
+            categoryName: string;
+        };
+        TradeOfferSummaryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            status: components["schemas"]["TradeOfferStatus"];
+            message?: string | null;
+            sender: components["schemas"]["TradeOfferUserSummary"];
+            receiver: components["schemas"]["TradeOfferUserSummary"];
+            senderItem: components["schemas"]["TradeOfferItemSummary"];
+            receiverItem: components["schemas"]["TradeOfferItemSummary"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            respondedAt?: string | null;
+        };
+        TradeOfferResponse: {
+            /** Format: uuid */
+            uuid: string;
+            status: components["schemas"]["TradeOfferStatus"];
+            message?: string | null;
+            sender: components["schemas"]["TradeOfferUserSummary"];
+            receiver: components["schemas"]["TradeOfferUserSummary"];
+            senderItem: components["schemas"]["TradeOfferItemSummary"];
+            receiverItem: components["schemas"]["TradeOfferItemSummary"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            respondedAt?: string | null;
+            /** Format: date-time */
+            expiresAt?: string | null;
+        };
+        TradeOfferPagedResponse: {
+            content: components["schemas"]["TradeOfferSummaryResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort: string;
+        };
         RegisterUserRequest: {
             /** @example alex99 */
             username: string;
@@ -823,6 +1018,8 @@ export interface components {
         RoleCodeParameter: components["schemas"]["RoleCode"];
         /** @description Public item UUID. */
         ItemUuid: string;
+        /** @description Public trade offer UUID. */
+        TradeOfferUuid: string;
     };
     requestBodies: {
         RegisterUserRequest: {
@@ -1555,6 +1752,201 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    createTradeOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTradeOfferRequest"];
+            };
+        };
+        responses: {
+            /** @description Trade offer created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    listIncomingTradeOffers: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Filter by trade offer status. */
+                status?: components["schemas"]["TradeOfferStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Incoming trade offers returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferPagedResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    listSentTradeOffers: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Filter by trade offer status. */
+                status?: components["schemas"]["TradeOfferStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Sent trade offers returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferPagedResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getTradeOfferByUuid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public trade offer UUID. */
+                tradeOfferUuid: components["parameters"]["TradeOfferUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trade offer returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    acceptTradeOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public trade offer UUID. */
+                tradeOfferUuid: components["parameters"]["TradeOfferUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trade offer accepted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    rejectTradeOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public trade offer UUID. */
+                tradeOfferUuid: components["parameters"]["TradeOfferUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trade offer rejected successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    cancelTradeOffer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public trade offer UUID. */
+                tradeOfferUuid: components["parameters"]["TradeOfferUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trade offer cancelled successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     ping: {

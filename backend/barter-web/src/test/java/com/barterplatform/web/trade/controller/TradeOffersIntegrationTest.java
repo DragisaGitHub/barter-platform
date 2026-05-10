@@ -1,0 +1,592 @@
+package com.barterplatform.web.trade.controller;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.barterplatform.BarterApplication;
+import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
+import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
+import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
+import com.barterplatform.infrastructure.identity.repository.UserRepository;
+import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
+import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+
+@SpringBootTest(
+        classes = BarterApplication.class,
+        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
+        properties = {
+                "spring.jpa.hibernate.ddl-auto=validate",
+                "spring.flyway.enabled=true"
+        }
+)
+@AutoConfigureMockMvc
+@Testcontainers(disabledWithoutDocker = true)
+@TestPropertySource(properties = {
+        "spring.flyway.locations=classpath:db/migration",
+        "barter.jwt.secret=integration-test-secret-key-at-least-32-bytes!!"
+})
+class TradeOffersIntegrationTest {
+
+    private static final String CATEGORY_TOYS_UUID = "c0a80101-0001-4000-8000-000000000001";
+
+    @SuppressWarnings("resource")
+    @Container
+    private static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>(
+            DockerImageName.parse("postgres:16-alpine"))
+            .withDatabaseName("barter_db")
+            .withUsername("barter_user")
+            .withPassword("barter_password");
+
+    @DynamicPropertySource
+    static void registerDataSourceProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.datasource.driver-class-name", POSTGRES::getDriverClassName);
+    }
+
+    @Autowired private MockMvc mockMvc;
+    @Autowired private ObjectMapper objectMapper;
+    @Autowired private UserRepository userRepository;
+    @Autowired private UserRoleRepository userRoleRepository;
+    @Autowired private RefreshTokenRepository refreshTokenRepository;
+    @Autowired private ItemRepository itemRepository;
+    @Autowired private ItemTagRepository itemTagRepository;
+    @Autowired private TradeOfferRepository tradeOfferRepository;
+
+    @BeforeEach
+    void cleanMutableTables() {
+        SecurityContextHolder.clearContext();
+        tradeOfferRepository.deleteAllInBatch();
+        itemTagRepository.deleteAllInBatch();
+        itemRepository.deleteAllInBatch();
+        refreshTokenRepository.deleteAllInBatch();
+        userRoleRepository.deleteAllInBatch();
+        userRepository.deleteAllInBatch();
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Full trade offer lifecycle
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void fullTradeOfferLifecycle() throws Exception {
+        // ── 1. Register & login Alice and Bob ─────────────────────
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        // ── 2. Alice creates ACTIVE item ──────────────────────────
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Book");
+
+        // ── 3. Bob creates ACTIVE item ────────────────────────────
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Gadget");
+
+        // ── 4. Bob sends trade offer to Alice ─────────────────────
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s",
+                                  "message": "Want to trade?"
+                                }
+                                """.formatted(bobItemUuid, aliceItemUuid)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.sender.username").value("bob"))
+                .andExpect(jsonPath("$.receiver.username").value("alice"))
+                .andExpect(jsonPath("$.senderItem.uuid").value(bobItemUuid))
+                .andExpect(jsonPath("$.receiverItem.uuid").value(aliceItemUuid))
+                .andExpect(jsonPath("$.message").value("Want to trade?"))
+                .andReturn();
+
+        String offerUuid = extractField(offerResult, "uuid");
+
+        // ── 5. Alice sees incoming offer ──────────────────────────
+        mockMvc.perform(apiGet("/trade-offers/incoming")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].uuid").value(offerUuid))
+                .andExpect(jsonPath("$.content[0].status").value("PENDING"));
+
+        // ── 6. Bob sees sent offer ────────────────────────────────
+        mockMvc.perform(apiGet("/trade-offers/sent")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].uuid").value(offerUuid));
+
+        // ── 7. Alice accepts offer ────────────────────────────────
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.respondedAt").isNotEmpty());
+
+        // ── 8. Both items become ARCHIVED ─────────────────────────
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+
+        mockMvc.perform(apiGet("/catalog/items/" + bobItemUuid))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+
+        // ── 9. Archived items disappear from public ACTIVE search ─
+        mockMvc.perform(apiGet("/catalog/items")
+                        .queryParam("page", "0")
+                        .queryParam("size", "20")
+                        .queryParam("status", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+
+        // ── 10. Archived items remain visible in owner my-items ───
+        mockMvc.perform(apiGet("/catalog/items/mine")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].uuid").value(aliceItemUuid));
+
+        mockMvc.perform(apiGet("/catalog/items/mine")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].uuid").value(bobItemUuid));
+
+        // ── 11. Accepted offer detail has respondedAt set ─────────
+        mockMvc.perform(apiGet("/trade-offers/" + offerUuid)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.respondedAt").isNotEmpty());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Competing offers auto-rejection
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void competingOffersAreAutoRejectedOnAccept() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+        String charlieToken = registerActivateAndLogin("charlie", "charlie@test.com", "P@ssword789");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+        String charlieItemUuid = createActiveItem(charlieToken, "Charlie's Item");
+
+        // Bob sends offer to Alice
+        MvcResult bobOfferResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(bobItemUuid, aliceItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String bobOfferUuid = extractField(bobOfferResult, "uuid");
+
+        // Charlie sends competing offer to Alice (for the same receiver item)
+        MvcResult charlieOfferResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + charlieToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(charlieItemUuid, aliceItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String charlieOfferUuid = extractField(charlieOfferResult, "uuid");
+
+        // Alice accepts Bob's offer
+        mockMvc.perform(apiPost("/trade-offers/" + bobOfferUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+        // Charlie's competing offer is automatically REJECTED
+        mockMvc.perform(apiGet("/trade-offers/" + charlieOfferUuid)
+                        .header("Authorization", "Bearer " + charlieToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Status filter on list endpoints
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void listIncomingWithStatusFilter() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        // Bob sends offer
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(bobItemUuid, aliceItemUuid)))
+                .andExpect(status().isCreated());
+
+        // Alice filters incoming by PENDING → 1 result
+        mockMvc.perform(apiGet("/trade-offers/incoming")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .queryParam("status", "PENDING"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        // Alice filters incoming by ACCEPTED → 0 results
+        mockMvc.perform(apiGet("/trade-offers/incoming")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .queryParam("status", "ACCEPTED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
+    void listSentWithStatusFilter() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        // Bob sends offer
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(bobItemUuid, aliceItemUuid)))
+                .andExpect(status().isCreated());
+
+        // Bob filters sent by PENDING → 1 result
+        mockMvc.perform(apiGet("/trade-offers/sent")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .queryParam("status", "PENDING"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        // Bob filters sent by REJECTED → 0 results
+        mockMvc.perform(apiGet("/trade-offers/sent")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .queryParam("status", "REJECTED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Authorization & permission checks
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void shouldReturn401ForCreateWithoutToken() throws Exception {
+        mockMvc.perform(apiPost("/trade-offers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "aaaa1111-1111-1111-1111-111111111111",
+                                  "receiverItemUuid": "bbbb2222-2222-2222-2222-222222222222"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void senderCannotAcceptOwnOffer() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(bobItemUuid, aliceItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult, "uuid");
+
+        // Bob (sender) tries to accept → 403
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void nonParticipantCannotAccessOffer() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+        String charlieToken = registerActivateAndLogin("charlie", "charlie@test.com", "P@ssword789");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(bobItemUuid, aliceItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult, "uuid");
+
+        // Charlie (non-participant) cannot view
+        mockMvc.perform(apiGet("/trade-offers/" + offerUuid)
+                        .header("Authorization", "Bearer " + charlieToken))
+                .andExpect(status().isForbidden());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Business rule enforcement
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void cannotOfferInactiveItem() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        // Alice creates ACTIVE item, then archives it
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        mockMvc.perform(apiPost("/catalog/items/" + aliceItemUuid + "/archive")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk());
+
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        // Bob tries to offer for archived item → 409
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(bobItemUuid, aliceItemUuid)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void selfOfferForbidden() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+
+        String item1Uuid = createActiveItem(aliceToken, "Alice Item 1");
+        String item2Uuid = createActiveItem(aliceToken, "Alice Item 2");
+
+        // Alice tries to trade with herself → 403
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(item1Uuid, item2Uuid)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void cancelledOfferCannotBeAccepted() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(bobItemUuid, aliceItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult, "uuid");
+
+        // Bob cancels
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/cancel")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("CANCELLED"));
+
+        // Alice tries to accept cancelled offer → 409
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void rejectedOfferCannotBeAccepted() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "senderItemUuid": "%s",
+                                  "receiverItemUuid": "%s"
+                                }
+                                """.formatted(bobItemUuid, aliceItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult, "uuid");
+
+        // Alice rejects
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/reject")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+
+        // Alice tries to accept rejected offer → 409
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isConflict());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Helpers
+    // ══════════════════════════════════════════════════════════════
+
+    private String registerActivateAndLogin(String username, String email, String password)
+            throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register")
+                        .contextPath("/api/v1")
+                        .servletPath("/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "%s",
+                                  "email": "%s",
+                                  "password": "%s"
+                                }
+                                """.formatted(username, email, password)))
+                .andExpect(status().isCreated());
+
+        var user = userRepository.findByEmail(email).orElseThrow();
+        user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        userRepository.save(user);
+
+        MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
+                        .contextPath("/api/v1")
+                        .servletPath("/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "identifier": "%s",
+                                  "password": "%s"
+                                }
+                                """.formatted(email, password)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andReturn();
+
+        JsonNode loginJson = objectMapper.readTree(loginResult.getResponse().getContentAsString());
+        return loginJson.get("accessToken").asText();
+    }
+
+    private String createActiveItem(String token, String title) throws Exception {
+        MvcResult result = mockMvc.perform(apiPost("/catalog/items")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "%s",
+                                  "categoryUuid": "%s",
+                                  "condition": "GOOD",
+                                  "status": "ACTIVE"
+                                }
+                                """.formatted(title, CATEGORY_TOYS_UUID)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("ACTIVE"))
+                .andReturn();
+
+        return extractField(result, "uuid");
+    }
+
+    private String extractField(MvcResult result, String field) throws Exception {
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        return json.get(field).asText();
+    }
+
+    private MockHttpServletRequestBuilder apiGet(String path) {
+        return get("/api/v1" + path)
+                .contextPath("/api/v1")
+                .servletPath(path)
+                .accept(MediaType.APPLICATION_JSON);
+    }
+
+    private MockHttpServletRequestBuilder apiPost(String path) {
+        return post("/api/v1" + path)
+                .contextPath("/api/v1")
+                .servletPath(path)
+                .accept(MediaType.APPLICATION_JSON);
+    }
+}
+

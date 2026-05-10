@@ -1,0 +1,192 @@
+create:
+  post:
+    tags:
+      - TradeOffers
+    operationId: createTradeOffer
+    summary: Create a new trade offer
+    security:
+      - bearerJwt: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CreateTradeOfferRequest'
+    responses:
+      '201':
+        description: Trade offer created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/TradeOfferResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+incoming:
+  get:
+    tags:
+      - TradeOffers
+    operationId: listIncomingTradeOffers
+    summary: List trade offers received by the authenticated user
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: status
+        in: query
+        required: false
+        description: Filter by trade offer status.
+        schema:
+          $ref: '../components/schemas/trade/TradeOfferStatus.yaml'
+    responses:
+      '200':
+        description: Incoming trade offers returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/TradeOfferPagedResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+
+sent:
+  get:
+    tags:
+      - TradeOffers
+    operationId: listSentTradeOffers
+    summary: List trade offers sent by the authenticated user
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: status
+        in: query
+        required: false
+        description: Filter by trade offer status.
+        schema:
+          $ref: '../components/schemas/trade/TradeOfferStatus.yaml'
+    responses:
+      '200':
+        description: Sent trade offers returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/TradeOfferPagedResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+
+byUuid:
+  get:
+    tags:
+      - TradeOffers
+    operationId: getTradeOfferByUuid
+    summary: Get trade offer detail by UUID
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/TradeOfferUuid'
+    responses:
+      '200':
+        description: Trade offer returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/TradeOfferResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+accept:
+  post:
+    tags:
+      - TradeOffers
+    operationId: acceptTradeOffer
+    summary: Accept a pending trade offer (receiver only)
+    description: >
+      Accepts a pending trade offer. Only the receiver can accept.
+      On acceptance, both traded items are archived and all other PENDING offers
+      involving either item are automatically rejected.
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/TradeOfferUuid'
+    responses:
+      '200':
+        description: Trade offer accepted successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/TradeOfferResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+reject:
+  post:
+    tags:
+      - TradeOffers
+    operationId: rejectTradeOffer
+    summary: Reject a pending trade offer (receiver only)
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/TradeOfferUuid'
+    responses:
+      '200':
+        description: Trade offer rejected successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/TradeOfferResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+cancel:
+  post:
+    tags:
+      - TradeOffers
+    operationId: cancelTradeOffer
+    summary: Cancel a pending trade offer (sender only)
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/TradeOfferUuid'
+    responses:
+      '200':
+        description: Trade offer cancelled successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/TradeOfferResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
