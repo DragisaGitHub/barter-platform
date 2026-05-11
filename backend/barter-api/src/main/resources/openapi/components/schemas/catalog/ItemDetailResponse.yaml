@@ -10,6 +10,7 @@ required:
   - ownerUuid
   - ownerUsername
   - createdAt
+  - images
 properties:
   uuid:
     type: string
@@ -35,6 +36,13 @@ properties:
     format: uuid
   ownerUsername:
     type: string
+  primaryImageUrl:
+    type: string
+    nullable: true
+  images:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/ItemImageResponse'
   createdAt:
     type: string
     format: date-time
@@ -42,4 +50,3 @@ properties:
     type: string
     format: date-time
     nullable: true
-

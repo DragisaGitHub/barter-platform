@@ -1,0 +1,102 @@
+itemImages:
+  post:
+    tags:
+      - Catalog
+    operationId: uploadItemImage
+    summary: Upload an image for an item
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            required:
+              - file
+            properties:
+              file:
+                type: string
+                format: binary
+    responses:
+      '201':
+        description: Image uploaded successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemImageResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+  get:
+    tags:
+      - Catalog
+    operationId: listItemImages
+    summary: List images for an item (public)
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    responses:
+      '200':
+        description: Images returned successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../openapi.yaml#/components/schemas/ItemImageResponse'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+itemImageByUuid:
+  delete:
+    tags:
+      - Catalog
+    operationId: deleteItemImage
+    summary: Delete an image
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+      - $ref: '../components/parameters/catalog/ImageUuid.yaml#/ImageUuid'
+    responses:
+      '204':
+        description: Image deleted successfully
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+itemImagePrimary:
+  put:
+    tags:
+      - Catalog
+    operationId: setItemImageAsPrimary
+    summary: Set an image as the primary image for an item
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+      - $ref: '../components/parameters/catalog/ImageUuid.yaml#/ImageUuid'
+    responses:
+      '200':
+        description: Primary image set successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemImageResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+

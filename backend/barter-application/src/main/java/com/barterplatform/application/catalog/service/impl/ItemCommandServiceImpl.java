@@ -79,7 +79,8 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         // Save tags
         List<TagEntity> tags = resolveAndSaveTags(saved.getId(), request.getTagUuids());
 
-        return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername());
+        return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
+                null, java.util.List.of());
     }
 
     // ── Update ───────────────────────────────────────────────────
@@ -126,7 +127,8 @@ public class ItemCommandServiceImpl implements ItemCommandService {
             tags = loadTagsForItem(saved.getId());
         }
 
-        return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername());
+        return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
+                null, java.util.List.of());
     }
 
     // ── Archive ──────────────────────────────────────────────────
@@ -146,7 +148,8 @@ public class ItemCommandServiceImpl implements ItemCommandService {
                 .orElseThrow(() -> notFound("Category for item '%s' was not found.", itemUuid));
         List<TagEntity> tags = loadTagsForItem(saved.getId());
 
-        return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername());
+        return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
+                null, java.util.List.of());
     }
 
     // ── Private helpers ──────────────────────────────────────────

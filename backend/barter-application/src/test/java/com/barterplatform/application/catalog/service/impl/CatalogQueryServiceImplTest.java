@@ -14,6 +14,7 @@ import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.application.catalog.mapper.CategoryMapper;
+import com.barterplatform.application.catalog.mapper.ItemImageMapper;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.application.catalog.mapper.TagMapper;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
@@ -28,6 +29,7 @@ import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
+import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.catalog.repository.TagRepository;
@@ -58,9 +60,11 @@ class CatalogQueryServiceImplTest {
     @Mock private ItemRepository itemRepository;
     @Mock private ItemTagRepository itemTagRepository;
     @Mock private UserRepository userRepository;
+    @Mock private ItemImageRepository itemImageRepository;
     @Mock private CategoryMapper categoryMapper;
     @Mock private TagMapper tagMapper;
     @Mock private ItemMapper itemMapper;
+    @Mock private ItemImageMapper itemImageMapper;
     @Mock private PageResponseMapper pageResponseMapper;
 
     private CatalogQueryServiceImpl service;
@@ -71,8 +75,8 @@ class CatalogQueryServiceImplTest {
     void setUp() {
         service = new CatalogQueryServiceImpl(
                 categoryRepository, tagRepository, itemRepository,
-                itemTagRepository, userRepository,
-                categoryMapper, tagMapper, itemMapper,
+                itemTagRepository, userRepository, itemImageRepository,
+                categoryMapper, tagMapper, itemMapper, itemImageMapper,
                 pageRequestFactory, pageResponseMapper);
     }
 
@@ -89,23 +93,23 @@ class CatalogQueryServiceImplTest {
         return e;
     }
 
-    private TagEntity tag(Long id, UUID uuid, String name) {
+    private TagEntity tag(Long id, UUID uuid) {
         TagEntity e = new TagEntity();
         e.setId(id);
         e.setUuid(uuid);
-        e.setName(name);
-        e.setSlug(name.toLowerCase());
+        e.setName("Vintage");
+        e.setSlug("Vintage".toLowerCase());
         e.setCreatedAt(OffsetDateTime.now());
         return e;
     }
 
-    private ItemEntity item(Long id, UUID uuid, Long ownerId, Long categoryId,
+    private ItemEntity item(UUID uuid,
                             ItemStatus status, ItemCondition condition) {
         ItemEntity e = new ItemEntity();
-        e.setId(id);
+        e.setId(1L);
         e.setUuid(uuid);
-        e.setOwnerId(ownerId);
-        e.setCategoryId(categoryId);
+        e.setOwnerId(10L);
+        e.setCategoryId(20L);
         e.setTitle("Test Item");
         e.setStatus(status);
         e.setCondition(condition);
@@ -113,9 +117,9 @@ class CatalogQueryServiceImplTest {
         return e;
     }
 
-    private UserEntity user(Long id, UUID uuid, String username) {
+    private UserEntity user(UUID uuid, String username) {
         UserEntity u = new UserEntity();
-        u.setId(id);
+        u.setId(10L);
         u.setUuid(uuid);
         u.setUsername(username);
         u.setEmail(username + "@test.com");
@@ -146,7 +150,7 @@ class CatalogQueryServiceImplTest {
             List<CategoryResponse> result = service.listCategories();
 
             assertEquals(2, result.size());
-            assertEquals("Books", result.get(0).getName());
+            assertEquals("Books", result.getFirst().getName());
         }
     }
 
@@ -159,7 +163,7 @@ class CatalogQueryServiceImplTest {
         @Test
         @DisplayName("returns mapped tag list")
         void returnsMappedTags() {
-            TagEntity tag1 = tag(1L, UUID.randomUUID(), "Vintage");
+            TagEntity tag1 = tag(1L, UUID.randomUUID());
             List<TagEntity> entities = List.of(tag1);
 
             TagResponse tr = new TagResponse().uuid(tag1.getUuid()).name("Vintage");
@@ -169,7 +173,7 @@ class CatalogQueryServiceImplTest {
             List<TagResponse> result = service.listTags();
 
             assertEquals(1, result.size());
-            assertEquals("Vintage", result.get(0).getName());
+            assertEquals("Vintage", result.getFirst().getName());
         }
     }
 
@@ -194,7 +198,7 @@ class CatalogQueryServiceImplTest {
         @DisplayName("throws NOT_FOUND when item is soft-deleted")
         void throwsNotFoundWhenDeleted() {
             UUID uuid = UUID.randomUUID();
-            ItemEntity entity = item(1L, uuid, 10L, 20L, ItemStatus.ACTIVE, ItemCondition.GOOD);
+            ItemEntity entity = item(uuid, ItemStatus.ACTIVE, ItemCondition.GOOD);
             entity.setDeletedAt(OffsetDateTime.now());
 
             when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(entity));
@@ -208,7 +212,7 @@ class CatalogQueryServiceImplTest {
         @DisplayName("throws NOT_FOUND when item has REMOVED status")
         void throwsNotFoundWhenRemoved() {
             UUID uuid = UUID.randomUUID();
-            ItemEntity entity = item(1L, uuid, 10L, 20L, ItemStatus.REMOVED, ItemCondition.GOOD);
+            ItemEntity entity = item(uuid, ItemStatus.REMOVED, ItemCondition.GOOD);
 
             when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(entity));
 
@@ -224,10 +228,10 @@ class CatalogQueryServiceImplTest {
             UUID ownerUuid = UUID.randomUUID();
             UUID catUuid = UUID.randomUUID();
 
-            ItemEntity entity = item(1L, itemUuid, 10L, 20L, ItemStatus.ACTIVE, ItemCondition.GOOD);
+            ItemEntity entity = item(itemUuid, ItemStatus.ACTIVE, ItemCondition.GOOD);
             CategoryEntity cat = category(20L, catUuid, "Books");
-            UserEntity owner = user(10L, ownerUuid, "alice");
-            TagEntity t1 = tag(5L, UUID.randomUUID(), "Vintage");
+            UserEntity owner = user(ownerUuid, "alice");
+            TagEntity t1 = tag(5L, UUID.randomUUID());
 
             ItemTagId tagId = new ItemTagId();
             tagId.setItemId(1L);
@@ -241,10 +245,12 @@ class CatalogQueryServiceImplTest {
             when(userRepository.findById(10L)).thenReturn(Optional.of(owner));
             when(itemTagRepository.findByIdItemId(1L)).thenReturn(List.of(ite));
             when(tagRepository.findAllById(List.of(5L))).thenReturn(List.of(t1));
+            when(itemImageRepository.findByItemIdOrderBySortOrderAsc(1L)).thenReturn(List.of());
+            when(itemImageMapper.toResponseList(List.of())).thenReturn(List.of());
 
             ItemDetailResponse expectedResponse = new ItemDetailResponse()
                     .uuid(itemUuid).title("Test Item");
-            when(itemMapper.toDetailResponse(entity, cat, List.of(t1), ownerUuid, "alice"))
+            when(itemMapper.toDetailResponse(entity, cat, List.of(t1), ownerUuid, "alice", null, List.of()))
                     .thenReturn(expectedResponse);
 
             ItemDetailResponse result = service.getItemByUuid(itemUuid);
@@ -275,9 +281,9 @@ class CatalogQueryServiceImplTest {
         @DisplayName("returns paged items for valid owner")
         void returnsItemsForValidOwner() {
             UUID ownerUuid = UUID.randomUUID();
-            UserEntity owner = user(10L, ownerUuid, "bob");
+            UserEntity owner = user(ownerUuid, "bob");
 
-            ItemEntity entity = item(1L, UUID.randomUUID(), 10L, 20L, ItemStatus.DRAFT, ItemCondition.NEW);
+            ItemEntity entity = item(UUID.randomUUID(), ItemStatus.DRAFT, ItemCondition.NEW);
             CategoryEntity cat = category(20L, UUID.randomUUID(), "Toys");
             Page<ItemEntity> itemPage = new PageImpl<>(List.of(entity),
                     PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt")), 1);
@@ -288,9 +294,11 @@ class CatalogQueryServiceImplTest {
                     .thenReturn(itemPage);
             when(categoryRepository.findAllById(any())).thenReturn(List.of(cat));
             when(userRepository.findAllById(any())).thenReturn(List.of(owner));
+            when(itemImageRepository.findFirstByItemIdAndPrimaryTrue(1L))
+                    .thenReturn(java.util.Optional.empty());
 
             ItemSummaryResponse summary = new ItemSummaryResponse().uuid(entity.getUuid());
-            when(itemMapper.toSummaryResponse(entity, cat, ownerUuid, "bob"))
+            when(itemMapper.toSummaryResponse(entity, cat, ownerUuid, "bob", null))
                     .thenReturn(summary);
 
             ItemPagedResponse expected = new ItemPagedResponse()

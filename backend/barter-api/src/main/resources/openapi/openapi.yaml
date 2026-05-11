@@ -76,6 +76,12 @@ paths:
     $ref: './paths/catalog.yaml#/itemByUuid'
   /catalog/items/{itemUuid}/archive:
     $ref: './paths/catalog.yaml#/itemArchive'
+  /catalog/items/{itemUuid}/images:
+    $ref: './paths/catalog-images.yaml#/itemImages'
+  /catalog/items/{itemUuid}/images/{imageUuid}:
+    $ref: './paths/catalog-images.yaml#/itemImageByUuid'
+  /catalog/items/{itemUuid}/images/{imageUuid}/primary:
+    $ref: './paths/catalog-images.yaml#/itemImagePrimary'
   /trade-offers:
     $ref: './paths/trade-offers.yaml#/create'
   /trade-offers/incoming:
@@ -159,6 +165,8 @@ components:
       $ref: './components/schemas/catalog/UpdateItemRequest.yaml'
     ArchiveItemRequest:
       $ref: './components/schemas/catalog/ArchiveItemRequest.yaml'
+    ItemImageResponse:
+      $ref: './components/schemas/catalog/ItemImageResponse.yaml'
     TradeOfferStatus:
       $ref: './components/schemas/trade/TradeOfferStatus.yaml'
     TradeOfferMode:
@@ -226,6 +234,8 @@ components:
       $ref: './components/parameters/ItemUuid.yaml#/ItemUuid'
     TradeOfferUuid:
       $ref: './components/parameters/trade/TradeOfferUuid.yaml#/TradeOfferUuid'
+    ImageUuid:
+      $ref: './components/parameters/catalog/ImageUuid.yaml#/ImageUuid'
   responses:
     BadRequest:
       $ref: './components/responses/BadRequest.yaml'
