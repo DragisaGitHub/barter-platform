@@ -24,6 +24,7 @@ import { IncomingOffersPage } from "../features/trade/IncomingOffersPage";
 import { SentOffersPage } from "../features/trade/SentOffersPage";
 import { TradeOfferDetailPage } from "../features/trade/TradeOfferDetailPage";
 import { NotificationsPage } from "../features/notifications/NotificationsPage";
+import { PublicProfilePage } from "../features/profile/PublicProfilePage";
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +45,10 @@ export const router = createBrowserRouter([
       {
         path: "/verify-email",
         element: <VerifyEmailPage />,
+      },
+      {
+        path: "/users/:uuid",
+        element: <PublicProfilePage />,
       },
     ],
   },

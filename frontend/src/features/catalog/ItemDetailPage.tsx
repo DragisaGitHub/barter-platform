@@ -9,6 +9,7 @@ import { Spinner } from "../../components/ui/Spinner";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { SendOfferModal } from "../trade/SendOfferModal";
 import { useAuth } from "../../auth/AuthContext";
+import { routePaths } from "@/routes/routePaths.ts";
 import type { ItemImageResponse } from "@/api/generated/types.ts";
 import { cn } from "@/utils";
 
@@ -148,7 +149,18 @@ export function ItemDetailPage() {
               <span className="text-sm font-medium text-slate-500 dark:text-slate-400">
                 Owner
               </span>
-              <p className="text-slate-900 dark:text-slate-100">{item.ownerUsername}</p>
+              {item.ownerUuid ? (
+                <p>
+                  <Link
+                    to={routePaths.publicProfile(item.ownerUuid)}
+                    className="text-indigo-600 dark:text-indigo-400 hover:underline"
+                  >
+                    {item.ownerUsername}
+                  </Link>
+                </p>
+              ) : (
+                <p className="text-slate-900 dark:text-slate-100">{item.ownerUsername}</p>
+              )}
             </div>
 
             {item.tags.length > 0 && (
