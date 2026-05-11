@@ -11,12 +11,14 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan(basePackages = {
         "com.barterplatform.domain.identity.entity",
         "com.barterplatform.domain.catalog.entity",
-        "com.barterplatform.domain.trade.entity"
+        "com.barterplatform.domain.trade.entity",
+        "com.barterplatform.domain.notification.entity"
 })
 @EnableJpaRepositories(basePackages = {
         "com.barterplatform.infrastructure.identity.repository",
         "com.barterplatform.infrastructure.catalog.repository",
-        "com.barterplatform.infrastructure.trade.repository"
+        "com.barterplatform.infrastructure.trade.repository",
+        "com.barterplatform.infrastructure.notification.repository"
 })
 @EnableConfigurationProperties(AdminBootstrapProperties.class)
 public class BarterApplication {

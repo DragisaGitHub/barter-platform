@@ -13,6 +13,7 @@ import com.barterplatform.infrastructure.identity.repository.EmailVerificationCo
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
+import com.barterplatform.infrastructure.notification.repository.NotificationRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -79,10 +80,13 @@ class TradeOffersIntegrationTest {
     @Autowired private ItemTagRepository itemTagRepository;
     @Autowired private TradeOfferRepository tradeOfferRepository;
     @Autowired private TradeOfferItemRepository tradeOfferItemRepository;
+    @Autowired private NotificationRepository notificationRepository;
 
     @BeforeEach
     void cleanMutableTables() {
         SecurityContextHolder.clearContext();
+        // Delete notifications before users (FK constraint)
+        notificationRepository.deleteAllInBatch();
         tradeOfferItemRepository.deleteAllInBatch();
         tradeOfferRepository.deleteAllInBatch();
         itemTagRepository.deleteAllInBatch();
@@ -133,7 +137,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Want to trade?"))
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // ── 5. Alice sees incoming offer ──────────────────────────
         mockMvc.perform(apiGet("/trade-offers/incoming")
@@ -225,7 +229,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.offeredItems", hasSize(2)))
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Accept: all 3 items should be archived
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
@@ -268,7 +272,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.senderItem").doesNotExist())
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Accept: only requested item should be archived
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
@@ -329,7 +333,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.message").value("I can offer $50 cash for this item"))
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Accept: only requested item archived (no offered items)
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
@@ -395,7 +399,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String bobOfferUuid = extractField(bobOfferResult, "uuid");
+        String bobOfferUuid = extractField(bobOfferResult);
 
         // Charlie sends a competing offer for Alice's item
         MvcResult charlieOfferResult = mockMvc.perform(apiPost("/trade-offers")
@@ -411,7 +415,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String charlieOfferUuid = extractField(charlieOfferResult, "uuid");
+        String charlieOfferUuid = extractField(charlieOfferResult);
 
         // Alice accepts Bob's offer
         mockMvc.perform(apiPost("/trade-offers/" + bobOfferUuid + "/accept")
@@ -466,7 +470,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String bobOfferUuid = extractField(bobOfferResult, "uuid");
+        String bobOfferUuid = extractField(bobOfferResult);
 
         // Charlie sends competing offer to Alice (for the same receiver item)
         MvcResult charlieOfferResult = mockMvc.perform(apiPost("/trade-offers")
@@ -482,7 +486,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String charlieOfferUuid = extractField(charlieOfferResult, "uuid");
+        String charlieOfferUuid = extractField(charlieOfferResult);
 
         // Alice accepts Bob's offer
         mockMvc.perform(apiPost("/trade-offers/" + bobOfferUuid + "/accept")
@@ -612,7 +616,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Bob (sender) tries to accept → 403
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
@@ -642,7 +646,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Charlie (non-participant) cannot view
         mockMvc.perform(apiGet("/trade-offers/" + offerUuid)
@@ -725,7 +729,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Bob cancels
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/cancel")
@@ -760,7 +764,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Alice rejects
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/reject")
@@ -897,12 +901,12 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andReturn();
 
-        return extractField(result, "uuid");
+        return extractField(result);
     }
 
-    private String extractField(MvcResult result, String field) throws Exception {
+    private String extractField(MvcResult result) throws Exception {
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
-        return json.get(field).asText();
+        return json.get("uuid").asText();
     }
 
     private MockHttpServletRequestBuilder apiGet(String path) {
@@ -919,4 +923,3 @@ class TradeOffersIntegrationTest {
                 .accept(MediaType.APPLICATION_JSON);
     }
 }
-

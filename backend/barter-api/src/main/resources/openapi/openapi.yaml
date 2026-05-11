@@ -23,6 +23,8 @@ tags:
     description: Catalog browsing, item listings, and item management
   - name: TradeOffers
     description: Trade offer creation, listing, and lifecycle management
+  - name: Notifications
+    description: In-app notification listing and read management
 paths:
   /auth/register:
     $ref: './paths/auth.yaml#/register'
@@ -96,6 +98,14 @@ paths:
     $ref: './paths/trade-offers.yaml#/reject'
   /trade-offers/{tradeOfferUuid}/cancel:
     $ref: './paths/trade-offers.yaml#/cancel'
+  /notifications:
+    $ref: './paths/notifications.yaml#/list'
+  /notifications/unread-count:
+    $ref: './paths/notifications.yaml#/unreadCount'
+  /notifications/read-all:
+    $ref: './paths/notifications.yaml#/markAllRead'
+  /notifications/{notificationUuid}/read:
+    $ref: './paths/notifications.yaml#/markRead'
   /ping:
     $ref: './paths/system.yaml'
 components:
@@ -183,6 +193,14 @@ components:
       $ref: './components/schemas/trade/TradeOfferResponse.yaml'
     TradeOfferPagedResponse:
       $ref: './components/schemas/trade/TradeOfferPagedResponse.yaml'
+    NotificationType:
+      $ref: './components/schemas/notification/NotificationType.yaml'
+    NotificationResponse:
+      $ref: './components/schemas/notification/NotificationResponse.yaml'
+    NotificationPagedResponse:
+      $ref: './components/schemas/notification/NotificationPagedResponse.yaml'
+    NotificationUnreadCountResponse:
+      $ref: './components/schemas/notification/NotificationUnreadCountResponse.yaml'
   requestBodies:
     RegisterUserRequest:
       content:
@@ -234,6 +252,8 @@ components:
       $ref: './components/parameters/ItemUuid.yaml#/ItemUuid'
     TradeOfferUuid:
       $ref: './components/parameters/trade/TradeOfferUuid.yaml#/TradeOfferUuid'
+    NotificationUuid:
+      $ref: './components/parameters/notification/NotificationUuid.yaml#/NotificationUuid'
     ImageUuid:
       $ref: './components/parameters/catalog/ImageUuid.yaml#/ImageUuid'
   responses:

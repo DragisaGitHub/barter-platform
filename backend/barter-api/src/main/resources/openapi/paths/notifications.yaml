@@ -1,0 +1,76 @@
+list:
+  get:
+    tags:
+      - Notifications
+    operationId: listNotifications
+    summary: List current user's notifications (newest first)
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+    responses:
+      '200':
+        description: Notifications returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/NotificationPagedResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+
+unreadCount:
+  get:
+    tags:
+      - Notifications
+    operationId: getUnreadNotificationCount
+    summary: Get unread notification count for the current user
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Unread count returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/NotificationUnreadCountResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+
+markRead:
+  post:
+    tags:
+      - Notifications
+    operationId: markNotificationAsRead
+    summary: Mark a single notification as read
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/NotificationUuid'
+    responses:
+      '200':
+        description: Notification marked as read successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/NotificationResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+markAllRead:
+  post:
+    tags:
+      - Notifications
+    operationId: markAllNotificationsAsRead
+    summary: Mark all notifications as read for the current user
+    security:
+      - bearerJwt: []
+    responses:
+      '204':
+        description: All notifications marked as read
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+

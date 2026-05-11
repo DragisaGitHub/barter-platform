@@ -1,0 +1,9 @@
+NotificationUuid:
+  name: notificationUuid
+  in: path
+  required: true
+  description: Public notification UUID.
+  schema:
+    type: string
+    format: uuid
+

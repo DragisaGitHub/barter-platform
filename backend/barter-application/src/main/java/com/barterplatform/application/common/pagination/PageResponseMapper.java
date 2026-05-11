@@ -2,6 +2,8 @@ package com.barterplatform.application.common.pagination;
 
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
+import com.barterplatform.api.model.NotificationPagedResponse;
+import com.barterplatform.api.model.NotificationResponse;
 import com.barterplatform.api.model.TradeOfferPagedResponse;
 import com.barterplatform.api.model.TradeOfferSummaryResponse;
 import com.barterplatform.api.model.UserPagedResponse;
@@ -48,6 +50,21 @@ public class PageResponseMapper {
             List<TradeOfferSummaryResponse> content,
             String sort) {
         return new TradeOfferPagedResponse()
+                .content(content)
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .sort(sort);
+    }
+
+    public NotificationPagedResponse toNotificationPagedResponse(
+            Page<?> page,
+            List<NotificationResponse> content,
+            String sort) {
+        return new NotificationPagedResponse()
                 .content(content)
                 .page(page.getNumber())
                 .size(page.getSize())

@@ -14,9 +14,11 @@ import static org.mockito.Mockito.when;
 import com.barterplatform.api.model.CreateTradeOfferRequest;
 import com.barterplatform.api.model.TradeOfferMode;
 import com.barterplatform.api.model.TradeOfferResponse;
+import com.barterplatform.application.notification.service.NotificationService;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
 import com.barterplatform.application.common.pagination.PageResponseMapper;
 import com.barterplatform.application.trade.mapper.TradeOfferMapper;
+import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
@@ -56,6 +58,7 @@ class TradeOfferServiceImplTest {
     @Mock private TradeOfferMapper tradeOfferMapper;
     @Mock private PageRequestFactory pageRequestFactory;
     @Mock private PageResponseMapper pageResponseMapper;
+    @Mock private NotificationService notificationService;
 
     private TradeOfferServiceImpl service;
 
@@ -65,7 +68,8 @@ class TradeOfferServiceImplTest {
                 tradeOfferRepository, tradeOfferItemRepository,
                 userRepository, itemRepository,
                 categoryRepository, tradeOfferMapper,
-                pageRequestFactory, pageResponseMapper);
+                pageRequestFactory, pageResponseMapper,
+                notificationService);
     }
 
     // ── Helpers ──────────────────────────────────────────────────
@@ -80,12 +84,12 @@ class TradeOfferServiceImplTest {
         return u;
     }
 
-    private ItemEntity item(Long id, UUID uuid, Long ownerId, Long categoryId, ItemStatus status) {
+    private ItemEntity item(Long id, UUID uuid, Long ownerId, ItemStatus status) {
         ItemEntity e = new ItemEntity();
         e.setId(id);
         e.setUuid(uuid);
         e.setOwnerId(ownerId);
-        e.setCategoryId(categoryId);
+        e.setCategoryId(100L);
         e.setTitle("Test Item " + id);
         e.setStatus(status);
         e.setCondition(ItemCondition.GOOD);
@@ -93,17 +97,17 @@ class TradeOfferServiceImplTest {
         return e;
     }
 
-    private CategoryEntity category(Long id, String name) {
+    private CategoryEntity category() {
         CategoryEntity c = new CategoryEntity();
-        c.setId(id);
+        c.setId(100L);
         c.setUuid(UUID.randomUUID());
-        c.setName(name);
+        c.setName("Books");
         c.setCreatedAt(OffsetDateTime.now());
         return c;
     }
 
     private TradeOfferEntity offer(Long id, UUID uuid, Long senderUserId, Long receiverUserId,
-                                   Long senderItemId, Long receiverItemId, TradeOfferStatus status) {
+                                   Long senderItemId, Long receiverItemId) {
         TradeOfferEntity o = new TradeOfferEntity();
         o.setId(id);
         o.setUuid(uuid);
@@ -112,7 +116,7 @@ class TradeOfferServiceImplTest {
         o.setSenderItemId(senderItemId);
         o.setReceiverItemId(receiverItemId);
         o.setMode(com.barterplatform.domain.trade.enums.TradeOfferMode.ITEM_EXCHANGE);
-        o.setStatus(status);
+        o.setStatus(TradeOfferStatus.PENDING);
         o.setCreatedAt(OffsetDateTime.now());
         return o;
     }
@@ -146,9 +150,9 @@ class TradeOfferServiceImplTest {
 
             UserEntity sender = user(1L, senderUuid, "alice");
             UserEntity receiver = user(2L, UUID.randomUUID(), "bob");
-            ItemEntity senderItem = item(10L, senderItemUuid, 1L, 100L, ItemStatus.ACTIVE);
-            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, 100L, ItemStatus.ACTIVE);
-            CategoryEntity cat = category(100L, "Books");
+            ItemEntity senderItem = item(10L, senderItemUuid, 1L, ItemStatus.ACTIVE);
+            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, ItemStatus.ACTIVE);
+            CategoryEntity cat = category();
 
             when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
             when(itemRepository.findByUuid(senderItemUuid)).thenReturn(Optional.of(senderItem));
@@ -172,7 +176,7 @@ class TradeOfferServiceImplTest {
 
             ArgumentCaptor<TradeOfferEntity> captor = ArgumentCaptor.forClass(TradeOfferEntity.class);
             verify(tradeOfferRepository, times(2)).save(captor.capture());
-            TradeOfferEntity saved = captor.getAllValues().get(0);
+            TradeOfferEntity saved = captor.getAllValues().getFirst();
             assertEquals(TradeOfferStatus.PENDING, saved.getStatus());
             assertEquals(1L, saved.getSenderUserId());
             assertEquals(2L, saved.getReceiverUserId());
@@ -180,6 +184,12 @@ class TradeOfferServiceImplTest {
             assertEquals(20L, saved.getReceiverItemId());
             assertEquals("Let's trade!", saved.getMessage());
             assertEquals(com.barterplatform.domain.trade.enums.TradeOfferMode.ITEM_EXCHANGE, saved.getMode());
+
+            // Verify receiver was notified
+            verify(notificationService).createNotification(
+                    eq(2L), eq(NotificationType.TRADE_OFFER_RECEIVED),
+                    any(String.class), any(String.class),
+                    any(UUID.class), eq("TRADE_OFFER"));
         }
 
         @Test
@@ -190,8 +200,8 @@ class TradeOfferServiceImplTest {
             UUID receiverItemUuid = UUID.randomUUID();
 
             UserEntity sender = user(1L, senderUuid, "alice");
-            ItemEntity senderItem = item(10L, senderItemUuid, 99L, 100L, ItemStatus.ACTIVE); // wrong owner
-            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, 100L, ItemStatus.ACTIVE);
+            ItemEntity senderItem = item(10L, senderItemUuid, 99L, ItemStatus.ACTIVE); // wrong owner
+            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, ItemStatus.ACTIVE);
 
             when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
             when(itemRepository.findByUuid(senderItemUuid)).thenReturn(Optional.of(senderItem));
@@ -213,8 +223,8 @@ class TradeOfferServiceImplTest {
             UUID receiverItemUuid = UUID.randomUUID();
 
             UserEntity sender = user(1L, senderUuid, "alice");
-            ItemEntity senderItem = item(10L, senderItemUuid, 1L, 100L, ItemStatus.ACTIVE);
-            ItemEntity receiverItem = item(20L, receiverItemUuid, 1L, 100L, ItemStatus.ACTIVE); // same owner
+            ItemEntity senderItem = item(10L, senderItemUuid, 1L, ItemStatus.ACTIVE);
+            ItemEntity receiverItem = item(20L, receiverItemUuid, 1L, ItemStatus.ACTIVE); // same owner
 
             when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
             when(itemRepository.findByUuid(receiverItemUuid)).thenReturn(Optional.of(receiverItem));
@@ -235,8 +245,8 @@ class TradeOfferServiceImplTest {
             UUID receiverItemUuid = UUID.randomUUID();
 
             UserEntity sender = user(1L, senderUuid, "alice");
-            ItemEntity senderItem = item(10L, senderItemUuid, 1L, 100L, ItemStatus.ARCHIVED);
-            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, 100L, ItemStatus.ACTIVE);
+            ItemEntity senderItem = item(10L, senderItemUuid, 1L, ItemStatus.ARCHIVED);
+            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, ItemStatus.ACTIVE);
 
             when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
             when(itemRepository.findByUuid(senderItemUuid)).thenReturn(Optional.of(senderItem));
@@ -318,13 +328,13 @@ class TradeOfferServiceImplTest {
 
             UserEntity sender = user(1L, UUID.randomUUID(), "alice");
             UserEntity receiver = user(2L, receiverUuid, "bob");
-            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L, TradeOfferStatus.PENDING);
-            ItemEntity senderItem = item(10L, UUID.randomUUID(), 1L, 100L, ItemStatus.ACTIVE);
-            ItemEntity receiverItem = item(20L, UUID.randomUUID(), 2L, 100L, ItemStatus.ACTIVE);
-            CategoryEntity cat = category(100L, "Books");
+            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
+            ItemEntity senderItem = item(10L, UUID.randomUUID(), 1L, ItemStatus.ACTIVE);
+            ItemEntity receiverItem = item(20L, UUID.randomUUID(), 2L, ItemStatus.ACTIVE);
+            CategoryEntity cat = category();
 
             // Competing offer
-            TradeOfferEntity competing = offer(51L, UUID.randomUUID(), 3L, 1L, 30L, 10L, TradeOfferStatus.PENDING);
+            TradeOfferEntity competing = offer(51L, UUID.randomUUID(), 3L, 1L, 30L, 10L);
 
             when(userRepository.findByUuid(receiverUuid)).thenReturn(Optional.of(receiver));
             when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(pendingOffer));
@@ -361,6 +371,17 @@ class TradeOfferServiceImplTest {
             // Items saved (2 archives), offer saved (1 accept), competing saved (1 reject)
             verify(itemRepository, times(2)).save(any(ItemEntity.class));
             verify(tradeOfferRepository, times(2)).save(any(TradeOfferEntity.class)); // main offer + competing
+
+            // Verify sender was notified ACCEPTED
+            verify(notificationService).createNotification(
+                    eq(1L), eq(NotificationType.TRADE_OFFER_ACCEPTED),
+                    any(String.class), any(String.class),
+                    any(UUID.class), eq("TRADE_OFFER"));
+
+            // Verify competing offer sender was NOT notified (auto-reject without notification)
+            verify(notificationService, never()).createNotification(
+                    eq(3L), any(NotificationType.class),
+                    any(), any(), any(), any());
         }
 
         @Test
@@ -370,7 +391,7 @@ class TradeOfferServiceImplTest {
             UUID offerUuid = UUID.randomUUID();
 
             UserEntity attacker = user(3L, attackerUuid, "eve");
-            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L, TradeOfferStatus.PENDING);
+            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
 
             when(userRepository.findByUuid(attackerUuid)).thenReturn(Optional.of(attacker));
             when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(pendingOffer));
@@ -389,13 +410,50 @@ class TradeOfferServiceImplTest {
     class RejectOffer {
 
         @Test
+        @DisplayName("rejects offer and notifies sender")
+        void rejectSuccess() {
+            UUID receiverUuid = UUID.randomUUID();
+            UUID offerUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, UUID.randomUUID(), "alice");
+            UserEntity receiver = user(2L, receiverUuid, "bob");
+            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
+
+            when(userRepository.findByUuid(receiverUuid)).thenReturn(Optional.of(receiver));
+            when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(pendingOffer));
+            when(tradeOfferRepository.save(any(TradeOfferEntity.class))).thenAnswer(i -> i.getArgument(0));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
+
+            ItemEntity receiverItem = item(20L, UUID.randomUUID(), 2L, ItemStatus.ACTIVE);
+            ItemEntity senderItem = item(10L, UUID.randomUUID(), 1L, ItemStatus.ACTIVE);
+            CategoryEntity cat = category();
+            when(itemRepository.findById(20L)).thenReturn(Optional.of(receiverItem));
+            when(itemRepository.findById(10L)).thenReturn(Optional.of(senderItem));
+            when(userRepository.findById(2L)).thenReturn(Optional.of(receiver));
+            when(categoryRepository.findById(100L)).thenReturn(Optional.of(cat));
+            when(tradeOfferItemRepository.findItemIdsByTradeOfferIdAndSide(50L, TradeOfferItemSide.OFFERED))
+                    .thenReturn(List.of(10L));
+            stubMapperToResponse();
+
+            service.rejectOffer(receiverUuid, offerUuid);
+
+            assertEquals(TradeOfferStatus.REJECTED, pendingOffer.getStatus());
+
+            // Verify sender was notified REJECTED
+            verify(notificationService).createNotification(
+                    eq(1L), eq(NotificationType.TRADE_OFFER_REJECTED),
+                    any(String.class), any(String.class),
+                    any(UUID.class), eq("TRADE_OFFER"));
+        }
+
+        @Test
         @DisplayName("throws FORBIDDEN when non-receiver tries to reject")
         void rejectByNonReceiverForbidden() {
             UUID attackerUuid = UUID.randomUUID();
             UUID offerUuid = UUID.randomUUID();
 
             UserEntity attacker = user(3L, attackerUuid, "eve");
-            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L, TradeOfferStatus.PENDING);
+            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
 
             when(userRepository.findByUuid(attackerUuid)).thenReturn(Optional.of(attacker));
             when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(pendingOffer));
@@ -414,13 +472,50 @@ class TradeOfferServiceImplTest {
     class CancelOffer {
 
         @Test
+        @DisplayName("cancels offer and notifies receiver")
+        void cancelSuccess() {
+            UUID senderUuid = UUID.randomUUID();
+            UUID offerUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, senderUuid, "alice");
+            UserEntity receiver = user(2L, UUID.randomUUID(), "bob");
+            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
+
+            when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
+            when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(pendingOffer));
+            when(tradeOfferRepository.save(any(TradeOfferEntity.class))).thenAnswer(i -> i.getArgument(0));
+            when(userRepository.findById(2L)).thenReturn(Optional.of(receiver));
+
+            ItemEntity receiverItem = item(20L, UUID.randomUUID(), 2L, ItemStatus.ACTIVE);
+            ItemEntity senderItem = item(10L, UUID.randomUUID(), 1L, ItemStatus.ACTIVE);
+            CategoryEntity cat = category();
+            when(itemRepository.findById(20L)).thenReturn(Optional.of(receiverItem));
+            when(itemRepository.findById(10L)).thenReturn(Optional.of(senderItem));
+            when(userRepository.findById(1L)).thenReturn(Optional.of(sender));
+            when(categoryRepository.findById(100L)).thenReturn(Optional.of(cat));
+            when(tradeOfferItemRepository.findItemIdsByTradeOfferIdAndSide(50L, TradeOfferItemSide.OFFERED))
+                    .thenReturn(List.of(10L));
+            stubMapperToResponse();
+
+            service.cancelOffer(senderUuid, offerUuid);
+
+            assertEquals(TradeOfferStatus.CANCELLED, pendingOffer.getStatus());
+
+            // Verify receiver was notified CANCELLED
+            verify(notificationService).createNotification(
+                    eq(2L), eq(NotificationType.TRADE_OFFER_CANCELLED),
+                    any(String.class), any(String.class),
+                    any(UUID.class), eq("TRADE_OFFER"));
+        }
+
+        @Test
         @DisplayName("throws FORBIDDEN when non-sender tries to cancel")
         void cancelByNonSenderForbidden() {
             UUID attackerUuid = UUID.randomUUID();
             UUID offerUuid = UUID.randomUUID();
 
             UserEntity attacker = user(3L, attackerUuid, "eve");
-            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L, TradeOfferStatus.PENDING);
+            TradeOfferEntity pendingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
 
             when(userRepository.findByUuid(attackerUuid)).thenReturn(Optional.of(attacker));
             when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(pendingOffer));
@@ -445,7 +540,7 @@ class TradeOfferServiceImplTest {
             UUID offerUuid = UUID.randomUUID();
 
             UserEntity attacker = user(3L, attackerUuid, "eve");
-            TradeOfferEntity existingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L, TradeOfferStatus.PENDING);
+            TradeOfferEntity existingOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
 
             when(userRepository.findByUuid(attackerUuid)).thenReturn(Optional.of(attacker));
             when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(existingOffer));
