@@ -2,7 +2,6 @@ package com.barterplatform.web.trade.controller;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -12,9 +11,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.barterplatform.api.model.CreateTradeOfferRequest;
-import com.barterplatform.api.model.TradeOfferPagedResponse;
-import com.barterplatform.api.model.TradeOfferResponse;
+import com.barterplatform.api.model.*;
+import com.barterplatform.application.trade.service.TradeOfferMessageService;
 import com.barterplatform.application.trade.service.TradeOfferService;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
 import com.barterplatform.web.exception.GlobalExceptionHandler;
@@ -37,12 +35,14 @@ class TradeOffersControllerMvcTest {
 
     private MockMvc mockMvc;
     private TradeOfferService tradeOfferService;
+    private TradeOfferMessageService tradeOfferMessageService;
 
     @BeforeEach
     void setUp() {
         tradeOfferService = mock(TradeOfferService.class);
+        tradeOfferMessageService = mock(TradeOfferMessageService.class);
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new TradeOffersController(tradeOfferService))
+                .standaloneSetup(new TradeOffersController(tradeOfferService,  tradeOfferMessageService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
         SecurityContextHolder.clearContext();
@@ -221,6 +221,68 @@ class TradeOffersControllerMvcTest {
                 .andExpect(jsonPath("$.status").value("CANCELLED"));
 
         verify(tradeOfferService).cancelOffer(USER_UUID, offerUuid);
+    }
+
+    @Test
+    void listTradeOfferMessagesShouldDelegate() throws Exception {
+        setAuthenticatedUser();
+
+        UUID offerUuid = UUID.randomUUID();
+        UUID messageUuid = UUID.randomUUID();
+
+        TradeOfferMessageResponse response = new TradeOfferMessageResponse()
+                .uuid(messageUuid)
+                .tradeOfferUuid(offerUuid)
+                .senderUserUuid(USER_UUID)
+                .senderUsername("alice")
+                .recipientUserUuid(UUID.randomUUID())
+                .recipientUsername("bob")
+                .content("Hello")
+                .isRead(false);
+
+        when(tradeOfferMessageService.listMessages(USER_UUID, offerUuid))
+                .thenReturn(List.of(response));
+
+        mockMvc.perform(apiGet("/trade-offers/" + offerUuid + "/messages"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].uuid").value(messageUuid.toString()))
+                .andExpect(jsonPath("$[0].content").value("Hello"));
+
+        verify(tradeOfferMessageService).listMessages(USER_UUID, offerUuid);
+    }
+
+    @Test
+    void sendTradeOfferMessageShouldDelegate() throws Exception {
+        setAuthenticatedUser();
+
+        UUID offerUuid = UUID.randomUUID();
+        UUID messageUuid = UUID.randomUUID();
+
+        TradeOfferMessageResponse response = new TradeOfferMessageResponse()
+                .uuid(messageUuid)
+                .tradeOfferUuid(offerUuid)
+                .senderUserUuid(USER_UUID)
+                .senderUsername("alice")
+                .recipientUserUuid(UUID.randomUUID())
+                .recipientUsername("bob")
+                .content("Hello")
+                .isRead(false);
+
+        when(tradeOfferMessageService.sendMessage(eq(USER_UUID), eq(offerUuid), any(SendTradeOfferMessageRequest.class)))
+                .thenReturn(response);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/messages")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "content": "Hello"
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.uuid").value(messageUuid.toString()))
+                .andExpect(jsonPath("$.content").value("Hello"));
+
+        verify(tradeOfferMessageService).sendMessage(eq(USER_UUID), eq(offerUuid), any(SendTradeOfferMessageRequest.class));
     }
 
     // ── Helpers ──────────────────────────────────────────────────

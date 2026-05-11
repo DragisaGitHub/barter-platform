@@ -100,6 +100,8 @@ paths:
     $ref: './paths/trade-offers.yaml#/reject'
   /trade-offers/{tradeOfferUuid}/cancel:
     $ref: './paths/trade-offers.yaml#/cancel'
+  /trade-offers/{tradeOfferUuid}/messages:
+    $ref: './paths/trade-offer-messages.yaml'
   /notifications:
     $ref: './paths/notifications.yaml#/list'
   /notifications/unread-count:
@@ -199,6 +201,8 @@ components:
       $ref: './components/schemas/trade/TradeOfferResponse.yaml'
     TradeOfferPagedResponse:
       $ref: './components/schemas/trade/TradeOfferPagedResponse.yaml'
+    TradeOfferMessageResponse:
+      $ref: './components/schemas/trade/TradeOfferMessageResponse.yaml'
     NotificationType:
       $ref: './components/schemas/notification/NotificationType.yaml'
     NotificationResponse:
@@ -240,6 +244,11 @@ components:
         application/json:
           schema:
             $ref: './components/requests/ResendVerificationCodeRequest.yaml'
+    SendTradeOfferMessageRequest:
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/SendTradeOfferMessageRequest.yaml'
     MfaVerifyRequest:
       content:
         application/json:

@@ -1,0 +1,63 @@
+get:
+  tags:
+    - TradeOffers
+  operationId: listTradeOfferMessages
+  summary: List messages for a trade offer
+  parameters:
+    - name: tradeOfferUuid
+      in: path
+      required: true
+      description: Public trade offer UUID.
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Trade offer messages
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../components/schemas/trade/TradeOfferMessageResponse.yaml'
+    '401':
+      $ref: '../components/responses/Unauthorized.yaml'
+    '403':
+      $ref: '../components/responses/Forbidden.yaml'
+    '404':
+      $ref: '../components/responses/NotFound.yaml'
+
+post:
+  tags:
+    - TradeOffers
+  operationId: sendTradeOfferMessage
+  summary: Send a message in a trade offer thread
+  parameters:
+    - name: tradeOfferUuid
+      in: path
+      required: true
+      description: Public trade offer UUID.
+      schema:
+        type: string
+        format: uuid
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../components/requests/SendTradeOfferMessageRequest.yaml'
+  responses:
+    '201':
+      description: Message sent
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/trade/TradeOfferMessageResponse.yaml'
+    '400':
+      $ref: '../components/responses/BadRequest.yaml'
+    '401':
+      $ref: '../components/responses/Unauthorized.yaml'
+    '403':
+      $ref: '../components/responses/Forbidden.yaml'
+    '404':
+      $ref: '../components/responses/NotFound.yaml'

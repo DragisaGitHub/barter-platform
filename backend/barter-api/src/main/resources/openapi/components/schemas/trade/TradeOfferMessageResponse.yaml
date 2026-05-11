@@ -1,0 +1,39 @@
+type: object
+required:
+  - uuid
+  - tradeOfferUuid
+  - senderUserUuid
+  - senderUsername
+  - recipientUserUuid
+  - recipientUsername
+  - content
+  - isRead
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  tradeOfferUuid:
+    type: string
+    format: uuid
+  senderUserUuid:
+    type: string
+    format: uuid
+  senderUsername:
+    type: string
+  recipientUserUuid:
+    type: string
+    format: uuid
+  recipientUsername:
+    type: string
+  content:
+    type: string
+  isRead:
+    type: boolean
+  readAt:
+    type: string
+    format: date-time
+    nullable: true
+  createdAt:
+    type: string
+    format: date-time
