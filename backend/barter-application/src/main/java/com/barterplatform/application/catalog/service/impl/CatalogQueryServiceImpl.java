@@ -137,15 +137,22 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     // ── My items ─────────────────────────────────────────────────
 
     @Override
-    public ItemPagedResponse listMyItems(UUID ownerUuid, Integer page, Integer size, String sort) {
+    public ItemPagedResponse listMyItems(UUID ownerUuid, Integer page, Integer size, String sort,
+                                         ItemStatus status) {
         UserEntity owner = userRepository.findByUuid(ownerUuid)
                 .orElseThrow(() -> notFound("User with uuid '%s' was not found.", ownerUuid));
 
         PageRequestFactory.ResolvedPageRequest pageRequest = pageRequestFactory.create(
                 page, size, sort, DEFAULT_ITEM_SORT_FIELD, ALLOWED_ITEM_SORT_FIELDS);
 
-        Page<ItemEntity> itemPage = itemRepository.findByOwnerIdAndStatusNotAndDeletedAtIsNull(
-                owner.getId(), ItemStatus.REMOVED, pageRequest.pageable());
+        Page<ItemEntity> itemPage;
+        if (status != null) {
+            itemPage = itemRepository.findByOwnerIdAndStatusAndDeletedAtIsNull(
+                    owner.getId(), status, pageRequest.pageable());
+        } else {
+            itemPage = itemRepository.findByOwnerIdAndStatusNotAndDeletedAtIsNull(
+                    owner.getId(), ItemStatus.REMOVED, pageRequest.pageable());
+        }
 
         List<ItemSummaryResponse> content = mapItemSummaries(itemPage.getContent());
 

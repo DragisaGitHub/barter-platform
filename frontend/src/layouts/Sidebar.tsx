@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
+import { usePendingIncomingCount, usePendingSentCount } from "../features/trade/useTradeOffers";
 import { cn } from "@/utils";
 
 interface SidebarProps {
@@ -27,18 +28,33 @@ interface NavItem {
   icon: typeof LayoutDashboard;
   label: string;
   adminOnly?: boolean;
+  badge?: number;
+}
+
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-indigo-500 text-white text-xs font-semibold leading-none">
+      {count > 99 ? "99+" : count}
+    </span>
+  );
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { hasRole } = useAuth();
   const isAdmin = hasRole("ADMIN");
 
+  const { data: incomingData } = usePendingIncomingCount();
+  const { data: sentData } = usePendingSentCount();
+  const pendingIncoming = incomingData?.totalElements ?? 0;
+  const pendingSent = sentData?.totalElements ?? 0;
+
   const navItems: NavItem[] = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/marketplace", icon: Store, label: "Marketplace" },
     { to: "/my-items", icon: List, label: "My Items" },
-    { to: "/offers/incoming", icon: Inbox, label: "Incoming Offers" },
-    { to: "/offers/sent", icon: Send, label: "Sent Offers" },
+    { to: "/offers/incoming", icon: Inbox, label: "Incoming Offers", badge: pendingIncoming },
+    { to: "/offers/sent", icon: Send, label: "Sent Offers", badge: pendingSent },
     { to: "/messages", icon: MessageSquare, label: "Messages" },
     { to: "/profile", icon: User, label: "Profile" },
   ];
@@ -98,6 +114,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               >
                 <item.icon className="size-5" />
                 {item.label}
+                {item.badge != null && <NavBadge count={item.badge} />}
               </NavLink>
             ))}
 

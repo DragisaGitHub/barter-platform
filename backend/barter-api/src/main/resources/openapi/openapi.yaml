@@ -155,6 +155,8 @@ components:
       $ref: './components/schemas/catalog/ArchiveItemRequest.yaml'
     TradeOfferStatus:
       $ref: './components/schemas/trade/TradeOfferStatus.yaml'
+    TradeOfferMode:
+      $ref: './components/schemas/trade/TradeOfferMode.yaml'
     CreateTradeOfferRequest:
       $ref: './components/schemas/trade/CreateTradeOfferRequest.yaml'
     TradeOfferUserSummary:

@@ -61,8 +61,9 @@ class TradeOffersControllerMvcTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "aaaa1111-1111-1111-1111-111111111111",
-                                  "receiverItemUuid": "bbbb2222-2222-2222-2222-222222222222"
+                                  "receiverItemUuid": "bbbb2222-2222-2222-2222-222222222222",
+                                  "senderItemUuids": ["aaaa1111-1111-1111-1111-111111111111"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
                                 """))
                 .andExpect(status().is5xxServerError());
@@ -76,7 +77,9 @@ class TradeOffersControllerMvcTest {
 
         TradeOfferResponse response = new TradeOfferResponse()
                 .uuid(UUID.randomUUID())
-                .status(com.barterplatform.api.model.TradeOfferStatus.PENDING);
+                .status(com.barterplatform.api.model.TradeOfferStatus.PENDING)
+                .mode(com.barterplatform.api.model.TradeOfferMode.ITEM_EXCHANGE)
+                .offeredItems(List.of());
         when(tradeOfferService.createOffer(eq(USER_UUID), any(CreateTradeOfferRequest.class)))
                 .thenReturn(response);
 
@@ -84,12 +87,14 @@ class TradeOffersControllerMvcTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "aaaa1111-1111-1111-1111-111111111111",
-                                  "receiverItemUuid": "bbbb2222-2222-2222-2222-222222222222"
+                                  "receiverItemUuid": "bbbb2222-2222-2222-2222-222222222222",
+                                  "senderItemUuids": ["aaaa1111-1111-1111-1111-111111111111"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
                                 """))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.status").value("PENDING"));
+                .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.mode").value("ITEM_EXCHANGE"));
 
         verify(tradeOfferService).createOffer(eq(USER_UUID), any(CreateTradeOfferRequest.class));
     }

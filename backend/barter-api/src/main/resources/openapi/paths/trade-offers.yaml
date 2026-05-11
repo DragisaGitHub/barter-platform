@@ -116,8 +116,8 @@ accept:
     summary: Accept a pending trade offer (receiver only)
     description: >
       Accepts a pending trade offer. Only the receiver can accept.
-      On acceptance, both traded items are archived and all other PENDING offers
-      involving either item are automatically rejected.
+      On acceptance, the requested item and all offered items are archived.
+      All other PENDING offers involving any of the accepted items are automatically rejected.
     security:
       - bearerJwt: []
     parameters:

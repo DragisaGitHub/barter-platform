@@ -1,5 +1,5 @@
-import { useState, type ChangeEvent } from "react";
-import { Search, SlidersHorizontal } from "lucide-react";
+import { useState, useMemo, type ChangeEvent } from "react";
+import { Search, SlidersHorizontal, ShoppingBag } from "lucide-react";
 import { useSearchItems, useCategories } from "./useCatalog";
 import { ItemCard } from "./ItemCard";
 import { ItemGridSkeleton } from "./ItemCardSkeleton";
@@ -7,6 +7,7 @@ import { Pagination } from "../../components/data/Pagination";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Input } from "../../components/ui/Input";
 import { Button } from "../../components/ui/Button";
+import { useAuth } from "../../auth/AuthContext";
 import type { ItemCondition } from "@/api/generated/types.ts";
 import type { SearchItemsParams } from "@/api/catalogApi.ts";
 
@@ -19,6 +20,7 @@ const CONDITIONS: { value: ItemCondition; label: string }[] = [
 ];
 
 export function MarketplacePage() {
+  const { user } = useAuth();
   const [params, setParams] = useState<SearchItemsParams>({
     page: 0,
     size: 12,
@@ -29,6 +31,15 @@ export function MarketplacePage() {
 
   const { data, isLoading, isError } = useSearchItems(params);
   const { data: categories } = useCategories();
+
+  // Filter out current user's own items client-side
+  const filteredItems = useMemo(() => {
+    if (!data) return [];
+    if (!user) return data.content;
+    return data.content.filter(
+      (item) => item.ownerUuid !== user.uuid && item.status === "ACTIVE"
+    );
+  }, [data, user]);
 
   const handleSearch = () => {
     setParams((prev) => ({ ...prev, page: 0, q: searchInput || undefined }));
@@ -142,18 +153,18 @@ export function MarketplacePage() {
         />
       )}
 
-      {data && data.content.length === 0 && (
+      {data && filteredItems.length === 0 && (
         <EmptyState
-          icon={<Search className="size-16" />}
-          title="No items found"
-          description="Try adjusting your search or filter criteria."
+          icon={<ShoppingBag className="size-16" />}
+          title="No tradeable items from other users found"
+          description="There are no active items from other users right now. Check back soon or adjust your search filters."
         />
       )}
 
-      {data && data.content.length > 0 && (
+      {data && filteredItems.length > 0 && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data.content.map((item) => (
+            {filteredItems.map((item) => (
               <ItemCard key={item.uuid} item={item} />
             ))}
           </div>

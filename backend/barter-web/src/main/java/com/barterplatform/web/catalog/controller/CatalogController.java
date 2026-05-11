@@ -90,7 +90,8 @@ public class CatalogController implements CatalogApi {
             Integer page, Integer size, @Nullable String sort,
             @Nullable ItemStatus status) {
         UUID ownerUuid = currentUserUuid();
-        return ResponseEntity.ok(catalogQueryService.listMyItems(ownerUuid, page, size, sort));
+        return ResponseEntity.ok(catalogQueryService.listMyItems(
+                ownerUuid, page, size, sort, mapStatusToDomain(status)));
     }
 
     @Override

@@ -42,9 +42,11 @@ public interface CatalogQueryService {
 
     /**
      * List items belonging to a specific owner.
-     * Includes DRAFT, ACTIVE, RESERVED, ARCHIVED items but excludes REMOVED and soft-deleted.
+     * If status is provided, returns only items with that status.
+     * Otherwise includes DRAFT, ACTIVE, RESERVED, ARCHIVED items but excludes REMOVED and soft-deleted.
      * Throws ApiException NOT_FOUND if the owner UUID does not exist.
      */
-    ItemPagedResponse listMyItems(UUID ownerUuid, Integer page, Integer size, String sort);
+    ItemPagedResponse listMyItems(UUID ownerUuid, Integer page, Integer size, String sort,
+                                  ItemStatus status);
 }
 

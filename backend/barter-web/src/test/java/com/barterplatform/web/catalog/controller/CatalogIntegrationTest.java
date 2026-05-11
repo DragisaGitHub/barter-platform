@@ -238,6 +238,86 @@ class CatalogIntegrationTest {
     }
 
     // ══════════════════════════════════════════════════════════════
+    //  Status filtering on /mine and public search
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void shouldFilterMyItemsByStatus() throws Exception {
+        String token = registerActivateAndLogin("alice", "alice@example.com", "P@ssword123");
+
+        // Create ACTIVE item
+        String activeBody = """
+                {
+                  "title": "Active Widget",
+                  "categoryUuid": "%s",
+                  "condition": "NEW",
+                  "status": "ACTIVE"
+                }
+                """.formatted(CATEGORY_TOYS_UUID);
+        mockMvc.perform(apiPost("/catalog/items")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(activeBody))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        // Create second item and archive it
+        String toArchiveBody = """
+                {
+                  "title": "Archive Widget",
+                  "categoryUuid": "%s",
+                  "condition": "GOOD",
+                  "status": "ACTIVE"
+                }
+                """.formatted(CATEGORY_TOYS_UUID);
+        MvcResult archiveResult = mockMvc.perform(apiPost("/catalog/items")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(toArchiveBody))
+                .andExpect(status().isCreated())
+                .andReturn();
+        String archivedUuid = extractField(archiveResult, "uuid");
+
+        mockMvc.perform(apiPost("/catalog/items/" + archivedUuid + "/archive")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+
+        // /mine without status filter → both items (ACTIVE + ARCHIVED)
+        mockMvc.perform(apiGet("/catalog/items/mine")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2));
+
+        // /mine?status=ACTIVE → only 1
+        mockMvc.perform(apiGet("/catalog/items/mine")
+                        .header("Authorization", "Bearer " + token)
+                        .queryParam("status", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Active Widget"))
+                .andExpect(jsonPath("$.content[0].status").value("ACTIVE"));
+
+        // /mine?status=ARCHIVED → only 1
+        mockMvc.perform(apiGet("/catalog/items/mine")
+                        .header("Authorization", "Bearer " + token)
+                        .queryParam("status", "ARCHIVED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Archive Widget"))
+                .andExpect(jsonPath("$.content[0].status").value("ARCHIVED"));
+
+        // Public search status=ACTIVE → only active item, never archived
+        mockMvc.perform(apiGet("/catalog/items")
+                        .queryParam("status", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Active Widget"));
+    }
+
+    // ══════════════════════════════════════════════════════════════
     //  Ownership enforcement
     // ══════════════════════════════════════════════════════════════
 

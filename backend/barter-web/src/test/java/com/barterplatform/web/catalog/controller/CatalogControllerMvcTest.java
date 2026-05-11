@@ -180,14 +180,14 @@ class CatalogControllerMvcTest {
         ItemPagedResponse pagedResponse = new ItemPagedResponse()
                 .content(List.of()).page(0).size(20).totalElements(0L).totalPages(0)
                 .first(true).last(true);
-        when(catalogQueryService.listMyItems(eq(USER_UUID), any(), any(), any()))
+        when(catalogQueryService.listMyItems(eq(USER_UUID), any(), any(), any(), any()))
                 .thenReturn(pagedResponse);
 
         mockMvc.perform(apiGet("/catalog/items/mine"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
 
-        verify(catalogQueryService).listMyItems(eq(USER_UUID), any(), any(), any());
+        verify(catalogQueryService).listMyItems(eq(USER_UUID), any(), any(), any(), any());
     }
 
     // ── Authenticated: archiveItem ───────────────────────────────
