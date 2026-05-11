@@ -25,6 +25,8 @@ tags:
     description: Trade offer creation, listing, and lifecycle management
   - name: Notifications
     description: In-app notification listing and read management
+  - name: Profiles
+    description: Public user profiles and trust information
 paths:
   /auth/register:
     $ref: './paths/auth.yaml#/register'
@@ -106,6 +108,10 @@ paths:
     $ref: './paths/notifications.yaml#/markAllRead'
   /notifications/{notificationUuid}/read:
     $ref: './paths/notifications.yaml#/markRead'
+  /profiles/{userUuid}:
+    $ref: './paths/profiles.yaml#/byUuid'
+  /profiles/{userUuid}/items:
+    $ref: './paths/profiles.yaml#/items'
   /ping:
     $ref: './paths/system.yaml'
 components:
@@ -201,6 +207,8 @@ components:
       $ref: './components/schemas/notification/NotificationPagedResponse.yaml'
     NotificationUnreadCountResponse:
       $ref: './components/schemas/notification/NotificationUnreadCountResponse.yaml'
+    PublicProfileResponse:
+      $ref: './components/schemas/profile/PublicProfileResponse.yaml'
   requestBodies:
     RegisterUserRequest:
       content:

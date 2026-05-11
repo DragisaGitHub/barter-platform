@@ -56,6 +56,17 @@ class SecurityConfigMvcTest {
                 .andExpect(content().string("pong"));
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "/api/v1/profiles/11111111-1111-1111-1111-111111111111",
+            "/api/v1/profiles/11111111-1111-1111-1111-111111111111/items"
+    })
+    void shouldAllowPublicProfileEndpointsWithoutAuthentication(String path) throws Exception {
+        mockMvc.perform(get(path))
+                .andExpect(status().isOk())
+                .andExpect(content().string("profile-ok"));
+    }
+
     @Test
     void shouldRequireAuthenticationForProtectedEndpoint() throws Exception {
         mockMvc.perform(get("/api/v1/protected"))
@@ -81,6 +92,11 @@ class SecurityConfigMvcTest {
         @GetMapping("/api/v1/ping")
         ResponseEntity<String> ping() {
             return ResponseEntity.ok("pong");
+        }
+
+        @GetMapping({"/api/v1/profiles/{userUuid}", "/api/v1/profiles/{userUuid}/items"})
+        ResponseEntity<String> profiles() {
+            return ResponseEntity.ok("profile-ok");
         }
 
         @GetMapping("/api/v1/protected")

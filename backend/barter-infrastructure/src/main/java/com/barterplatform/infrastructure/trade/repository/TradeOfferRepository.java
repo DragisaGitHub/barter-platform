@@ -25,6 +25,10 @@ public interface TradeOfferRepository extends JpaRepository<TradeOfferEntity, Lo
 
     Page<TradeOfferEntity> findBySenderUserIdAndStatus(Long senderUserId, TradeOfferStatus status, Pageable pageable);
 
+    long countBySenderUserIdAndStatus(Long senderUserId, TradeOfferStatus status);
+
+    long countByReceiverUserIdAndStatus(Long receiverUserId, TradeOfferStatus status);
+
     /**
      * Find all PENDING offers (excluding the accepted one) that involve any of the given item IDs,
      * either as the receiver_item_id on the offer itself or as an item in trade_offer_items.

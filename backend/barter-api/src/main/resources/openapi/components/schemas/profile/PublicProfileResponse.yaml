@@ -1,0 +1,35 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - username
+  - joinedAt
+  - activeItemCount
+  - completedTradeCount
+  - cancelledTradeCount
+properties:
+  uuid:
+    type: string
+    format: uuid
+  username:
+    type: string
+  joinedAt:
+    type: string
+    format: date-time
+  activeItemCount:
+    type: integer
+    format: int32
+    minimum: 0
+  completedTradeCount:
+    type: integer
+    format: int32
+    minimum: 0
+  cancelledTradeCount:
+    type: integer
+    format: int32
+    minimum: 0
+  averageRating:
+    type: number
+    format: double
+    nullable: true
+
