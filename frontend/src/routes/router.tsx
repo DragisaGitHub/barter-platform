@@ -23,6 +23,7 @@ import { EditItemPage } from "../features/catalog/EditItemPage";
 import { IncomingOffersPage } from "../features/trade/IncomingOffersPage";
 import { SentOffersPage } from "../features/trade/SentOffersPage";
 import { TradeOfferDetailPage } from "../features/trade/TradeOfferDetailPage";
+import { NotificationsPage } from "../features/notifications/NotificationsPage";
 
 export const router = createBrowserRouter([
   {
@@ -92,6 +93,10 @@ export const router = createBrowserRouter([
       {
         path: "/offers/:uuid",
         element: <TradeOfferDetailPage />,
+      },
+      {
+        path: "/notifications",
+        element: <NotificationsPage />,
       },
       {
         path: "/messages",
