@@ -73,3 +73,13 @@ export type TradeOfferPagedResponse = components["schemas"]["TradeOfferPagedResp
 // ─── Trade Offer Request DTOs ───────────────────────────────────────────────
 
 export type CreateTradeOfferRequest = components["schemas"]["CreateTradeOfferRequest"];
+
+// ─── Notification Enums ─────────────────────────────────────────────────────
+
+export type NotificationType = components["schemas"]["NotificationType"];
+
+// ─── Notification Response DTOs ─────────────────────────────────────────────
+
+export type NotificationResponse = components["schemas"]["NotificationResponse"];
+export type NotificationPagedResponse = components["schemas"]["NotificationPagedResponse"];
+export type NotificationUnreadCountResponse = components["schemas"]["NotificationUnreadCountResponse"];

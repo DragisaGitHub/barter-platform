@@ -9,6 +9,7 @@ export const routePaths = {
   myItemsNew: "/my-items/new",
   myItemsEdit: (uuid: string) => `/my-items/${uuid}/edit`,
   offers: "/offers",
+  notifications: "/notifications",
   messages: "/messages",
   profile: "/profile",
   admin: {

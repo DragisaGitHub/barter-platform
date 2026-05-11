@@ -1,0 +1,36 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - type
+  - title
+  - isRead
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  type:
+    $ref: './NotificationType.yaml'
+  title:
+    type: string
+  message:
+    type: string
+    nullable: true
+  referenceUuid:
+    type: string
+    format: uuid
+    nullable: true
+  referenceType:
+    type: string
+    nullable: true
+  isRead:
+    type: boolean
+  readAt:
+    type: string
+    format: date-time
+    nullable: true
+  createdAt:
+    type: string
+    format: date-time
+

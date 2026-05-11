@@ -1,0 +1,10 @@
+type: object
+additionalProperties: false
+required:
+  - count
+properties:
+  count:
+    type: integer
+    format: int64
+    minimum: 0
+

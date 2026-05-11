@@ -2,6 +2,7 @@ import { Menu, LogOut } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { Button } from "../components/ui/Button";
 import { useNavigate } from "react-router-dom";
+import { NotificationBell } from "../features/notifications/NotificationBell";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -30,6 +31,8 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <div className="hidden lg:block" />
 
         <div className="flex items-center gap-4">
+          <NotificationBell />
+
           <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
               {user?.username}

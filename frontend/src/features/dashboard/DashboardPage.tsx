@@ -20,6 +20,37 @@ import { useIncomingTradeOffers, useSentTradeOffers } from "../trade/useTradeOff
 import { TradeOfferStatusBadge } from "../trade/TradeOfferStatusBadge";
 import type { TradeOfferStatus } from "@/api/generated/types.ts";
 
+/** Safely extract a title from a possibly-null trade offer item. */
+function getItemTitle(item: { title?: string } | null | undefined): string {
+  return item?.title || "Unknown item";
+}
+
+/** Build a human-readable summary for a trade offer, accounting for mode. */
+function getTradeOfferSummary(
+  offer: { mode: string; sender: { username: string }; receiver: { username: string }; senderItem?: { title?: string } | null; receiverItem?: { title?: string } | null },
+  isSender: boolean,
+): string {
+  const receiverItemTitle = getItemTitle(offer.receiverItem);
+
+  if (offer.mode === "GIFT") {
+    return isSender
+      ? `You requested ${offer.receiver.username}'s ${receiverItemTitle} as a gift`
+      : `${offer.sender.username} requested your ${receiverItemTitle} as a gift`;
+  }
+
+  if (offer.mode === "NEGOTIABLE") {
+    return isSender
+      ? `You want to negotiate for ${offer.receiver.username}'s ${receiverItemTitle}`
+      : `${offer.sender.username} wants to negotiate for your ${receiverItemTitle}`;
+  }
+
+  // ITEM_EXCHANGE (default)
+  const senderItemTitle = getItemTitle(offer.senderItem);
+  return isSender
+    ? `You offered ${senderItemTitle} for ${offer.receiver.username}'s ${receiverItemTitle}`
+    : `${offer.sender.username} wants your ${receiverItemTitle} for their ${senderItemTitle}`;
+}
+
 const STATUS_EXPLANATION: Record<TradeOfferStatus, string> = {
   PENDING: "Waiting for response",
   ACCEPTED: "Trade accepted",
@@ -299,9 +330,7 @@ export function DashboardPage() {
             <div className="space-y-2">
               {recentActivity.map((offer) => {
                 const isSender = offer.sender.uuid === user?.uuid;
-                const summary = isSender
-                  ? `You offered ${offer.senderItem!.title} for ${offer.receiver.username}'s ${offer.receiverItem.title}`
-                  : `${offer.sender.username} wants your ${offer.receiverItem.title} for their ${offer.senderItem!.title}`;
+                const summary = getTradeOfferSummary(offer, isSender);
 
                 return (
                   <Link key={offer.uuid} to={`/offers/${offer.uuid}`}>

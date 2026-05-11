@@ -6,6 +6,7 @@ import com.barterplatform.api.model.TradeOfferResponse;
 import com.barterplatform.api.model.TradeOfferSummaryResponse;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
 import com.barterplatform.application.common.pagination.PageResponseMapper;
+import com.barterplatform.application.notification.service.NotificationService;
 import com.barterplatform.application.trade.mapper.TradeOfferMapper;
 import com.barterplatform.application.trade.service.TradeOfferService;
 import com.barterplatform.common.exception.ApiException;
@@ -14,6 +15,7 @@ import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.entity.UserEntity;
+import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.domain.trade.entity.TradeOfferEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferItemEntity;
 import com.barterplatform.domain.trade.enums.TradeOfferItemSide;
@@ -50,6 +52,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
     private final TradeOfferMapper tradeOfferMapper;
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
+    private final NotificationService notificationService;
 
     public TradeOfferServiceImpl(TradeOfferRepository tradeOfferRepository,
                                  TradeOfferItemRepository tradeOfferItemRepository,
@@ -58,7 +61,8 @@ public class TradeOfferServiceImpl implements TradeOfferService {
                                  CategoryRepository categoryRepository,
                                  TradeOfferMapper tradeOfferMapper,
                                  PageRequestFactory pageRequestFactory,
-                                 PageResponseMapper pageResponseMapper) {
+                                 PageResponseMapper pageResponseMapper,
+                                 NotificationService notificationService) {
         this.tradeOfferRepository = tradeOfferRepository;
         this.tradeOfferItemRepository = tradeOfferItemRepository;
         this.userRepository = userRepository;
@@ -67,6 +71,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         this.tradeOfferMapper = tradeOfferMapper;
         this.pageRequestFactory = pageRequestFactory;
         this.pageResponseMapper = pageResponseMapper;
+        this.notificationService = notificationService;
     }
 
     // ── Create ───────────────────────────────────────────────────
@@ -130,6 +135,18 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         saved.getItems().add(requestedToi);
 
         tradeOfferRepository.save(saved);
+
+        // Notify the receiver that a new trade offer was received
+        String senderItemSummary = senderItems.isEmpty()
+                ? ""
+                : " for \"" + senderItems.getFirst().getTitle() + "\"";
+        notificationService.createNotification(
+                receiver.getId(),
+                NotificationType.TRADE_OFFER_RECEIVED,
+                "New trade offer from " + sender.getUsername(),
+                sender.getUsername() + " wants \"" + receiverItem.getTitle() + "\"" + senderItemSummary + ".",
+                saved.getUuid(),
+                "TRADE_OFFER");
 
         return toResponse(saved, sender, receiver, senderItems, receiverItem);
     }
@@ -248,6 +265,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         involvedItemIds.addAll(offeredItemIds);
 
         // Reject all competing PENDING offers involving any accepted item
+        // (no notifications for auto-rejected competing offers — MVP scope)
         List<TradeOfferEntity> competing = tradeOfferRepository.findCompetingPendingOffers(
                 saved.getId(), involvedItemIds);
         for (TradeOfferEntity comp : competing) {
@@ -257,6 +275,15 @@ public class TradeOfferServiceImpl implements TradeOfferService {
 
         UserEntity sender = userRepository.findById(saved.getSenderUserId())
                 .orElseThrow(() -> notFound("Sender user was not found."));
+
+        // Notify the sender that their offer was accepted
+        notificationService.createNotification(
+                sender.getId(),
+                NotificationType.TRADE_OFFER_ACCEPTED,
+                user.getUsername() + " accepted your trade offer",
+                user.getUsername() + " accepted your offer for \"" + receiverItem.getTitle() + "\".",
+                saved.getUuid(),
+                "TRADE_OFFER");
 
         return toResponse(saved, sender, user, offeredItems, receiverItem);
     }
@@ -280,6 +307,18 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         }
 
         TradeOfferEntity saved = tradeOfferRepository.save(offer);
+
+        // Notify the sender that their offer was rejected
+        UserEntity sender = userRepository.findById(saved.getSenderUserId())
+                .orElseThrow(() -> notFound("Sender user was not found."));
+        notificationService.createNotification(
+                sender.getId(),
+                NotificationType.TRADE_OFFER_REJECTED,
+                user.getUsername() + " rejected your trade offer",
+                user.getUsername() + " rejected your trade offer.",
+                saved.getUuid(),
+                "TRADE_OFFER");
+
         return toFullResponse(saved);
     }
 
@@ -302,6 +341,18 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         }
 
         TradeOfferEntity saved = tradeOfferRepository.save(offer);
+
+        // Notify the receiver that the offer was cancelled
+        UserEntity receiver = userRepository.findById(saved.getReceiverUserId())
+                .orElseThrow(() -> notFound("Receiver user was not found."));
+        notificationService.createNotification(
+                receiver.getId(),
+                NotificationType.TRADE_OFFER_CANCELLED,
+                user.getUsername() + " cancelled their trade offer",
+                user.getUsername() + " cancelled their trade offer.",
+                saved.getUuid(),
+                "TRADE_OFFER");
+
         return toFullResponse(saved);
     }
 
