@@ -9,6 +9,75 @@ import { Spinner } from "../../components/ui/Spinner";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { SendOfferModal } from "../trade/SendOfferModal";
 import { useAuth } from "../../auth/AuthContext";
+import type { ItemImageResponse } from "@/api/generated/types.ts";
+import { cn } from "@/utils";
+
+function ImageSection({ images }: { images: ItemImageResponse[] }) {
+  const [selectedIdx, setSelectedIdx] = useState(0);
+  const primary = images.find((img) => img.isPrimary) ?? images[0];
+  const sorted = [...images].sort((a, b) => {
+    if (a.isPrimary) return -1;
+    if (b.isPrimary) return 1;
+    return a.sortOrder - b.sortOrder;
+  });
+  const displayed = sorted[selectedIdx] ?? primary;
+
+  if (images.length === 0) {
+    return (
+      <div className="aspect-square rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
+        <Package className="size-24 text-slate-300 dark:text-slate-500" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {/* Main image */}
+      <div className="aspect-square rounded-xl bg-slate-100 dark:bg-slate-700 overflow-hidden">
+        {displayed ? (
+          <img
+            src={displayed.url}
+            alt={displayed.originalFilename}
+            loading="lazy"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <Package className="size-24 text-slate-300 dark:text-slate-500" />
+          </div>
+        )}
+      </div>
+
+      {/* Thumbnails if more than 1 image */}
+      {sorted.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {sorted.map((img, idx) => (
+            <button
+              key={img.uuid}
+              onClick={() => setSelectedIdx(idx)}
+              className={cn(
+                "shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-colors",
+                idx === selectedIdx
+                  ? "border-indigo-500"
+                  : "border-transparent hover:border-slate-300 dark:hover:border-slate-600"
+              )}
+            >
+              <img
+                src={img.url}
+                alt={img.originalFilename}
+                loading="lazy"
+                className="w-full h-full object-cover"
+              />
+              {img.isPrimary && (
+                <span className="sr-only">Primary image</span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function ItemDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
@@ -51,9 +120,9 @@ export function ItemDetailPage() {
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Image placeholder */}
-        <div className="aspect-square rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center">
-          <Package className="size-24 text-slate-300 dark:text-slate-500" />
+        {/* Image gallery */}
+        <div>
+          <ImageSection images={item.images ?? []} />
         </div>
 
         {/* Details */}

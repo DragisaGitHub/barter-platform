@@ -6,12 +6,16 @@ import { Spinner } from "../../components/ui/Spinner";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Button } from "../../components/ui/Button";
 import { toast } from "sonner";
+import { useItemImages } from "./useItemImages";
+import { ImageUploader } from "./components/ImageUploader";
+import { ItemImageGallery } from "./components/ItemImageGallery";
 
 export function EditItemPage() {
   const { uuid } = useParams<{ uuid: string }>();
   const navigate = useNavigate();
   const { data: item, isLoading, isError } = useItemDetail(uuid ?? "");
   const updateMutation = useUpdateItem(uuid ?? "");
+  const { data: images = [] } = useItemImages(uuid ?? "");
 
   const handleSubmit = (data: ItemFormValues) => {
     updateMutation.mutate(
@@ -70,6 +74,13 @@ export function EditItemPage() {
       </Link>
 
       <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-8">Edit Item</h1>
+
+      {/* Images section */}
+      <div className="mb-8 space-y-4">
+        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Images</h2>
+        <ImageUploader itemUuid={uuid ?? ""} currentImageCount={images.length} />
+        <ItemImageGallery itemUuid={uuid ?? ""} images={images} />
+      </div>
 
       <ItemForm
         defaultValues={{

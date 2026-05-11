@@ -19,9 +19,9 @@ export function CreateItemPage() {
         status: data.status,
       },
       {
-        onSuccess: () => {
-          toast.success("Item created successfully");
-          navigate("/my-items");
+        onSuccess: (item) => {
+          toast.success("Item created! You can now add images.");
+          navigate(`/my-items/${item.uuid}/edit`);
         },
         onError: () => {
           toast.error("Failed to create item");

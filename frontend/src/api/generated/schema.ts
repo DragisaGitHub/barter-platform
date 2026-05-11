@@ -449,6 +449,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalog/items/{itemUuid}/images": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List images for an item (public) */
+        get: operations["listItemImages"];
+        put?: never;
+        /** Upload an image for an item */
+        post: operations["uploadItemImage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog/items/{itemUuid}/images/{imageUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete an image */
+        delete: operations["deleteItemImage"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog/items/{itemUuid}/images/{imageUuid}/primary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set an image as the primary image for an item */
+        put: operations["setItemImageAsPrimary"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/trade-offers": {
         parameters: {
             query?: never;
@@ -818,6 +870,7 @@ export interface components {
             /** Format: uuid */
             ownerUuid: string;
             ownerUsername: string;
+            primaryImageUrl?: string | null;
             /** Format: date-time */
             createdAt: string;
         };
@@ -833,6 +886,8 @@ export interface components {
             /** Format: uuid */
             ownerUuid: string;
             ownerUsername: string;
+            primaryImageUrl?: string | null;
+            images: components["schemas"]["ItemImageResponse"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -875,6 +930,19 @@ export interface components {
         ArchiveItemRequest: {
             /** @description Optional reason for archiving the item. */
             reason?: string;
+        };
+        ItemImageResponse: {
+            /** Format: uuid */
+            uuid: string;
+            url: string;
+            originalFilename: string;
+            contentType: string;
+            /** Format: int64 */
+            fileSize: number;
+            sortOrder: number;
+            isPrimary: boolean;
+            /** Format: date-time */
+            createdAt: string;
         };
         /** @enum {string} */
         TradeOfferStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "EXPIRED";
@@ -1082,6 +1150,8 @@ export interface components {
         ItemUuid: string;
         /** @description Public trade offer UUID. */
         TradeOfferUuid: string;
+        /** @description Public image UUID. */
+        ImageUuid: string;
     };
     requestBodies: {
         RegisterUserRequest: {
@@ -1876,6 +1946,118 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listItemImages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Images returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemImageResponse"][];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    uploadItemImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Image uploaded successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemImageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteItemImage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+                /** @description Public image UUID. */
+                imageUuid: components["parameters"]["ImageUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    setItemImageAsPrimary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+                /** @description Public image UUID. */
+                imageUuid: components["parameters"]["ImageUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Primary image set successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemImageResponse"];
+                };
+            };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
