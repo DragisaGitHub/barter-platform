@@ -42,6 +42,12 @@ export type RefreshRequest = components["schemas"]["RefreshTokenRequest"];
 export type LogoutRequest = components["schemas"]["RefreshTokenRequest"];
 export type UpdateStatusRequest = components["schemas"]["UpdateUserStatusRequest"];
 export type MfaVerifyRequest = components["schemas"]["MfaVerifyRequest"];
+export type VerifyEmailRequest = components["schemas"]["VerifyEmailRequest"];
+export type ResendVerificationCodeRequest = components["schemas"]["ResendVerificationCodeRequest"];
+
+// ─── Misc Response DTOs ─────────────────────────────────────────────────────
+
+export type MessageResponse = components["schemas"]["MessageResponse"];
 
 // ─── Catalog Enums ──────────────────────────────────────────────────────────
 

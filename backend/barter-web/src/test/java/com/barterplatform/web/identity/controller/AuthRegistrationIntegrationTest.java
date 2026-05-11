@@ -10,6 +10,7 @@ import com.barterplatform.domain.identity.entity.RoleEntity;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.identity.entity.UserRoleEntity;
 import com.barterplatform.domain.identity.enums.RoleCode;
+import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
 import com.barterplatform.infrastructure.identity.repository.RoleRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
@@ -74,8 +75,12 @@ class AuthRegistrationIntegrationTest {
     @Autowired
     private RoleRepository roleRepository;
 
+    @Autowired
+    private EmailVerificationCodeRepository emailVerificationCodeRepository;
+
     @BeforeEach
     void cleanMutableTables() {
+        emailVerificationCodeRepository.deleteAllInBatch();
         userRoleRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
     }

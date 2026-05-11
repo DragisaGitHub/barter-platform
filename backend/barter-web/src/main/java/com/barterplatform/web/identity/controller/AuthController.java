@@ -3,9 +3,12 @@ package com.barterplatform.web.identity.controller;
 import com.barterplatform.api.controller.AuthApi;
 import com.barterplatform.api.model.CurrentUserResponse;
 import com.barterplatform.api.model.LoginRequest;
+import com.barterplatform.api.model.MessageResponse;
 import com.barterplatform.api.model.RefreshTokenRequest;
 import com.barterplatform.api.model.RegisterUserRequest;
+import com.barterplatform.api.model.ResendVerificationCodeRequest;
 import com.barterplatform.api.model.TokenResponse;
+import com.barterplatform.api.model.VerifyEmailRequest;
 import com.barterplatform.application.identity.service.AuthService;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +53,19 @@ public class AuthController implements AuthApi {
         AuthenticatedUser principal = (AuthenticatedUser) SecurityContextHolder.getContext()
                 .getAuthentication().getPrincipal();
         CurrentUserResponse response = authService.getCurrentUser(principal.getUserUuid());
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<MessageResponse> verifyEmail(@Nullable VerifyEmailRequest verifyEmailRequest) {
+        MessageResponse response = authService.verifyEmail(verifyEmailRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<MessageResponse> resendVerificationCode(
+            @Nullable ResendVerificationCodeRequest resendVerificationCodeRequest) {
+        MessageResponse response = authService.resendVerificationCode(resendVerificationCodeRequest);
         return ResponseEntity.ok(response);
     }
 }

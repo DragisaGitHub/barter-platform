@@ -6,6 +6,7 @@ import { AdminRoute } from "./AdminRoute";
 import { LandingPage } from "../features/landing/LandingPage";
 import { LoginPage } from "../features/auth/LoginPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
+import { VerifyEmailPage } from "../features/auth/VerifyEmailPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { PlaceholderPage } from "../features/placeholder/PlaceholderPage";
 import { AdminDashboardPage } from "../features/admin/AdminDashboardPage";
@@ -38,6 +39,10 @@ export const router = createBrowserRouter([
       {
         path: "/register",
         element: <RegisterPage />,
+      },
+      {
+        path: "/verify-email",
+        element: <VerifyEmailPage />,
       },
     ],
   },

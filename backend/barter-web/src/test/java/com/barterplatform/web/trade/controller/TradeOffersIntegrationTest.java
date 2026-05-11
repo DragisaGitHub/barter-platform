@@ -9,6 +9,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.barterplatform.BarterApplication;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
+import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
@@ -73,6 +74,7 @@ class TradeOffersIntegrationTest {
     @Autowired private UserRepository userRepository;
     @Autowired private UserRoleRepository userRoleRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
+    @Autowired private EmailVerificationCodeRepository emailVerificationCodeRepository;
     @Autowired private ItemRepository itemRepository;
     @Autowired private ItemTagRepository itemTagRepository;
     @Autowired private TradeOfferRepository tradeOfferRepository;
@@ -85,6 +87,7 @@ class TradeOffersIntegrationTest {
         tradeOfferRepository.deleteAllInBatch();
         itemTagRepository.deleteAllInBatch();
         itemRepository.deleteAllInBatch();
+        emailVerificationCodeRepository.deleteAllInBatch();
         refreshTokenRepository.deleteAllInBatch();
         userRoleRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
@@ -857,6 +860,7 @@ class TradeOffersIntegrationTest {
 
         var user = userRepository.findByEmail(email).orElseThrow();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        user.setEmailVerified(true);
         userRepository.save(user);
 
         MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")

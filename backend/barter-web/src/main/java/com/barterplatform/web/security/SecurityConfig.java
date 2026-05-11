@@ -53,10 +53,14 @@ public class SecurityConfig {
                                 "/auth/login",
                                 "/auth/refresh",
                                 "/auth/logout",
+                                "/auth/verify-email",
+                                "/auth/resend-verification-code",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh",
-                                "/api/v1/auth/logout").permitAll()
+                                "/api/v1/auth/logout",
+                                "/api/v1/auth/verify-email",
+                                "/api/v1/auth/resend-verification-code").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/ping",
                                 "/api/v1/ping",

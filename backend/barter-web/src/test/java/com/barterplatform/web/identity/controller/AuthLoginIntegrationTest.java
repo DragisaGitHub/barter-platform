@@ -10,6 +10,7 @@ import com.barterplatform.domain.identity.entity.RefreshTokenEntity;
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
+import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -72,8 +73,12 @@ class AuthLoginIntegrationTest {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
 
+    @Autowired
+    private EmailVerificationCodeRepository emailVerificationCodeRepository;
+
     @BeforeEach
     void cleanMutableTables() {
+        emailVerificationCodeRepository.deleteAllInBatch();
         refreshTokenRepository.deleteAllInBatch();
         userRoleRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
@@ -90,6 +95,7 @@ class AuthLoginIntegrationTest {
         // Activate the user (set status to ACTIVE)
         var user = userRepository.findByEmail("alex@example.com").orElseThrow();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        user.setEmailVerified(true);
         userRepository.save(user);
 
         // Login with email
@@ -126,6 +132,7 @@ class AuthLoginIntegrationTest {
 
         var user = userRepository.findByEmail("alex@example.com").orElseThrow();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        user.setEmailVerified(true);
         userRepository.save(user);
 
         mockMvc.perform(loginRequest("alex99", "P@ssword123"))
@@ -141,6 +148,7 @@ class AuthLoginIntegrationTest {
 
         var user = userRepository.findByEmail("alex@example.com").orElseThrow();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        user.setEmailVerified(true);
         userRepository.save(user);
 
         mockMvc.perform(loginRequest("alex@example.com", "WrongPassword1"))

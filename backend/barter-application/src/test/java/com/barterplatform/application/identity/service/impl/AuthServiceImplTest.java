@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -26,6 +25,7 @@ import com.barterplatform.application.identity.auth.JwtService;
 import com.barterplatform.application.identity.auth.RefreshTokenService;
 import com.barterplatform.application.identity.mapper.RoleMapper;
 import com.barterplatform.application.identity.mapper.UserMapper;
+import com.barterplatform.application.identity.service.EmailVerificationService;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.identity.entity.RefreshTokenEntity;
@@ -76,6 +76,9 @@ class AuthServiceImplTest {
 
     @Mock
     private RefreshTokenService refreshTokenService;
+
+    @Mock
+    private EmailVerificationService emailVerificationService;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -148,9 +151,43 @@ class AuthServiceImplTest {
         assertEquals(0, response.getOauthAccounts().size());
         assertNull(response.getMfaSettings());
 
+        verify(emailVerificationService).createAndSendVerificationCode(101L, "alex@example.com");
         verify(roleRepository).findByCode(RoleCode.USER);
         verify(userMapper).toCurrentUserResponse(any(UserEntity.class));
         verify(roleMapper).toResponse(userRole);
+    }
+
+    @Test
+    void shouldThrowForbiddenForPendingVerificationUser() {
+        LoginRequest request = new LoginRequest("alex@example.com", "P@ssword123");
+        UserEntity user = activeUser();
+        user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.PENDING_VERIFICATION);
+        user.setEmailVerified(false);
+
+        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("P@ssword123", user.getPasswordHash())).thenReturn(true);
+
+        ApiException ex = assertThrows(ApiException.class, () -> authService.login(request));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertEquals(ErrorCode.FORBIDDEN, ex.getCode());
+        assertEquals("Email verification required.", ex.getMessage());
+    }
+
+    @Test
+    void shouldThrowForbiddenForUnverifiedEmail() {
+        LoginRequest request = new LoginRequest("alex@example.com", "P@ssword123");
+        UserEntity user = activeUser();
+        user.setEmailVerified(false);
+
+        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("P@ssword123", user.getPasswordHash())).thenReturn(true);
+
+        ApiException ex = assertThrows(ApiException.class, () -> authService.login(request));
+
+        assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
+        assertEquals(ErrorCode.FORBIDDEN, ex.getCode());
+        assertEquals("Email verification required.", ex.getMessage());
     }
 
     @Test

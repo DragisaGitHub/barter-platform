@@ -78,6 +78,46 @@ logout:
         $ref: '../components/responses/Unauthorized.yaml'
       '403':
         $ref: '../components/responses/Forbidden.yaml'
+verifyEmail:
+  post:
+    tags:
+      - Auth
+    operationId: verifyEmail
+    summary: Verify email address with a 6-digit code
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/VerifyEmailRequest'
+    responses:
+      '200':
+        description: Email verified successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/MessageResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+resendVerificationCode:
+  post:
+    tags:
+      - Auth
+    operationId: resendVerificationCode
+    summary: Resend email verification code
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/ResendVerificationCodeRequest'
+    responses:
+      '200':
+        description: Verification code resent successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/MessageResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
 me:
   get:
     tags:
