@@ -15,6 +15,7 @@ import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
 import com.barterplatform.infrastructure.notification.repository.NotificationRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
+import com.barterplatform.infrastructure.trade.repository.TradeOfferMessageRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -70,17 +71,30 @@ class TradeOffersIntegrationTest {
         registry.add("spring.datasource.driver-class-name", POSTGRES::getDriverClassName);
     }
 
-    @Autowired private MockMvc mockMvc;
-    @Autowired private ObjectMapper objectMapper;
-    @Autowired private UserRepository userRepository;
-    @Autowired private UserRoleRepository userRoleRepository;
-    @Autowired private RefreshTokenRepository refreshTokenRepository;
-    @Autowired private EmailVerificationCodeRepository emailVerificationCodeRepository;
-    @Autowired private ItemRepository itemRepository;
-    @Autowired private ItemTagRepository itemTagRepository;
-    @Autowired private TradeOfferRepository tradeOfferRepository;
-    @Autowired private TradeOfferItemRepository tradeOfferItemRepository;
-    @Autowired private NotificationRepository notificationRepository;
+    @Autowired
+    private MockMvc mockMvc;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private UserRoleRepository userRoleRepository;
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+    @Autowired
+    private EmailVerificationCodeRepository emailVerificationCodeRepository;
+    @Autowired
+    private ItemRepository itemRepository;
+    @Autowired
+    private ItemTagRepository itemTagRepository;
+    @Autowired
+    private TradeOfferRepository tradeOfferRepository;
+    @Autowired
+    private TradeOfferItemRepository tradeOfferItemRepository;
+    @Autowired
+    private TradeOfferMessageRepository tradeOfferMessageRepository;
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @BeforeEach
     void cleanMutableTables() {
@@ -88,6 +102,7 @@ class TradeOffersIntegrationTest {
         // Delete notifications before users (FK constraint)
         notificationRepository.deleteAllInBatch();
         tradeOfferItemRepository.deleteAllInBatch();
+        tradeOfferMessageRepository.deleteAllInBatch();
         tradeOfferRepository.deleteAllInBatch();
         itemTagRepository.deleteAllInBatch();
         itemRepository.deleteAllInBatch();
@@ -841,6 +856,174 @@ class TradeOffersIntegrationTest {
                                 }
                                 """.formatted(aliceItemUuid)))
                 .andExpect(status().isBadRequest());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Trade offer messaging
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void participantsCanExchangeMessages() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "receiverItemUuid": "%s",
+                              "senderItemUuids": ["%s"],
+                              "mode": "ITEM_EXCHANGE"
+                            }
+                            """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/messages")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "content": "Hello Alice"
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.content").value("Hello Alice"));
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/messages")
+                        .header("Authorization", "Bearer " + aliceToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "content": "Hello Bob"
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.content").value("Hello Bob"));
+
+        mockMvc.perform(apiGet("/trade-offers/" + offerUuid + "/messages")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].content").value("Hello Alice"))
+                .andExpect(jsonPath("$[1].content").value("Hello Bob"));
+    }
+
+    @Test
+    void nonParticipantCannotAccessMessages() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+        String charlieToken = registerActivateAndLogin("charlie", "charlie@test.com", "P@ssword789");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "receiverItemUuid": "%s",
+                              "senderItemUuids": ["%s"],
+                              "mode": "ITEM_EXCHANGE"
+                            }
+                            """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiGet("/trade-offers/" + offerUuid + "/messages")
+                        .header("Authorization", "Bearer " + charlieToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void cannotSendMessageForNonPendingOffer() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "receiverItemUuid": "%s",
+                              "senderItemUuids": ["%s"],
+                              "mode": "ITEM_EXCHANGE"
+                            }
+                            """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/messages")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "content": "Too late"
+                            }
+                            """))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void messagesRemainReadableAfterAccept() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "receiverItemUuid": "%s",
+                              "senderItemUuids": ["%s"],
+                              "mode": "ITEM_EXCHANGE"
+                            }
+                            """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/messages")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "content": "Initial message"
+                            }
+                            """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(apiGet("/trade-offers/" + offerUuid + "/messages")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].content").value("Initial message"));
     }
 
     // ══════════════════════════════════════════════════════════════

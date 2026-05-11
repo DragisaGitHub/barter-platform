@@ -11,6 +11,8 @@ import { Spinner } from "../../components/ui/Spinner";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../auth/AuthContext";
 import type { TradeOfferStatus, TradeOfferItemSummary } from "@/api/generated/types.ts";
+import {TradeOfferMessagesPanel} from "@/features/trade/TradeOfferMessagesPanel.tsx";
+import React from "react";
 
 const STATUS_DETAIL: Record<TradeOfferStatus, { label: string; description: string; icon: React.ReactNode }> = {
   PENDING: {
@@ -256,6 +258,10 @@ export function TradeOfferDetailPage() {
           />
         </Card>
       ) : null}
+      <TradeOfferMessagesPanel
+          tradeOfferUuid={offer.uuid}
+          status={offer.status}
+      />
     </div>
   );
 }
