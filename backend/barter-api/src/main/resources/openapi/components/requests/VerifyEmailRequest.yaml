@@ -1,0 +1,19 @@
+type: object
+additionalProperties: false
+required:
+  - email
+  - code
+properties:
+  email:
+    type: string
+    format: email
+    maxLength: 255
+    example: alex@example.com
+  code:
+    type: string
+    minLength: 6
+    maxLength: 6
+    pattern: '^\d{6}$'
+    example: '123456'
+
+

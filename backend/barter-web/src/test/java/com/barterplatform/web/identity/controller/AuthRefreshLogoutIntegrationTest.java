@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.barterplatform.BarterApplication;
 import com.barterplatform.domain.identity.entity.RefreshTokenEntity;
+import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
@@ -75,10 +76,14 @@ class AuthRefreshLogoutIntegrationTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
+    private EmailVerificationCodeRepository emailVerificationCodeRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void cleanMutableTables() {
+        emailVerificationCodeRepository.deleteAllInBatch();
         refreshTokenRepository.deleteAllInBatch();
         userRoleRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
@@ -204,6 +209,7 @@ class AuthRefreshLogoutIntegrationTest {
 
         var user = userRepository.findByEmail(email).orElseThrow();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        user.setEmailVerified(true);
         userRepository.save(user);
     }
 

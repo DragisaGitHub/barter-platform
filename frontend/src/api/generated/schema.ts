@@ -72,6 +72,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Verify email address with a 6-digit code */
+        post: operations["verifyEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/resend-verification-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resend email verification code */
+        post: operations["resendVerificationCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/me": {
         parameters: {
             query?: never;
@@ -749,6 +783,10 @@ export interface components {
             scope?: string[];
             user: components["schemas"]["CurrentUserResponse"];
         };
+        MessageResponse: {
+            /** @example Email verified successfully. */
+            message: string;
+        };
         /** @enum {string} */
         ItemStatus: "DRAFT" | "ACTIVE" | "RESERVED" | "ARCHIVED" | "REMOVED";
         /** @enum {string} */
@@ -945,6 +983,22 @@ export interface components {
             /** @description Raw refresh token issued by the auth service. */
             refreshToken: string;
         };
+        VerifyEmailRequest: {
+            /**
+             * Format: email
+             * @example alex@example.com
+             */
+            email: string;
+            /** @example 123456 */
+            code: string;
+        };
+        ResendVerificationCodeRequest: {
+            /**
+             * Format: email
+             * @example alex@example.com
+             */
+            email: string;
+        };
         UpdateUserStatusRequest: {
             status: components["schemas"]["UserStatus"];
             /** @description Optional moderation reason for the status change. */
@@ -1050,6 +1104,16 @@ export interface components {
                 "application/json": components["schemas"]["UpdateUserStatusRequest"];
             };
         };
+        VerifyEmailRequest: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailRequest"];
+            };
+        };
+        ResendVerificationCodeRequest: {
+            content: {
+                "application/json": components["schemas"]["ResendVerificationCodeRequest"];
+            };
+        };
         MfaVerifyRequest: {
             content: {
                 "application/json": components["schemas"]["MfaVerifyRequest"];
@@ -1068,6 +1132,16 @@ export interface components {
         "requestBodies-RefreshTokenRequest": {
             content: {
                 "application/json": components["schemas"]["RefreshTokenRequest"];
+            };
+        };
+        "requestBodies-VerifyEmailRequest": {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailRequest"];
+            };
+        };
+        "requestBodies-ResendVerificationCodeRequest": {
+            content: {
+                "application/json": components["schemas"]["ResendVerificationCodeRequest"];
             };
         };
         "requestBodies-UpdateUserStatusRequest": {
@@ -1174,6 +1248,51 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+        };
+    };
+    verifyEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: components["requestBodies"]["requestBodies-VerifyEmailRequest"];
+        responses: {
+            /** @description Email verified successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    resendVerificationCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: components["requestBodies"]["requestBodies-ResendVerificationCodeRequest"];
+        responses: {
+            /** @description Verification code resent successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
         };
     };
     getCurrentUser: {

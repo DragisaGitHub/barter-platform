@@ -2,14 +2,18 @@ package com.barterplatform.application.identity.service.impl;
 
 import com.barterplatform.api.model.CurrentUserResponse;
 import com.barterplatform.api.model.LoginRequest;
+import com.barterplatform.api.model.MessageResponse;
 import com.barterplatform.api.model.RefreshTokenRequest;
 import com.barterplatform.api.model.RegisterUserRequest;
+import com.barterplatform.api.model.ResendVerificationCodeRequest;
 import com.barterplatform.api.model.TokenResponse;
+import com.barterplatform.api.model.VerifyEmailRequest;
 import com.barterplatform.application.identity.auth.JwtService;
 import com.barterplatform.application.identity.auth.RefreshTokenService;
 import com.barterplatform.application.identity.mapper.RoleMapper;
 import com.barterplatform.application.identity.mapper.UserMapper;
 import com.barterplatform.application.identity.service.AuthService;
+import com.barterplatform.application.identity.service.EmailVerificationService;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.identity.entity.RefreshTokenEntity;
@@ -46,6 +50,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
+    private final EmailVerificationService emailVerificationService;
 
     @Override
     public CurrentUserResponse registerUser(RegisterUserRequest request) {
@@ -63,6 +68,9 @@ public class AuthServiceImpl implements AuthService {
         UserEntity savedUser = userRepository.save(user);
         RoleEntity userRole = resolveUserRole();
         userRoleRepository.save(createUserRole(savedUser.getId(), userRole.getId()));
+
+        // Generate and send email verification code
+        emailVerificationService.createAndSendVerificationCode(savedUser.getId(), savedUser.getEmail());
 
         CurrentUserResponse response = userMapper.toCurrentUserResponse(savedUser);
         response.setRoles(List.of(roleMapper.toResponse(userRole)));
@@ -145,6 +153,16 @@ public class AuthServiceImpl implements AuthService {
         return buildCurrentUserResponse(user);
     }
 
+    @Override
+    public MessageResponse verifyEmail(VerifyEmailRequest request) {
+        return emailVerificationService.verifyEmail(request);
+    }
+
+    @Override
+    public MessageResponse resendVerificationCode(ResendVerificationCodeRequest request) {
+        return emailVerificationService.resendVerificationCode(request);
+    }
+
     private UserEntity findUserByIdentifier(String identifier) {
         Optional<UserEntity> user = identifier.contains("@")
                 ? userRepository.findByEmail(identifier)
@@ -177,6 +195,12 @@ public class AuthServiceImpl implements AuthService {
                     HttpStatus.FORBIDDEN,
                     ErrorCode.FORBIDDEN,
                     "Account is banned.");
+        }
+        if (user.getStatus() == UserStatus.PENDING_VERIFICATION || !user.isEmailVerified()) {
+            throw new ApiException(
+                    HttpStatus.FORBIDDEN,
+                    ErrorCode.FORBIDDEN,
+                    "Email verification required.");
         }
     }
 

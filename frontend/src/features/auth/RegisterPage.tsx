@@ -51,8 +51,8 @@ export function RegisterPage() {
         email: data.email,
         password: data.password,
       });
-      toast.success("Registration successful! Please log in.");
-      navigate("/login");
+      toast.success("Account created! Please verify your email.");
+      navigate(`/verify-email?email=${encodeURIComponent(data.email)}`);
     } catch (error) {
       if (error instanceof AxiosError) {
         const errorData = error.response?.data as ErrorResponse | undefined;

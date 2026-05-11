@@ -32,6 +32,10 @@ paths:
     $ref: './paths/auth.yaml#/refresh'
   /auth/logout:
     $ref: './paths/auth.yaml#/logout'
+  /auth/verify-email:
+    $ref: './paths/auth.yaml#/verifyEmail'
+  /auth/resend-verification-code:
+    $ref: './paths/auth.yaml#/resendVerificationCode'
   /auth/me:
     $ref: './paths/auth.yaml#/me'
   /users:
@@ -133,6 +137,8 @@ components:
       $ref: './components/schemas/CurrentUserResponse.yaml'
     TokenResponse:
       $ref: './components/schemas/TokenResponse.yaml'
+    MessageResponse:
+      $ref: './components/schemas/MessageResponse.yaml'
     ItemStatus:
       $ref: './components/schemas/catalog/ItemStatus.yaml'
     ItemCondition:
@@ -190,6 +196,16 @@ components:
         application/json:
           schema:
             $ref: './components/requests/UpdateUserStatusRequest.yaml'
+    VerifyEmailRequest:
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/VerifyEmailRequest.yaml'
+    ResendVerificationCodeRequest:
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/ResendVerificationCodeRequest.yaml'
     MfaVerifyRequest:
       content:
         application/json:

@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.barterplatform.BarterApplication;
+import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
@@ -74,10 +75,14 @@ class AuthMeIntegrationTest {
     private RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
+    private EmailVerificationCodeRepository emailVerificationCodeRepository;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void cleanMutableTables() {
+        emailVerificationCodeRepository.deleteAllInBatch();
         refreshTokenRepository.deleteAllInBatch();
         userRoleRepository.deleteAllInBatch();
         userRepository.deleteAllInBatch();
@@ -108,6 +113,7 @@ class AuthMeIntegrationTest {
         // Activate user
         var user = userRepository.findByEmail("alex@example.com").orElseThrow();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        user.setEmailVerified(true);
         userRepository.save(user);
 
         // Login to get token
@@ -177,6 +183,7 @@ class AuthMeIntegrationTest {
 
         var user = userRepository.findByEmail("bob@example.com").orElseThrow();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        user.setEmailVerified(true);
         userRepository.save(user);
 
         MvcResult loginResult = mockMvc.perform(post("/api/v1/auth/login")
