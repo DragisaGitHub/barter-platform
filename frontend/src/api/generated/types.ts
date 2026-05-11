@@ -83,3 +83,8 @@ export type NotificationType = components["schemas"]["NotificationType"];
 export type NotificationResponse = components["schemas"]["NotificationResponse"];
 export type NotificationPagedResponse = components["schemas"]["NotificationPagedResponse"];
 export type NotificationUnreadCountResponse = components["schemas"]["NotificationUnreadCountResponse"];
+
+// ─── Profile Response DTOs ──────────────────────────────────────────────────
+
+export type PublicProfileResponse = components["schemas"]["PublicProfileResponse"];
+

@@ -12,6 +12,7 @@ export const routePaths = {
   notifications: "/notifications",
   messages: "/messages",
   profile: "/profile",
+  publicProfile: (uuid: string) => `/users/${uuid}`,
   admin: {
     dashboard: "/admin",
     users: "/admin/users",

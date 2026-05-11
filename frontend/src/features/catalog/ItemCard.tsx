@@ -3,6 +3,7 @@ import { Package } from "lucide-react";
 import type { ItemSummaryResponse } from "@/api/generated/types.ts";
 import { Card } from "../../components/ui/Card";
 import { ItemStatusBadge, ItemConditionBadge } from "./ItemBadges";
+import { routePaths } from "@/routes/routePaths.ts";
 
 interface ItemCardProps {
   item: ItemSummaryResponse;
@@ -38,7 +39,17 @@ export function ItemCard({ item, linkPrefix = "/marketplace/items" }: ItemCardPr
 
         <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
           <span>{item.categoryName}</span>
-          <span>by {item.ownerUsername}</span>
+          {item.ownerUuid ? (
+            <Link
+              to={routePaths.publicProfile(item.ownerUuid)}
+              onClick={(e) => e.stopPropagation()}
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline"
+            >
+              by {item.ownerUsername}
+            </Link>
+          ) : (
+            <span>by {item.ownerUsername}</span>
+          )}
         </div>
       </Card>
     </Link>

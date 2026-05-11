@@ -1,0 +1,39 @@
+byUuid:
+  get:
+    tags:
+      - Profiles
+    operationId: getPublicProfile
+    summary: Get public profile by user UUID
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/UserUuid'
+    responses:
+      '200':
+        description: Public profile returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/PublicProfileResponse'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+items:
+  get:
+    tags:
+      - Profiles
+    operationId: listPublicItems
+    summary: List active items for a user's public profile
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/UserUuid'
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+    responses:
+      '200':
+        description: Public items returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemPagedResponse'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+

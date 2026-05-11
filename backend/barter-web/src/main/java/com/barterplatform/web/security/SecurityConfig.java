@@ -73,7 +73,9 @@ public class SecurityConfig {
                                 "/api/v1/catalog/tags",
                                 "/api/v1/catalog/items",
                                 "/api/v1/catalog/items/*",
-                                "/api/v1/catalog/items/*/images").permitAll()
+                                "/api/v1/catalog/items/*/images",
+                                "/profiles/**",
+                                "/api/v1/profiles/**").permitAll()
                         .requestMatchers("/files/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",

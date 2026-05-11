@@ -691,6 +691,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/profiles/{userUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get public profile by user UUID */
+        get: operations["getPublicProfile"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/profiles/{userUuid}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List active items for a user's public profile */
+        get: operations["listPublicItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ping": {
         parameters: {
             query?: never;
@@ -1127,6 +1161,21 @@ export interface components {
         NotificationUnreadCountResponse: {
             /** Format: int64 */
             count: number;
+        };
+        PublicProfileResponse: {
+            /** Format: uuid */
+            uuid: string;
+            username: string;
+            /** Format: date-time */
+            joinedAt: string;
+            /** Format: int32 */
+            activeItemCount: number;
+            /** Format: int32 */
+            completedTradeCount: number;
+            /** Format: int32 */
+            cancelledTradeCount: number;
+            /** Format: double */
+            averageRating?: number | null;
         };
         RegisterUserRequest: {
             /** @example alex99 */
@@ -2453,6 +2502,61 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getPublicProfile: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public user UUID. */
+                userUuid: components["parameters"]["UserUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public profile returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicProfileResponse"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listPublicItems: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+            };
+            header?: never;
+            path: {
+                /** @description Public user UUID. */
+                userUuid: components["parameters"]["UserUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Public items returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemPagedResponse"];
+                };
+            };
             404: components["responses"]["NotFound"];
         };
     };
