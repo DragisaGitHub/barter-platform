@@ -69,6 +69,10 @@ export const router = createBrowserRouter([
         element: <CreateItemPage />,
       },
       {
+        path: "/my-items/:uuid",
+        element: <ItemDetailPage />,
+      },
+      {
         path: "/my-items/:uuid/edit",
         element: <EditItemPage />,
       },

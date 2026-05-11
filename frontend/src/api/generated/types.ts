@@ -65,6 +65,7 @@ export type ArchiveItemRequest = components["schemas"]["ArchiveItemRequest"];
 // ─── Trade Offer Enums ──────────────────────────────────────────────────────
 
 export type TradeOfferStatus = components["schemas"]["TradeOfferStatus"];
+export type TradeOfferMode = components["schemas"]["TradeOfferMode"];
 
 // ─── Trade Offer Response DTOs ──────────────────────────────────────────────
 

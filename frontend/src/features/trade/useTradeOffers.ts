@@ -23,6 +23,8 @@ export const tradeOfferKeys = {
   incoming: (params: ListTradeOffersParams) => ["trade-offers", "incoming", params] as const,
   sent: (params: ListTradeOffersParams) => ["trade-offers", "sent", params] as const,
   detail: (uuid: string) => ["trade-offers", uuid] as const,
+  pendingIncoming: ["trade-offers", "pending-incoming-count"] as const,
+  pendingSent: ["trade-offers", "pending-sent-count"] as const,
 };
 
 // ─── Query hooks ────────────────────────────────────────────────────────────
@@ -31,6 +33,7 @@ export function useIncomingTradeOffers(params: ListTradeOffersParams = {}) {
   return useQuery<TradeOfferPagedResponse>({
     queryKey: tradeOfferKeys.incoming(params),
     queryFn: () => listIncomingTradeOffers(params),
+    refetchInterval: 20_000,
   });
 }
 
@@ -38,6 +41,7 @@ export function useSentTradeOffers(params: ListTradeOffersParams = {}) {
   return useQuery<TradeOfferPagedResponse>({
     queryKey: tradeOfferKeys.sent(params),
     queryFn: () => listSentTradeOffers(params),
+    refetchInterval: 30_000,
   });
 }
 
@@ -46,6 +50,26 @@ export function useTradeOffer(uuid: string) {
     queryKey: tradeOfferKeys.detail(uuid),
     queryFn: () => getTradeOfferByUuid(uuid),
     enabled: !!uuid,
+  });
+}
+
+// ─── Badge count hooks (lightweight, for sidebar) ───────────────────────────
+
+export function usePendingIncomingCount() {
+  return useQuery<TradeOfferPagedResponse>({
+    queryKey: tradeOfferKeys.pendingIncoming,
+    queryFn: () => listIncomingTradeOffers({ status: "PENDING", page: 0, size: 1 }),
+    refetchInterval: 20_000,
+    staleTime: 10_000,
+  });
+}
+
+export function usePendingSentCount() {
+  return useQuery<TradeOfferPagedResponse>({
+    queryKey: tradeOfferKeys.pendingSent,
+    queryFn: () => listSentTradeOffers({ status: "PENDING", page: 0, size: 1 }),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
   });
 }
 
@@ -91,4 +115,3 @@ export function useCancelTradeOffer() {
     },
   });
 }
-

@@ -1,13 +1,19 @@
 package com.barterplatform.domain.trade.entity;
 
 import com.barterplatform.common.persistence.AuditableEntity;
+import com.barterplatform.domain.trade.enums.TradeOfferMode;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,11 +29,15 @@ public class TradeOfferEntity extends AuditableEntity {
     @Column(name = "receiver_user_id", nullable = false)
     private Long receiverUserId;
 
-    @Column(name = "sender_item_id", nullable = false)
+    @Column(name = "sender_item_id")
     private Long senderItemId;
 
     @Column(name = "receiver_item_id", nullable = false)
     private Long receiverItemId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mode", nullable = false, length = 32)
+    private TradeOfferMode mode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 32)
@@ -41,6 +51,9 @@ public class TradeOfferEntity extends AuditableEntity {
 
     @Column(name = "expires_at")
     private OffsetDateTime expiresAt;
+
+    @OneToMany(mappedBy = "tradeOffer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<TradeOfferItemEntity> items = new ArrayList<>();
 
     // --- Domain methods ---
 

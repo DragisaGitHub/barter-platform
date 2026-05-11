@@ -8,43 +8,36 @@ import {
   useCancelTradeOffer,
 } from "./useTradeOffers";
 import { toast } from "sonner";
+import type { TradeOfferMode } from "@/api/generated/types.ts";
 
 interface TradeOfferActionButtonsProps {
   offerUuid: string;
   canAccept: boolean;
   canReject: boolean;
   canCancel: boolean;
+  mode?: TradeOfferMode;
 }
 
 type ConfirmAction = "accept" | "reject" | "cancel" | null;
 
-const confirmConfig = {
-  accept: {
-    title: "Accept Trade Offer",
-    description:
-      "Are you sure you want to accept this trade offer? Both items will be archived and other competing offers will be rejected.",
-    buttonLabel: "Accept",
-    buttonVariant: "primary" as const,
-  },
-  reject: {
-    title: "Reject Trade Offer",
-    description: "Are you sure you want to reject this trade offer?",
-    buttonLabel: "Reject",
-    buttonVariant: "danger" as const,
-  },
-  cancel: {
-    title: "Cancel Trade Offer",
-    description: "Are you sure you want to cancel this trade offer?",
-    buttonLabel: "Cancel Offer",
-    buttonVariant: "danger" as const,
-  },
-};
+function getAcceptDescription(mode?: TradeOfferMode): string {
+  switch (mode) {
+    case "GIFT":
+      return "Are you sure you want to accept this gift request? Your requested item will be archived.";
+    case "NEGOTIABLE":
+      return "Are you sure you want to accept this negotiation? All involved items will be archived and competing offers will be rejected.";
+    case "ITEM_EXCHANGE":
+    default:
+      return "Are you sure you want to accept this trade offer? All involved items will be archived and competing offers will be rejected.";
+  }
+}
 
 export function TradeOfferActionButtons({
   offerUuid,
   canAccept,
   canReject,
   canCancel,
+  mode,
 }: TradeOfferActionButtonsProps) {
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
 
@@ -54,6 +47,27 @@ export function TradeOfferActionButtons({
 
   const isPending =
     acceptMutation.isPending || rejectMutation.isPending || cancelMutation.isPending;
+
+  const confirmConfig = {
+    accept: {
+      title: "Accept Trade Offer",
+      description: getAcceptDescription(mode),
+      buttonLabel: "Accept",
+      buttonVariant: "primary" as const,
+    },
+    reject: {
+      title: "Reject Trade Offer",
+      description: "Are you sure you want to reject this trade offer?",
+      buttonLabel: "Reject",
+      buttonVariant: "danger" as const,
+    },
+    cancel: {
+      title: "Cancel Trade Offer",
+      description: "Are you sure you want to cancel this trade offer?",
+      buttonLabel: "Cancel Offer",
+      buttonVariant: "danger" as const,
+    },
+  };
 
   const handleConfirm = () => {
     if (!confirmAction) return;
@@ -92,7 +106,7 @@ export function TradeOfferActionButtons({
         {canAccept && (
           <Button size="sm" onClick={() => setConfirmAction("accept")}>
             <Check className="size-4" />
-            Accept
+            Accept Trade
           </Button>
         )}
         {canReject && (
@@ -104,7 +118,7 @@ export function TradeOfferActionButtons({
         {canCancel && (
           <Button variant="outline" size="sm" onClick={() => setConfirmAction("cancel")}>
             <Ban className="size-4" />
-            Cancel
+            Cancel Offer
           </Button>
         )}
       </div>

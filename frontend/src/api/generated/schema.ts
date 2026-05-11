@@ -494,7 +494,7 @@ export interface paths {
         put?: never;
         /**
          * Accept a pending trade offer (receiver only)
-         * @description Accepts a pending trade offer. Only the receiver can accept. On acceptance, both traded items are archived and all other PENDING offers involving either item are automatically rejected.
+         * @description Accepts a pending trade offer. Only the receiver can accept. On acceptance, the requested item and all offered items are archived. All other PENDING offers involving any of the accepted items are automatically rejected.
          */
         post: operations["acceptTradeOffer"];
         delete?: never;
@@ -840,18 +840,18 @@ export interface components {
         };
         /** @enum {string} */
         TradeOfferStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "EXPIRED";
+        /** @enum {string} */
+        TradeOfferMode: "ITEM_EXCHANGE" | "GIFT" | "NEGOTIABLE";
         CreateTradeOfferRequest: {
             /**
              * Format: uuid
-             * @description UUID of the item offered by the sender. Must belong to the authenticated user.
-             */
-            senderItemUuid: string;
-            /**
-             * Format: uuid
-             * @description UUID of the item the sender wants in return. Derives the receiver user.
+             * @description UUID of the item the sender wants. Derives the receiver user.
              */
             receiverItemUuid: string;
-            /** @description Optional message from sender to receiver. */
+            /** @description UUIDs of items offered by the sender. Required for ITEM_EXCHANGE (at least one), forbidden for GIFT, optional for NEGOTIABLE. All must belong to the authenticated user and be ACTIVE. */
+            senderItemUuids?: string[];
+            mode: components["schemas"]["TradeOfferMode"];
+            /** @description Optional message from sender to receiver. Required for GIFT and NEGOTIABLE modes to explain the arrangement. */
             message?: string;
         };
         TradeOfferUserSummary: {
@@ -871,11 +871,15 @@ export interface components {
             /** Format: uuid */
             uuid: string;
             status: components["schemas"]["TradeOfferStatus"];
+            mode: components["schemas"]["TradeOfferMode"];
             message?: string | null;
             sender: components["schemas"]["TradeOfferUserSummary"];
             receiver: components["schemas"]["TradeOfferUserSummary"];
-            senderItem: components["schemas"]["TradeOfferItemSummary"];
+            /** @description Deprecated: first offered item for backward compatibility. Use offeredItems instead. */
+            senderItem?: components["schemas"]["TradeOfferItemSummary"];
             receiverItem: components["schemas"]["TradeOfferItemSummary"];
+            /** @description Items offered by the sender. Empty for GIFT mode. */
+            offeredItems: components["schemas"]["TradeOfferItemSummary"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -885,11 +889,15 @@ export interface components {
             /** Format: uuid */
             uuid: string;
             status: components["schemas"]["TradeOfferStatus"];
+            mode: components["schemas"]["TradeOfferMode"];
             message?: string | null;
             sender: components["schemas"]["TradeOfferUserSummary"];
             receiver: components["schemas"]["TradeOfferUserSummary"];
-            senderItem: components["schemas"]["TradeOfferItemSummary"];
+            /** @description Deprecated: first offered item for backward compatibility. Use offeredItems instead. */
+            senderItem?: components["schemas"]["TradeOfferItemSummary"];
             receiverItem: components["schemas"]["TradeOfferItemSummary"];
+            /** @description Items offered by the sender. Empty for GIFT mode. */
+            offeredItems: components["schemas"]["TradeOfferItemSummary"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */

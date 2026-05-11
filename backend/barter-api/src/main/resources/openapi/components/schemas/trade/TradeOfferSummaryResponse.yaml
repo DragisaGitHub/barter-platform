@@ -3,10 +3,11 @@ additionalProperties: false
 required:
   - uuid
   - status
+  - mode
   - sender
   - receiver
-  - senderItem
   - receiverItem
+  - offeredItems
   - createdAt
 properties:
   uuid:
@@ -14,6 +15,8 @@ properties:
     format: uuid
   status:
     $ref: '../../../openapi.yaml#/components/schemas/TradeOfferStatus'
+  mode:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeOfferMode'
   message:
     type: string
     nullable: true
@@ -23,8 +26,15 @@ properties:
     $ref: '../../../openapi.yaml#/components/schemas/TradeOfferUserSummary'
   senderItem:
     $ref: '../../../openapi.yaml#/components/schemas/TradeOfferItemSummary'
+    description: "Deprecated: first offered item for backward compatibility. Use offeredItems instead."
+    nullable: true
   receiverItem:
     $ref: '../../../openapi.yaml#/components/schemas/TradeOfferItemSummary'
+  offeredItems:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/TradeOfferItemSummary'
+    description: Items offered by the sender. Empty for GIFT mode.
   createdAt:
     type: string
     format: date-time
@@ -32,4 +42,3 @@ properties:
     type: string
     format: date-time
     nullable: true
-

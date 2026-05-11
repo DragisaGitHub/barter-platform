@@ -12,6 +12,7 @@ import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
+import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -75,10 +76,12 @@ class TradeOffersIntegrationTest {
     @Autowired private ItemRepository itemRepository;
     @Autowired private ItemTagRepository itemTagRepository;
     @Autowired private TradeOfferRepository tradeOfferRepository;
+    @Autowired private TradeOfferItemRepository tradeOfferItemRepository;
 
     @BeforeEach
     void cleanMutableTables() {
         SecurityContextHolder.clearContext();
+        tradeOfferItemRepository.deleteAllInBatch();
         tradeOfferRepository.deleteAllInBatch();
         itemTagRepository.deleteAllInBatch();
         itemRepository.deleteAllInBatch();
@@ -88,7 +91,7 @@ class TradeOffersIntegrationTest {
     }
 
     // ══════════════════════════════════════════════════════════════
-    //  Full trade offer lifecycle
+    //  Full trade offer lifecycle (ITEM_EXCHANGE – backward compat)
     // ══════════════════════════════════════════════════════════════
 
     @Test
@@ -103,23 +106,27 @@ class TradeOffersIntegrationTest {
         // ── 3. Bob creates ACTIVE item ────────────────────────────
         String bobItemUuid = createActiveItem(bobToken, "Bob's Gadget");
 
-        // ── 4. Bob sends trade offer to Alice ─────────────────────
+        // ── 4. Bob sends trade offer to Alice (ITEM_EXCHANGE) ─────
         MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
                         .header("Authorization", "Bearer " + bobToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
                                   "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE",
                                   "message": "Want to trade?"
                                 }
-                                """.formatted(bobItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, bobItemUuid)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.status").value("PENDING"))
+                .andExpect(jsonPath("$.mode").value("ITEM_EXCHANGE"))
                 .andExpect(jsonPath("$.sender.username").value("bob"))
                 .andExpect(jsonPath("$.receiver.username").value("alice"))
                 .andExpect(jsonPath("$.senderItem.uuid").value(bobItemUuid))
                 .andExpect(jsonPath("$.receiverItem.uuid").value(aliceItemUuid))
+                .andExpect(jsonPath("$.offeredItems", hasSize(1)))
+                .andExpect(jsonPath("$.offeredItems[0].uuid").value(bobItemUuid))
                 .andExpect(jsonPath("$.message").value("Want to trade?"))
                 .andReturn();
 
@@ -131,7 +138,8 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].uuid").value(offerUuid))
-                .andExpect(jsonPath("$.content[0].status").value("PENDING"));
+                .andExpect(jsonPath("$.content[0].status").value("PENDING"))
+                .andExpect(jsonPath("$.content[0].mode").value("ITEM_EXCHANGE"));
 
         // ── 6. Bob sees sent offer ────────────────────────────────
         mockMvc.perform(apiGet("/trade-offers/sent")
@@ -186,7 +194,249 @@ class TradeOffersIntegrationTest {
     }
 
     // ══════════════════════════════════════════════════════════════
-    //  Competing offers auto-rejection
+    //  ITEM_EXCHANGE with multiple offered items
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void itemExchangeWithMultipleOfferedItems() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItem1Uuid = createActiveItem(bobToken, "Bob's Item 1");
+        String bobItem2Uuid = createActiveItem(bobToken, "Bob's Item 2");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s", "%s"],
+                                  "mode": "ITEM_EXCHANGE",
+                                  "message": "Two for one deal!"
+                                }
+                                """.formatted(aliceItemUuid, bobItem1Uuid, bobItem2Uuid)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.mode").value("ITEM_EXCHANGE"))
+                .andExpect(jsonPath("$.offeredItems", hasSize(2)))
+                .andReturn();
+
+        String offerUuid = extractField(offerResult, "uuid");
+
+        // Accept: all 3 items should be archived
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+        mockMvc.perform(apiGet("/catalog/items/" + bobItem1Uuid))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+        mockMvc.perform(apiGet("/catalog/items/" + bobItem2Uuid))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  GIFT mode
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void giftModeWithNoOfferedItems() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "mode": "GIFT",
+                                  "message": "I would love this as a gift!"
+                                }
+                                """.formatted(aliceItemUuid)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.mode").value("GIFT"))
+                .andExpect(jsonPath("$.offeredItems", hasSize(0)))
+                .andExpect(jsonPath("$.senderItem").doesNotExist())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult, "uuid");
+
+        // Accept: only requested item should be archived
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+    }
+
+    @Test
+    void giftModeWithOfferedItemsIsRejected() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "GIFT",
+                                  "message": "This should fail"
+                                }
+                                """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  NEGOTIABLE mode
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void negotiableModeWithNoOfferedItemsAndMessage() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "mode": "NEGOTIABLE",
+                                  "message": "I can offer $50 cash for this item"
+                                }
+                                """.formatted(aliceItemUuid)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.mode").value("NEGOTIABLE"))
+                .andExpect(jsonPath("$.offeredItems", hasSize(0)))
+                .andExpect(jsonPath("$.message").value("I can offer $50 cash for this item"))
+                .andReturn();
+
+        String offerUuid = extractField(offerResult, "uuid");
+
+        // Accept: only requested item archived (no offered items)
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Duplicate senderItemUuids rejected
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void duplicateSenderItemUuidsRejected() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s", "%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid, bobItemUuid, bobItemUuid)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Accept archives all offered items + requested item and rejects competing
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void acceptArchivesAllOfferedAndRequestedAndRejectsCompeting() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+        String charlieToken = registerActivateAndLogin("charlie", "charlie@test.com", "P@ssword789");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItem1Uuid = createActiveItem(bobToken, "Bob's Item 1");
+        String bobItem2Uuid = createActiveItem(bobToken, "Bob's Item 2");
+        String charlieItemUuid = createActiveItem(charlieToken, "Charlie's Item");
+
+        // Bob offers two items for Alice's item
+        MvcResult bobOfferResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s", "%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid, bobItem1Uuid, bobItem2Uuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String bobOfferUuid = extractField(bobOfferResult, "uuid");
+
+        // Charlie sends a competing offer for Alice's item
+        MvcResult charlieOfferResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + charlieToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid, charlieItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String charlieOfferUuid = extractField(charlieOfferResult, "uuid");
+
+        // Alice accepts Bob's offer
+        mockMvc.perform(apiPost("/trade-offers/" + bobOfferUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+        // All 3 items archived
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+        mockMvc.perform(apiGet("/catalog/items/" + bobItem1Uuid))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+        mockMvc.perform(apiGet("/catalog/items/" + bobItem2Uuid))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+
+        // Charlie's item NOT archived
+        mockMvc.perform(apiGet("/catalog/items/" + charlieItemUuid))
+                .andExpect(jsonPath("$.status").value("ACTIVE"));
+
+        // Charlie's competing offer auto-rejected
+        mockMvc.perform(apiGet("/trade-offers/" + charlieOfferUuid)
+                        .header("Authorization", "Bearer " + charlieToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("REJECTED"));
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Competing offers auto-rejection (backward compat)
     // ══════════════════════════════════════════════════════════════
 
     @Test
@@ -205,10 +455,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(bobItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, bobItemUuid)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -220,10 +471,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(charlieItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, charlieItemUuid)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -260,10 +512,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(bobItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, bobItemUuid)))
                 .andExpect(status().isCreated());
 
         // Alice filters incoming by PENDING → 1 result
@@ -295,10 +548,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(bobItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, bobItemUuid)))
                 .andExpect(status().isCreated());
 
         // Bob filters sent by PENDING → 1 result
@@ -326,8 +580,9 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "aaaa1111-1111-1111-1111-111111111111",
-                                  "receiverItemUuid": "bbbb2222-2222-2222-2222-222222222222"
+                                  "receiverItemUuid": "bbbb2222-2222-2222-2222-222222222222",
+                                  "senderItemUuids": ["aaaa1111-1111-1111-1111-111111111111"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
                                 """))
                 .andExpect(status().isUnauthorized());
@@ -346,10 +601,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(bobItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, bobItemUuid)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -375,10 +631,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(bobItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, bobItemUuid)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -415,10 +672,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(bobItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, bobItemUuid)))
                 .andExpect(status().isConflict());
     }
 
@@ -435,10 +693,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(item1Uuid, item2Uuid)))
+                                """.formatted(item2Uuid, item1Uuid)))
                 .andExpect(status().isForbidden());
     }
 
@@ -455,10 +714,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(bobItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, bobItemUuid)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -489,10 +749,11 @@ class TradeOffersIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "senderItemUuid": "%s",
-                                  "receiverItemUuid": "%s"
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
                                 }
-                                """.formatted(bobItemUuid, aliceItemUuid)))
+                                """.formatted(aliceItemUuid, bobItemUuid)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
@@ -508,6 +769,71 @@ class TradeOffersIntegrationTest {
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
                         .header("Authorization", "Bearer " + aliceToken))
                 .andExpect(status().isConflict());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Mode validation: ITEM_EXCHANGE requires sender items
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void itemExchangeWithoutSenderItemsRejected() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid)))
+                .andExpect(status().isBadRequest());
+    }
+
+    // ══════════════════════════════════════════════════════════════
+    //  Mode validation: GIFT/NEGOTIABLE require message
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void giftWithoutMessageRejected() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "mode": "GIFT"
+                                }
+                                """.formatted(aliceItemUuid)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void negotiableWithoutMessageRejected() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "mode": "NEGOTIABLE"
+                                }
+                                """.formatted(aliceItemUuid)))
+                .andExpect(status().isBadRequest());
     }
 
     // ══════════════════════════════════════════════════════════════

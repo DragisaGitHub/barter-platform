@@ -267,7 +267,7 @@ class CatalogQueryServiceImplTest {
             when(userRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
             ApiException ex = assertThrows(ApiException.class,
-                    () -> service.listMyItems(uuid, 0, 20, null));
+                    () -> service.listMyItems(uuid, 0, 20, null, null));
             assertEquals(404, ex.getStatus().value());
         }
 
@@ -298,7 +298,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(itemPage), any(), any()))
                     .thenReturn(expected);
 
-            ItemPagedResponse result = service.listMyItems(ownerUuid, 0, 20, null);
+            ItemPagedResponse result = service.listMyItems(ownerUuid, 0, 20, null, null);
 
             assertNotNull(result);
             assertEquals(1, result.getContent().size());

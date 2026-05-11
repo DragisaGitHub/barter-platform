@@ -1,5 +1,6 @@
 package com.barterplatform.domain.trade.entity;
 
+import com.barterplatform.domain.trade.enums.TradeOfferMode;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ class TradeOfferEntityTest {
         offer.setReceiverUserId(2L);
         offer.setSenderItemId(10L);
         offer.setReceiverItemId(20L);
+        offer.setMode(TradeOfferMode.ITEM_EXCHANGE);
         offer.setStatus(TradeOfferStatus.PENDING);
     }
 
@@ -95,4 +97,3 @@ class TradeOfferEntityTest {
         assertTrue(ex.getMessage().contains("Cannot expire"));
     }
 }
-

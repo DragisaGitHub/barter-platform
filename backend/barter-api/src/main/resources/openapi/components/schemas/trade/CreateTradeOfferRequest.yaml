@@ -1,19 +1,27 @@
 type: object
 additionalProperties: false
 required:
-  - senderItemUuid
   - receiverItemUuid
+  - mode
 properties:
-  senderItemUuid:
-    type: string
-    format: uuid
-    description: UUID of the item offered by the sender. Must belong to the authenticated user.
   receiverItemUuid:
     type: string
     format: uuid
-    description: UUID of the item the sender wants in return. Derives the receiver user.
+    description: UUID of the item the sender wants. Derives the receiver user.
+  senderItemUuids:
+    type: array
+    items:
+      type: string
+      format: uuid
+    description: >
+      UUIDs of items offered by the sender. Required for ITEM_EXCHANGE (at least one),
+      forbidden for GIFT, optional for NEGOTIABLE. All must belong to the authenticated user
+      and be ACTIVE.
+  mode:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeOfferMode'
   message:
     type: string
     maxLength: 1000
-    description: Optional message from sender to receiver.
-
+    description: >
+      Optional message from sender to receiver.
+      Required for GIFT and NEGOTIABLE modes to explain the arrangement.
