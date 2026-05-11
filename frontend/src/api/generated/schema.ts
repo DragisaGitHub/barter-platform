@@ -623,6 +623,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/trade-offers/{tradeOfferUuid}/messages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List messages for a trade offer */
+        get: operations["listTradeOfferMessages"];
+        put?: never;
+        /** Send a message in a trade offer thread */
+        post: operations["sendTradeOfferMessage"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/notifications": {
         parameters: {
             query?: never;
@@ -1127,6 +1145,24 @@ export interface components {
             last: boolean;
             sort: string;
         };
+        TradeOfferMessageResponse: {
+            /** Format: uuid */
+            uuid: string;
+            /** Format: uuid */
+            tradeOfferUuid: string;
+            /** Format: uuid */
+            senderUserUuid: string;
+            senderUsername: string;
+            /** Format: uuid */
+            recipientUserUuid: string;
+            recipientUsername: string;
+            content: string;
+            isRead: boolean;
+            /** Format: date-time */
+            readAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
         /** @enum {string} */
         NotificationType: "TRADE_OFFER_RECEIVED" | "TRADE_OFFER_ACCEPTED" | "TRADE_OFFER_REJECTED" | "TRADE_OFFER_CANCELLED";
         NotificationResponse: {
@@ -1229,6 +1265,9 @@ export interface components {
             code: string;
             /** @description Optional recovery code to use instead of the TOTP code. */
             recoveryCode?: string | null;
+        };
+        SendTradeOfferMessageRequest: {
+            content: string;
         };
     };
     responses: {
@@ -1336,6 +1375,11 @@ export interface components {
         ResendVerificationCodeRequest: {
             content: {
                 "application/json": components["schemas"]["ResendVerificationCodeRequest"];
+            };
+        };
+        SendTradeOfferMessageRequest: {
+            content: {
+                "application/json": components["schemas"]["SendTradeOfferMessageRequest"];
             };
         };
         MfaVerifyRequest: {
@@ -2410,6 +2454,63 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+        };
+    };
+    listTradeOfferMessages: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public trade offer UUID. */
+                tradeOfferUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trade offer messages */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferMessageResponse"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    sendTradeOfferMessage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public trade offer UUID. */
+                tradeOfferUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendTradeOfferMessageRequest"];
+            };
+        };
+        responses: {
+            /** @description Message sent */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferMessageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
         };
     };
     listNotifications: {

@@ -69,10 +69,12 @@ export type TradeOfferItemSummary = components["schemas"]["TradeOfferItemSummary
 export type TradeOfferSummaryResponse = components["schemas"]["TradeOfferSummaryResponse"];
 export type TradeOfferResponse = components["schemas"]["TradeOfferResponse"];
 export type TradeOfferPagedResponse = components["schemas"]["TradeOfferPagedResponse"];
+export type TradeOfferMessageResponse = components["schemas"]["TradeOfferMessageResponse"];
 
 // ─── Trade Offer Request DTOs ───────────────────────────────────────────────
 
 export type CreateTradeOfferRequest = components["schemas"]["CreateTradeOfferRequest"];
+export type SendTradeOfferMessageRequest = components["schemas"]["SendTradeOfferMessageRequest"];
 
 // ─── Notification Enums ─────────────────────────────────────────────────────
 
