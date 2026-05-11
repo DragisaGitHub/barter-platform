@@ -6,12 +6,14 @@ import com.barterplatform.api.model.CategoryResponse;
 import com.barterplatform.api.model.CreateItemRequest;
 import com.barterplatform.api.model.ItemCondition;
 import com.barterplatform.api.model.ItemDetailResponse;
+import com.barterplatform.api.model.ItemImageResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemStatus;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.api.model.UpdateItemRequest;
 import com.barterplatform.application.catalog.service.CatalogQueryService;
 import com.barterplatform.application.catalog.service.ItemCommandService;
+import com.barterplatform.application.catalog.service.ItemImageService;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
 import java.util.List;
 import java.util.UUID;
@@ -20,17 +22,21 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 public class CatalogController implements CatalogApi {
 
     private final CatalogQueryService catalogQueryService;
     private final ItemCommandService itemCommandService;
+    private final ItemImageService itemImageService;
 
     public CatalogController(CatalogQueryService catalogQueryService,
-                             ItemCommandService itemCommandService) {
+                             ItemCommandService itemCommandService,
+                             ItemImageService itemImageService) {
         this.catalogQueryService = catalogQueryService;
         this.itemCommandService = itemCommandService;
+        this.itemImageService = itemImageService;
     }
 
     // ── Public endpoints ─────────────────────────────────────────
@@ -62,7 +68,7 @@ public class CatalogController implements CatalogApi {
         return ResponseEntity.ok(catalogQueryService.getItemByUuid(itemUuid));
     }
 
-    // ── Authenticated endpoints ──────────────────────────────────
+    // ── Authenticated item endpoints ─────────────────────────────
 
     @Override
     public ResponseEntity<ItemDetailResponse> createItem(CreateItemRequest createItemRequest) {
@@ -97,6 +103,34 @@ public class CatalogController implements CatalogApi {
     @Override
     public ResponseEntity<Void> removeItem(UUID itemUuid) {
         return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    }
+
+    // ── Image endpoints ──────────────────────────────────────────
+
+    @Override
+    public ResponseEntity<ItemImageResponse> uploadItemImage(UUID itemUuid, MultipartFile file) {
+        UUID currentUserUuid = currentUserUuid();
+        ItemImageResponse response = itemImageService.uploadImage(currentUserUuid, itemUuid, file);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @Override
+    public ResponseEntity<List<ItemImageResponse>> listItemImages(UUID itemUuid) {
+        return ResponseEntity.ok(itemImageService.listImages(itemUuid));
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteItemImage(UUID itemUuid, UUID imageUuid) {
+        UUID currentUserUuid = currentUserUuid();
+        itemImageService.deleteImage(currentUserUuid, itemUuid, imageUuid);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<ItemImageResponse> setItemImageAsPrimary(UUID itemUuid, UUID imageUuid) {
+        UUID currentUserUuid = currentUserUuid();
+        ItemImageResponse response = itemImageService.setPrimaryImage(currentUserUuid, itemUuid, imageUuid);
+        return ResponseEntity.ok(response);
     }
 
     // ── Private helpers ──────────────────────────────────────────

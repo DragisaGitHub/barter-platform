@@ -2,25 +2,30 @@ package com.barterplatform.application.catalog.service.impl;
 
 import com.barterplatform.api.model.CategoryResponse;
 import com.barterplatform.api.model.ItemDetailResponse;
+import com.barterplatform.api.model.ItemImageResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.application.catalog.mapper.CategoryMapper;
+import com.barterplatform.application.catalog.mapper.ItemImageMapper;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.application.catalog.mapper.TagMapper;
 import com.barterplatform.application.catalog.service.CatalogQueryService;
+import com.barterplatform.application.catalog.storage.FileStorageService;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
 import com.barterplatform.application.common.pagination.PageResponseMapper;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
+import com.barterplatform.domain.catalog.entity.ItemImageEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagEntity;
 import com.barterplatform.domain.catalog.entity.TagEntity;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
+import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.catalog.repository.TagRepository;
@@ -48,9 +53,11 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     private final ItemRepository itemRepository;
     private final ItemTagRepository itemTagRepository;
     private final UserRepository userRepository;
+    private final ItemImageRepository itemImageRepository;
     private final CategoryMapper categoryMapper;
     private final TagMapper tagMapper;
     private final ItemMapper itemMapper;
+    private final ItemImageMapper itemImageMapper;
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
 
@@ -59,9 +66,11 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                                    ItemRepository itemRepository,
                                    ItemTagRepository itemTagRepository,
                                    UserRepository userRepository,
+                                   ItemImageRepository itemImageRepository,
                                    CategoryMapper categoryMapper,
                                    TagMapper tagMapper,
                                    ItemMapper itemMapper,
+                                   ItemImageMapper itemImageMapper,
                                    PageRequestFactory pageRequestFactory,
                                    PageResponseMapper pageResponseMapper) {
         this.categoryRepository = categoryRepository;
@@ -69,9 +78,11 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         this.itemRepository = itemRepository;
         this.itemTagRepository = itemTagRepository;
         this.userRepository = userRepository;
+        this.itemImageRepository = itemImageRepository;
         this.categoryMapper = categoryMapper;
         this.tagMapper = tagMapper;
         this.itemMapper = itemMapper;
+        this.itemImageMapper = itemImageMapper;
         this.pageRequestFactory = pageRequestFactory;
         this.pageResponseMapper = pageResponseMapper;
     }
@@ -79,13 +90,13 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     // ── Categories & Tags ────────────────────────────────────────
 
     @Override
-    public List<CategoryResponse> listCategories() {
+    public List<com.barterplatform.api.model.CategoryResponse> listCategories() {
         return categoryMapper.toResponseList(
                 categoryRepository.findAllByDeletedAtIsNullOrderBySortOrderAscNameAsc());
     }
 
     @Override
-    public List<TagResponse> listTags() {
+    public List<com.barterplatform.api.model.TagResponse> listTags() {
         return tagMapper.toResponseList(
                 tagRepository.findAllByDeletedAtIsNullOrderByNameAsc());
     }
@@ -131,7 +142,16 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
 
         List<TagEntity> tags = loadTagsForItem(item.getId());
 
-        return itemMapper.toDetailResponse(item, category, tags, owner.getUuid(), owner.getUsername());
+        List<ItemImageEntity> imageEntities = itemImageRepository.findByItemIdOrderBySortOrderAsc(item.getId());
+        List<ItemImageResponse> images = itemImageMapper.toResponseList(imageEntities);
+        String primaryImageUrl = imageEntities.stream()
+                .filter(ItemImageEntity::isPrimary)
+                .findFirst()
+                .map(img -> itemImageMapper.toResponse(img).getUrl())
+                .orElse(null);
+
+        return itemMapper.toDetailResponse(item, category, tags, owner.getUuid(), owner.getUsername(),
+                primaryImageUrl, images);
     }
 
     // ── My items ─────────────────────────────────────────────────
@@ -210,14 +230,27 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         Map<Long, UserEntity> ownersById = userRepository.findAllById(ownerIds).stream()
                 .collect(Collectors.toMap(UserEntity::getId, Function.identity()));
 
+        // Batch-load primary images
+        Set<Long> itemIds = items.stream()
+                .map(ItemEntity::getId)
+                .collect(Collectors.toSet());
+        Map<Long, String> primaryImageUrlByItemId = new HashMap<>();
+        for (Long itemId : itemIds) {
+            itemImageRepository.findFirstByItemIdAndPrimaryTrue(itemId)
+                    .ifPresent(img -> primaryImageUrlByItemId.put(itemId,
+                            itemImageMapper.toResponse(img).getUrl()));
+        }
+
         return items.stream().map(item -> {
             CategoryEntity category = categoriesById.get(item.getCategoryId());
             UserEntity owner = ownersById.get(item.getOwnerId());
+            String primaryImageUrl = primaryImageUrlByItemId.get(item.getId());
             return itemMapper.toSummaryResponse(
                     item,
                     category,
                     owner != null ? owner.getUuid() : null,
-                    owner != null ? owner.getUsername() : null);
+                    owner != null ? owner.getUsername() : null,
+                    primaryImageUrl);
         }).toList();
     }
 

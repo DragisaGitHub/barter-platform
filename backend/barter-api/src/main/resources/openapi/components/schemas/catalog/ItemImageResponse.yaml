@@ -1,0 +1,32 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - url
+  - originalFilename
+  - contentType
+  - fileSize
+  - sortOrder
+  - isPrimary
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  url:
+    type: string
+  originalFilename:
+    type: string
+  contentType:
+    type: string
+  fileSize:
+    type: integer
+    format: int64
+  sortOrder:
+    type: integer
+  isPrimary:
+    type: boolean
+  createdAt:
+    type: string
+    format: date-time
+

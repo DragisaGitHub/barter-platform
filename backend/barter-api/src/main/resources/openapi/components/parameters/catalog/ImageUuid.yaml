@@ -1,0 +1,9 @@
+ImageUuid:
+  name: imageUuid
+  in: path
+  required: true
+  description: Public image UUID.
+  schema:
+    type: string
+    format: uuid
+

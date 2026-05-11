@@ -16,6 +16,10 @@ spring:
           starttls:
             enable: true
             required: true
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
 
 server:
   port: 8080
@@ -43,6 +47,11 @@ barter:
       username: ${BARTER_BOOTSTRAP_ADMIN_USERNAME:}
       email: ${BARTER_BOOTSTRAP_ADMIN_EMAIL:}
       password: ${BARTER_BOOTSTRAP_ADMIN_PASSWORD:}
+  storage:
+    local:
+      base-path: ${BARTER_STORAGE_BASE_PATH:./uploads}
+    max-images-per-item: ${BARTER_STORAGE_MAX_IMAGES_PER_ITEM:6}
+    max-image-size-bytes: ${BARTER_STORAGE_MAX_IMAGE_SIZE_BYTES:5242880}
 
 
 

@@ -31,7 +31,9 @@ properties:
     format: uuid
   ownerUsername:
     type: string
+  primaryImageUrl:
+    type: string
+    nullable: true
   createdAt:
     type: string
     format: date-time
-

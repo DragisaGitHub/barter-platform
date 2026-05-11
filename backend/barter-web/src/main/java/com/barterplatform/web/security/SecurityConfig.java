@@ -68,10 +68,13 @@ public class SecurityConfig {
                                 "/catalog/tags",
                                 "/catalog/items",
                                 "/catalog/items/*",
+                                "/catalog/items/*/images",
                                 "/api/v1/catalog/categories",
                                 "/api/v1/catalog/tags",
                                 "/api/v1/catalog/items",
-                                "/api/v1/catalog/items/*").permitAll()
+                                "/api/v1/catalog/items/*",
+                                "/api/v1/catalog/items/*/images").permitAll()
+                        .requestMatchers("/files/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

@@ -135,7 +135,7 @@ class ItemCommandServiceImplTest {
 
             ItemDetailResponse expectedResponse = new ItemDetailResponse()
                     .uuid(UUID.randomUUID()).title("My Book");
-            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any()))
+            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any(), any(), any()))
                     .thenReturn(expectedResponse);
 
             ItemDetailResponse result = service.createItem(ownerUuid, request);
@@ -223,7 +223,7 @@ class ItemCommandServiceImplTest {
 
             ItemDetailResponse expectedResponse = new ItemDetailResponse()
                     .uuid(itemUuid).title("Test Item");
-            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any()))
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(expectedResponse);
 
             UpdateItemRequest request = new UpdateItemRequest()
@@ -263,7 +263,7 @@ class ItemCommandServiceImplTest {
 
             ItemDetailResponse expectedResponse = new ItemDetailResponse()
                     .uuid(itemUuid).title("Test Item");
-            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any()))
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(expectedResponse);
 
             ArchiveItemRequest request = new ArchiveItemRequest().reason("No longer needed");
@@ -300,4 +300,5 @@ class ItemCommandServiceImplTest {
         }
     }
 }
+
 

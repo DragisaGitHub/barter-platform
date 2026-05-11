@@ -22,6 +22,7 @@ import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.application.catalog.service.CatalogQueryService;
 import com.barterplatform.application.catalog.service.ItemCommandService;
+import com.barterplatform.application.catalog.service.ItemImageService;
 import com.barterplatform.web.exception.GlobalExceptionHandler;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
 import java.util.List;
@@ -43,13 +44,15 @@ class CatalogControllerMvcTest {
     private MockMvc mockMvc;
     private CatalogQueryService catalogQueryService;
     private ItemCommandService itemCommandService;
+    private ItemImageService itemImageService;
 
     @BeforeEach
     void setUp() {
         catalogQueryService = mock(CatalogQueryService.class);
         itemCommandService = mock(ItemCommandService.class);
+        itemImageService = mock(ItemImageService.class);
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new CatalogController(catalogQueryService, itemCommandService))
+                .standaloneSetup(new CatalogController(catalogQueryService, itemCommandService, itemImageService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
         SecurityContextHolder.clearContext();

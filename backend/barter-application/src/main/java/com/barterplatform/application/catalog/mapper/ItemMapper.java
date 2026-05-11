@@ -3,6 +3,7 @@ package com.barterplatform.application.catalog.mapper;
 import com.barterplatform.application.config.CentralMapperConfig;
 import com.barterplatform.api.model.CategoryResponse;
 import com.barterplatform.api.model.ItemDetailResponse;
+import com.barterplatform.api.model.ItemImageResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
@@ -35,17 +36,27 @@ public interface ItemMapper {
     @Mapping(target = "categoryName", ignore = true)
     @Mapping(target = "ownerUuid", ignore = true)
     @Mapping(target = "ownerUsername", ignore = true)
+    @Mapping(target = "primaryImageUrl", ignore = true)
     ItemSummaryResponse toSummaryResponse(ItemEntity entity);
 
     default ItemSummaryResponse toSummaryResponse(ItemEntity entity,
                                                    CategoryEntity category,
                                                    UUID ownerUuid,
                                                    String ownerUsername) {
+        return toSummaryResponse(entity, category, ownerUuid, ownerUsername, null);
+    }
+
+    default ItemSummaryResponse toSummaryResponse(ItemEntity entity,
+                                                   CategoryEntity category,
+                                                   UUID ownerUuid,
+                                                   String ownerUsername,
+                                                   String primaryImageUrl) {
         ItemSummaryResponse response = toSummaryResponse(entity);
         response.setCategoryUuid(category.getUuid());
         response.setCategoryName(category.getName());
         response.setOwnerUuid(ownerUuid);
         response.setOwnerUsername(ownerUsername);
+        response.setPrimaryImageUrl(primaryImageUrl);
         return response;
     }
 
@@ -55,6 +66,8 @@ public interface ItemMapper {
     @Mapping(target = "tags", ignore = true)
     @Mapping(target = "ownerUuid", ignore = true)
     @Mapping(target = "ownerUsername", ignore = true)
+    @Mapping(target = "primaryImageUrl", ignore = true)
+    @Mapping(target = "images", ignore = true)
     ItemDetailResponse toDetailResponse(ItemEntity entity);
 
     default ItemDetailResponse toDetailResponse(ItemEntity entity,
@@ -62,6 +75,16 @@ public interface ItemMapper {
                                                  List<TagEntity> tags,
                                                  UUID ownerUuid,
                                                  String ownerUsername) {
+        return toDetailResponse(entity, category, tags, ownerUuid, ownerUsername, null, List.of());
+    }
+
+    default ItemDetailResponse toDetailResponse(ItemEntity entity,
+                                                 CategoryEntity category,
+                                                 List<TagEntity> tags,
+                                                 UUID ownerUuid,
+                                                 String ownerUsername,
+                                                 String primaryImageUrl,
+                                                 List<ItemImageResponse> images) {
         ItemDetailResponse response = toDetailResponse(entity);
 
         // Map category
@@ -88,6 +111,8 @@ public interface ItemMapper {
 
         response.setOwnerUuid(ownerUuid);
         response.setOwnerUsername(ownerUsername);
+        response.setPrimaryImageUrl(primaryImageUrl);
+        response.setImages(images != null ? images : List.of());
         return response;
     }
 }
