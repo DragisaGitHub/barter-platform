@@ -1,28 +1,80 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { FormInput } from "../../components/forms/FormInput";
 import { parseApiError } from "@/utils";
 import type { ErrorResponse } from "@/api/generated/types.ts";
+import { routePaths } from "@/routes/routePaths.ts";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email or username is required"),
-  password: z.string().min(1, "Password is required"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
+
+function PasswordField({
+  showPassword,
+  onToggle,
+}: {
+  showPassword: boolean;
+  onToggle: () => void;
+}) {
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<LoginFormData>();
+
+  const error = errors.password?.message as string | undefined;
+
+  return (
+    <div className="w-full">
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+        Password
+      </label>
+      <div className="relative">
+        <input
+          {...register("password")}
+          type={showPassword ? "text" : "password"}
+          placeholder="Enter your password"
+          autoComplete="current-password"
+          className={[
+            "w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors duration-150",
+            "focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20",
+            "disabled:bg-slate-50 disabled:text-slate-500 disabled:cursor-not-allowed",
+            "dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500",
+            "dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20",
+            error && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+            "pr-12",
+          ].join(" ")}
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+          aria-label={showPassword ? "Hide password" : "Show password"}
+        >
+          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+      {error && <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{error}</p>}
+    </div>
+  );
+}
 
 export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   // null = no banner; string = show banner (empty string means email unknown)
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
 
@@ -34,13 +86,21 @@ export function LoginPage() {
     },
   });
 
+  const formError = methods.formState.errors.root?.message as string | undefined;
+  const invalidLoginMessage = "Invalid email/username or password.";
+
+  const showFormError = (message: string) => {
+    methods.setError("root", { type: "manual", message });
+  };
+
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     setUnverifiedEmail(null);
+    methods.clearErrors("root");
     try {
       await login(data);
       toast.success("Login successful");
-      navigate("/dashboard");
+      navigate(routePaths.dashboard);
     } catch (error) {
       if (error instanceof AxiosError) {
         const status = error.response?.status;
@@ -59,13 +119,37 @@ export function LoginPage() {
           return;
         }
 
-        toast.error(parseApiError(error));
+        if (
+          status === 400 ||
+          status === 401 ||
+          msg.toLowerCase().includes("invalid credentials") ||
+          msg.toLowerCase().includes("request validation failed")
+        ) {
+          showFormError(invalidLoginMessage);
+          toast.error(invalidLoginMessage);
+          return;
+        }
+
+        const message = parseApiError(error);
+        showFormError(message);
+        toast.error(message);
       } else {
-        toast.error(parseApiError(error));
+        const message = parseApiError(error);
+        showFormError(message);
+        toast.error(message);
       }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const onInvalid = () => {
+    const firstErrorMessage =
+      methods.formState.errors.identifier?.message ??
+      methods.formState.errors.password?.message ??
+      "Please fix the errors below.";
+
+    showFormError(firstErrorMessage as string);
   };
 
   return (
@@ -111,7 +195,13 @@ export function LoginPage() {
           )}
 
           <FormProvider {...methods}>
-            <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
+            <form noValidate onSubmit={methods.handleSubmit(onSubmit, onInvalid)} className="space-y-4">
+              {formError && (
+                <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
+                  {formError}
+                </div>
+              )}
+
               <FormInput
                 name="identifier"
                 label="Email or Username"
@@ -120,13 +210,19 @@ export function LoginPage() {
                 autoComplete="username"
               />
 
-              <FormInput
-                name="password"
-                label="Password"
-                type="password"
-                placeholder="Enter your password"
-                autoComplete="current-password"
+              <PasswordField
+                showPassword={showPassword}
+                onToggle={() => setShowPassword((current) => !current)}
               />
+
+              <div className="flex justify-end -mt-2">
+                <Link
+                  to={routePaths.forgotPassword}
+                  className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
+                >
+                  Forgot password?
+                </Link>
+              </div>
 
               <Button type="submit" fullWidth isLoading={isLoading}>
                 Sign In

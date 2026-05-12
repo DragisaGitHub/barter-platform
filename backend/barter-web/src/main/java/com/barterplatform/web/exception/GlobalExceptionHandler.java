@@ -10,6 +10,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -22,30 +23,49 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String DEFAULT_VALIDATION_MESSAGE = "Please check the entered fields.";
+    private static final String DEFAULT_PROCESSING_MESSAGE = "Request could not be processed.";
+    private static final String DEFAULT_INTERNAL_MESSAGE = "An unexpected internal error occurred.";
+
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(
             ApiException ex,
             HttpServletRequest request) {
-        return buildResponse(ex.getStatus(), ex.getCode(), ex.getMessage(), request, List.of());
+        return buildResponse(
+                ex.getStatus(),
+                ex.getCode(),
+                sanitizeMessage(ex.getMessage(), DEFAULT_PROCESSING_MESSAGE),
+                request,
+                List.of());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
+
         List<FieldErrorResponse> fieldErrors = new ArrayList<>();
 
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
-            fieldErrors.add(new FieldErrorResponse(fieldError.getField(), resolveMessage(fieldError.getDefaultMessage())));
+            fieldErrors.add(new FieldErrorResponse(
+                    fieldError.getField(),
+                    sanitizeMessage(fieldError.getDefaultMessage(), DEFAULT_VALIDATION_MESSAGE)));
         }
 
         ex.getBindingResult().getGlobalErrors().forEach(globalError ->
-                fieldErrors.add(new FieldErrorResponse(globalError.getObjectName(), resolveMessage(globalError.getDefaultMessage()))));
+                fieldErrors.add(new FieldErrorResponse(
+                        globalError.getObjectName(),
+                        sanitizeMessage(globalError.getDefaultMessage(), DEFAULT_VALIDATION_MESSAGE)))
+        );
+
+        String topLevelMessage = fieldErrors.isEmpty()
+                ? DEFAULT_VALIDATION_MESSAGE
+                : fieldErrors.getFirst().getMessage();
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 ErrorCode.VALIDATION_ERROR,
-                "Request validation failed.",
+                topLevelMessage,
                 request,
                 fieldErrors);
     }
@@ -54,16 +74,23 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleConstraintViolation(
             ConstraintViolationException ex,
             HttpServletRequest request) {
+
         List<FieldErrorResponse> fieldErrors = ex.getConstraintViolations().stream()
                 .map(violation -> new FieldErrorResponse(
-                        violation.getPropertyPath() != null ? violation.getPropertyPath().toString() : "request",
-                        resolveMessage(violation.getMessage())))
+                        violation.getPropertyPath() != null
+                                ? violation.getPropertyPath().toString()
+                                : "request",
+                        sanitizeMessage(violation.getMessage(), DEFAULT_VALIDATION_MESSAGE)))
                 .toList();
+
+        String topLevelMessage = fieldErrors.isEmpty()
+                ? DEFAULT_VALIDATION_MESSAGE
+                : fieldErrors.getFirst().getMessage();
 
         return buildResponse(
                 HttpStatus.BAD_REQUEST,
                 ErrorCode.VALIDATION_ERROR,
-                "Request validation failed.",
+                topLevelMessage,
                 request,
                 fieldErrors);
     }
@@ -72,10 +99,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAccessDenied(
             AccessDeniedException ex,
             HttpServletRequest request) {
+
         return buildResponse(
                 HttpStatus.FORBIDDEN,
                 ErrorCode.FORBIDDEN,
-                resolveMessage(ex.getMessage(), "Access is denied."),
+                sanitizeMessage(ex.getMessage(), "Access is denied."),
                 request,
                 List.of());
     }
@@ -84,20 +112,23 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleAuthentication(
             AuthenticationException ex,
             HttpServletRequest request) {
+
         return buildResponse(
                 HttpStatus.UNAUTHORIZED,
                 ErrorCode.UNAUTHORIZED,
-                resolveMessage(ex.getMessage(), "Authentication is required to access this resource."),
+                sanitizeMessage(ex.getMessage(), "Authentication is required to access this resource."),
                 request,
                 List.of());
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(HttpServletRequest request) {
+    public ResponseEntity<ErrorResponse> handleGenericException(
+            HttpServletRequest request) {
+
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 ErrorCode.INTERNAL_ERROR,
-                "An unexpected internal error occurred.",
+                DEFAULT_INTERNAL_MESSAGE,
                 request,
                 List.of());
     }
@@ -108,23 +139,45 @@ public class GlobalExceptionHandler {
             String message,
             HttpServletRequest request,
             List<FieldErrorResponse> fieldErrors) {
+
         ErrorResponse errorResponse = new ErrorResponse()
                 .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
                 .status(status.value())
                 .error(status.getReasonPhrase())
                 .code(code.name())
-                .message(resolveMessage(message))
+                .message(message)
                 .path(request.getRequestURI())
                 .fieldErrors(new ArrayList<>(fieldErrors));
 
         return ResponseEntity.status(status).body(errorResponse);
     }
 
-    private String resolveMessage(String message) {
-        return resolveMessage(message, "Request could not be processed.");
-    }
+    private String sanitizeMessage(String message, String fallback) {
+        if (message == null || message.isBlank()) {
+            return fallback;
+        }
 
-    private String resolveMessage(String message, String fallback) {
-        return message == null || message.isBlank() ? fallback : message;
+        String normalized = message.toLowerCase(Locale.ROOT);
+
+        List<String> unsafePatterns = List.of(
+                "hibernate",
+                "sql",
+                "select ",
+                "insert ",
+                "update ",
+                "delete ",
+                "constraint",
+                "table ",
+                "column ",
+                "relation ",
+                "org.hibernate",
+                "java.",
+                "exception"
+        );
+
+        boolean unsafe = unsafePatterns.stream()
+                .anyMatch(normalized::contains);
+
+        return unsafe ? fallback : message;
     }
 }

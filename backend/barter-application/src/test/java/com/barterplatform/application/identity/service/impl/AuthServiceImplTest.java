@@ -14,18 +14,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import com.barterplatform.api.model.CurrentUserResponse;
-import com.barterplatform.api.model.LoginRequest;
-import com.barterplatform.api.model.RefreshTokenRequest;
-import com.barterplatform.api.model.RegisterUserRequest;
-import com.barterplatform.api.model.RoleResponse;
-import com.barterplatform.api.model.TokenResponse;
-import com.barterplatform.api.model.UserStatus;
+import com.barterplatform.api.model.*;
 import com.barterplatform.application.identity.auth.JwtService;
 import com.barterplatform.application.identity.auth.RefreshTokenService;
 import com.barterplatform.application.identity.mapper.RoleMapper;
 import com.barterplatform.application.identity.mapper.UserMapper;
 import com.barterplatform.application.identity.service.EmailVerificationService;
+import com.barterplatform.application.identity.service.MailSender;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.identity.entity.RefreshTokenEntity;
@@ -38,11 +33,16 @@ import com.barterplatform.infrastructure.identity.repository.RoleRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
 import java.time.OffsetDateTime;
+import java.security.MessageDigest;
+import java.util.HexFormat;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -79,6 +79,12 @@ class AuthServiceImplTest {
 
     @Mock
     private EmailVerificationService emailVerificationService;
+
+    @Mock
+    private com.barterplatform.infrastructure.identity.repository.PasswordResetTokenRepository passwordResetTokenRepository;
+
+    @Mock
+    private MailSender mailSender;
 
     @InjectMocks
     private AuthServiceImpl authService;
@@ -446,6 +452,126 @@ class AuthServiceImplTest {
         authService.logout(request);
 
         verify(refreshTokenService).revoke(existingToken);
+    }
+
+    @Test
+    void forgotPassword_createsHashedTokenAndSendsEmail() throws Exception {
+        UserEntity user = activeUser();
+
+        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        MessageResponse response = authService.forgotPassword(new ForgotPasswordRequest("alex@example.com"));
+
+        assertEquals("If an account exists for this email, a password reset link has been sent.", response.getMessage());
+
+        ArgumentCaptor<com.barterplatform.domain.identity.entity.PasswordResetTokenEntity> tokenCaptor = ArgumentCaptor.forClass(com.barterplatform.domain.identity.entity.PasswordResetTokenEntity.class);
+        verify(passwordResetTokenRepository).save(tokenCaptor.capture());
+        com.barterplatform.domain.identity.entity.PasswordResetTokenEntity saved = tokenCaptor.getValue();
+        assertEquals(user.getId(), saved.getUserId());
+        assertNotNull(saved.getTokenHash());
+        assertNotNull(saved.getExpiresAt());
+
+        ArgumentCaptor<String> htmlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(mailSender).sendHtml(eq("alex@example.com"), eq("Barter Platform – Reset your password"), htmlCaptor.capture());
+        String html = htmlCaptor.getValue();
+
+        Pattern p = Pattern.compile("token=([0-9a-fA-F]{64})");
+        Matcher m = p.matcher(html);
+        assertTrue(m.find());
+        String rawToken = m.group(1);
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        String expectedHash = HexFormat.of().formatHex(digest.digest(rawToken.getBytes()));
+        assertEquals(expectedHash, saved.getTokenHash());
+    }
+
+    @Test
+    void forgotPassword_returnsGenericSuccessWhenUserDoesNotExist() {
+        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+
+        MessageResponse response = authService.forgotPassword(new ForgotPasswordRequest("unknown@example.com"));
+
+        assertEquals("If an account exists for this email, a password reset link has been sent.", response.getMessage());
+
+        verify(passwordResetTokenRepository, never()).save(any());
+        verify(mailSender, never()).sendHtml(any(), any(), any());
+    }
+
+    @Test
+    void resetPassword_updatesEncodedPassword_and_marksTokenUsed() throws Exception {
+        UserEntity user = activeUser();
+        String rawToken = "0123456789abcdef0123456789abcdef";
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        String tokenHash = HexFormat.of().formatHex(digest.digest(rawToken.getBytes()));
+
+        com.barterplatform.domain.identity.entity.PasswordResetTokenEntity tokenEntity = new com.barterplatform.domain.identity.entity.PasswordResetTokenEntity();
+        tokenEntity.setUserId(user.getId());
+        tokenEntity.setTokenHash(tokenHash);
+        tokenEntity.setExpiresAt(OffsetDateTime.now().plusMinutes(10));
+
+        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findFirstByUserIdAndUsedAtIsNullOrderByCreatedAtDesc(user.getId()))
+                .thenReturn(Optional.of(tokenEntity));
+        when(passwordEncoder.encode("NewP@ssword123")).thenReturn("encoded-new");
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(passwordResetTokenRepository.save(any(com.barterplatform.domain.identity.entity.PasswordResetTokenEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        MessageResponse response = authService.resetPassword(new ResetPasswordRequest("alex@example.com", rawToken, "NewP@ssword123"));
+
+        assertEquals("Password reset successfully.", response.getMessage());
+
+        ArgumentCaptor<UserEntity> userCaptor = ArgumentCaptor.forClass(UserEntity.class);
+        verify(userRepository).save(userCaptor.capture());
+        UserEntity savedUser = userCaptor.getValue();
+        assertEquals("encoded-new", savedUser.getPasswordHash());
+
+        ArgumentCaptor<com.barterplatform.domain.identity.entity.PasswordResetTokenEntity> tokenSaveCaptor = ArgumentCaptor.forClass(com.barterplatform.domain.identity.entity.PasswordResetTokenEntity.class);
+        verify(passwordResetTokenRepository).save(tokenSaveCaptor.capture());
+        com.barterplatform.domain.identity.entity.PasswordResetTokenEntity savedToken = tokenSaveCaptor.getValue();
+        assertNotNull(savedToken.getUsedAt());
+    }
+
+    @Test
+    void resetPassword_rejectsExpiredToken() throws Exception {
+        UserEntity user = activeUser();
+        String rawToken = "0123456789abcdef0123456789abcdef";
+
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        String tokenHash = HexFormat.of().formatHex(digest.digest(rawToken.getBytes()));
+
+        com.barterplatform.domain.identity.entity.PasswordResetTokenEntity tokenEntity = new com.barterplatform.domain.identity.entity.PasswordResetTokenEntity();
+        tokenEntity.setUserId(user.getId());
+        tokenEntity.setTokenHash(tokenHash);
+        tokenEntity.setExpiresAt(OffsetDateTime.now().minusMinutes(1));
+
+        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findFirstByUserIdAndUsedAtIsNullOrderByCreatedAtDesc(user.getId()))
+                .thenReturn(Optional.of(tokenEntity));
+
+        ApiException ex = assertThrows(ApiException.class, () -> authService.resetPassword(new ResetPasswordRequest("alex@example.com", rawToken, "NewP@ssword123")));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(ErrorCode.BAD_REQUEST, ex.getCode());
+    }
+
+    @Test
+    void resetPassword_rejectsInvalidToken() throws Exception {
+        UserEntity user = activeUser();
+        String rawToken = "0123456789abcdef0123456789abcdef";
+
+        com.barterplatform.domain.identity.entity.PasswordResetTokenEntity tokenEntity = new com.barterplatform.domain.identity.entity.PasswordResetTokenEntity();
+        tokenEntity.setUserId(user.getId());
+        tokenEntity.setTokenHash("deadbeef");
+        tokenEntity.setExpiresAt(OffsetDateTime.now().plusMinutes(10));
+
+        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(passwordResetTokenRepository.findFirstByUserIdAndUsedAtIsNullOrderByCreatedAtDesc(user.getId()))
+                .thenReturn(Optional.of(tokenEntity));
+
+        ApiException ex = assertThrows(ApiException.class, () -> authService.resetPassword(new ResetPasswordRequest("alex@example.com", rawToken, "NewP@ssword123")));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(ErrorCode.BAD_REQUEST, ex.getCode());
     }
 
     private UserEntity activeUser() {

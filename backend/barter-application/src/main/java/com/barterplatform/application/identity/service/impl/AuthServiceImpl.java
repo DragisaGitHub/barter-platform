@@ -1,32 +1,28 @@
 package com.barterplatform.application.identity.service.impl;
 
-import com.barterplatform.api.model.CurrentUserResponse;
-import com.barterplatform.api.model.LoginRequest;
-import com.barterplatform.api.model.MessageResponse;
-import com.barterplatform.api.model.RefreshTokenRequest;
-import com.barterplatform.api.model.RegisterUserRequest;
-import com.barterplatform.api.model.ResendVerificationCodeRequest;
-import com.barterplatform.api.model.TokenResponse;
-import com.barterplatform.api.model.VerifyEmailRequest;
+import com.barterplatform.api.model.*;
 import com.barterplatform.application.identity.auth.JwtService;
 import com.barterplatform.application.identity.auth.RefreshTokenService;
 import com.barterplatform.application.identity.mapper.RoleMapper;
 import com.barterplatform.application.identity.mapper.UserMapper;
 import com.barterplatform.application.identity.service.AuthService;
 import com.barterplatform.application.identity.service.EmailVerificationService;
+import com.barterplatform.application.identity.service.MailSender;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
-import com.barterplatform.domain.identity.entity.RefreshTokenEntity;
-import com.barterplatform.domain.identity.entity.RoleEntity;
-import com.barterplatform.domain.identity.entity.UserEntity;
-import com.barterplatform.domain.identity.entity.UserRoleEntity;
-import com.barterplatform.domain.identity.entity.UserRoleId;
+import com.barterplatform.domain.identity.entity.*;
 import com.barterplatform.domain.identity.enums.RoleCode;
 import com.barterplatform.domain.identity.enums.UserStatus;
+import com.barterplatform.infrastructure.identity.repository.PasswordResetTokenRepository;
 import com.barterplatform.infrastructure.identity.repository.RoleRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
+
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.time.OffsetDateTime;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -41,6 +37,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final long PASSWORD_RESET_EXPIRATION_MINUTES = 30;
+
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final MailSender mailSender;
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
@@ -103,6 +105,75 @@ public class AuthServiceImpl implements AuthService {
                 .expiresIn(jwtService.getAccessTokenExpirationSeconds())
                 .refreshExpiresIn(refreshTokenService.getRefreshTokenExpirationSeconds())
                 .user(userResponse);
+    }
+
+    @Override
+    public MessageResponse forgotPassword(ForgotPasswordRequest request) {
+        Optional<UserEntity> userOptional = userRepository.findByEmail(request.getEmail());
+
+        if (userOptional.isEmpty()) {
+            return new MessageResponse().message("If an account exists for this email, a password reset link has been sent.");
+        }
+
+        UserEntity user = userOptional.get();
+
+        String rawToken = generateResetToken();
+        String tokenHash = hashToken(rawToken);
+
+        PasswordResetTokenEntity entity = new PasswordResetTokenEntity();
+        entity.setUserId(user.getId());
+        entity.setTokenHash(tokenHash);
+        entity.setExpiresAt(OffsetDateTime.now().plusMinutes(PASSWORD_RESET_EXPIRATION_MINUTES));
+
+        passwordResetTokenRepository.save(entity);
+
+        mailSender.sendHtml(
+                user.getEmail(),
+                "Barter Platform – Reset your password",
+                buildPasswordResetEmailHtml(user.getEmail(), rawToken)
+        );
+
+        return new MessageResponse().message("If an account exists for this email, a password reset link has been sent.");
+    }
+
+    @Override
+    public MessageResponse resetPassword(ResetPasswordRequest request) {
+        UserEntity user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        ErrorCode.NOT_FOUND,
+                        "User not found."));
+
+        PasswordResetTokenEntity tokenEntity = passwordResetTokenRepository
+                .findFirstByUserIdAndUsedAtIsNullOrderByCreatedAtDesc(user.getId())
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.BAD_REQUEST,
+                        ErrorCode.BAD_REQUEST,
+                        "Invalid or expired password reset token."));
+
+        if (tokenEntity.getExpiresAt().isBefore(OffsetDateTime.now())) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCode.BAD_REQUEST,
+                    "Invalid or expired password reset token.");
+        }
+
+        String providedHash = hashToken(request.getToken());
+
+        if (!providedHash.equals(tokenEntity.getTokenHash())) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCode.BAD_REQUEST,
+                    "Invalid or expired password reset token.");
+        }
+
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        tokenEntity.setUsedAt(OffsetDateTime.now());
+        passwordResetTokenRepository.save(tokenEntity);
+
+        return new MessageResponse().message("Password reset successfully.");
     }
 
     @Override
@@ -265,5 +336,69 @@ public class AuthServiceImpl implements AuthService {
         userRoleEntity.setId(userRoleId);
         userRoleEntity.setAssignedAt(OffsetDateTime.now());
         return userRoleEntity;
+    }
+
+    private String generateResetToken() {
+        byte[] bytes = new byte[32];
+        SECURE_RANDOM.nextBytes(bytes);
+        return HexFormat.of().formatHex(bytes);
+    }
+
+    private String hashToken(String rawToken) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(rawToken.getBytes());
+            return HexFormat.of().formatHex(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-256 algorithm not available", e);
+        }
+    }
+
+    private static String buildPasswordResetEmailHtml(String email, String token) {
+        String resetUrl = "http://localhost:5173/reset-password?email=%s&token=%s".formatted(email, token);
+
+        return """
+            <!DOCTYPE html>
+            <html lang="en">
+            <body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+              <table width="100%%" cellpadding="0" cellspacing="0" role="presentation"
+                     style="background:#f1f5f9;padding:40px 16px;">
+                <tr>
+                  <td align="center">
+                    <table width="100%%" cellpadding="0" cellspacing="0" role="presentation"
+                           style="max-width:480px;background:#ffffff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);">
+                      <tr>
+                        <td style="padding:28px 40px 20px;text-align:center;border-bottom:1px solid #e2e8f0;">
+                          <span style="font-size:22px;font-weight:700;color:#4f46e5;letter-spacing:-0.5px;">Barter Platform</span>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:32px 40px;">
+                          <h1 style="margin:0 0 8px;font-size:20px;font-weight:700;color:#0f172a;">
+                            Reset your password
+                          </h1>
+                          <p style="margin:0 0 24px;font-size:15px;color:#475569;line-height:1.6;">
+                            We received a password reset request for <strong>%s</strong>.
+                            This link expires in <strong>%d minutes</strong>.
+                          </p>
+                          <p style="margin:0 0 24px;">
+                            <a href="%s"
+                               style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;
+                                      padding:12px 20px;border-radius:8px;font-weight:600;font-size:14px;">
+                              Reset password
+                            </a>
+                          </p>
+                          <p style="margin:0;font-size:13px;color:#94a3b8;line-height:1.6;">
+                            If you did not request this, you can safely ignore this email.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </body>
+            </html>
+            """.formatted(email, AuthServiceImpl.PASSWORD_RESET_EXPIRATION_MINUTES, resetUrl);
     }
 }

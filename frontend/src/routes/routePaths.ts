@@ -1,6 +1,8 @@
 export const routePaths = {
   home: "/",
   login: "/login",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
   register: "/register",
   dashboard: "/dashboard",
   marketplace: "/marketplace",

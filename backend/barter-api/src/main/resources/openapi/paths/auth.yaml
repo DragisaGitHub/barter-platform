@@ -40,6 +40,43 @@ login:
         $ref: '../components/responses/Unauthorized.yaml'
       '403':
         $ref: '../components/responses/Forbidden.yaml'
+forgotPassword:
+  post:
+    tags:
+      - Auth
+    operationId: forgotPassword
+    summary: Request password reset email
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/ForgotPasswordRequest'
+    responses:
+      '200':
+        description: Password reset email sent if account exists
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/MessageResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+
+resetPassword:
+  post:
+    tags:
+      - Auth
+    operationId: resetPassword
+    summary: Reset account password using token
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/ResetPasswordRequest'
+    responses:
+      '200':
+        description: Password reset successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/MessageResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
 refresh:
   post:
     tags:

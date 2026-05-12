@@ -28,6 +28,8 @@ export type TokenResponse = components["schemas"]["TokenResponse"];
 
 export type RegisterRequest = components["schemas"]["RegisterUserRequest"];
 export type LoginRequest = components["schemas"]["LoginRequest"];
+export type ForgotPasswordRequest = components["schemas"]["ForgotPasswordRequest"];
+export type ResetPasswordRequest = components["schemas"]["ResetPasswordRequest"];
 export type VerifyEmailRequest = components["schemas"]["VerifyEmailRequest"];
 export type ResendVerificationCodeRequest = components["schemas"]["ResendVerificationCodeRequest"];
 
