@@ -55,12 +55,16 @@ public class SecurityConfig {
                                 "/auth/logout",
                                 "/auth/verify-email",
                                 "/auth/resend-verification-code",
+                                "/auth/forgot-password",
+                                "/auth/reset-password",
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/refresh",
                                 "/api/v1/auth/logout",
                                 "/api/v1/auth/verify-email",
-                                "/api/v1/auth/resend-verification-code").permitAll()
+                                "/api/v1/auth/resend-verification-code",
+                                "/api/v1/auth/forgot-password",
+                                "/api/v1/auth/reset-password").permitAll()
                         .requestMatchers(HttpMethod.GET,
                                 "/ping",
                                 "/api/v1/ping",

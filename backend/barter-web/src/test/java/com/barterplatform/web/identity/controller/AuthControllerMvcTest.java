@@ -8,12 +8,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.barterplatform.api.model.CurrentUserResponse;
-import com.barterplatform.api.model.LoginRequest;
-import com.barterplatform.api.model.RefreshTokenRequest;
-import com.barterplatform.api.model.RegisterUserRequest;
-import com.barterplatform.api.model.TokenResponse;
-import com.barterplatform.api.model.UserStatus;
+import com.barterplatform.api.model.*;
 import com.barterplatform.application.identity.service.AuthService;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
@@ -45,6 +40,20 @@ class AuthControllerMvcTest {
               "password": "P@ssword123"
             }
             """;
+
+    private static final String FORGOT_PASSWORD_REQUEST_JSON = """
+        {
+          "email": "alex@example.com"
+        }
+        """;
+
+    private static final String RESET_PASSWORD_REQUEST_JSON = """
+        {
+          "email": "alex@example.com",
+          "token": "0123456789abcdef0123456789abcdef",
+          "newPassword": "NewP@ssword123"
+        }
+        """;
 
     private static final String REFRESH_TOKEN_REQUEST_JSON = """
             {
@@ -128,6 +137,95 @@ class AuthControllerMvcTest {
                 .andExpect(jsonPath("$.user.uuid").value("11111111-1111-1111-1111-111111111111"));
 
         verify(authService).login(request);
+        verifyNoMoreInteractions(authService);
+    }
+
+    @Test
+    void shouldRequestPasswordResetSuccessfully() throws Exception {
+        ForgotPasswordRequest request = new ForgotPasswordRequest("alex@example.com");
+        MessageResponse response = new MessageResponse()
+                .message("If an account exists for this email, a password reset link has been sent.");
+
+        when(authService.forgotPassword(request)).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/auth/forgot-password")
+                        .contextPath("/api/v1")
+                        .servletPath("/auth/forgot-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(FORGOT_PASSWORD_REQUEST_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("If an account exists for this email, a password reset link has been sent."));
+
+        verify(authService).forgotPassword(request);
+        verifyNoMoreInteractions(authService);
+    }
+
+    @Test
+    void shouldResetPasswordSuccessfully() throws Exception {
+        ResetPasswordRequest request = new ResetPasswordRequest(
+                "alex@example.com",
+                "0123456789abcdef0123456789abcdef",
+                "NewP@ssword123");
+        MessageResponse response = new MessageResponse()
+                .message("Password reset successfully.");
+
+        when(authService.resetPassword(request)).thenReturn(response);
+
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                        .contextPath("/api/v1")
+                        .servletPath("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(RESET_PASSWORD_REQUEST_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password reset successfully."));
+
+        verify(authService).resetPassword(request);
+        verifyNoMoreInteractions(authService);
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidResetToken() throws Exception {
+        ResetPasswordRequest request = new ResetPasswordRequest(
+                "alex@example.com",
+                "0123456789abcdef0123456789abcdef",
+                "NewP@ssword123");
+
+        when(authService.resetPassword(request)).thenThrow(
+                new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, "Invalid or expired password reset token."));
+
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                        .contextPath("/api/v1")
+                        .servletPath("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(RESET_PASSWORD_REQUEST_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Invalid or expired password reset token."));
+
+        verify(authService).resetPassword(request);
+        verifyNoMoreInteractions(authService);
+    }
+
+    @Test
+    void shouldReturnBadRequestForExpiredResetToken() throws Exception {
+        ResetPasswordRequest request = new ResetPasswordRequest(
+                "alex@example.com",
+                "0123456789abcdef0123456789abcdef",
+                "NewP@ssword123");
+
+        when(authService.resetPassword(request)).thenThrow(
+                new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, "Password reset token expired."));
+
+        mockMvc.perform(post("/api/v1/auth/reset-password")
+                        .contextPath("/api/v1")
+                        .servletPath("/auth/reset-password")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(RESET_PASSWORD_REQUEST_JSON))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Password reset token expired."));
+
+        verify(authService).resetPassword(request);
         verifyNoMoreInteractions(authService);
     }
 

@@ -18,6 +18,8 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import java.util.Iterator;
 import java.util.Set;
+
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -158,7 +160,7 @@ class GlobalExceptionHandlerMvcTest {
 
         @RequestMapping("/constraint")
         String constraintViolation() {
-            throw new ConstraintViolationException(Set.of(mockConstraintViolation("query", "must not be blank")));
+            throw new ConstraintViolationException(Set.of(mockConstraintViolation()));
         }
 
         @RequestMapping("/access-denied")
@@ -176,12 +178,12 @@ class GlobalExceptionHandlerMvcTest {
     }
 
     @SuppressWarnings("unchecked")
-    private static ConstraintViolation<Object> mockConstraintViolation(String field, String message) {
+    private static ConstraintViolation<Object> mockConstraintViolation() {
         ConstraintViolation<Object> violation = mock(ConstraintViolation.class);
-        Path path = new SimplePath(field);
+        Path path = new SimplePath("query");
 
         when(violation.getPropertyPath()).thenReturn(path);
-        when(violation.getMessage()).thenReturn(message);
+        when(violation.getMessage()).thenReturn("must not be blank");
 
         return violation;
     }
@@ -189,12 +191,12 @@ class GlobalExceptionHandlerMvcTest {
     private record SimplePath(String value) implements Path {
 
         @Override
-        public Iterator<Node> iterator() {
+        public @NonNull Iterator<Node> iterator() {
             return java.util.List.<Node>of().iterator();
         }
 
         @Override
-        public String toString() {
+        public @NonNull String toString() {
             return value;
         }
     }

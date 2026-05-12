@@ -32,6 +32,10 @@ paths:
     $ref: './paths/auth.yaml#/register'
   /auth/login:
     $ref: './paths/auth.yaml#/login'
+  /auth/forgot-password:
+    $ref: './paths/auth.yaml#/forgotPassword'
+  /auth/reset-password:
+    $ref: './paths/auth.yaml#/resetPassword'
   /auth/refresh:
     $ref: './paths/auth.yaml#/refresh'
   /auth/logout:
@@ -224,6 +228,18 @@ components:
         application/json:
           schema:
             $ref: './components/requests/LoginRequest.yaml'
+    ForgotPasswordRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/ForgotPasswordRequest.yaml'
+    ResetPasswordRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/ResetPasswordRequest.yaml'
     RefreshTokenRequest:
       content:
         application/json:

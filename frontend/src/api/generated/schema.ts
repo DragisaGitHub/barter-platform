@@ -38,6 +38,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Request password reset email */
+        post: operations["forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reset account password using token */
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/refresh": {
         parameters: {
             query?: never;
@@ -1235,6 +1269,16 @@ export interface components {
             /** @description Optional one-time MFA code for second-factor login. */
             mfaCode?: string | null;
         };
+        ForgotPasswordRequest: {
+            /** Format: email */
+            email: string;
+        };
+        ResetPasswordRequest: {
+            /** Format: email */
+            email: string;
+            token: string;
+            newPassword: string;
+        };
         RefreshTokenRequest: {
             /** @description Raw refresh token issued by the auth service. */
             refreshToken: string;
@@ -1357,6 +1401,16 @@ export interface components {
                 "application/json": components["schemas"]["LoginRequest"];
             };
         };
+        ForgotPasswordRequest: {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordRequest"];
+            };
+        };
+        ResetPasswordRequest: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
         RefreshTokenRequest: {
             content: {
                 "application/json": components["schemas"]["RefreshTokenRequest"];
@@ -1395,6 +1449,16 @@ export interface components {
         "requestBodies-LoginRequest": {
             content: {
                 "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        "requestBodies-ForgotPasswordRequest": {
+            content: {
+                "application/json": components["schemas"]["ForgotPasswordRequest"];
+            };
+        };
+        "requestBodies-ResetPasswordRequest": {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
             };
         };
         "requestBodies-RefreshTokenRequest": {
@@ -1472,6 +1536,49 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+        };
+    };
+    forgotPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["requestBodies-ForgotPasswordRequest"];
+        responses: {
+            /** @description Password reset email sent if account exists */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["requestBodies-ResetPasswordRequest"];
+        responses: {
+            /** @description Password reset successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            404: components["responses"]["NotFound"];
         };
     };
     refreshToken: {

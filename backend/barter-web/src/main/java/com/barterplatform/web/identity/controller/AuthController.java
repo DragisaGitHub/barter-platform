@@ -1,14 +1,7 @@
 package com.barterplatform.web.identity.controller;
 
 import com.barterplatform.api.controller.AuthApi;
-import com.barterplatform.api.model.CurrentUserResponse;
-import com.barterplatform.api.model.LoginRequest;
-import com.barterplatform.api.model.MessageResponse;
-import com.barterplatform.api.model.RefreshTokenRequest;
-import com.barterplatform.api.model.RegisterUserRequest;
-import com.barterplatform.api.model.ResendVerificationCodeRequest;
-import com.barterplatform.api.model.TokenResponse;
-import com.barterplatform.api.model.VerifyEmailRequest;
+import com.barterplatform.api.model.*;
 import com.barterplatform.application.identity.service.AuthService;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +26,18 @@ public class AuthController implements AuthApi {
     @Override
     public ResponseEntity<TokenResponse> login(@Nullable LoginRequest loginRequest) {
         TokenResponse response = authService.login(loginRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<MessageResponse> forgotPassword(ForgotPasswordRequest forgotPasswordRequest) {
+        MessageResponse response = authService.forgotPassword(forgotPasswordRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<MessageResponse> resetPassword(ResetPasswordRequest resetPasswordRequest) {
+        MessageResponse response = authService.resetPassword(resetPasswordRequest);
         return ResponseEntity.ok(response);
     }
 
