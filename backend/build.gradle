@@ -4,6 +4,11 @@ plugins {
     id 'org.openapi.generator' version '7.14.0' apply false
 }
 
+ext {
+    springBootVersion = '3.5.0'
+    mapstructVersion = '1.6.3'
+}
+
 allprojects {
     group = 'com.barterplatform'
     version = '0.0.1-SNAPSHOT'
@@ -13,13 +18,18 @@ allprojects {
     }
 }
 
-ext {
-    mapstructVersion = '1.6.3'
-    junitJupiterVersion = '5.10.2'
-}
-
 subprojects {
     apply plugin: 'java'
+
+    if (!plugins.hasPlugin('io.spring.dependency-management')) {
+        apply plugin: 'io.spring.dependency-management'
+    }
+
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.boot:spring-boot-dependencies:${rootProject.ext.springBootVersion}"
+        }
+    }
 
     java {
         toolchain {
@@ -39,7 +49,8 @@ subprojects {
     }
 
     dependencies {
-        testImplementation "org.junit.jupiter:junit-jupiter:${rootProject.ext.junitJupiterVersion}"
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
 }
 
