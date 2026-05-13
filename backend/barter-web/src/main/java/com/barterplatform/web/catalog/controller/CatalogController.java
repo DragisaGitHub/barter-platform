@@ -9,9 +9,11 @@ import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemImageResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemStatus;
+import com.barterplatform.api.model.MessageResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.api.model.UpdateItemRequest;
 import com.barterplatform.application.catalog.service.CatalogQueryService;
+import com.barterplatform.application.catalog.service.FavoriteItemService;
 import com.barterplatform.application.catalog.service.ItemCommandService;
 import com.barterplatform.application.catalog.service.ItemImageService;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
@@ -28,13 +30,16 @@ import org.springframework.web.multipart.MultipartFile;
 public class CatalogController implements CatalogApi {
 
     private final CatalogQueryService catalogQueryService;
+    private final FavoriteItemService favoriteItemService;
     private final ItemCommandService itemCommandService;
     private final ItemImageService itemImageService;
 
     public CatalogController(CatalogQueryService catalogQueryService,
+                             FavoriteItemService favoriteItemService,
                              ItemCommandService itemCommandService,
                              ItemImageService itemImageService) {
         this.catalogQueryService = catalogQueryService;
+        this.favoriteItemService = favoriteItemService;
         this.itemCommandService = itemCommandService;
         this.itemImageService = itemImageService;
     }
@@ -98,6 +103,26 @@ public class CatalogController implements CatalogApi {
         UUID ownerUuid = currentUserUuid();
         return ResponseEntity.ok(catalogQueryService.listMyItems(
                 ownerUuid, page, size, sort, mapStatusToDomain(status)));
+    }
+
+    @Override
+    public ResponseEntity<ItemPagedResponse> listFavoriteItems(
+            Integer page, Integer size, @Nullable String sort) {
+        UUID currentUserUuid = currentUserUuid();
+        return ResponseEntity.ok(favoriteItemService.listFavoriteItems(currentUserUuid, page, size, sort));
+    }
+
+    @Override
+    public ResponseEntity<MessageResponse> favoriteItem(UUID itemUuid) {
+        UUID currentUserUuid = currentUserUuid();
+        return ResponseEntity.ok(favoriteItemService.favoriteItem(currentUserUuid, itemUuid));
+    }
+
+    @Override
+    public ResponseEntity<Void> unfavoriteItem(UUID itemUuid) {
+        UUID currentUserUuid = currentUserUuid();
+        favoriteItemService.unfavoriteItem(currentUserUuid, itemUuid);
+        return ResponseEntity.noContent().build();
     }
 
     @Override

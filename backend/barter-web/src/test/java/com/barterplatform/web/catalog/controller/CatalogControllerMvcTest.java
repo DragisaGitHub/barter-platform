@@ -19,8 +19,10 @@ import com.barterplatform.api.model.CreateItemRequest;
 import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
+import com.barterplatform.api.model.MessageResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.application.catalog.service.CatalogQueryService;
+import com.barterplatform.application.catalog.service.FavoriteItemService;
 import com.barterplatform.application.catalog.service.ItemCommandService;
 import com.barterplatform.application.catalog.service.ItemImageService;
 import com.barterplatform.web.exception.GlobalExceptionHandler;
@@ -43,16 +45,19 @@ class CatalogControllerMvcTest {
 
     private MockMvc mockMvc;
     private CatalogQueryService catalogQueryService;
+    private FavoriteItemService favoriteItemService;
     private ItemCommandService itemCommandService;
     private ItemImageService itemImageService;
 
     @BeforeEach
     void setUp() {
         catalogQueryService = mock(CatalogQueryService.class);
+        favoriteItemService = mock(FavoriteItemService.class);
         itemCommandService = mock(ItemCommandService.class);
         itemImageService = mock(ItemImageService.class);
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new CatalogController(catalogQueryService, itemCommandService, itemImageService))
+                .standaloneSetup(new CatalogController(
+                        catalogQueryService, favoriteItemService, itemCommandService, itemImageService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
         SecurityContextHolder.clearContext();
@@ -191,6 +196,50 @@ class CatalogControllerMvcTest {
                 .andExpect(jsonPath("$.totalElements").value(0));
 
         verify(catalogQueryService).listMyItems(eq(USER_UUID), any(), any(), any(), any());
+    }
+
+    @Test
+    void listFavoriteItemsShouldDelegateToFavoriteItemService() throws Exception {
+        setAuthenticatedUser();
+
+        ItemPagedResponse pagedResponse = new ItemPagedResponse()
+                .content(List.of(new ItemSummaryResponse().uuid(UUID.randomUUID()).title("Wishlisted Item")))
+                .page(0).size(20).totalElements(1L).totalPages(1).first(true).last(true);
+        when(favoriteItemService.listFavoriteItems(eq(USER_UUID), any(), any(), any()))
+                .thenReturn(pagedResponse);
+
+        mockMvc.perform(apiGet("/catalog/favorites"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].title").value("Wishlisted Item"));
+
+        verify(favoriteItemService).listFavoriteItems(eq(USER_UUID), any(), any(), any());
+    }
+
+    @Test
+    void favoriteItemShouldDelegateToFavoriteItemService() throws Exception {
+        setAuthenticatedUser();
+
+        UUID itemUuid = UUID.randomUUID();
+        when(favoriteItemService.favoriteItem(USER_UUID, itemUuid))
+                .thenReturn(new MessageResponse().message("Item favorited successfully."));
+
+        mockMvc.perform(apiPost("/catalog/items/" + itemUuid + "/favorite"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Item favorited successfully."));
+
+        verify(favoriteItemService).favoriteItem(USER_UUID, itemUuid);
+    }
+
+    @Test
+    void unfavoriteItemShouldDelegateToFavoriteItemService() throws Exception {
+        setAuthenticatedUser();
+
+        UUID itemUuid = UUID.randomUUID();
+
+        mockMvc.perform(apiDelete("/catalog/items/" + itemUuid + "/favorite"))
+                .andExpect(status().isNoContent());
+
+        verify(favoriteItemService).unfavoriteItem(USER_UUID, itemUuid);
     }
 
     // ── Authenticated: archiveItem ───────────────────────────────

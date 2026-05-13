@@ -1,7 +1,9 @@
 package com.barterplatform.web.catalog.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -10,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.barterplatform.BarterApplication;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
+import com.barterplatform.infrastructure.catalog.repository.FavoriteItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
@@ -81,12 +84,14 @@ class CatalogIntegrationTest {
     @Autowired private UserRoleRepository userRoleRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
     @Autowired private EmailVerificationCodeRepository emailVerificationCodeRepository;
+    @Autowired private FavoriteItemRepository favoriteItemRepository;
     @Autowired private ItemRepository itemRepository;
     @Autowired private ItemTagRepository itemTagRepository;
 
     @BeforeEach
     void cleanMutableTables() {
         SecurityContextHolder.clearContext();
+        favoriteItemRepository.deleteAllInBatch();
         itemTagRepository.deleteAllInBatch();
         itemRepository.deleteAllInBatch();
         emailVerificationCodeRepository.deleteAllInBatch();
@@ -469,6 +474,110 @@ class CatalogIntegrationTest {
     }
 
     // ══════════════════════════════════════════════════════════════
+    //  Favorites / wishlist
+    // ══════════════════════════════════════════════════════════════
+
+    @Test
+    void shouldFavoriteItemSuccessfully() throws Exception {
+        String token = registerActivateAndLogin("alice", "alice@example.com", "P@ssword123");
+        String itemUuid = createItem(token, "Favorite Candidate");
+
+        mockMvc.perform(apiPost("/catalog/items/" + itemUuid + "/favorite")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Item favorited successfully."));
+
+        assertThat(favoriteItemRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    void shouldFavoriteItemIdempotently() throws Exception {
+        String token = registerActivateAndLogin("alice", "alice@example.com", "P@ssword123");
+        String itemUuid = createItem(token, "Favorite Twice");
+
+        mockMvc.perform(apiPost("/catalog/items/" + itemUuid + "/favorite")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(apiPost("/catalog/items/" + itemUuid + "/favorite")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Item favorited successfully."));
+
+        assertThat(favoriteItemRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    void shouldUnfavoriteItemIdempotently() throws Exception {
+        String token = registerActivateAndLogin("alice", "alice@example.com", "P@ssword123");
+        String itemUuid = createItem(token, "Unfavorite Candidate");
+
+        mockMvc.perform(apiPost("/catalog/items/" + itemUuid + "/favorite")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(apiDelete("/catalog/items/" + itemUuid + "/favorite")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(apiDelete("/catalog/items/" + itemUuid + "/favorite")
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isNoContent());
+
+        assertThat(favoriteItemRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    void shouldListOnlyCurrentUsersFavorites() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@example.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob42", "bob@example.com", "P@ssword456");
+
+        String aliceItemUuid = createItem(aliceToken, "Alice Favorite Item");
+        String bobItemUuid = createItem(bobToken, "Bob Favorite Item");
+
+        mockMvc.perform(apiPost("/catalog/items/" + aliceItemUuid + "/favorite")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(apiPost("/catalog/items/" + bobItemUuid + "/favorite")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(apiPost("/catalog/items/" + aliceItemUuid + "/favorite")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(apiGet("/catalog/favorites")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.sort").value("createdAt,desc"))
+                .andExpect(jsonPath("$.content[*].title", containsInAnyOrder(
+                        "Alice Favorite Item", "Bob Favorite Item")));
+
+        mockMvc.perform(apiGet("/catalog/favorites")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content", hasSize(1)))
+                .andExpect(jsonPath("$.content[0].title").value("Alice Favorite Item"));
+    }
+
+    @Test
+    void shouldReturn401ForFavoriteWithoutToken() throws Exception {
+        String token = registerActivateAndLogin("alice", "alice@example.com", "P@ssword123");
+        String itemUuid = createItem(token, "Unauthorized Favorite");
+
+        mockMvc.perform(apiPost("/catalog/items/" + itemUuid + "/favorite"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldReturn401ForFavoritesWithoutToken() throws Exception {
+        mockMvc.perform(apiGet("/catalog/favorites"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ══════════════════════════════════════════════════════════════
     //  Helpers
     // ══════════════════════════════════════════════════════════════
 
@@ -521,6 +630,24 @@ class CatalogIntegrationTest {
         return json.get(field).asText();
     }
 
+    private String createItem(String token, String title) throws Exception {
+        MvcResult createResult = mockMvc.perform(apiPost("/catalog/items")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "%s",
+                                  "categoryUuid": "%s",
+                                  "condition": "GOOD",
+                                  "status": "ACTIVE"
+                                }
+                                """.formatted(title, CATEGORY_TOYS_UUID)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        return extractField(createResult, "uuid");
+    }
+
     private MockHttpServletRequestBuilder apiGet(String path) {
         return get("/api/v1" + path)
                 .contextPath("/api/v1")
@@ -537,6 +664,13 @@ class CatalogIntegrationTest {
 
     private MockHttpServletRequestBuilder apiPatch(String path) {
         return patch("/api/v1" + path)
+                .contextPath("/api/v1")
+                .servletPath(path)
+                .accept(MediaType.APPLICATION_JSON);
+    }
+
+    private MockHttpServletRequestBuilder apiDelete(String path) {
+        return delete("/api/v1" + path)
                 .contextPath("/api/v1")
                 .servletPath(path)
                 .accept(MediaType.APPLICATION_JSON);

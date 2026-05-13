@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   Store,
+  Heart,
   Inbox,
   Send,
   List,
@@ -52,6 +53,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const navItems: NavItem[] = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/marketplace", icon: Store, label: "Marketplace" },
+    { to: "/favorites", icon: Heart, label: "Favorites" },
     { to: "/my-items", icon: List, label: "My Items" },
     { to: "/offers/incoming", icon: Inbox, label: "Incoming Offers", badge: pendingIncoming },
     { to: "/offers/sent", icon: Send, label: "Sent Offers", badge: pendingSent },

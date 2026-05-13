@@ -19,6 +19,7 @@ import { SystemPage } from "../features/admin/SystemPage";
 import { MarketplacePage } from "../features/catalog/MarketplacePage";
 import { ItemDetailPage } from "../features/catalog/ItemDetailPage";
 import { MyItemsPage } from "../features/catalog/MyItemsPage";
+import { FavoritesPage } from "../features/catalog/FavoritesPage";
 import { CreateItemPage } from "../features/catalog/CreateItemPage";
 import { EditItemPage } from "../features/catalog/EditItemPage";
 import { IncomingOffersPage } from "../features/trade/IncomingOffersPage";
@@ -87,6 +88,10 @@ export const router = createBrowserRouter([
       {
         path: "/my-items",
         element: <MyItemsPage />,
+      },
+      {
+        path: "/favorites",
+        element: <FavoritesPage />,
       },
       {
         path: "/my-items/new",

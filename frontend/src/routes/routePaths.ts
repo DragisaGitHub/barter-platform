@@ -40,6 +40,7 @@ export const routePaths = {
   verifyEmail: "/verify-email",
   dashboard: "/dashboard",
   marketplaceItem: (uuid: string) => `/marketplace/items/${uuid}`,
+  favorites: "/favorites",
   myItems: "/my-items",
   myItemsNew: "/my-items/new",
   myItemsEdit: (uuid: string) => `/my-items/${uuid}/edit`,

@@ -1,8 +1,9 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   Clock,
+  Heart,
   LogIn,
   Package,
   Search,
@@ -16,18 +17,27 @@ import type {
   CategoryResponse,
   ItemSummaryResponse,
 } from "@/api/generated/types";
-import { routePaths } from "@/routes/routePaths";
+import { buildPathWithQuery, routePaths } from "@/routes/routePaths";
+import { parseApiError } from "@/utils";
 import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Spinner } from "../../components/ui/Spinner";
 import { getCategoryIcon } from "./categoryIcons";
-import { useCategories, useSearchItems } from "./useCatalog";
+import {
+  useCategories,
+  useFavoriteItem,
+  useFavoriteItems,
+  useSearchItems,
+  useUnfavoriteItem,
+} from "./useCatalog";
+import { toast } from "sonner";
 
 const pageShellClassName = "marketplace-panel";
 
 export function MarketplacePage() {
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [params, setParams] = useState<SearchItemsParams>({
     page: 0,
     size: 20,
@@ -35,9 +45,18 @@ export function MarketplacePage() {
   });
   const [searchInput, setSearchInput] = useState("");
   const [loadedItems, setLoadedItems] = useState<ItemSummaryResponse[]>([]);
+  const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>({});
+  const [pendingFavoriteUuid, setPendingFavoriteUuid] = useState<string | null>(null);
 
   const { data, isLoading, isFetching, isError } = useSearchItems(params);
   const { data: categories } = useCategories();
+  const favoriteListParams = useMemo(
+    () => ({ page: 0, size: 200, sort: "createdAt,desc" }),
+    []
+  );
+  const { data: favoriteItemsData } = useFavoriteItems(favoriteListParams, isAuthenticated);
+  const favoriteItemMutation = useFavoriteItem();
+  const unfavoriteItemMutation = useUnfavoriteItem();
 
   const orderedCategories = useMemo(
     () => (categories ? [...categories].sort((a, b) => a.sortOrder - b.sortOrder) : []),
@@ -72,6 +91,13 @@ export function MarketplacePage() {
     );
   }, [data]);
 
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setFavoriteOverrides({});
+      setPendingFavoriteUuid(null);
+    }
+  }, [isAuthenticated]);
+
   const filteredItems = useMemo(() => {
     const activeItems = loadedItems.filter((item) => item.status === "ACTIVE");
 
@@ -81,6 +107,20 @@ export function MarketplacePage() {
 
     return activeItems.filter((item) => item.ownerUuid !== user.uuid);
   }, [loadedItems, user]);
+
+  const favoriteItemUuids = useMemo(() => {
+    const uuids = new Set(favoriteItemsData?.content.map((item) => item.uuid) ?? []);
+
+    Object.entries(favoriteOverrides).forEach(([itemUuid, isFavorite]) => {
+      if (isFavorite) {
+        uuids.add(itemUuid);
+      } else {
+        uuids.delete(itemUuid);
+      }
+    });
+
+    return uuids;
+  }, [favoriteItemsData?.content, favoriteOverrides]);
 
   const selectedCategory = useMemo(
     () => orderedCategories.find((category) => category.uuid === params.categoryUuid),
@@ -129,6 +169,36 @@ export function MarketplacePage() {
     document.getElementById(sectionId)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
+    });
+  };
+
+  const handleToggleFavorite = (itemUuid: string) => {
+    if (!isAuthenticated) {
+      navigate(
+        buildPathWithQuery(routePaths.login, {
+          redirect: routePaths.marketplace,
+        })
+      );
+      return;
+    }
+
+    const isCurrentlyFavorite = favoriteItemUuids.has(itemUuid);
+    const mutation = isCurrentlyFavorite ? unfavoriteItemMutation : favoriteItemMutation;
+
+    setPendingFavoriteUuid(itemUuid);
+    mutation.mutate(itemUuid, {
+      onSuccess: () => {
+        setFavoriteOverrides((previous) => ({
+          ...previous,
+          [itemUuid]: !isCurrentlyFavorite,
+        }));
+      },
+      onError: (error) => {
+        toast.error(parseApiError(error));
+      },
+      onSettled: () => {
+        setPendingFavoriteUuid((current) => (current === itemUuid ? null : current));
+      },
     });
   };
 
@@ -394,7 +464,13 @@ export function MarketplacePage() {
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                   {filteredItems.map((item) => (
-                    <MarketplaceItemCard key={item.uuid} item={item} />
+                    <MarketplaceItemCard
+                      key={item.uuid}
+                      item={item}
+                      isFavorite={favoriteItemUuids.has(item.uuid)}
+                      isFavoritePending={pendingFavoriteUuid === item.uuid}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
                   ))}
                 </div>
 
@@ -419,7 +495,17 @@ export function MarketplacePage() {
   );
 }
 
-function MarketplaceItemCard({ item }: { item: ItemSummaryResponse }) {
+function MarketplaceItemCard({
+  item,
+  isFavorite,
+  isFavoritePending,
+  onToggleFavorite,
+}: {
+  item: ItemSummaryResponse;
+  isFavorite: boolean;
+  isFavoritePending: boolean;
+  onToggleFavorite: (itemUuid: string) => void;
+}) {
   const timeAgo = useMemo(() => {
     try {
       return formatDistanceToNow(new Date(item.createdAt), { addSuffix: true });
@@ -429,58 +515,72 @@ function MarketplaceItemCard({ item }: { item: ItemSummaryResponse }) {
   }, [item.createdAt]);
 
   return (
-    <Link
-      to={routePaths.marketplaceItem(item.uuid)}
-      className="marketplace-item-card group flex h-full flex-col overflow-hidden transition-colors duration-200"
-    >
-      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
-        {item.primaryImageUrl ? (
-          <img
-            src={item.primaryImageUrl}
-            alt={item.title}
-            loading="lazy"
-            className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-slate-100">
-            <Package className="size-10 text-slate-300" />
-          </div>
-        )}
+    <div className="group relative">
+      <button
+        type="button"
+        onClick={() => onToggleFavorite(item.uuid)}
+        disabled={isFavoritePending}
+        className={`absolute right-2.5 top-2.5 z-10 inline-flex size-9 items-center justify-center rounded-full border border-white/80 bg-white/95 shadow-sm backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 ${
+          isFavorite ? "text-rose-500" : "text-slate-500 hover:text-rose-500"
+        }`}
+        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+      >
+        <Heart className={`size-4.5 ${isFavorite ? "fill-current" : ""}`} />
+      </button>
 
-        <div className="marketplace-soft-badge absolute left-2.5 top-2.5 inline-flex items-center bg-white/95 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-emerald-700">
-          {item.status}
-        </div>
-      </div>
-
-      <div className="flex flex-1 flex-col p-3">
-        <div className="mb-2 flex flex-wrap items-center gap-1.5">
-          <span className="marketplace-soft-badge inline-flex max-w-full items-center bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700">
-            <span className="truncate">{item.categoryName}</span>
-          </span>
-          <span className="marketplace-soft-badge inline-flex items-center bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
-            {formatEnumLabel(item.condition)}
-          </span>
-        </div>
-
-        <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-5 text-slate-900 transition-colors group-hover:text-violet-600">
-          {item.title}
-        </h3>
-
-        <div className="mt-auto space-y-2 pt-2">
-          <div className="h-px w-full bg-slate-100" />
-          <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
-            <div className="flex min-w-0 items-center gap-1.5">
-              <User className="size-3.5 shrink-0 text-slate-400" />
-              <span className="truncate">{item.ownerUsername}</span>
+      <Link
+        to={routePaths.marketplaceItem(item.uuid)}
+        className="marketplace-item-card flex h-full flex-col overflow-hidden transition-colors duration-200"
+      >
+        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+          {item.primaryImageUrl ? (
+            <img
+              src={item.primaryImageUrl}
+              alt={item.title}
+              loading="lazy"
+              className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-slate-100">
+              <Package className="size-10 text-slate-300" />
             </div>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <Clock className="size-3.5 text-slate-400" />
-              <span>{timeAgo}</span>
-            </div>
+          )}
+
+          <div className="marketplace-soft-badge absolute left-2.5 top-2.5 inline-flex items-center bg-white/95 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-emerald-700">
+            {item.status}
           </div>
         </div>
-      </div>
-    </Link>
+
+        <div className="flex flex-1 flex-col p-3">
+          <div className="mb-2 flex flex-wrap items-center gap-1.5">
+            <span className="marketplace-soft-badge inline-flex max-w-full items-center bg-violet-50 px-2 py-0.5 text-[10px] font-medium text-violet-700">
+              <span className="truncate">{item.categoryName}</span>
+            </span>
+            <span className="marketplace-soft-badge inline-flex items-center bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+              {formatEnumLabel(item.condition)}
+            </span>
+          </div>
+
+          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-5 text-slate-900 transition-colors group-hover:text-violet-600">
+            {item.title}
+          </h3>
+
+          <div className="mt-auto space-y-2 pt-2">
+            <div className="h-px w-full bg-slate-100" />
+            <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
+              <div className="flex min-w-0 items-center gap-1.5">
+                <User className="size-3.5 shrink-0 text-slate-400" />
+                <span className="truncate">{item.ownerUsername}</span>
+              </div>
+              <div className="flex shrink-0 items-center gap-1.5">
+                <Clock className="size-3.5 text-slate-400" />
+                <span>{timeAgo}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </div>
   );
 }
 
