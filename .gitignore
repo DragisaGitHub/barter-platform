@@ -20,3 +20,4 @@ Thumbs.db
 
 *.log
 backend/bootrun_*.txt
+/uploads/
