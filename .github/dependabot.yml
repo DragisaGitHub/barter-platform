@@ -9,6 +9,11 @@ updates:
       time: "08:00"
       timezone: "Europe/Belgrade"
     open-pull-requests-limit: 5
+    groups:
+      backend-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "backend"
@@ -21,6 +26,11 @@ updates:
       time: "08:30"
       timezone: "Europe/Belgrade"
     open-pull-requests-limit: 5
+    groups:
+      frontend-minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
     labels:
       - "dependencies"
       - "frontend"
@@ -33,6 +43,10 @@ updates:
       time: "09:00"
       timezone: "Europe/Belgrade"
     open-pull-requests-limit: 3
+    groups:
+      docker-updates:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "docker"
@@ -45,6 +59,10 @@ updates:
       time: "09:30"
       timezone: "Europe/Belgrade"
     open-pull-requests-limit: 3
+    groups:
+      github-actions-updates:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
       - "github-actions"
