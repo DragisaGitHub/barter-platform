@@ -25,7 +25,6 @@ public class RolesController implements RolesApi {
         return ResponseEntity.ok(roleService.listRoles());
     }
 
-    @Override
     public ResponseEntity<RoleResponse> getRoleByCode(Object code) {
         return ResponseEntity.ok(roleService.getRoleByCode(parseRoleCode(code)));
     }
