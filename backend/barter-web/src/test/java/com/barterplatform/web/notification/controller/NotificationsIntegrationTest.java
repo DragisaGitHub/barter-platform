@@ -16,18 +16,15 @@ import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
 import com.barterplatform.infrastructure.notification.repository.NotificationRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
@@ -35,21 +32,21 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 @SpringBootTest(
         classes = BarterApplication.class,
         webEnvironment = SpringBootTest.WebEnvironment.MOCK,
         properties = {
                 "spring.jpa.hibernate.ddl-auto=validate",
-                "spring.flyway.enabled=true"
+                "spring.flyway.enabled=true",
+                "spring.flyway.locations=classpath:db/migration",
+                "barter.jwt.secret=integration-test-secret-key-at-least-32-bytes!!"
         }
 )
 @AutoConfigureMockMvc
 @Testcontainers(disabledWithoutDocker = true)
-@TestPropertySource(properties = {
-        "spring.flyway.locations=classpath:db/migration",
-        "barter.jwt.secret=integration-test-secret-key-at-least-32-bytes!!"
-})
 class NotificationsIntegrationTest {
 
     private static final String CATEGORY_TOYS_UUID = "c0a80101-0001-4000-8000-000000000001";

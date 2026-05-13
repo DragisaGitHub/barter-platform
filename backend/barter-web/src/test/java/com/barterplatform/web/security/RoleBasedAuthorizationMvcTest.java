@@ -5,6 +5,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
 import com.barterplatform.api.model.PermissionCode;
 import com.barterplatform.api.model.PermissionResponse;
@@ -23,11 +24,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
+import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.MockMvcBuilderCustomizer;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -99,8 +100,7 @@ class RoleBasedAuthorizationMvcTest {
     @EnableAutoConfiguration(exclude = {
             DataSourceAutoConfiguration.class,
             HibernateJpaAutoConfiguration.class,
-            JpaRepositoriesAutoConfiguration.class,
-            FlywayAutoConfiguration.class
+            DataJpaRepositoriesAutoConfiguration.class
     })
     @Import({SecurityConfig.class, JwtAuthenticationFilter.class,
             UsersController.class, PermissionsController.class})
@@ -138,6 +138,15 @@ class RoleBasedAuthorizationMvcTest {
                             .description("Allows viewing users")
                             .createdAt(OffsetDateTime.now())));
             return service;
+        }
+
+        /**
+         * Spring Boot 4 no longer auto-registers SecurityMockMvcConfigurer with @AutoConfigureMockMvc.
+         * This bean ensures @WithMockUser wires the security context into MockMvc correctly.
+         */
+        @Bean
+        MockMvcBuilderCustomizer securityMockMvcCustomizer() {
+            return builder -> builder.apply(springSecurity());
         }
     }
 }

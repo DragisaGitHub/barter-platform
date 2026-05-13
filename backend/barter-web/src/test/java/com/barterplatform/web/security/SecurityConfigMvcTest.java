@@ -4,6 +4,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
 import com.barterplatform.web.security.jwt.JwtAuthenticationFilter;
 import com.barterplatform.web.security.jwt.JwtAuthenticationService;
@@ -13,11 +14,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration;
-import org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.data.jpa.autoconfigure.DataJpaRepositoriesAutoConfiguration;
+import org.springframework.boot.hibernate.autoconfigure.HibernateJpaAutoConfiguration;
+import org.springframework.boot.jdbc.autoconfigure.DataSourceAutoConfiguration;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.MockMvcBuilderCustomizer;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -25,6 +26,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -95,7 +97,7 @@ class SecurityConfigMvcTest {
         }
 
         @GetMapping({"/api/v1/profiles/{userUuid}", "/api/v1/profiles/{userUuid}/items"})
-        ResponseEntity<String> profiles() {
+        ResponseEntity<String> profiles(@PathVariable String userUuid) {
             return ResponseEntity.ok("profile-ok");
         }
 
@@ -109,8 +111,7 @@ class SecurityConfigMvcTest {
     @EnableAutoConfiguration(exclude = {
             DataSourceAutoConfiguration.class,
             HibernateJpaAutoConfiguration.class,
-            JpaRepositoriesAutoConfiguration.class,
-            FlywayAutoConfiguration.class
+            DataJpaRepositoriesAutoConfiguration.class
     })
     @Import({SecurityConfig.class, TestSecurityController.class, JwtAuthenticationFilter.class})
     static class TestApplication {
@@ -118,6 +119,15 @@ class SecurityConfigMvcTest {
         @Bean
         JwtAuthenticationService jwtAuthenticationService() {
             return mock(JwtAuthenticationService.class);
+        }
+
+        /**
+         * Spring Boot 4 no longer auto-registers SecurityMockMvcConfigurer with @AutoConfigureMockMvc.
+         * This bean ensures @WithMockUser wires the security context into MockMvc correctly.
+         */
+        @Bean
+        MockMvcBuilderCustomizer securityMockMvcCustomizer() {
+            return builder -> builder.apply(springSecurity());
         }
     }
 }
