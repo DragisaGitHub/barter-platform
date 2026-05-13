@@ -9,7 +9,7 @@ dependencies {
     implementation project(':barter-infrastructure')
 
     implementation "org.mapstruct:mapstruct:${rootProject.ext.mapstructVersion}"
-    implementation 'org.springframework.security:spring-security-crypto:6.5.0'
+    implementation 'org.springframework.security:spring-security-crypto:7.0.5'
 
     api 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
