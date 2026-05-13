@@ -12,6 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Ca
 import { FormInput } from "../../components/forms/FormInput";
 import { parseApiError } from "@/utils";
 import type { ErrorResponse } from "@/api/generated/types.ts";
+import {
+  buildPathWithQuery,
+  getSafeRedirectPath,
+  routePaths,
+} from "@/routes/routePaths.ts";
 
 const verifyEmailSchema = z.object({
   email: z.string().email("Enter a valid email address"),
@@ -27,6 +32,8 @@ export function VerifyEmailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const emailFromParam = searchParams.get("email") ?? "";
+  const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
+  const loginHref = buildPathWithQuery(routePaths.login, { redirect: redirectPath });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -46,7 +53,7 @@ export function VerifyEmailPage() {
     try {
       const result = await verifyEmail(data.email, data.code);
       toast.success(result.message ?? "Email verified successfully!");
-      navigate("/login");
+      navigate(loginHref);
     } catch (error) {
       if (error instanceof AxiosError) {
         const errorData = error.response?.data as ErrorResponse | undefined;
@@ -86,23 +93,41 @@ export function VerifyEmailPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <div className="flex justify-center mb-3">
-            <div className="rounded-full bg-indigo-100 dark:bg-indigo-900/30 p-3">
-              <Mail className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+    <div className="min-h-screen bg-slate-50 px-4 py-10 dark:bg-slate-950">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-md items-center">
+        <Card className="w-full max-w-md border-slate-200/80 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-none">
+          <CardHeader>
+            <div className="flex justify-center mb-3">
+              <div className="rounded-full bg-indigo-100 dark:bg-indigo-900/30 p-3">
+                <Mail className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-center">Check your email</CardTitle>
-          <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-2">
-            {emailFromParam
-              ? <>We sent a 6-digit verification code to <span className="font-medium text-slate-800 dark:text-slate-200">{emailFromParam}</span>.</>
-              : "Enter your email and the 6-digit code we sent you."}
-          </p>
-        </CardHeader>
+            <div className="mx-auto mb-1 inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-700 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300">
+              Verify your account
+            </div>
+            <CardTitle className="text-center">Check your email</CardTitle>
+            <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-2">
+              {emailFromParam ? (
+                <>
+                  We sent a 6-digit verification code to{" "}
+                  <span className="font-medium text-slate-800 dark:text-slate-200">
+                    {emailFromParam}
+                  </span>
+                  .
+                </>
+              ) : (
+                "Enter your email and the 6-digit code we sent you."
+              )}
+            </p>
+          </CardHeader>
 
         <CardContent>
+          {redirectPath && (
+            <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-sm text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
+              Verify once, sign in next, and we’ll return you to the marketplace item you started from.
+            </div>
+          )}
+
           <FormProvider {...methods}>
             <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
               {/* Show email field only when not pre-filled from query param */}
@@ -152,14 +177,15 @@ export function VerifyEmailPage() {
 
           <div className="mt-5 text-center">
             <Link
-              to="/login"
+              to={loginHref}
               className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             >
               ← Back to sign in
             </Link>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

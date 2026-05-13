@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,7 +11,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Ca
 import { FormInput } from "../../components/forms/FormInput";
 import { parseApiError } from "@/utils";
 import type { ErrorResponse } from "@/api/generated/types.ts";
-import { routePaths } from "@/routes/routePaths.ts";
+import {
+  buildPathWithQuery,
+  getSafeRedirectPath,
+  routePaths,
+} from "@/routes/routePaths.ts";
 
 const forgotPasswordSchema = z.object({
   email: z.email("Enter a valid email address"),
@@ -20,8 +24,11 @@ const forgotPasswordSchema = z.object({
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export function ForgotPasswordPage() {
+  const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
+  const loginHref = buildPathWithQuery(routePaths.login, { redirect: redirectPath });
 
   const methods = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -78,7 +85,7 @@ export function ForgotPasswordPage() {
               </p>
               <div className="mt-4">
                 <Link
-                  to={routePaths.login}
+                  to={loginHref}
                   className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
                   Back to sign in
@@ -106,7 +113,7 @@ export function ForgotPasswordPage() {
           {!isSuccess && (
             <div className="mt-6 text-center text-sm">
               <Link
-                to={routePaths.login}
+                to={loginHref}
                 className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
               >
                 Back to sign in
