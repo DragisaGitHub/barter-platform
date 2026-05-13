@@ -1,0 +1,73 @@
+@layer base {
+  html {
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	text-rendering: optimizeLegibility;
+  }
+
+  body {
+	min-height: 100vh;
+  }
+}
+
+:root {
+  --marketplace-background: #f8f9fa;
+  --marketplace-foreground: oklch(0.145 0 0);
+  --marketplace-card: #ffffff;
+  --marketplace-primary: #8b5cf6;
+  --marketplace-primary-soft: rgba(139, 92, 246, 0.1);
+  --marketplace-primary-border: rgba(139, 92, 246, 0.2);
+  --marketplace-border: rgba(0, 0, 0, 0.1);
+  --marketplace-muted: #ececf0;
+  --marketplace-muted-foreground: #717182;
+  --marketplace-accent: #e9ebef;
+  --marketplace-input-background: #f3f3f5;
+  --marketplace-radius: 0.625rem;
+  --marketplace-shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --marketplace-shadow-hover: 0 8px 24px -18px rgba(15, 23, 42, 0.22);
+}
+
+.marketplace-page {
+  background: var(--marketplace-background);
+  color: var(--marketplace-foreground);
+}
+
+.marketplace-panel {
+  background: var(--marketplace-card);
+  border: 1px solid var(--marketplace-border);
+  border-radius: var(--marketplace-radius);
+  box-shadow: none;
+}
+
+.marketplace-nav {
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 1px solid var(--marketplace-border);
+}
+
+.marketplace-search-input {
+  background: var(--marketplace-input-background);
+  border: 1px solid transparent;
+  border-radius: var(--marketplace-radius);
+}
+
+.marketplace-search-input:focus {
+  border-color: rgba(139, 92, 246, 0.35);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.08);
+}
+
+.marketplace-item-card {
+  background: var(--marketplace-card);
+  border: 1px solid var(--marketplace-border);
+  border-radius: var(--marketplace-radius);
+  box-shadow: none;
+}
+
+.marketplace-item-card:hover {
+  border-color: var(--marketplace-primary-border);
+  box-shadow: var(--marketplace-shadow-hover);
+}
+
+.marketplace-soft-badge {
+  border-radius: 0.375rem;
+}
+

@@ -25,6 +25,9 @@ server:
   port: 8080
   servlet:
     context-path: /api/v1
+  error:
+    whitelabel:
+      enabled: false
 
 springdoc:
   api-docs:

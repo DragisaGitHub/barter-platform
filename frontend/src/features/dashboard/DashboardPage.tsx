@@ -59,6 +59,20 @@ const STATUS_EXPLANATION: Record<TradeOfferStatus, string> = {
   EXPIRED: "Expired",
 };
 
+function getMarketplaceItemKey(
+  item: { uuid?: string; createdAt?: string; ownerUuid?: string },
+  index: number,
+): string {
+  return ["marketplace", item.uuid ?? "unknown", item.createdAt ?? "unknown", item.ownerUuid ?? "unknown", index].join(":");
+}
+
+function getRecentOfferKey(
+  offer: { uuid?: string; createdAt?: string; status?: string; direction: "incoming" | "sent" },
+  index: number,
+): string {
+  return ["offer", offer.direction, offer.uuid ?? "unknown", offer.status ?? "unknown", offer.createdAt ?? "unknown", index].join(":");
+}
+
 export function DashboardPage() {
   const { user, hasRole } = useAuth();
   const isAdmin = hasRole("ADMIN");
@@ -275,8 +289,8 @@ export function DashboardPage() {
           )}
           {!marketplaceLoading && recentMarketplace.length > 0 && (
             <div className="space-y-2">
-              {recentMarketplace.map((item) => (
-                <Link key={item.uuid} to={`/marketplace/items/${item.uuid}`}>
+              {recentMarketplace.map((item, index) => (
+                <Link key={getMarketplaceItemKey(item, index)} to={`/marketplace/items/${item.uuid}`}>
                   <Card className="hover:shadow-md transition-shadow cursor-pointer !p-4">
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
@@ -328,12 +342,12 @@ export function DashboardPage() {
           )}
           {recentActivity.length > 0 && (
             <div className="space-y-2">
-              {recentActivity.map((offer) => {
+              {recentActivity.map((offer, index) => {
                 const isSender = offer.sender.uuid === user?.uuid;
                 const summary = getTradeOfferSummary(offer, isSender);
 
                 return (
-                  <Link key={offer.uuid} to={`/offers/${offer.uuid}`}>
+                  <Link key={getRecentOfferKey(offer, index)} to={`/offers/${offer.uuid}`}>
                     <Card className="hover:shadow-md transition-shadow cursor-pointer !p-4">
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
