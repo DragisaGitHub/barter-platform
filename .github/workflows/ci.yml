@@ -28,7 +28,7 @@ jobs:
 
       - name: Build backend
         working-directory: backend
-        run: chmod +x ./gradlew && ./gradlew clean build
+        run: chmod +x ./gradlew && ./gradlew clean :barter-api:openApiGenerate build
 
   frontend:
     name: Frontend build
