@@ -430,6 +430,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalog/favorites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List favorite items for the authenticated user */
+        get: operations["listFavoriteItems"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalog/items/mine": {
         parameters: {
             query?: never;
@@ -464,6 +481,24 @@ export interface paths {
         head?: never;
         /** Update an owned item listing */
         patch: operations["updateItem"];
+        trace?: never;
+    };
+    "/catalog/items/{itemUuid}/favorite": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mark an item as favorite for the authenticated user */
+        post: operations["favoriteItem"];
+        /** Remove an item from the authenticated user's favorites */
+        delete: operations["unfavoriteItem"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/catalog/items/{itemUuid}/archive": {
@@ -2116,6 +2151,34 @@ export interface operations {
             403: components["responses"]["Forbidden"];
         };
     };
+    listFavoriteItems: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Favorite items returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemPagedResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+        };
+    };
     listMyItems: {
         parameters: {
             query?: {
@@ -2222,6 +2285,54 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    favoriteItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Item favorited successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    unfavoriteItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Favorite removed successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
         };
     };

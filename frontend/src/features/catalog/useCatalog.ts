@@ -5,11 +5,15 @@ import {
   searchItems,
   getItemByUuid,
   listMyItems,
+  listFavoriteItems,
   createItem,
   updateItem,
   archiveItem,
+  favoriteItem,
+  unfavoriteItem,
   type SearchItemsParams,
   type MyItemsParams,
+  type FavoriteItemsParams,
 } from "@/api/catalogApi.ts";
 import type {
   CategoryResponse,
@@ -27,9 +31,11 @@ export const catalogKeys = {
   categories: ["catalog", "categories"] as const,
   tags: ["catalog", "tags"] as const,
   items: ["catalog", "items"] as const,
+  favorites: ["catalog", "favorites"] as const,
   itemSearch: (params: SearchItemsParams) => ["catalog", "items", "search", params] as const,
   itemDetail: (uuid: string) => ["catalog", "items", uuid] as const,
   myItems: (params: MyItemsParams) => ["catalog", "items", "mine", params] as const,
+  favoriteItems: (params: FavoriteItemsParams) => ["catalog", "favorites", params] as const,
 };
 
 // ─── Query hooks ────────────────────────────────────────────────────────────
@@ -72,6 +78,14 @@ export function useMyItems(params: MyItemsParams = {}) {
   });
 }
 
+export function useFavoriteItems(params: FavoriteItemsParams = {}, enabled = true) {
+  return useQuery<ItemPagedResponse>({
+    queryKey: catalogKeys.favoriteItems(params),
+    queryFn: () => listFavoriteItems(params),
+    enabled,
+  });
+}
+
 // ─── Mutation hooks ─────────────────────────────────────────────────────────
 
 export function useCreateItem() {
@@ -101,6 +115,28 @@ export function useArchiveItem() {
     mutationFn: ({ uuid, data }: { uuid: string; data?: ArchiveItemRequest }) =>
       archiveItem(uuid, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: catalogKeys.items });
+    },
+  });
+}
+
+export function useFavoriteItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (itemUuid: string) => favoriteItem(itemUuid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: catalogKeys.favorites });
+      queryClient.invalidateQueries({ queryKey: catalogKeys.items });
+    },
+  });
+}
+
+export function useUnfavoriteItem() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (itemUuid: string) => unfavoriteItem(itemUuid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: catalogKeys.favorites });
       queryClient.invalidateQueries({ queryKey: catalogKeys.items });
     },
   });

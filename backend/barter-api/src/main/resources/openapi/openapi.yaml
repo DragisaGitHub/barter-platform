@@ -78,10 +78,14 @@ paths:
     $ref: './paths/catalog.yaml#/tags'
   /catalog/items:
     $ref: './paths/catalog.yaml#/items'
+  /catalog/favorites:
+    $ref: './paths/catalog.yaml#/favorites'
   /catalog/items/mine:
     $ref: './paths/catalog.yaml#/itemsMine'
   /catalog/items/{itemUuid}:
     $ref: './paths/catalog.yaml#/itemByUuid'
+  /catalog/items/{itemUuid}/favorite:
+    $ref: './paths/catalog.yaml#/itemFavorite'
   /catalog/items/{itemUuid}/archive:
     $ref: './paths/catalog.yaml#/itemArchive'
   /catalog/items/{itemUuid}/images:

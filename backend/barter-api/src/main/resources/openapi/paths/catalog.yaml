@@ -140,6 +140,28 @@ itemsMine:
       '401':
         $ref: '../components/responses/Unauthorized.yaml'
 
+favorites:
+  get:
+    tags:
+      - Catalog
+    operationId: listFavoriteItems
+    summary: List favorite items for the authenticated user
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+    responses:
+      '200':
+        description: Favorite items returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ItemPagedResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+
 itemByUuid:
   get:
     tags:
@@ -203,6 +225,44 @@ itemByUuid:
         $ref: '../components/responses/Unauthorized.yaml'
       '403':
         $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+itemFavorite:
+  post:
+    tags:
+      - Catalog
+    operationId: favoriteItem
+    summary: Mark an item as favorite for the authenticated user
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    responses:
+      '200':
+        description: Item favorited successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/MessageResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+  delete:
+    tags:
+      - Catalog
+    operationId: unfavoriteItem
+    summary: Remove an item from the authenticated user's favorites
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    responses:
+      '204':
+        description: Favorite removed successfully
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
       '404':
         $ref: '../components/responses/NotFound.yaml'
 

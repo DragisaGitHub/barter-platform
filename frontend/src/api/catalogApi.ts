@@ -4,6 +4,7 @@ import type {
   TagResponse,
   ItemPagedResponse,
   ItemDetailResponse,
+  MessageResponse,
   CreateItemRequest,
   UpdateItemRequest,
   ArchiveItemRequest,
@@ -29,6 +30,12 @@ export interface MyItemsParams {
   size?: number;
   sort?: string;
   status?: ItemStatus;
+}
+
+export interface FavoriteItemsParams {
+  page?: number;
+  size?: number;
+  sort?: string;
 }
 
 // ─── API functions ──────────────────────────────────────────────────────────
@@ -58,6 +65,13 @@ export async function listMyItems(params: MyItemsParams = {}): Promise<ItemPaged
   return response.data;
 }
 
+export async function listFavoriteItems(
+  params: FavoriteItemsParams = {}
+): Promise<ItemPagedResponse> {
+  const response = await apiClient.get<ItemPagedResponse>("/catalog/favorites", { params });
+  return response.data;
+}
+
 export async function createItem(data: CreateItemRequest): Promise<ItemDetailResponse> {
   const response = await apiClient.post<ItemDetailResponse>("/catalog/items", data);
   return response.data;
@@ -71,5 +85,14 @@ export async function updateItem(uuid: string, data: UpdateItemRequest): Promise
 export async function archiveItem(uuid: string, data?: ArchiveItemRequest): Promise<ItemDetailResponse> {
   const response = await apiClient.post<ItemDetailResponse>(`/catalog/items/${uuid}/archive`, data ?? {});
   return response.data;
+}
+
+export async function favoriteItem(itemUuid: string): Promise<MessageResponse> {
+  const response = await apiClient.post<MessageResponse>(`/catalog/items/${itemUuid}/favorite`);
+  return response.data;
+}
+
+export async function unfavoriteItem(itemUuid: string): Promise<void> {
+  await apiClient.delete(`/catalog/items/${itemUuid}/favorite`);
 }
 
