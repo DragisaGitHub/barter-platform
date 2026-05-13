@@ -1,11 +1,44 @@
+type QueryParamValue = string | null | undefined;
+
+export function getSafeRedirectPath(redirect: QueryParamValue): string | undefined {
+  if (!redirect) {
+    return undefined;
+  }
+
+  const normalizedRedirect = redirect.trim();
+
+  if (!normalizedRedirect.startsWith("/") || normalizedRedirect.startsWith("//")) {
+    return undefined;
+  }
+
+  return normalizedRedirect;
+}
+
+export function buildPathWithQuery(
+  path: string,
+  params: Record<string, QueryParamValue>
+): string {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value) {
+      searchParams.set(key, value);
+    }
+  });
+
+  const query = searchParams.toString();
+  return query ? `${path}?${query}` : path;
+}
+
 export const routePaths = {
   home: "/",
+  marketplace: "/marketplace",
   login: "/login",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   register: "/register",
+  verifyEmail: "/verify-email",
   dashboard: "/dashboard",
-  marketplace: "/marketplace",
   marketplaceItem: (uuid: string) => `/marketplace/items/${uuid}`,
   myItems: "/my-items",
   myItemsNew: "/my-items/new",

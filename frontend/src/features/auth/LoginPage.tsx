@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,7 +12,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Ca
 import { FormInput } from "../../components/forms/FormInput";
 import { parseApiError } from "@/utils";
 import type { ErrorResponse } from "@/api/generated/types.ts";
-import { routePaths } from "@/routes/routePaths.ts";
+import {
+  buildPathWithQuery,
+  getSafeRedirectPath,
+  routePaths,
+} from "@/routes/routePaths.ts";
 
 const loginSchema = z.object({
   identifier: z.string().min(1, "Email or username is required"),
@@ -72,11 +76,21 @@ function PasswordField({
 
 export function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   // null = no banner; string = show banner (empty string means email unknown)
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
+  const registerHref = buildPathWithQuery(routePaths.register, { redirect: redirectPath });
+  const forgotPasswordHref = buildPathWithQuery(routePaths.forgotPassword, {
+    redirect: redirectPath,
+  });
+  const verifyEmailHref = buildPathWithQuery(routePaths.verifyEmail, {
+    email: unverifiedEmail || undefined,
+    redirect: redirectPath,
+  });
 
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -100,7 +114,7 @@ export function LoginPage() {
     try {
       await login(data);
       toast.success("Login successful");
-      navigate(routePaths.dashboard);
+      navigate(redirectPath ?? routePaths.dashboard);
     } catch (error) {
       if (error instanceof AxiosError) {
         const status = error.response?.status;
@@ -153,15 +167,27 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center">Welcome Back</CardTitle>
-          <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-2">
-            Sign in to your account to continue
-          </p>
-        </CardHeader>
-        <CardContent>
+    <div className="min-h-screen bg-slate-50 px-4 py-10 dark:bg-slate-950">
+      <div className="mx-auto flex min-h-[calc(100vh-5rem)] w-full max-w-md items-center">
+        <Card className="w-full max-w-md border-slate-200/80 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-none">
+          <CardHeader>
+            <div className="mx-auto mb-3 inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-700 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300">
+              Marketplace sign in
+            </div>
+            <CardTitle className="text-center">Welcome Back</CardTitle>
+            <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-2">
+              {redirectPath
+                ? "Sign in to get back to the listing you were viewing and continue your trade flow."
+                : "Sign in to continue trading, managing listings, and following your marketplace activity."}
+            </p>
+          </CardHeader>
+          <CardContent>
+            {redirectPath && (
+              <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-sm text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
+                You’ll return to your selected marketplace item right after sign in.
+              </div>
+            )}
+
           {/* Email verification required banner */}
           {unverifiedEmail !== null && (
             <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4 text-sm">
@@ -181,11 +207,7 @@ export function LoginPage() {
               )}
               <div className="mt-3">
                 <Link
-                  to={
-                    unverifiedEmail
-                      ? `/verify-email?email=${encodeURIComponent(unverifiedEmail)}`
-                      : "/verify-email"
-                  }
+                  to={verifyEmailHref}
                   className="inline-block rounded-md bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 text-sm font-medium transition-colors"
                 >
                   Verify email →
@@ -217,7 +239,7 @@ export function LoginPage() {
 
               <div className="flex justify-end -mt-2">
                 <Link
-                  to={routePaths.forgotPassword}
+                  to={forgotPasswordHref}
                   className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
                 >
                   Forgot password?
@@ -235,7 +257,7 @@ export function LoginPage() {
               Don't have an account?{" "}
             </span>
             <Link
-              to="/register"
+              to={registerHref}
               className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
             >
               Sign up
@@ -244,14 +266,15 @@ export function LoginPage() {
 
           <div className="mt-4 text-center">
             <Link
-              to="/"
+              to={routePaths.marketplace}
               className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             >
-              Back to home
+              Back to marketplace
             </Link>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
