@@ -1,5 +1,6 @@
 import axios from "axios";
 import type { TokenResponse } from "./generated/types";
+import { tokenService } from "../auth/token.service";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
@@ -37,12 +38,14 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const requestUrl = typeof originalRequest?.url === "string" ? originalRequest.url : "";
+    const isAuthMeRequest = requestUrl.includes("/auth/me");
 
-    if (originalRequest?.url?.includes("/auth/login")) {
+    if (requestUrl.includes("/auth/login")) {
       return Promise.reject(error);
     }
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve) => {
           addRefreshSubscriber((token: string) => {
@@ -56,8 +59,15 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = localStorage.getItem("refreshToken");
+        const refreshToken = tokenService.getRefreshToken();
         if (!refreshToken) {
+          tokenService.clearTokens();
+
+          if (isAuthMeRequest) {
+            isRefreshing = false;
+            return Promise.reject(error);
+          }
+
           throw new Error("No refresh token");
         }
 
@@ -67,8 +77,7 @@ apiClient.interceptors.response.use(
         );
 
         const { accessToken, refreshToken: newRefreshToken } = response.data;
-        localStorage.setItem("accessToken", accessToken);
-        localStorage.setItem("refreshToken", newRefreshToken);
+        tokenService.setTokens(accessToken, newRefreshToken);
 
         apiClient.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
@@ -79,10 +88,14 @@ apiClient.interceptors.response.use(
         return apiClient(originalRequest);
       } catch (refreshError) {
         isRefreshing = false;
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        window.location.href = "/login";
-        return Promise.reject(refreshError);
+        tokenService.clearTokens();
+
+        if (!isAuthMeRequest) {
+          window.location.href = "/login";
+          return Promise.reject(refreshError);
+        }
+
+        return Promise.reject(error);
       }
     }
 

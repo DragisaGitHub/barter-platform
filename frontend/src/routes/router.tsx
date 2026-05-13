@@ -3,7 +3,6 @@ import { PublicLayout } from "../layouts/PublicLayout";
 import { AppLayout } from "../layouts/AppLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AdminRoute } from "./AdminRoute";
-import { LandingPage } from "../features/landing/LandingPage";
 import { LoginPage } from "../features/auth/LoginPage";
 import { ForgotPasswordPage } from "../features/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "../features/auth/ResetPasswordPage";
@@ -27,14 +26,25 @@ import { SentOffersPage } from "../features/trade/SentOffersPage";
 import { TradeOfferDetailPage } from "../features/trade/TradeOfferDetailPage";
 import { NotificationsPage } from "../features/notifications/NotificationsPage";
 import { PublicProfilePage } from "../features/profile/PublicProfilePage";
+import { NotFoundPage } from "../features/error/NotFoundPage";
+import { RouteErrorPage } from "../features/error/ErrorPage";
 
 export const router = createBrowserRouter([
   {
     element: <PublicLayout />,
+    errorElement: <RouteErrorPage />,
     children: [
       {
         path: "/",
-        element: <LandingPage />,
+        element: <Navigate to="/marketplace" replace />,
+      },
+      {
+        path: "/marketplace",
+        element: <MarketplacePage />,
+      },
+      {
+        path: "/marketplace/items/:uuid",
+        element: <ItemDetailPage />,
       },
       {
         path: "/login",
@@ -68,18 +78,11 @@ export const router = createBrowserRouter([
         <AppLayout />
       </ProtectedRoute>
     ),
+    errorElement: <RouteErrorPage />,
     children: [
       {
         path: "/dashboard",
         element: <DashboardPage />,
-      },
-      {
-        path: "/marketplace",
-        element: <MarketplacePage />,
-      },
-      {
-        path: "/marketplace/items/:uuid",
-        element: <ItemDetailPage />,
       },
       {
         path: "/my-items",
@@ -139,6 +142,7 @@ export const router = createBrowserRouter([
         <AppLayout />
       </AdminRoute>
     ),
+    errorElement: <RouteErrorPage />,
     children: [
       {
         path: "/admin",
@@ -168,6 +172,6 @@ export const router = createBrowserRouter([
   },
   {
     path: "*",
-    element: <Navigate to="/" replace />,
+    element: <NotFoundPage />,
   },
 ]);
