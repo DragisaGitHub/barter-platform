@@ -6,8 +6,8 @@ plugins {
 dependencies {
     implementation project(':barter-common')
 
-    api 'org.springframework:spring-web:6.2.7'
-    api 'org.springframework:spring-context:6.2.7'
+    api 'org.springframework:spring-web:7.0.7'
+    api 'org.springframework:spring-context:7.0.7'
     api 'jakarta.validation:jakarta.validation-api:3.0.2'
     api 'jakarta.annotation:jakarta.annotation-api:2.1.1'
     api 'jakarta.servlet:jakarta.servlet-api:6.0.0'
