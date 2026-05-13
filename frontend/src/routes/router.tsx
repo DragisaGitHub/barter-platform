@@ -122,15 +122,6 @@ export const router = createBrowserRouter([
         element: <NotificationsPage />,
       },
       {
-        path: "/messages",
-        element: (
-          <PlaceholderPage
-            title="Messages"
-            description="Chat with other traders about potential exchanges."
-          />
-        ),
-      },
-      {
         path: "/profile",
         element: (
           <PlaceholderPage
