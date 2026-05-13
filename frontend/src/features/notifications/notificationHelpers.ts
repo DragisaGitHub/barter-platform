@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns";
 import type { NotificationResponse, NotificationType } from "@/api/generated/types.ts";
+import { routePaths } from "@/routes/routePaths.ts";
 
 /**
  * Format notification createdAt to a relative time string (e.g. "5 minutes ago").
@@ -49,9 +50,17 @@ export function getNotificationColor(type: NotificationType): string {
  * Returns null if no specific target is available.
  */
 export function getNotificationTargetPath(notification: NotificationResponse): string | null {
-  if (notification.referenceType === "TRADE_OFFER" && notification.referenceUuid) {
-    return `/offers/${notification.referenceUuid}`;
+  const referenceUuid = notification.referenceUuid?.trim();
+  const normalizedReferenceType = notification.referenceType?.trim().toUpperCase();
+
+  if (!referenceUuid) {
+    return null;
   }
+
+  if (normalizedReferenceType === "TRADE_OFFER" || notification.type.startsWith("TRADE_OFFER")) {
+    return `${routePaths.offers}/${referenceUuid}`;
+  }
+
   return null;
 }
 
