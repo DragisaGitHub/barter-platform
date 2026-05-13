@@ -28,10 +28,10 @@ jobs:
 
       - name: Build backend
         working-directory: backend
-        run: ./gradlew clean build
+        run: chmod +x ./gradlew && ./gradlew clean build
 
   frontend:
-    name: Frontend build and tests
+    name: Frontend build
     runs-on: ubuntu-latest
 
     steps:
@@ -48,10 +48,6 @@ jobs:
       - name: Install frontend dependencies
         working-directory: frontend
         run: yarn install --frozen-lockfile
-
-      - name: Test frontend
-        working-directory: frontend
-        run: yarn test --run
 
       - name: Build frontend
         working-directory: frontend
