@@ -11,19 +11,19 @@ dependencies {
     implementation "org.mapstruct:mapstruct:${rootProject.ext.mapstructVersion}"
     implementation 'org.springframework.security:spring-security-crypto:6.5.0'
 
-    api 'io.jsonwebtoken:jjwt-api:0.12.6'
-    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
-    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    api 'io.jsonwebtoken:jjwt-api:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 
-    compileOnly 'org.projectlombok:lombok:1.18.36'
+    compileOnly 'org.projectlombok:lombok:1.18.46'
 
     annotationProcessor "org.mapstruct:mapstruct-processor:${rootProject.ext.mapstructVersion}"
-    annotationProcessor 'org.projectlombok:lombok:1.18.36'
+    annotationProcessor 'org.projectlombok:lombok:1.18.46'
 
-    testImplementation 'org.mockito:mockito-junit-jupiter:5.12.0'
-    testImplementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.23.0'
+    testImplementation 'io.jsonwebtoken:jjwt-api:0.13.0'
     testImplementation 'org.springframework:spring-test:6.2.7'
-    testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
-    testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    testRuntimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
+    testRuntimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 }
 
