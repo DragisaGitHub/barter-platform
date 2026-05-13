@@ -22,13 +22,14 @@ import org.testcontainers.utility.DockerImageName;
         webEnvironment = SpringBootTest.WebEnvironment.NONE,
         properties = {
                 "spring.jpa.hibernate.ddl-auto=validate",
-                "spring.flyway.enabled=true"
+                "spring.flyway.enabled=true",
+                "spring.flyway.locations=classpath:db/migration",
+                "logging.level.org.flywaydb=DEBUG",
+                "logging.level.org.springframework.boot.flyway=DEBUG",
+                "logging.level.org.hibernate.tool.schema=DEBUG"
         }
 )
 @Testcontainers(disabledWithoutDocker = true)
-@TestPropertySource(properties = {
-        "spring.flyway.locations=classpath:db/migration"
-})
 class IdentityJpaBootstrapSmokeTest {
 
     @Container
