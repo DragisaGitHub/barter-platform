@@ -6,7 +6,6 @@ import {
   Inbox,
   Send,
   List,
-  MessageSquare,
   User,
   Shield,
   Users,
@@ -57,7 +56,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: "/my-items", icon: List, label: "My Items" },
     { to: "/offers/incoming", icon: Inbox, label: "Incoming Offers", badge: pendingIncoming },
     { to: "/offers/sent", icon: Send, label: "Sent Offers", badge: pendingSent },
-    { to: "/messages", icon: MessageSquare, label: "Messages" },
     { to: "/profile", icon: User, label: "Profile" },
   ];
 

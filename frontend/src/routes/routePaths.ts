@@ -46,7 +46,6 @@ export const routePaths = {
   myItemsEdit: (uuid: string) => `/my-items/${uuid}/edit`,
   offers: "/offers",
   notifications: "/notifications",
-  messages: "/messages",
   profile: "/profile",
   publicProfile: (uuid: string) => `/users/${uuid}`,
   admin: {
