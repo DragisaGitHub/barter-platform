@@ -11,6 +11,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -93,6 +94,23 @@ public class GlobalExceptionHandler {
                 topLevelMessage,
                 request,
                 fieldErrors);
+    }
+
+    @ExceptionHandler(TypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(
+            TypeMismatchException ex,
+            HttpServletRequest request) {
+
+        String message = ex.getValue() == null
+                ? DEFAULT_VALIDATION_MESSAGE
+                : "Unsupported value '%s'.".formatted(ex.getValue());
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                ErrorCode.BAD_REQUEST,
+                message,
+                request,
+                List.of());
     }
 
     @ExceptionHandler(AccessDeniedException.class)

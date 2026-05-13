@@ -1,14 +1,15 @@
 package com.barterplatform.web.identity.controller;
 
 import com.barterplatform.api.controller.RolesApi;
+import com.barterplatform.api.model.RoleCode;
 import com.barterplatform.api.model.RoleResponse;
 import com.barterplatform.application.identity.service.RoleService;
-import com.barterplatform.common.exception.ApiException;
-import com.barterplatform.common.exception.ErrorCode;
-import com.barterplatform.domain.identity.enums.RoleCode;
+import java.beans.PropertyEditorSupport;
 import java.util.List;
-import org.springframework.http.HttpStatus;
+import java.util.Locale;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.WebDataBinder;
+import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -25,24 +26,27 @@ public class RolesController implements RolesApi {
         return ResponseEntity.ok(roleService.listRoles());
     }
 
-    public ResponseEntity<RoleResponse> getRoleByCode(Object code) {
-        return ResponseEntity.ok(roleService.getRoleByCode(parseRoleCode(code)));
+    @Override
+    public ResponseEntity<RoleResponse> getRoleByCode(RoleCode code) {
+        return ResponseEntity.ok(roleService.getRoleByCode(mapRoleCode(code)));
     }
 
-    private RoleCode parseRoleCode(Object code) {
-        if (code == null) {
-            throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, "Role code is required.");
-        }
+    @InitBinder
+    void initRoleCodeBinder(WebDataBinder binder) {
+        binder.registerCustomEditor(RoleCode.class, new PropertyEditorSupport() {
+            @Override
+            public void setAsText(String text) {
+                if (text == null) {
+                    setValue(null);
+                    return;
+                }
 
-        try {
-            return RoleCode.valueOf(code.toString().trim().toUpperCase());
-        } catch (IllegalArgumentException ex) {
-            throw new ApiException(
-                    HttpStatus.BAD_REQUEST,
-                    ErrorCode.BAD_REQUEST,
-                    "Unsupported role code '%s'.".formatted(code),
-                    ex);
-        }
+                setValue(RoleCode.fromValue(text.trim().toUpperCase(Locale.ROOT)));
+            }
+        });
+    }
+
+    private com.barterplatform.domain.identity.enums.RoleCode mapRoleCode(RoleCode code) {
+        return com.barterplatform.domain.identity.enums.RoleCode.valueOf(code.getValue());
     }
 }
-

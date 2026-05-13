@@ -30,7 +30,12 @@ byCode:
     security:
       - bearerJwt: []
     parameters:
-      - $ref: '../openapi.yaml#/components/parameters/RoleCodeParameter'
+      - name: code
+        in: path
+        required: true
+        description: Role code.
+        schema:
+          $ref: '../components/schemas/RoleCode.yaml'
     responses:
       '200':
         description: Role returned successfully

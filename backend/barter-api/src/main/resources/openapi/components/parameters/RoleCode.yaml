@@ -4,5 +4,5 @@ RoleCodeParameter:
   required: true
   description: Role code.
   schema:
-    $ref: '../../openapi.yaml#/components/schemas/RoleCode'
+    $ref: '../schemas/RoleCode.yaml'
 
