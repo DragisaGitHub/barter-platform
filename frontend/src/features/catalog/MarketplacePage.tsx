@@ -116,26 +116,6 @@ export function MarketplacePage() {
     }));
   }, [categoryUuidFromUrl, params.categoryUuid]);
 
-  useEffect(() => {
-    if (categoryUuidFromUrl === (params.categoryUuid ?? undefined)) {
-      return;
-    }
-
-    setSearchParams(
-      (current) => {
-        const next = new URLSearchParams(current);
-
-        if (params.categoryUuid) {
-          next.set("categoryUuid", params.categoryUuid);
-        } else {
-          next.delete("categoryUuid");
-        }
-
-        return next;
-      },
-      { replace: true }
-    );
-  }, [categoryUuidFromUrl, params.categoryUuid, setSearchParams]);
 
   const filteredItems = useMemo(() => {
     const activeItems = loadedItems.filter((item) => item.status === "ACTIVE");
@@ -204,12 +184,32 @@ export function MarketplacePage() {
   };
 
   const selectCategory = (categoryUuid: string) => {
+    const nextCategoryUuid = categoryUuid || undefined;
+
+    if ((params.categoryUuid ?? undefined) === nextCategoryUuid) {
+      return;
+    }
+
     resetResults();
     setParams((previous) => ({
       ...previous,
       page: 0,
-      categoryUuid: categoryUuid || undefined,
+      categoryUuid: nextCategoryUuid,
     }));
+
+    if (categoryUuidFromUrl !== nextCategoryUuid) {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+
+        if (nextCategoryUuid) {
+          next.set("categoryUuid", nextCategoryUuid);
+        } else {
+          next.delete("categoryUuid");
+        }
+
+        return next;
+      });
+    }
   };
 
   const handleTagToggle = (tagUuid: string) => {
