@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -366,6 +367,85 @@ class CatalogQueryServiceImplTest {
             assertNotNull(result);
             verify(categoryRepository).findByUuid(catUuid);
             verify(itemRepository).findAll(any(Specification.class), any(Pageable.class));
+        }
+
+        @Test
+        @DisplayName("null tagUuids — no tag lookup performed")
+        @SuppressWarnings("unchecked")
+        void nullTagUuids_noTagFilter() {
+            Page<ItemEntity> emptyPage = new PageImpl<>(List.of(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt")), 0);
+
+            when(itemRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(emptyPage);
+            when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
+                    .thenReturn(new ItemPagedResponse().content(List.of()));
+
+            service.searchItems(0, 20, null, null, null, null, null, null);
+
+            verify(tagRepository, never()).findByUuid(any());
+        }
+
+        @Test
+        @DisplayName("empty tagUuids list — no tag lookup performed")
+        @SuppressWarnings("unchecked")
+        void emptyTagUuids_noTagFilter() {
+            Page<ItemEntity> emptyPage = new PageImpl<>(List.of(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt")), 0);
+
+            when(itemRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(emptyPage);
+            when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
+                    .thenReturn(new ItemPagedResponse().content(List.of()));
+
+            service.searchItems(0, 20, null, null, null, List.of(), null, null);
+
+            verify(tagRepository, never()).findByUuid(any());
+        }
+
+        @Test
+        @DisplayName("non-empty tagUuids — tag UUIDs are resolved and filter is applied")
+        @SuppressWarnings("unchecked")
+        void nonEmptyTagUuids_filterApplied() {
+            UUID tagUuid = UUID.randomUUID();
+            TagEntity tagEntity = tag(7L, tagUuid);
+
+            Page<ItemEntity> emptyPage = new PageImpl<>(List.of(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt")), 0);
+
+            when(tagRepository.findByUuid(tagUuid)).thenReturn(Optional.of(tagEntity));
+            when(itemRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(emptyPage);
+            when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
+                    .thenReturn(new ItemPagedResponse().content(List.of()));
+
+            service.searchItems(0, 20, null, null, null, List.of(tagUuid), null, null);
+
+            verify(tagRepository).findByUuid(tagUuid);
+            verify(itemRepository).findAll(any(Specification.class), any(Pageable.class));
+        }
+
+        @Test
+        @DisplayName("unknown tagUuid is silently skipped — no filter added")
+        @SuppressWarnings("unchecked")
+        void unknownTagUuid_silentlySkipped() {
+            UUID unknownUuid = UUID.randomUUID();
+
+            Page<ItemEntity> emptyPage = new PageImpl<>(List.of(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt")), 0);
+
+            when(tagRepository.findByUuid(unknownUuid)).thenReturn(Optional.empty());
+            when(itemRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(emptyPage);
+            when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
+                    .thenReturn(new ItemPagedResponse().content(List.of()));
+
+            // Should not throw; unknown UUID is skipped
+            ItemPagedResponse result = service.searchItems(
+                    0, 20, null, null, null, List.of(unknownUuid), null, null);
+
+            assertNotNull(result);
+            verify(tagRepository).findByUuid(unknownUuid);
         }
     }
 }

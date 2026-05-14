@@ -111,10 +111,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         PageRequestFactory.ResolvedPageRequest pageRequest = pageRequestFactory.create(
                 page, size, sort, DEFAULT_ITEM_SORT_FIELD, ALLOWED_ITEM_SORT_FIELDS);
 
-        Specification<ItemEntity> spec = buildSearchSpecification(q, categoryUuid, status, condition);
-
-        // TODO: tagUuids filtering deferred to a future version — requires Specification
-        //       subquery joining item_tags. Parameter is accepted but currently ignored.
+        Specification<ItemEntity> spec = buildSearchSpecification(q, categoryUuid, tagUuids, status, condition);
 
         Page<ItemEntity> itemPage = itemRepository.findAll(spec, pageRequest.pageable());
 
@@ -182,6 +179,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     // ── Private helpers ──────────────────────────────────────────
 
     private Specification<ItemEntity> buildSearchSpecification(String q, UUID categoryUuid,
+                                                               List<UUID> tagUuids,
                                                                ItemStatus status, ItemCondition condition) {
         List<Specification<ItemEntity>> specs = new ArrayList<>();
 
@@ -206,6 +204,16 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
 
         if (q != null && !q.isBlank()) {
             specs.add(ItemSpecifications.titleContainsIgnoreCase(q.trim()));
+        }
+
+        if (tagUuids != null && !tagUuids.isEmpty()) {
+            List<Long> tagIds = tagUuids.stream()
+                    .map(uuid -> tagRepository.findByUuid(uuid).map(TagEntity::getId).orElse(null))
+                    .filter(Objects::nonNull)
+                    .toList();
+            if (!tagIds.isEmpty()) {
+                specs.add(ItemSpecifications.hasAnyTagId(tagIds));
+            }
         }
 
         return Specification.allOf(specs);

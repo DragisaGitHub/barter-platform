@@ -28,6 +28,7 @@ import {
   useFavoriteItem,
   useFavoriteItems,
   useSearchItems,
+  useTags,
   useUnfavoriteItem,
 } from "./useCatalog";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ export function MarketplacePage() {
 
   const { data, isLoading, isFetching, isError } = useSearchItems(params);
   const { data: categories } = useCategories();
+  const { data: tags } = useTags();
   const favoriteListParams = useMemo(
     () => ({ page: 0, size: 200, sort: "createdAt,desc" }),
     []
@@ -154,6 +156,22 @@ export function MarketplacePage() {
       page: 0,
       categoryUuid: categoryUuid || undefined,
     }));
+  };
+
+  const handleTagToggle = (tagUuid: string) => {
+    resetResults();
+    setParams((previous) => {
+      const current = previous.tagUuids ?? [];
+      const next = current.includes(tagUuid)
+        ? current.filter((id) => id !== tagUuid)
+        : [...current, tagUuid];
+      return { ...previous, page: 0, tagUuids: next.length > 0 ? next : undefined };
+    });
+  };
+
+  const clearTags = () => {
+    resetResults();
+    setParams((previous) => ({ ...previous, page: 0, tagUuids: undefined }));
   };
 
   const loadMore = () => {
@@ -324,6 +342,42 @@ export function MarketplacePage() {
               })}
             </div>
           </div>
+
+          {tags && tags.length > 0 ? (
+            <div className={`${pageShellClassName} p-4`}>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-base font-medium text-slate-900">Tags</h2>
+                {params.tagUuids && params.tagUuids.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={clearTags}
+                    className="text-xs font-medium text-violet-600 transition hover:text-violet-800"
+                  >
+                    Clear
+                  </button>
+                ) : null}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {tags.map((tag) => {
+                  const isSelected = params.tagUuids?.includes(tag.uuid) ?? false;
+                  return (
+                    <button
+                      key={tag.uuid}
+                      type="button"
+                      onClick={() => handleTagToggle(tag.uuid)}
+                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                        isSelected
+                          ? "border-violet-400 bg-violet-100 text-violet-700"
+                          : "border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:text-violet-600"
+                      }`}
+                    >
+                      {tag.name}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : null}
 
           {!isAuthenticated ? (
             <div className="rounded-lg border border-violet-200 bg-violet-50/70 p-4">
