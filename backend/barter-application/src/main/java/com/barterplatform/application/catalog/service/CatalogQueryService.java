@@ -28,7 +28,7 @@ public interface CatalogQueryService {
      * @param sort         sort expression e.g. "createdAt,desc"
      * @param q            free-text search on title (contains, case-insensitive)
      * @param categoryUuid filter by category UUID
-     * @param tagUuids     filter by tag UUIDs — accepted but ignored in v1 (TODO: implement via Specification subquery)
+     * @param tagUuids     filter by tag UUIDs — items matching at least one tag are returned; ignored when null/empty
      * @param status       filter by item status; defaults to ACTIVE for public search
      * @param condition    filter by item condition
      */
