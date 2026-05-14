@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   FolderTree,
   KeyRound,
@@ -6,11 +6,10 @@ import {
   Lock,
   Settings,
   Shield,
-  Store,
+  Tags,
   Users,
   X,
 } from "lucide-react";
-import { Button } from "../components/ui/Button";
 import { cn } from "@/utils";
 import { routePaths } from "../routes/routePaths";
 
@@ -33,16 +32,10 @@ const adminNavItems: AdminNavItem[] = [
   { to: routePaths.admin.permissions, label: "Permissions", icon: Lock },
   { to: routePaths.admin.system, label: "System", icon: Settings },
   { to: routePaths.admin.categories, label: "Categories", icon: FolderTree, end: true },
+  { to: routePaths.admin.tags, label: "Tags", icon: Tags, end: true },
 ];
 
 export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
-  const navigate = useNavigate();
-
-  const handleMarketplaceClick = () => {
-    onClose?.();
-    navigate(routePaths.marketplace);
-  };
-
   return (
     <>
       {isOpen && onClose && (
@@ -119,25 +112,6 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           </nav>
         </div>
 
-        <div className="border-t border-slate-800 px-4 py-4">
-          <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Secondary action
-            </p>
-            <p className="mt-2 text-sm text-slate-300">
-              Open the user-facing marketplace without leaving the admin control panel setup.
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleMarketplaceClick}
-              className="mt-3 w-full justify-center border-slate-700 bg-slate-950 text-slate-100 hover:bg-slate-800 hover:text-white"
-            >
-              <Store className="size-4" />
-              Open marketplace
-            </Button>
-          </div>
-        </div>
       </aside>
     </>
   );

@@ -147,15 +147,6 @@ export function UsersListPage() {
               aria-label="Search users on the current page"
             />
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-            <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">
-              Page {page + 1} of {data.totalPages ?? 1}
-            </span>
-            <span className="rounded-full bg-slate-100 px-3 py-1 dark:bg-slate-800">
-              Sorting: {sort ? `${sort.field} (${sort.direction})` : "none"}
-            </span>
-          </div>
         </div>
 
         <Button type="button" variant="outline" onClick={() => refetch()}>
@@ -255,13 +246,18 @@ export function UsersListPage() {
               onRowClick={handleRowClick}
             />
 
-            {(data.totalPages ?? 0) > 1 && (
-              <Pagination
-                currentPage={data.page ?? 0}
-                totalPages={data.totalPages ?? 0}
-                onPageChange={setPage}
-              />
-            )}
+            <Pagination
+              currentPage={data.page ?? 0}
+              totalPages={Math.max(data.totalPages ?? 0, 1)}
+              onPageChange={setPage}
+              statusContent={
+                <>
+                  <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    Sorting: {sort ? `${sort.field} (${sort.direction})` : "none"}
+                  </span>
+                </>
+              }
+            />
           </>
         )}
       </AdminSurface>

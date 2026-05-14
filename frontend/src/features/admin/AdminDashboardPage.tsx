@@ -6,6 +6,7 @@ import {
   Lock,
   Settings,
   ShieldCheck,
+  Tags,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -54,11 +55,17 @@ const adminModules: AdminModule[] = [
   },
   {
     title: "Categories",
-    description: "Prepare for category management without enabling CRUD in this phase.",
+    description: "Manage category taxonomy, parent structure, ordering, and archive state.",
     to: routePaths.admin.categories,
     icon: FolderTree,
     tone: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-    status: "Coming next",
+  },
+  {
+    title: "Tags",
+    description: "Manage reusable item metadata labels, slugs, and archive state.",
+    to: routePaths.admin.tags,
+    icon: Tags,
+    tone: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300",
   },
 ];
 
@@ -66,22 +73,22 @@ export function AdminDashboardPage() {
   return (
     <AdminPageShell
       title="Admin Control Panel"
-      description="Platform operations, moderation, and configuration now live in a dedicated admin workspace separated from the regular marketplace experience."
+      description="Operate moderation, access control, taxonomy, and platform governance from a dedicated internal control panel."
       badges={
         <>
           <Badge variant="primary">Operations</Badge>
-          <Badge>Separated workspace</Badge>
+          <Badge>Internal workspace</Badge>
         </>
       }
       actions={
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
-          Use this control panel for access review, moderation workflows, and safe platform-level configuration.
+          Use this workspace for access review, operational oversight, governance, and controlled platform configuration.
         </div>
       }
     >
       <AdminSurface
         title="Operational modules"
-        description="Open existing admin areas without mixing them into the marketplace dashboard or user navigation."
+        description="Open focused backoffice modules for administration, moderation, and platform control."
         contentClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
       >
         {adminModules.map((module) => {
@@ -92,13 +99,13 @@ export function AdminDashboardPage() {
                   <div className={`flex size-12 items-center justify-center rounded-xl ${module.tone}`}>
                     <module.icon className="size-5" />
                   </div>
-                  {module.status ? <Badge variant="warning">{module.status}</Badge> : <Badge variant="success">Ready</Badge>}
+                  <Badge variant="success">Ready</Badge>
                 </div>
                 <CardTitle>{module.title}</CardTitle>
                 <CardDescription>{module.description}</CardDescription>
               </CardHeader>
               <CardContent className="mt-auto flex items-center justify-between pt-2 text-sm font-medium text-indigo-600 dark:text-indigo-300">
-                <span>{module.status ? "Preview module" : "Open module"}</span>
+                <span>Open module</span>
                 <ArrowRight className="size-4" />
               </CardContent>
             </Card>
@@ -131,7 +138,7 @@ export function AdminDashboardPage() {
                 Dedicated admin experience
               </h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Admin routes now live inside the dedicated admin shell, while category management remains safely staged as a placeholder module for the next phase.
+                Administrative workflows are isolated inside a dedicated shell with consistent navigation, operational context, and governance-focused tooling.
               </p>
             </div>
           </div>
@@ -141,13 +148,13 @@ export function AdminDashboardPage() {
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Current scope</p>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Users, roles, permissions, system health, and category placeholder coverage.
+              Users, roles, permissions, system health, category administration, and tag administration.
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Preserved behavior</p>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Existing admin pages stay in place, backend APIs stay untouched, and no unsupported CRUD flows were introduced.
+              Existing admin pages and routes remain intact while the control panel stays focused on moderation, access control, and platform operations.
             </p>
           </div>
         </div>

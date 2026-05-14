@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom";
-import { LogOut, Menu, Store } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { useAuth } from "../auth/AuthContext";
 import { Button } from "../components/ui/Button";
 import { routePaths } from "../routes/routePaths";
@@ -45,7 +45,14 @@ function getAdminSectionMeta(pathname: string) {
   if (pathname.startsWith(routePaths.admin.categories)) {
     return {
       title: "Categories",
-      description: "Prepare category management without changing current contracts yet.",
+      description: "Manage platform taxonomy and archive state within the admin control plane.",
+    };
+  }
+
+  if (pathname.startsWith(routePaths.admin.tags)) {
+    return {
+      title: "Tags",
+      description: "Manage reusable metadata tags and archive state within the admin control plane.",
     };
   }
 
@@ -66,10 +73,6 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
   const handleLogout = async () => {
     await logout();
     navigate(routePaths.login);
-  };
-
-  const handleMarketplaceClick = () => {
-    navigate(routePaths.marketplace);
   };
 
   return (
@@ -106,16 +109,6 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
             <p className="text-xs text-slate-600 dark:text-slate-400">{identitySubtitle}</p>
           </div>
 
-          <Button
-            variant="outline"
-            size="sm"
-            type="button"
-            onClick={handleMarketplaceClick}
-            className="hidden md:inline-flex"
-          >
-            <Store className="size-4" />
-            Open marketplace
-          </Button>
 
           <div className="rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900 md:hidden">
             <p className="max-w-[8rem] truncate text-sm font-medium text-slate-900 dark:text-slate-100">

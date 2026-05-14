@@ -23,7 +23,6 @@ import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Spinner } from "../../components/ui/Spinner";
-import { getCategoryIcon } from "./categoryIcons";
 import {
   useCategories,
   useFavoriteItem,
@@ -77,7 +76,7 @@ export function MarketplacePage() {
     [orderedCategories]
   );
 
-  const featuredCategories = useMemo(() => orderedCategories.slice(0, 6), [orderedCategories]);
+  const browseCategories = useMemo(() => orderedCategories, [orderedCategories]);
 
   useEffect(() => {
     if (!data) {
@@ -306,7 +305,6 @@ export function MarketplacePage() {
 
             <div className="space-y-1">
               {allCategories.map((category) => {
-                const Icon = getCategoryIcon(category.slug);
                 const isSelected = (params.categoryUuid ?? "") === category.uuid;
 
                 return (
@@ -320,7 +318,6 @@ export function MarketplacePage() {
                         : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <Icon className={`size-4.5 shrink-0 ${isSelected ? "text-violet-600" : "text-slate-500"}`} />
                     <span className="min-w-0 flex-1 truncate text-sm font-medium">{category.name}</span>
                   </button>
                 );
@@ -371,7 +368,7 @@ export function MarketplacePage() {
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-lg font-medium text-slate-900">Browse by category</h2>
-                <p className="text-sm text-slate-500">Explore the most active sections of the marketplace.</p>
+                <p className="text-sm text-slate-500">Explore all available sections of the marketplace.</p>
               </div>
               {selectedCategory ? (
                 <button
@@ -385,8 +382,7 @@ export function MarketplacePage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-              {featuredCategories.map((category) => {
-                const Icon = getCategoryIcon(category.slug);
+              {browseCategories.map((category) => {
                 const isSelected = params.categoryUuid === category.uuid;
 
                 return (
@@ -400,17 +396,11 @@ export function MarketplacePage() {
                         : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
                     }`}
                   >
-                    <div
-                      className={`flex size-10 items-center justify-center rounded-full transition-colors ${
-                        isSelected
-                          ? "bg-violet-100 text-violet-600"
-                          : "bg-violet-50 text-violet-600 group-hover:bg-violet-100"
-                      }`}
-                    >
-                      <Icon className="size-5" />
-                    </div>
-                    <span className="text-xs font-medium leading-4 text-slate-700 group-hover:text-violet-700">
+                    <span className="text-sm font-semibold leading-5 text-slate-900 group-hover:text-violet-700 dark:text-slate-100">
                       {category.name}
+                    </span>
+                    <span className="text-xs text-slate-500 group-hover:text-violet-600 dark:text-slate-400">
+                      Browse listings
                     </span>
                   </button>
                 );

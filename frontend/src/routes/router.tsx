@@ -1,4 +1,6 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
+import { useAuth } from "@/auth/AuthContext";
+import { LoadingScreen } from "@/components/ui/Spinner";
 import { PublicLayout } from "../layouts/PublicLayout";
 import { AppLayout } from "../layouts/AppLayout";
 import { AdminLayout } from "../layouts/AdminLayout";
@@ -12,6 +14,7 @@ import { VerifyEmailPage } from "../features/auth/VerifyEmailPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { AdminDashboardPage } from "../features/admin/AdminDashboardPage";
 import { AdminCategoriesPage } from "../features/admin/AdminCategoriesPage";
+import { AdminTagsPage } from "../features/admin/AdminTagsPage";
 import { UsersListPage } from "../features/admin/UsersListPage";
 import { UserDetailPage } from "../features/admin/UserDetailPage";
 import { RolesPage } from "../features/admin/RolesPage";
@@ -31,6 +34,45 @@ import { ProfilePage } from "../features/profile/ProfilePage";
 import { PublicProfilePage } from "../features/profile/PublicProfilePage";
 import { NotFoundPage } from "../features/error/NotFoundPage";
 import { RouteErrorPage } from "../features/error/ErrorPage";
+import { routePaths } from "./routePaths";
+
+function AdminAwareHomeRedirect() {
+  const { isAuthenticated, isLoading, hasRole } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (isAuthenticated && hasRole("ADMIN")) {
+    return <Navigate to={routePaths.admin.dashboard} replace />;
+  }
+
+  return <Navigate to={routePaths.marketplace} replace />;
+}
+
+function AdminAwareMarketplacePage() {
+  const { isAuthenticated, isLoading, hasRole } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (isAuthenticated && hasRole("ADMIN")) {
+    return <Navigate to={routePaths.admin.dashboard} replace />;
+  }
+
+  return <MarketplacePage />;
+}
+
+function AdminAwareDashboardPage() {
+  const { hasRole } = useAuth();
+
+  if (hasRole("ADMIN")) {
+    return <Navigate to={routePaths.admin.dashboard} replace />;
+  }
+
+  return <DashboardPage />;
+}
 
 export const router = createBrowserRouter([
   {
@@ -39,11 +81,11 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <Navigate to="/marketplace" replace />,
+        element: <AdminAwareHomeRedirect />,
       },
       {
         path: "/marketplace",
-        element: <MarketplacePage />,
+        element: <AdminAwareMarketplacePage />,
       },
       {
         path: "/marketplace/items/:uuid",
@@ -85,7 +127,7 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/dashboard",
-        element: <DashboardPage />,
+        element: <AdminAwareDashboardPage />,
       },
       {
         path: "/my-items",
@@ -164,6 +206,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/categories",
         element: <AdminCategoriesPage />,
+      },
+      {
+        path: "/admin/tags",
+        element: <AdminTagsPage />,
       },
     ],
   },

@@ -1,0 +1,25 @@
+type: object
+additionalProperties: false
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+    nullable: true
+  slug:
+    type: string
+    minLength: 1
+    maxLength: 140
+    nullable: true
+  description:
+    type: string
+    nullable: true
+  parentUuid:
+    type: string
+    format: uuid
+    nullable: true
+  sortOrder:
+    type: integer
+    format: int32
+    nullable: true
+

@@ -58,5 +58,6 @@ export const routePaths = {
     permissions: "/admin/permissions",
     system: "/admin/system",
     categories: "/admin/categories",
+    tags: "/admin/tags",
   },
 } as const;

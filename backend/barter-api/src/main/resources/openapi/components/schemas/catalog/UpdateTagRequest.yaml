@@ -1,0 +1,14 @@
+type: object
+additionalProperties: false
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+    nullable: true
+  slug:
+    type: string
+    minLength: 1
+    maxLength: 140
+    nullable: true
+

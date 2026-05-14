@@ -21,6 +21,8 @@ tags:
     description: Placeholder system operations for generator validation
   - name: Catalog
     description: Catalog browsing, item listings, and item management
+  - name: AdminCategories
+    description: Administrator category management operations
   - name: TradeOffers
     description: Trade offer creation, listing, and lifecycle management
   - name: Notifications
@@ -74,8 +76,16 @@ paths:
     $ref: './paths/oauth.yaml#/accounts'
   /catalog/categories:
     $ref: './paths/catalog.yaml#/categories'
+  /admin/categories:
+    $ref: './paths/admin-categories.yaml#/categories'
+  /admin/categories/{categoryUuid}:
+    $ref: './paths/admin-categories.yaml#/categoryByUuid'
   /catalog/tags:
     $ref: './paths/catalog.yaml#/tags'
+  /admin/tags:
+    $ref: './paths/admin-tags.yaml#/tags'
+  /admin/tags/{tagUuid}:
+    $ref: './paths/admin-tags.yaml#/tagByUuid'
   /catalog/items:
     $ref: './paths/catalog.yaml#/items'
   /catalog/favorites:
@@ -177,8 +187,16 @@ components:
       $ref: './components/schemas/catalog/ItemCondition.yaml'
     CategoryResponse:
       $ref: './components/schemas/catalog/CategoryResponse.yaml'
+    AdminCategoryResponse:
+      $ref: './components/schemas/catalog/AdminCategoryResponse.yaml'
+    AdminCategoryPagedResponse:
+      $ref: './components/schemas/catalog/AdminCategoryPagedResponse.yaml'
     TagResponse:
       $ref: './components/schemas/catalog/TagResponse.yaml'
+    AdminTagResponse:
+      $ref: './components/schemas/catalog/AdminTagResponse.yaml'
+    AdminTagPagedResponse:
+      $ref: './components/schemas/catalog/AdminTagPagedResponse.yaml'
     ItemSummaryResponse:
       $ref: './components/schemas/catalog/ItemSummaryResponse.yaml'
     ItemDetailResponse:
@@ -187,8 +205,16 @@ components:
       $ref: './components/schemas/catalog/ItemPagedResponse.yaml'
     CreateItemRequest:
       $ref: './components/schemas/catalog/CreateItemRequest.yaml'
+    CreateCategoryRequest:
+      $ref: './components/schemas/catalog/CreateCategoryRequest.yaml'
+    CreateTagRequest:
+      $ref: './components/schemas/catalog/CreateTagRequest.yaml'
     UpdateItemRequest:
       $ref: './components/schemas/catalog/UpdateItemRequest.yaml'
+    UpdateCategoryRequest:
+      $ref: './components/schemas/catalog/UpdateCategoryRequest.yaml'
+    UpdateTagRequest:
+      $ref: './components/schemas/catalog/UpdateTagRequest.yaml'
     ArchiveItemRequest:
       $ref: './components/schemas/catalog/ArchiveItemRequest.yaml'
     ItemImageResponse:

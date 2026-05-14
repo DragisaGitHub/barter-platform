@@ -1,0 +1,47 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - name
+  - slug
+  - sortOrder
+  - deleted
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  name:
+    type: string
+    maxLength: 120
+  slug:
+    type: string
+    maxLength: 140
+  description:
+    type: string
+    nullable: true
+  parentUuid:
+    type: string
+    format: uuid
+    nullable: true
+  parentName:
+    type: string
+    maxLength: 120
+    nullable: true
+  sortOrder:
+    type: integer
+    format: int32
+  deleted:
+    type: boolean
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    nullable: true
+  deletedAt:
+    type: string
+    format: date-time
+    nullable: true
+

@@ -45,7 +45,11 @@ export type ItemCondition = components["schemas"]["ItemCondition"];
 // ─── Catalog Response DTOs ──────────────────────────────────────────────────
 
 export type CategoryResponse = components["schemas"]["CategoryResponse"];
+export type AdminCategoryResponse = components["schemas"]["AdminCategoryResponse"];
+export type AdminCategoryPagedResponse = components["schemas"]["AdminCategoryPagedResponse"];
 export type TagResponse = components["schemas"]["TagResponse"];
+export type AdminTagResponse = components["schemas"]["AdminTagResponse"];
+export type AdminTagPagedResponse = components["schemas"]["AdminTagPagedResponse"];
 export type ItemSummaryResponse = components["schemas"]["ItemSummaryResponse"];
 export type ItemDetailResponse = components["schemas"]["ItemDetailResponse"];
 export type ItemPagedResponse = components["schemas"]["ItemPagedResponse"];
@@ -57,7 +61,11 @@ export type ItemImageResponse = components["schemas"]["ItemImageResponse"];
 // ─── Catalog Request DTOs ───────────────────────────────────────────────────
 
 export type CreateItemRequest = components["schemas"]["CreateItemRequest"];
+export type CreateCategoryRequest = components["schemas"]["CreateCategoryRequest"];
+export type CreateTagRequest = components["schemas"]["CreateTagRequest"];
 export type UpdateItemRequest = components["schemas"]["UpdateItemRequest"];
+export type UpdateCategoryRequest = components["schemas"]["UpdateCategoryRequest"];
+export type UpdateTagRequest = components["schemas"]["UpdateTagRequest"];
 export type ArchiveItemRequest = components["schemas"]["ArchiveItemRequest"];
 
 // ─── Trade Offer Enums ──────────────────────────────────────────────────────

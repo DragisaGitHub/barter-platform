@@ -395,6 +395,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/categories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List categories for administrators */
+        get: operations["listAdminCategories"];
+        put?: never;
+        /** Create a category */
+        post: operations["createAdminCategory"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/categories/{categoryUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get category detail for administrators */
+        get: operations["getAdminCategoryByUuid"];
+        put?: never;
+        post?: never;
+        /** Soft-delete a category */
+        delete: operations["deleteAdminCategory"];
+        options?: never;
+        head?: never;
+        /** Update a category */
+        patch: operations["updateAdminCategory"];
+        trace?: never;
+    };
     "/catalog/tags": {
         parameters: {
             query?: never;
@@ -410,6 +447,43 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/admin/tags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tags for administrators */
+        get: operations["listAdminTags"];
+        put?: never;
+        /** Create a tag */
+        post: operations["createAdminTag"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/tags/{tagUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get tag detail for administrators */
+        get: operations["getAdminTagByUuid"];
+        put?: never;
+        post?: never;
+        /** Soft-delete a tag */
+        delete: operations["deleteAdminTag"];
+        options?: never;
+        head?: never;
+        /** Update a tag */
+        patch: operations["updateAdminTag"];
         trace?: never;
     };
     "/catalog/items": {
@@ -1041,11 +1115,71 @@ export interface components {
             /** Format: int32 */
             sortOrder: number;
         };
+        AdminCategoryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            name: string;
+            slug: string;
+            description?: string | null;
+            /** Format: uuid */
+            parentUuid?: string | null;
+            parentName?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
+            deleted: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** Format: date-time */
+            deletedAt?: string | null;
+        };
+        AdminCategoryPagedResponse: {
+            content: components["schemas"]["AdminCategoryResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort: string;
+        };
         TagResponse: {
             /** Format: uuid */
             uuid: string;
             name: string;
             slug: string;
+        };
+        AdminTagResponse: {
+            /** Format: uuid */
+            uuid: string;
+            name: string;
+            slug: string;
+            deleted: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** Format: date-time */
+            deletedAt?: string | null;
+        };
+        AdminTagPagedResponse: {
+            content: components["schemas"]["AdminTagResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort: string;
         };
         ItemSummaryResponse: {
             /** Format: uuid */
@@ -1106,6 +1240,22 @@ export interface components {
             /** @description Optional initial status. Defaults to DRAFT if omitted. */
             status?: components["schemas"]["ItemStatus"];
         };
+        CreateCategoryRequest: {
+            name: string;
+            slug?: string | null;
+            description?: string | null;
+            /** Format: uuid */
+            parentUuid?: string | null;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            sortOrder: number;
+        };
+        CreateTagRequest: {
+            name: string;
+            slug?: string | null;
+        };
         UpdateItemRequest: {
             title?: string;
             description?: string;
@@ -1115,6 +1265,19 @@ export interface components {
             condition?: components["schemas"]["ItemCondition"];
             /** @description Only DRAFT and ACTIVE transitions are allowed by the owner. */
             status?: components["schemas"]["ItemStatus"];
+        };
+        UpdateCategoryRequest: {
+            name?: string | null;
+            slug?: string | null;
+            description?: string | null;
+            /** Format: uuid */
+            parentUuid?: string | null;
+            /** Format: int32 */
+            sortOrder?: number | null;
+        };
+        UpdateTagRequest: {
+            name?: string | null;
+            slug?: string | null;
         };
         ArchiveItemRequest: {
             /** @description Optional reason for archiving the item. */
@@ -1841,7 +2004,7 @@ export interface operations {
             header?: never;
             path: {
                 /** @description Role code. */
-                code: components["parameters"]["RoleCodeParameter"];
+                code: components["schemas"]["RoleCode"];
             };
             cookie?: never;
         };
@@ -2066,6 +2229,150 @@ export interface operations {
             };
         };
     };
+    listAdminCategories: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Search by category name or slug. */
+                q?: string;
+                /** @description Include soft-deleted categories in the result. */
+                includeDeleted?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Categories returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryPagedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createAdminCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Category created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getAdminCategoryByUuid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category UUID. */
+                categoryUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteAdminCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category UUID. */
+                categoryUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateAdminCategory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category UUID. */
+                categoryUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCategoryRequest"];
+            };
+        };
+        responses: {
+            /** @description Category updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminCategoryResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     listTags: {
         parameters: {
             query?: never;
@@ -2084,6 +2391,150 @@ export interface operations {
                     "application/json": components["schemas"]["TagResponse"][];
                 };
             };
+        };
+    };
+    listAdminTags: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Search by tag name or slug. */
+                q?: string;
+                /** @description Include soft-deleted tags in the result. */
+                includeDeleted?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tags returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTagPagedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createAdminTag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTagRequest"];
+            };
+        };
+        responses: {
+            /** @description Tag created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTagResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getAdminTagByUuid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tag UUID. */
+                tagUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tag returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTagResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteAdminTag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tag UUID. */
+                tagUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tag deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateAdminTag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tag UUID. */
+                tagUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTagRequest"];
+            };
+        };
+        responses: {
+            /** @description Tag updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminTagResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     searchItems: {

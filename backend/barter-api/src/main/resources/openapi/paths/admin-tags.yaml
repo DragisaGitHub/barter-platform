@@ -1,0 +1,160 @@
+tags:
+  get:
+    tags:
+      - AdminTags
+    operationId: listAdminTags
+    summary: List tags for administrators
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: q
+        in: query
+        required: false
+        description: Search by tag name or slug.
+        schema:
+          type: string
+          maxLength: 255
+      - name: includeDeleted
+        in: query
+        required: false
+        description: Include soft-deleted tags in the result.
+        schema:
+          type: boolean
+          default: false
+    responses:
+      '200':
+        description: Tags returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminTagPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+  post:
+    tags:
+      - AdminTags
+    operationId: createAdminTag
+    summary: Create a tag
+    security:
+      - bearerJwt: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CreateTagRequest'
+    responses:
+      '201':
+        description: Tag created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminTagResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+tagByUuid:
+  get:
+    tags:
+      - AdminTags
+    operationId: getAdminTagByUuid
+    summary: Get tag detail for administrators
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: tagUuid
+        in: path
+        required: true
+        description: Tag UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Tag returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminTagResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+  patch:
+    tags:
+      - AdminTags
+    operationId: updateAdminTag
+    summary: Update a tag
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: tagUuid
+        in: path
+        required: true
+        description: Tag UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/UpdateTagRequest'
+    responses:
+      '200':
+        description: Tag updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminTagResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+  delete:
+    tags:
+      - AdminTags
+    operationId: deleteAdminTag
+    summary: Soft-delete a tag
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: tagUuid
+        in: path
+        required: true
+        description: Tag UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Tag deleted successfully
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
