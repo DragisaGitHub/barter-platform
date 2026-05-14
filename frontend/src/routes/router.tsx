@@ -9,7 +9,6 @@ import { ResetPasswordPage } from "../features/auth/ResetPasswordPage";
 import { RegisterPage } from "../features/auth/RegisterPage";
 import { VerifyEmailPage } from "../features/auth/VerifyEmailPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
-import { PlaceholderPage } from "../features/placeholder/PlaceholderPage";
 import { AdminDashboardPage } from "../features/admin/AdminDashboardPage";
 import { UsersListPage } from "../features/admin/UsersListPage";
 import { UserDetailPage } from "../features/admin/UserDetailPage";
@@ -26,6 +25,7 @@ import { IncomingOffersPage } from "../features/trade/IncomingOffersPage";
 import { SentOffersPage } from "../features/trade/SentOffersPage";
 import { TradeOfferDetailPage } from "../features/trade/TradeOfferDetailPage";
 import { NotificationsPage } from "../features/notifications/NotificationsPage";
+import { ProfilePage } from "../features/profile/ProfilePage";
 import { PublicProfilePage } from "../features/profile/PublicProfilePage";
 import { NotFoundPage } from "../features/error/NotFoundPage";
 import { RouteErrorPage } from "../features/error/ErrorPage";
@@ -123,12 +123,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "/profile",
-        element: (
-          <PlaceholderPage
-            title="Profile"
-            description="View and edit your profile information."
-          />
-        ),
+        element: <ProfilePage />,
       },
     ],
   },
