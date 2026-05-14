@@ -25,42 +25,56 @@ export function DataTable<T>({
   onRowClick,
 }: DataTableProps<T>) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-700">
-      <table className="w-full">
+    <div className="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+      <table className="w-full min-w-[720px]">
         <thead className="bg-slate-50 dark:bg-slate-800/50">
           <tr>
             {columns.map((column) => (
               <th
                 key={column.key}
+                scope="col"
+                aria-sort={
+                  column.sortable && currentSort?.field === column.key
+                    ? currentSort.direction === "asc"
+                      ? "ascending"
+                      : "descending"
+                    : "none"
+                }
                 className={cn(
-                  "px-6 py-3 text-left text-xs font-medium text-slate-700 dark:text-slate-300 uppercase tracking-wider",
-                  column.sortable && onSort && "cursor-pointer select-none hover:bg-slate-100 dark:hover:bg-slate-700/50"
+                  "px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-slate-700 dark:text-slate-300"
                 )}
-                onClick={() => column.sortable && onSort?.(column.key)}
               >
-                <div className="flex items-center gap-2">
-                  {column.label}
-                  {column.sortable && currentSort?.field === column.key && (
-                    <span className="text-indigo-600 dark:text-indigo-400">
-                      {currentSort.direction === "asc" ? (
-                        <ChevronUp className="size-4" />
-                      ) : (
-                        <ChevronDown className="size-4" />
-                      )}
-                    </span>
-                  )}
-                </div>
+                {column.sortable && onSort ? (
+                  <button
+                    type="button"
+                    onClick={() => onSort(column.key)}
+                    className="-ml-2 inline-flex items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:hover:bg-slate-700/50"
+                  >
+                    <span>{column.label}</span>
+                    {currentSort?.field === column.key ? (
+                      <span className="text-indigo-600 dark:text-indigo-400">
+                        {currentSort.direction === "asc" ? (
+                          <ChevronUp className="size-4" />
+                        ) : (
+                          <ChevronDown className="size-4" />
+                        )}
+                      </span>
+                    ) : null}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2">{column.label}</div>
+                )}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
+        <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-900">
           {data.map((item, index) => (
             <tr
               key={index}
               className={cn(
                 "transition-colors",
-                onRowClick && "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50"
+                onRowClick && "cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/60"
               )}
               onClick={() => onRowClick?.(item)}
             >

@@ -1,5 +1,9 @@
 package com.barterplatform.application.common.pagination;
 
+import com.barterplatform.api.model.AdminCategoryPagedResponse;
+import com.barterplatform.api.model.AdminCategoryResponse;
+import com.barterplatform.api.model.AdminTagPagedResponse;
+import com.barterplatform.api.model.AdminTagResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.NotificationPagedResponse;
@@ -14,6 +18,36 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class PageResponseMapper {
+
+    public AdminCategoryPagedResponse toAdminCategoryPagedResponse(
+            Page<?> page,
+            List<AdminCategoryResponse> content,
+            String sort) {
+        return new AdminCategoryPagedResponse()
+                .content(content)
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .sort(sort);
+    }
+
+    public AdminTagPagedResponse toAdminTagPagedResponse(
+            Page<?> page,
+            List<AdminTagResponse> content,
+            String sort) {
+        return new AdminTagPagedResponse()
+                .content(content)
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .sort(sort);
+    }
 
     public UserPagedResponse toUserPagedResponse(
             Page<?> page,
