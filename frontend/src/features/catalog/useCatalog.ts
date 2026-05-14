@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   listCategories,
+  listPopularCategories,
   listTags,
   searchItems,
   getItemByUuid,
@@ -11,12 +12,14 @@ import {
   archiveItem,
   favoriteItem,
   unfavoriteItem,
+  type PopularCategoriesParams,
   type SearchItemsParams,
   type MyItemsParams,
   type FavoriteItemsParams,
 } from "@/api/catalogApi.ts";
 import type {
   CategoryResponse,
+  PopularCategoryResponse,
   TagResponse,
   ItemPagedResponse,
   ItemDetailResponse,
@@ -29,6 +32,7 @@ import type {
 
 export const catalogKeys = {
   categories: ["catalog", "categories"] as const,
+  popularCategories: (limit: number) => ["catalog", "categories", "popular", limit] as const,
   tags: ["catalog", "tags"] as const,
   items: ["catalog", "items"] as const,
   favorites: ["catalog", "favorites"] as const,
@@ -45,6 +49,16 @@ export function useCategories() {
     queryKey: catalogKeys.categories,
     queryFn: listCategories,
     staleTime: 5 * 60 * 1000, // categories rarely change
+  });
+}
+
+export function usePopularCategories(params: PopularCategoriesParams = {}) {
+  const limit = params.limit ?? 6;
+
+  return useQuery<PopularCategoryResponse[]>({
+    queryKey: catalogKeys.popularCategories(limit),
+    queryFn: () => listPopularCategories({ limit }),
+    staleTime: 60 * 1000,
   });
 }
 

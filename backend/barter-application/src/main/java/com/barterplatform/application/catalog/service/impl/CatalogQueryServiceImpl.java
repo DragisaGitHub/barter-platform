@@ -5,6 +5,7 @@ import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemImageResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
+import com.barterplatform.api.model.PopularCategoryResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.application.catalog.mapper.CategoryMapper;
 import com.barterplatform.application.catalog.mapper.ItemImageMapper;
@@ -28,6 +29,7 @@ import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
+import com.barterplatform.infrastructure.catalog.repository.PopularCategoryProjection;
 import com.barterplatform.infrastructure.catalog.repository.TagRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 
@@ -35,6 +37,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -45,6 +48,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class CatalogQueryServiceImpl implements CatalogQueryService {
 
     private static final String DEFAULT_ITEM_SORT_FIELD = "createdAt";
+    private static final int DEFAULT_POPULAR_CATEGORY_LIMIT = 6;
+    private static final int MIN_POPULAR_CATEGORY_LIMIT = 1;
+    private static final int MAX_POPULAR_CATEGORY_LIMIT = 20;
     private static final Set<String> ALLOWED_ITEM_SORT_FIELDS = Set.of(
             "createdAt", "updatedAt", "title", "status");
 
@@ -93,6 +99,14 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     public List<com.barterplatform.api.model.CategoryResponse> listCategories() {
         return categoryMapper.toResponseList(
                 categoryRepository.findAllByDeletedAtIsNullOrderBySortOrderAscNameAsc());
+    }
+
+    @Override
+    public List<PopularCategoryResponse> listPopularCategories(Integer limit) {
+        int resolvedLimit = resolvePopularCategoryLimit(limit);
+        return categoryRepository.findPopularCategories(ItemStatus.ACTIVE, PageRequest.of(0, resolvedLimit)).stream()
+                .map(this::mapPopularCategoryResponse)
+                .toList();
     }
 
     @Override
@@ -217,6 +231,32 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         }
 
         return Specification.allOf(specs);
+    }
+
+    private int resolvePopularCategoryLimit(Integer limit) {
+        if (limit == null) {
+            return DEFAULT_POPULAR_CATEGORY_LIMIT;
+        }
+
+        if (limit < MIN_POPULAR_CATEGORY_LIMIT || limit > MAX_POPULAR_CATEGORY_LIMIT) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCode.BAD_REQUEST,
+                    "Popular category limit must be between %d and %d."
+                            .formatted(MIN_POPULAR_CATEGORY_LIMIT, MAX_POPULAR_CATEGORY_LIMIT));
+        }
+
+        return limit;
+    }
+
+    private PopularCategoryResponse mapPopularCategoryResponse(PopularCategoryProjection projection) {
+        return new PopularCategoryResponse()
+                .uuid(projection.getUuid())
+                .name(projection.getName())
+                .slug(projection.getSlug())
+                .description(projection.getDescription())
+                .sortOrder(projection.getSortOrder())
+                .activeItemCount(projection.getActiveItemCount());
     }
 
     private List<ItemSummaryResponse> mapItemSummaries(List<ItemEntity> items) {

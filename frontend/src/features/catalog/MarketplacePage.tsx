@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
   Clock,
@@ -27,6 +27,7 @@ import {
   useCategories,
   useFavoriteItem,
   useFavoriteItems,
+  usePopularCategories,
   useSearchItems,
   useTags,
   useUnfavoriteItem,
@@ -35,21 +36,30 @@ import { toast } from "sonner";
 
 const pageShellClassName = "marketplace-panel";
 
+type SidebarCategoryEntry = CategoryResponse & {
+  activeItemCount?: number;
+};
+
 export function MarketplacePage() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const [params, setParams] = useState<SearchItemsParams>({
+  const [searchParams, setSearchParams] = useSearchParams();
+  const categoryUuidFromUrl = searchParams.get("categoryUuid") ?? undefined;
+  const [params, setParams] = useState<SearchItemsParams>(() => ({
     page: 0,
     size: 20,
     sort: "createdAt,desc",
-  });
+    categoryUuid: categoryUuidFromUrl,
+  }));
   const [searchInput, setSearchInput] = useState("");
   const [loadedItems, setLoadedItems] = useState<ItemSummaryResponse[]>([]);
   const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>({});
   const [pendingFavoriteUuid, setPendingFavoriteUuid] = useState<string | null>(null);
+  const resetResults = () => setLoadedItems([]);
 
   const { data, isLoading, isFetching, isError } = useSearchItems(params);
   const { data: categories } = useCategories();
+  const { data: popularCategoriesData, isLoading: isPopularCategoriesLoading } = usePopularCategories({ limit: 10 });
   const { data: tags } = useTags();
   const favoriteListParams = useMemo(
     () => ({ page: 0, size: 200, sort: "createdAt,desc" }),
@@ -60,25 +70,19 @@ export function MarketplacePage() {
   const unfavoriteItemMutation = useUnfavoriteItem();
 
   const orderedCategories = useMemo(
-    () => (categories ? [...categories].sort((a, b) => a.sortOrder - b.sortOrder) : []),
+    () =>
+      categories
+        ? [...categories].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name))
+        : [],
     [categories]
   );
 
-  const allCategories = useMemo<CategoryResponse[]>(
-    () => [
-      {
-        uuid: "",
-        name: "All Categories",
-        slug: "all",
-        description: null,
-        sortOrder: -1,
-      },
-      ...orderedCategories,
-    ],
-    [orderedCategories]
-  );
+  const popularCategories = useMemo(() => popularCategoriesData ?? [], [popularCategoriesData]);
 
-  const browseCategories = useMemo(() => orderedCategories, [orderedCategories]);
+  const featuredPopularCategories = useMemo(
+    () => popularCategories.slice(0, 6),
+    [popularCategories]
+  );
 
   useEffect(() => {
     if (!data) {
@@ -98,6 +102,20 @@ export function MarketplacePage() {
       setPendingFavoriteUuid(null);
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (categoryUuidFromUrl === (params.categoryUuid ?? undefined)) {
+      return;
+    }
+
+    resetResults();
+    setParams((previous) => ({
+      ...previous,
+      page: 0,
+      categoryUuid: categoryUuidFromUrl,
+    }));
+  }, [categoryUuidFromUrl, params.categoryUuid]);
+
 
   const filteredItems = useMemo(() => {
     const activeItems = loadedItems.filter((item) => item.status === "ACTIVE");
@@ -128,6 +146,23 @@ export function MarketplacePage() {
     [orderedCategories, params.categoryUuid]
   );
 
+  const sidebarCategories = useMemo<SidebarCategoryEntry[]>(() => {
+    const topPopularCategories = popularCategories.slice(0, 10).map((category) => ({
+      uuid: category.uuid,
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      sortOrder: category.sortOrder,
+      activeItemCount: category.activeItemCount,
+    }));
+
+    if (!selectedCategory || topPopularCategories.some((category) => category.uuid === selectedCategory.uuid)) {
+      return topPopularCategories;
+    }
+
+    return [{ ...selectedCategory }, ...topPopularCategories].slice(0, 10);
+  }, [popularCategories, selectedCategory]);
+
   const resultsTitle = params.q
     ? `Search results for “${params.q}”`
     : selectedCategory
@@ -136,7 +171,6 @@ export function MarketplacePage() {
 
   const resultsMeta = filteredItems.length === 1 ? "1 live listing" : `${filteredItems.length} live listings`;
 
-  const resetResults = () => setLoadedItems([]);
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -150,12 +184,32 @@ export function MarketplacePage() {
   };
 
   const selectCategory = (categoryUuid: string) => {
+    const nextCategoryUuid = categoryUuid || undefined;
+
+    if ((params.categoryUuid ?? undefined) === nextCategoryUuid) {
+      return;
+    }
+
     resetResults();
     setParams((previous) => ({
       ...previous,
       page: 0,
-      categoryUuid: categoryUuid || undefined,
+      categoryUuid: nextCategoryUuid,
     }));
+
+    if (categoryUuidFromUrl !== nextCategoryUuid) {
+      setSearchParams((current) => {
+        const next = new URLSearchParams(current);
+
+        if (nextCategoryUuid) {
+          next.set("categoryUuid", nextCategoryUuid);
+        } else {
+          next.delete("categoryUuid");
+        }
+
+        return next;
+      });
+    }
   };
 
   const handleTagToggle = (tagUuid: string) => {
@@ -261,7 +315,7 @@ export function MarketplacePage() {
             <div className="flex flex-wrap items-center gap-4 xl:gap-6">
               <button
                 type="button"
-                onClick={() => scrollToSection("browse-by-category")}
+                onClick={() => scrollToSection("popular-categories")}
                 className="transition hover:text-violet-600"
               >
                 Categories
@@ -321,13 +375,29 @@ export function MarketplacePage() {
               </span>
             </div>
 
-            <div className="space-y-1">
-              {allCategories.map((category) => {
-                const isSelected = (params.categoryUuid ?? "") === category.uuid;
+            <p className="mb-3 text-xs leading-5 text-slate-500">
+              Quick shortcuts for the most active categories right now, plus fast access to the full directory.
+            </p>
+
+            <div className="space-y-1.5">
+              <button
+                type="button"
+                onClick={() => selectCategory("")}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+                  !params.categoryUuid
+                    ? "bg-violet-50 text-violet-700"
+                    : "text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">All Categories</span>
+              </button>
+
+              {sidebarCategories.map((category) => {
+                const isSelected = params.categoryUuid === category.uuid;
 
                 return (
                   <button
-                    key={category.uuid || "all"}
+                    key={category.uuid}
                     type="button"
                     onClick={() => selectCategory(category.uuid)}
                     className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
@@ -336,11 +406,26 @@ export function MarketplacePage() {
                         : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
-                    <span className="min-w-0 flex-1 truncate text-sm font-medium">{category.name}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{category.name}</span>
+                      {typeof category.activeItemCount === "number" ? (
+                        <span className="text-xs text-slate-500">
+                          {category.activeItemCount} active {category.activeItemCount === 1 ? "listing" : "listings"}
+                        </span>
+                      ) : null}
+                    </span>
                   </button>
                 );
               })}
             </div>
+
+            <Link
+              to={routePaths.marketplaceCategories}
+              className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:text-violet-600"
+            >
+              Show all categories
+              <ArrowRight className="size-4" />
+            </Link>
           </div>
 
           {tags && tags.length > 0 ? (
@@ -418,48 +503,80 @@ export function MarketplacePage() {
         </aside>
 
         <main className="min-w-0 flex-1 space-y-6">
-          <section id="browse-by-category" className={`${pageShellClassName} p-4`}>
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-lg font-medium text-slate-900">Browse by category</h2>
-                <p className="text-sm text-slate-500">Explore all available sections of the marketplace.</p>
+          <section id="popular-categories" className={`${pageShellClassName} p-4`}>
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="max-w-2xl">
+                <h2 className="text-lg font-medium text-slate-900">Popular Categories</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  Compact discovery shortcuts based on live marketplace activity, so listings stay front and center.
+                </p>
               </div>
-              {selectedCategory ? (
-                <button
-                  type="button"
-                  onClick={() => selectCategory("")}
-                  className="inline-flex items-center gap-2 self-start rounded-lg bg-violet-50 px-3 py-2 text-xs font-medium text-violet-600 transition hover:bg-violet-100 sm:self-auto"
-                >
-                  Clear filter
-                </button>
-              ) : null}
-            </div>
 
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-              {browseCategories.map((category) => {
-                const isSelected = params.categoryUuid === category.uuid;
-
-                return (
+              <div className="flex flex-wrap items-center gap-2">
+                {selectedCategory ? (
                   <button
-                    key={category.uuid}
                     type="button"
-                    onClick={() => selectCategory(category.uuid)}
-                    className={`group flex min-h-[108px] flex-col items-center justify-center gap-2 rounded-lg border px-3 py-3 text-center transition-colors ${
-                      isSelected
-                        ? "border-violet-200 bg-violet-50 text-violet-700"
-                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
+                    onClick={() => selectCategory("")}
+                    className="inline-flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-xs font-medium text-violet-600 transition hover:bg-violet-100"
                   >
-                    <span className="text-sm font-semibold leading-5 text-slate-900 group-hover:text-violet-700 dark:text-slate-100">
-                      {category.name}
-                    </span>
-                    <span className="text-xs text-slate-500 group-hover:text-violet-600 dark:text-slate-400">
-                      Browse listings
-                    </span>
+                    Clear filter
                   </button>
-                );
-              })}
+                ) : null}
+                <Link
+                  to={routePaths.marketplaceCategories}
+                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-violet-200 hover:text-violet-600"
+                >
+                  View all categories
+                  <ArrowRight className="size-4" />
+                </Link>
+              </div>
             </div>
+
+            {isPopularCategoriesLoading ? (
+              <div className="mt-5 flex justify-center py-8">
+                <Spinner />
+              </div>
+            ) : null}
+
+            {!isPopularCategoriesLoading && featuredPopularCategories.length === 0 ? (
+              <div className="mt-5 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                Popular categories will appear here as active listings build momentum across the marketplace.
+              </div>
+            ) : null}
+
+            {!isPopularCategoriesLoading && featuredPopularCategories.length > 0 ? (
+              <div className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {featuredPopularCategories.map((category) => {
+                  const isSelected = params.categoryUuid === category.uuid;
+
+                  return (
+                    <button
+                      key={category.uuid}
+                      type="button"
+                      onClick={() => selectCategory(category.uuid)}
+                      className={`group flex items-start justify-between gap-3 rounded-xl border px-4 py-3 text-left transition-colors ${
+                        isSelected
+                          ? "border-violet-200 bg-violet-50 text-violet-700"
+                          : "border-slate-200 bg-white text-slate-700 hover:border-violet-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-semibold text-slate-900 transition group-hover:text-violet-700">
+                          {category.name}
+                        </div>
+                        <div className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
+                          {category.description?.trim() || "Jump straight into the most active listings in this category."}
+                        </div>
+                      </div>
+
+                      <div className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                        {category.activeItemCount} active
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
           </section>
 
           <section className={`${pageShellClassName} p-4`}>

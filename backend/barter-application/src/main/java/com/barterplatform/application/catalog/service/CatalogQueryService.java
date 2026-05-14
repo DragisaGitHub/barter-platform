@@ -3,6 +3,7 @@ package com.barterplatform.application.catalog.service;
 import com.barterplatform.api.model.CategoryResponse;
 import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
+import com.barterplatform.api.model.PopularCategoryResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
@@ -12,6 +13,8 @@ import java.util.UUID;
 public interface CatalogQueryService {
 
     List<CategoryResponse> listCategories();
+
+    List<PopularCategoryResponse> listPopularCategories(Integer limit);
 
     List<TagResponse> listTags();
 

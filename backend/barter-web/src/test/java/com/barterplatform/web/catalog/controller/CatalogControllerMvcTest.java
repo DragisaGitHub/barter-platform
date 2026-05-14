@@ -20,6 +20,7 @@ import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.MessageResponse;
+import com.barterplatform.api.model.PopularCategoryResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.application.catalog.service.CatalogQueryService;
 import com.barterplatform.application.catalog.service.FavoriteItemService;
@@ -81,6 +82,24 @@ class CatalogControllerMvcTest {
                 .andExpect(jsonPath("$[0].name").value("Books"));
 
         verify(catalogQueryService).listCategories();
+    }
+
+    @Test
+    void listPopularCategoriesShouldReturn200() throws Exception {
+        PopularCategoryResponse category = new PopularCategoryResponse()
+                .uuid(UUID.randomUUID())
+                .name("Books")
+                .slug("books")
+                .sortOrder(1)
+                .activeItemCount(12L);
+        when(catalogQueryService.listPopularCategories(6)).thenReturn(List.of(category));
+
+        mockMvc.perform(apiGet("/catalog/categories/popular").queryParam("limit", "6"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("Books"))
+                .andExpect(jsonPath("$[0].activeItemCount").value(12));
+
+        verify(catalogQueryService).listPopularCategories(6);
     }
 
     // ── Public: listTags ─────────────────────────────────────────

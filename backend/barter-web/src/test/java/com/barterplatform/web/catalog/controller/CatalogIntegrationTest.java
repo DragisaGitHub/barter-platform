@@ -2,7 +2,9 @@ package com.barterplatform.web.catalog.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -11,14 +13,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.barterplatform.BarterApplication;
+import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
+import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.infrastructure.catalog.repository.FavoriteItemRepository;
+import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -56,8 +66,22 @@ class CatalogIntegrationTest {
     // ── Seed UUIDs from V003__catalog_schema.sql ──────────────────
     private static final String CATEGORY_TOYS_UUID = "c0a80101-0001-4000-8000-000000000001";
     private static final String CATEGORY_BOOKS_UUID = "c0a80101-0002-4000-8000-000000000002";
+    private static final String CATEGORY_ELECTRONICS_UUID = "c0a80101-0003-4000-8000-000000000003";
+    private static final String CATEGORY_CLOTHES_UUID = "c0a80101-0004-4000-8000-000000000004";
+    private static final String CATEGORY_HOME_UUID = "c0a80101-0005-4000-8000-000000000005";
+    private static final String CATEGORY_SPORTS_UUID = "c0a80101-0006-4000-8000-000000000006";
     private static final String TAG_KIDS_UUID = "d0a80101-0001-4000-8000-000000000001";
     private static final String TAG_VINTAGE_UUID = "d0a80101-0003-4000-8000-000000000003";
+    private static final Map<String, SeedCategoryState> SEED_CATEGORY_STATES = new LinkedHashMap<>();
+
+    static {
+        SEED_CATEGORY_STATES.put(CATEGORY_TOYS_UUID, new SeedCategoryState("Toys", "toys", 1));
+        SEED_CATEGORY_STATES.put(CATEGORY_BOOKS_UUID, new SeedCategoryState("Books", "books", 2));
+        SEED_CATEGORY_STATES.put(CATEGORY_ELECTRONICS_UUID, new SeedCategoryState("Electronics", "electronics", 3));
+        SEED_CATEGORY_STATES.put(CATEGORY_CLOTHES_UUID, new SeedCategoryState("Clothes", "clothes", 4));
+        SEED_CATEGORY_STATES.put(CATEGORY_HOME_UUID, new SeedCategoryState("Home", "home", 5));
+        SEED_CATEGORY_STATES.put(CATEGORY_SPORTS_UUID, new SeedCategoryState("Sports", "sports", 6));
+    }
 
     @SuppressWarnings("resource")
     @Container
@@ -77,6 +101,7 @@ class CatalogIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
+    @Autowired private CategoryRepository categoryRepository;
     @Autowired private UserRepository userRepository;
     @Autowired private UserRoleRepository userRoleRepository;
     @Autowired private RefreshTokenRepository refreshTokenRepository;
@@ -91,6 +116,7 @@ class CatalogIntegrationTest {
         favoriteItemRepository.deleteAllInBatch();
         itemTagRepository.deleteAllInBatch();
         itemRepository.deleteAllInBatch();
+        resetCategories();
         emailVerificationCodeRepository.deleteAllInBatch();
         refreshTokenRepository.deleteAllInBatch();
         userRoleRepository.deleteAllInBatch();
@@ -118,6 +144,85 @@ class CatalogIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
                 .andExpect(jsonPath("$.length()").value(6));
+    }
+
+    @Test
+    void shouldListPopularCategoriesUsingActiveItemCountsAndLimit() throws Exception {
+        String token = registerActivateAndLogin("popular-user", "popular@example.com", "P@ssword123");
+
+        createItem(token, "Toy Car", CATEGORY_TOYS_UUID);
+        createItem(token, "Toy Train", CATEGORY_TOYS_UUID);
+        createItem(token, "Toy Puzzle", CATEGORY_TOYS_UUID);
+        createItem(token, "Book One", CATEGORY_BOOKS_UUID);
+        createItem(token, "Book Two", CATEGORY_BOOKS_UUID);
+        createItem(token, "Laptop", CATEGORY_ELECTRONICS_UUID);
+        createItem(token, "Headphones", CATEGORY_ELECTRONICS_UUID);
+
+        String deletedCategoryItemUuid = createItem(token, "Coat", CATEGORY_CLOTHES_UUID);
+        String inactiveItemUuid = createItem(token, "Lamp", CATEGORY_HOME_UUID);
+        String deletedItemUuid = createItem(token, "Bicycle", CATEGORY_SPORTS_UUID);
+
+        CategoryEntity deletedCategory = categoryRepository.findByUuid(UUID.fromString(CATEGORY_CLOTHES_UUID)).orElseThrow();
+        deletedCategory.setDeletedAt(OffsetDateTime.now());
+        categoryRepository.save(deletedCategory);
+
+        ItemEntity inactiveItem = itemRepository.findByUuid(UUID.fromString(inactiveItemUuid)).orElseThrow();
+        inactiveItem.setStatus(ItemStatus.ARCHIVED);
+        inactiveItem.setArchivedAt(OffsetDateTime.now());
+        itemRepository.save(inactiveItem);
+
+        ItemEntity deletedItem = itemRepository.findByUuid(UUID.fromString(deletedItemUuid)).orElseThrow();
+        deletedItem.setDeletedAt(OffsetDateTime.now());
+        itemRepository.save(deletedItem);
+
+        assertThat(itemRepository.findByUuid(UUID.fromString(deletedCategoryItemUuid))).isPresent();
+
+        mockMvc.perform(apiGet("/catalog/categories/popular"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[0].uuid").value(CATEGORY_TOYS_UUID))
+                .andExpect(jsonPath("$[0].activeItemCount").value(3))
+                .andExpect(jsonPath("$[1].uuid").value(CATEGORY_BOOKS_UUID))
+                .andExpect(jsonPath("$[1].activeItemCount").value(2))
+                .andExpect(jsonPath("$[2].uuid").value(CATEGORY_ELECTRONICS_UUID))
+                .andExpect(jsonPath("$[2].activeItemCount").value(2))
+                .andExpect(jsonPath("$[*].slug", not(hasItem("clothes"))))
+                .andExpect(jsonPath("$[*].slug", not(hasItem("home"))))
+                .andExpect(jsonPath("$[*].slug", not(hasItem("sports"))));
+
+        mockMvc.perform(apiGet("/catalog/categories/popular").queryParam("limit", "2"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(2)))
+                .andExpect(jsonPath("$[0].uuid").value(CATEGORY_TOYS_UUID))
+                .andExpect(jsonPath("$[1].uuid").value(CATEGORY_BOOKS_UUID));
+    }
+
+    @Test
+    void shouldUseSortOrderAndNameFallbackForPopularCategoriesWithSameCounts() throws Exception {
+        String token = registerActivateAndLogin("fallback-user", "fallback@example.com", "P@ssword123");
+
+        CategoryEntity priorityCategory = createCategory("Priority Picks", "priority-picks", 10);
+        CategoryEntity alphaCategory = createCategory("Alpha Finds", "alpha-finds", 20);
+        CategoryEntity betaCategory = createCategory("Beta Finds", "beta-finds", 20);
+
+        createItem(token, "Priority Item", priorityCategory.getUuid().toString());
+        createItem(token, "Alpha Item", alphaCategory.getUuid().toString());
+        createItem(token, "Beta Item", betaCategory.getUuid().toString());
+
+        mockMvc.perform(apiGet("/catalog/categories/popular").queryParam("limit", "3"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(3)))
+                .andExpect(jsonPath("$[0].name").value("Priority Picks"))
+                .andExpect(jsonPath("$[1].name").value("Alpha Finds"))
+                .andExpect(jsonPath("$[2].name").value("Beta Finds"));
+    }
+
+    @Test
+    void shouldRejectPopularCategoryLimitAboveMaximum() throws Exception {
+        mockMvc.perform(apiGet("/catalog/categories/popular").queryParam("limit", "21"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("must be less than or equal to 20"));
     }
 
     @Test
@@ -628,6 +733,10 @@ class CatalogIntegrationTest {
     }
 
     private String createItem(String token, String title) throws Exception {
+        return createItem(token, title, CATEGORY_TOYS_UUID);
+    }
+
+    private String createItem(String token, String title, String categoryUuid) throws Exception {
         MvcResult createResult = mockMvc.perform(apiPost("/catalog/items")
                         .header("Authorization", "Bearer " + token)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -638,11 +747,50 @@ class CatalogIntegrationTest {
                                   "condition": "GOOD",
                                   "status": "ACTIVE"
                                 }
-                                """.formatted(title, CATEGORY_TOYS_UUID)))
+                                """.formatted(title, categoryUuid)))
                 .andExpect(status().isCreated())
                 .andReturn();
 
         return extractField(createResult, "uuid");
+    }
+
+    private CategoryEntity createCategory(String name, String slug, int sortOrder) {
+        CategoryEntity category = new CategoryEntity();
+        category.setName(name);
+        category.setSlug(slug);
+        category.setSortOrder(sortOrder);
+        return categoryRepository.save(category);
+    }
+
+    private void resetCategories() {
+        List<CategoryEntity> categories = categoryRepository.findAll();
+        List<CategoryEntity> extraCategories = new ArrayList<>();
+        List<CategoryEntity> seededCategories = new ArrayList<>();
+
+        for (CategoryEntity category : categories) {
+            SeedCategoryState seedCategoryState = SEED_CATEGORY_STATES.get(category.getUuid().toString());
+            if (seedCategoryState == null) {
+                extraCategories.add(category);
+                continue;
+            }
+
+            category.setName(seedCategoryState.name());
+            category.setSlug(seedCategoryState.slug());
+            category.setDescription(null);
+            category.setParentId(null);
+            category.setSortOrder(seedCategoryState.sortOrder());
+            category.setDeletedAt(null);
+            seededCategories.add(category);
+        }
+
+        if (!extraCategories.isEmpty()) {
+            categoryRepository.deleteAllInBatch(extraCategories);
+        }
+
+        categoryRepository.saveAll(seededCategories);
+    }
+
+    private record SeedCategoryState(String name, String slug, int sortOrder) {
     }
 
     private MockHttpServletRequestBuilder apiGet(String path) {

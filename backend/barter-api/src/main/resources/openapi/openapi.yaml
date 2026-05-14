@@ -76,6 +76,8 @@ paths:
     $ref: './paths/oauth.yaml#/accounts'
   /catalog/categories:
     $ref: './paths/catalog.yaml#/categories'
+  /catalog/categories/popular:
+    $ref: './paths/catalog.yaml#/popularCategories'
   /admin/categories:
     $ref: './paths/admin-categories.yaml#/categories'
   /admin/categories/{categoryUuid}:
@@ -187,6 +189,8 @@ components:
       $ref: './components/schemas/catalog/ItemCondition.yaml'
     CategoryResponse:
       $ref: './components/schemas/catalog/CategoryResponse.yaml'
+    PopularCategoryResponse:
+      $ref: './components/schemas/catalog/PopularCategoryResponse.yaml'
     AdminCategoryResponse:
       $ref: './components/schemas/catalog/AdminCategoryResponse.yaml'
     AdminCategoryPagedResponse:

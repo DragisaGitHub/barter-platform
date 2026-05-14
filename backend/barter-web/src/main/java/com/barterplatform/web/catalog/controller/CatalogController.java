@@ -10,6 +10,7 @@ import com.barterplatform.api.model.ItemImageResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemStatus;
 import com.barterplatform.api.model.MessageResponse;
+import com.barterplatform.api.model.PopularCategoryResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.api.model.UpdateItemRequest;
 import com.barterplatform.application.catalog.service.CatalogQueryService;
@@ -49,6 +50,11 @@ public class CatalogController implements CatalogApi {
     @Override
     public ResponseEntity<List<CategoryResponse>> listCategories() {
         return ResponseEntity.ok(catalogQueryService.listCategories());
+    }
+
+    @Override
+    public ResponseEntity<List<PopularCategoryResponse>> listPopularCategories(@Nullable Integer limit) {
+        return ResponseEntity.ok(catalogQueryService.listPopularCategories(limit));
     }
 
     @Override

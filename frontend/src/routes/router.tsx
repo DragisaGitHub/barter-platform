@@ -21,6 +21,7 @@ import { RolesPage } from "../features/admin/RolesPage";
 import { PermissionsPage } from "../features/admin/PermissionsPage";
 import { SystemPage } from "../features/admin/SystemPage";
 import { MarketplacePage } from "../features/catalog/MarketplacePage";
+import { MarketplaceCategoriesPage } from "../features/catalog/MarketplaceCategoriesPage";
 import { ItemDetailPage } from "../features/catalog/ItemDetailPage";
 import { MyItemsPage } from "../features/catalog/MyItemsPage";
 import { FavoritesPage } from "../features/catalog/FavoritesPage";
@@ -64,6 +65,20 @@ function AdminAwareMarketplacePage() {
   return <MarketplacePage />;
 }
 
+function AdminAwareMarketplaceCategoriesPage() {
+  const { isAuthenticated, isLoading, hasRole } = useAuth();
+
+  if (isLoading) {
+    return <LoadingScreen />;
+  }
+
+  if (isAuthenticated && hasRole("ADMIN")) {
+    return <Navigate to={routePaths.admin.dashboard} replace />;
+  }
+
+  return <MarketplaceCategoriesPage />;
+}
+
 function AdminAwareDashboardPage() {
   const { hasRole } = useAuth();
 
@@ -86,6 +101,10 @@ export const router = createBrowserRouter([
       {
         path: "/marketplace",
         element: <AdminAwareMarketplacePage />,
+      },
+      {
+        path: routePaths.marketplaceCategories,
+        element: <AdminAwareMarketplaceCategoriesPage />,
       },
       {
         path: "/marketplace/items/:uuid",

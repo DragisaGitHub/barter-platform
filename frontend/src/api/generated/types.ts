@@ -45,6 +45,7 @@ export type ItemCondition = components["schemas"]["ItemCondition"];
 // ─── Catalog Response DTOs ──────────────────────────────────────────────────
 
 export type CategoryResponse = components["schemas"]["CategoryResponse"];
+export type PopularCategoryResponse = components["schemas"]["PopularCategoryResponse"];
 export type AdminCategoryResponse = components["schemas"]["AdminCategoryResponse"];
 export type AdminCategoryPagedResponse = components["schemas"]["AdminCategoryPagedResponse"];
 export type TagResponse = components["schemas"]["TagResponse"];

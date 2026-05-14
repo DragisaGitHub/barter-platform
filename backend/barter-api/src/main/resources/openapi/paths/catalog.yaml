@@ -14,6 +14,35 @@ categories:
               items:
                 $ref: '../openapi.yaml#/components/schemas/CategoryResponse'
 
+popularCategories:
+  get:
+    tags:
+      - Catalog
+    operationId: listPopularCategories
+    summary: List popular categories by active item count
+    parameters:
+      - name: limit
+        in: query
+        required: false
+        description: Maximum number of popular categories to return.
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 20
+          default: 6
+    responses:
+      '200':
+        description: Popular categories returned successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../openapi.yaml#/components/schemas/PopularCategoryResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+
 tags:
   get:
     tags:
