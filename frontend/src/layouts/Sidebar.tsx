@@ -7,14 +7,8 @@ import {
   Send,
   List,
   User,
-  Shield,
-  Users,
-  KeyRound,
-  Lock,
-  Settings,
   X,
 } from "lucide-react";
-import { useAuth } from "../auth/AuthContext";
 import { usePendingIncomingCount, usePendingSentCount } from "../features/trade/useTradeOffers";
 import { cn } from "@/utils";
 
@@ -27,7 +21,6 @@ interface NavItem {
   to: string;
   icon: typeof LayoutDashboard;
   label: string;
-  adminOnly?: boolean;
   badge?: number;
 }
 
@@ -41,9 +34,6 @@ function NavBadge({ count }: { count: number }) {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
-  const { hasRole } = useAuth();
-  const isAdmin = hasRole("ADMIN");
-
   const { data: incomingData } = usePendingIncomingCount();
   const { data: sentData } = usePendingSentCount();
   const pendingIncoming = incomingData?.totalElements ?? 0;
@@ -59,13 +49,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: "/profile", icon: User, label: "Profile" },
   ];
 
-  const adminItems: NavItem[] = [
-    { to: "/admin", icon: Shield, label: "Admin Dashboard" },
-    { to: "/admin/users", icon: Users, label: "Users" },
-    { to: "/admin/roles", icon: KeyRound, label: "Roles" },
-    { to: "/admin/permissions", icon: Lock, label: "Permissions" },
-    { to: "/admin/system", icon: Settings, label: "System" },
-  ];
 
   return (
     <>
@@ -117,34 +100,6 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 {item.badge != null && <NavBadge count={item.badge} />}
               </NavLink>
             ))}
-
-            {isAdmin && (
-              <>
-                <div className="pt-4 pb-2">
-                  <h2 className="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                    Administration
-                  </h2>
-                </div>
-                {adminItems.map((item) => (
-                  <NavLink
-                    key={item.to}
-                    to={item.to}
-                    onClick={onClose}
-                    className={({ isActive }) =>
-                      cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
-                        isActive
-                          ? "bg-indigo-600 text-white"
-                          : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                      )
-                    }
-                  >
-                    <item.icon className="size-5" />
-                    {item.label}
-                  </NavLink>
-                ))}
-              </>
-            )}
           </nav>
         </div>
       </aside>
