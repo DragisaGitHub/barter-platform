@@ -1,6 +1,7 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { PublicLayout } from "../layouts/PublicLayout";
 import { AppLayout } from "../layouts/AppLayout";
+import { AdminLayout } from "../layouts/AdminLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AdminRoute } from "./AdminRoute";
 import { LoginPage } from "../features/auth/LoginPage";
@@ -10,6 +11,7 @@ import { RegisterPage } from "../features/auth/RegisterPage";
 import { VerifyEmailPage } from "../features/auth/VerifyEmailPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { AdminDashboardPage } from "../features/admin/AdminDashboardPage";
+import { AdminCategoriesPage } from "../features/admin/AdminCategoriesPage";
 import { UsersListPage } from "../features/admin/UsersListPage";
 import { UserDetailPage } from "../features/admin/UserDetailPage";
 import { RolesPage } from "../features/admin/RolesPage";
@@ -130,7 +132,7 @@ export const router = createBrowserRouter([
   {
     element: (
       <AdminRoute>
-        <AppLayout />
+        <AdminLayout />
       </AdminRoute>
     ),
     errorElement: <RouteErrorPage />,
@@ -158,6 +160,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/system",
         element: <SystemPage />,
+      },
+      {
+        path: "/admin/categories",
+        element: <AdminCategoriesPage />,
       },
     ],
   },

@@ -57,5 +57,6 @@ export const routePaths = {
     roles: "/admin/roles",
     permissions: "/admin/permissions",
     system: "/admin/system",
+    categories: "/admin/categories",
   },
 } as const;
