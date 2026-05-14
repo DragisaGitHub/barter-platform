@@ -33,6 +33,7 @@ export function buildPathWithQuery(
 export const routePaths = {
   home: "/",
   marketplace: "/marketplace",
+  marketplaceCategories: "/marketplace/categories",
   login: "/login",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",

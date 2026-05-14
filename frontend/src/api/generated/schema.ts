@@ -395,6 +395,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalog/categories/popular": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List popular categories by active item count */
+        get: operations["listPopularCategories"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/categories": {
         parameters: {
             query?: never;
@@ -1114,6 +1131,17 @@ export interface components {
             description?: string | null;
             /** Format: int32 */
             sortOrder: number;
+        };
+        PopularCategoryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            name: string;
+            slug: string;
+            description?: string | null;
+            /** Format: int32 */
+            sortOrder: number;
+            /** Format: int64 */
+            activeItemCount: number;
         };
         AdminCategoryResponse: {
             /** Format: uuid */
@@ -2227,6 +2255,30 @@ export interface operations {
                     "application/json": components["schemas"]["CategoryResponse"][];
                 };
             };
+        };
+    };
+    listPopularCategories: {
+        parameters: {
+            query?: {
+                /** @description Maximum number of popular categories to return. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Popular categories returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PopularCategoryResponse"][];
+                };
+            };
+            400: components["responses"]["BadRequest"];
         };
     };
     listAdminCategories: {

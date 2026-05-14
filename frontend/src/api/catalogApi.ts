@@ -1,6 +1,7 @@
 import { apiClient } from "./axios";
 import type {
   CategoryResponse,
+  PopularCategoryResponse,
   TagResponse,
   ItemPagedResponse,
   ItemDetailResponse,
@@ -38,10 +39,23 @@ export interface FavoriteItemsParams {
   sort?: string;
 }
 
+export interface PopularCategoriesParams {
+  limit?: number;
+}
+
 // ─── API functions ──────────────────────────────────────────────────────────
 
 export async function listCategories(): Promise<CategoryResponse[]> {
   const response = await apiClient.get<CategoryResponse[]>("/catalog/categories");
+  return response.data;
+}
+
+export async function listPopularCategories(
+  params: PopularCategoriesParams = {}
+): Promise<PopularCategoryResponse[]> {
+  const response = await apiClient.get<PopularCategoryResponse[]>("/catalog/categories/popular", {
+    params,
+  });
   return response.data;
 }
 
