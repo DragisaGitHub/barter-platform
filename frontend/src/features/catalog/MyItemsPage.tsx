@@ -35,6 +35,7 @@ const STATUS_OPTIONS: { value: ItemStatus | ""; label: string }[] = [
   { value: "ACTIVE", label: "Active" },
   { value: "RESERVED", label: "Reserved" },
   { value: "ARCHIVED", label: "Archived" },
+  { value: "REMOVED", label: "Removed" },
 ];
 
 const CONDITION_OPTIONS: { value: ItemCondition | ""; label: string }[] = [
@@ -127,6 +128,12 @@ export function MyItemsPage() {
     size: 1,
     sort: "createdAt,desc",
     status: "ARCHIVED",
+  });
+  const { data: removedData, isLoading: removedLoading } = useMyItems({
+    page: 0,
+    size: 1,
+    sort: "createdAt,desc",
+    status: "REMOVED",
   });
   const archiveMutation = useArchiveItem();
 
@@ -238,7 +245,7 @@ export function MyItemsPage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <SummaryCard
               title="Total Listings"
               value={totalData?.totalElements}
@@ -270,6 +277,14 @@ export function MyItemsPage() {
               icon={FolderArchive}
               iconClassName="bg-violet-100 text-violet-700 dark:bg-violet-950/30 dark:text-violet-300"
               isLoading={archivedLoading}
+            />
+            <SummaryCard
+              title="Removed"
+              value={removedData?.totalElements}
+              helper="Hidden by moderation but still visible to you"
+              icon={Archive}
+              iconClassName="bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
+              isLoading={removedLoading}
             />
           </div>
         </div>

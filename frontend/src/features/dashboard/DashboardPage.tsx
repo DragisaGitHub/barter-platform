@@ -57,6 +57,7 @@ const STATUS_EXPLANATION: Record<TradeOfferStatus, string> = {
   REJECTED: "Trade rejected",
   CANCELLED: "Cancelled by sender",
   EXPIRED: "Expired",
+  INVALIDATED: "No longer valid",
 };
 
 function getMarketplaceItemKey(

@@ -1,0 +1,171 @@
+listings:
+  get:
+    tags:
+      - AdminListings
+    operationId: listAdminListings
+    summary: List listings for administrators
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: q
+        in: query
+        required: false
+        description: Search by listing title.
+        schema:
+          type: string
+          maxLength: 255
+      - name: ownerQuery
+        in: query
+        required: false
+        description: Search by owner username or email.
+        schema:
+          type: string
+          maxLength: 255
+      - name: categoryUuid
+        in: query
+        required: false
+        description: Filter by category UUID.
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        required: false
+        description: Filter by listing status.
+        schema:
+          $ref: '../components/schemas/catalog/ItemStatus.yaml'
+    responses:
+      '200':
+        description: Listings returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminListingPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
+listingByUuid:
+  get:
+    tags:
+      - AdminListings
+    operationId: getAdminListingByUuid
+    summary: Get administrator listing detail by UUID
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    responses:
+      '200':
+        description: Listing returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminListingDetailResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+listingModerationActions:
+  get:
+    tags:
+      - AdminListings
+    operationId: listListingModerationActions
+    summary: List moderation actions for a listing
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    responses:
+      '200':
+        description: Moderation actions returned successfully
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: '../openapi.yaml#/components/schemas/ListingModerationActionResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+listingRemove:
+  post:
+    tags:
+      - AdminListings
+    operationId: removeAdminListing
+    summary: Remove a listing from the marketplace
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/AdminRemoveListingRequest'
+    responses:
+      '200':
+        description: Listing removed successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminListingDetailResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+listingRestore:
+  post:
+    tags:
+      - AdminListings
+    operationId: restoreAdminListing
+    summary: Restore a previously removed listing
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/ItemUuid'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/AdminRestoreListingRequest'
+    responses:
+      '200':
+        description: Listing restored successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminListingDetailResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+

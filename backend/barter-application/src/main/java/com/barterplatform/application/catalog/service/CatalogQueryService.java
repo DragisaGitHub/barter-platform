@@ -29,7 +29,7 @@ public interface CatalogQueryService {
      * @param q            free-text search on title (contains, case-insensitive)
      * @param categoryUuid filter by category UUID
      * @param tagUuids     filter by tag UUIDs — items matching at least one tag are returned; ignored when null/empty
-     * @param status       filter by item status; defaults to ACTIVE for public search
+     * @param status       public marketplace visibility is always ACTIVE only
      * @param condition    filter by item condition
      */
     ItemPagedResponse searchItems(Integer page, Integer size, String sort,
@@ -38,15 +38,15 @@ public interface CatalogQueryService {
 
     /**
      * Get full item detail by UUID.
-     * Throws ApiException NOT_FOUND if the item is missing, soft-deleted, or has REMOVED status.
-     * Includes category, tags, ownerUuid, and ownerUsername.
+     * Public callers can only access ACTIVE items. Owners and administrators can access
+     * their own/all non-deleted listings, including removed listings with moderation summary.
      */
-    ItemDetailResponse getItemByUuid(UUID itemUuid);
+    ItemDetailResponse getItemByUuid(UUID itemUuid, UUID requesterUuid, boolean isAdmin);
 
     /**
      * List items belonging to a specific owner.
      * If status is provided, returns only items with that status.
-     * Otherwise includes DRAFT, ACTIVE, RESERVED, ARCHIVED items but excludes REMOVED and soft-deleted.
+     * Otherwise includes DRAFT, ACTIVE, RESERVED, ARCHIVED, and REMOVED items but excludes soft-deleted rows.
      * Throws ApiException NOT_FOUND if the owner UUID does not exist.
      */
     ItemPagedResponse listMyItems(UUID ownerUuid, Integer page, Integer size, String sort,

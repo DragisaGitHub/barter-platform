@@ -17,6 +17,7 @@ const STATUS_OPTIONS: { value: TradeOfferStatus | ""; label: string }[] = [
   { value: "REJECTED", label: "Rejected" },
   { value: "CANCELLED", label: "Cancelled" },
   { value: "EXPIRED", label: "Expired" },
+  { value: "INVALIDATED", label: "Invalidated" },
 ];
 
 export function SentOffersPage() {

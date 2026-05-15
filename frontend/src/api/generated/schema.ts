@@ -449,6 +449,91 @@ export interface paths {
         patch: operations["updateAdminCategory"];
         trace?: never;
     };
+    "/admin/listings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List listings for administrators */
+        get: operations["listAdminListings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/listings/{itemUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get administrator listing detail by UUID */
+        get: operations["getAdminListingByUuid"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/listings/{itemUuid}/moderation-actions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List moderation actions for a listing */
+        get: operations["listListingModerationActions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/listings/{itemUuid}/remove": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Remove a listing from the marketplace */
+        post: operations["removeAdminListing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/listings/{itemUuid}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restore a previously removed listing */
+        post: operations["restoreAdminListing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalog/tags": {
         parameters: {
             query?: never;
@@ -1243,9 +1328,74 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt?: string | null;
+            /** Format: date-time */
+            archivedAt?: string | null;
+            /** Format: date-time */
+            removedAt?: string | null;
+            moderationSummary?: components["schemas"]["OwnerListingModerationSummary"];
         };
         ItemPagedResponse: {
             content: components["schemas"]["ItemSummaryResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort: string;
+        };
+        AdminListingSummaryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            title: string;
+            status: components["schemas"]["ItemStatus"];
+            condition: components["schemas"]["ItemCondition"];
+            /** Format: uuid */
+            categoryUuid: string;
+            categoryName: string;
+            /** Format: uuid */
+            ownerUuid: string;
+            ownerUsername: string;
+            primaryImageUrl?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** Format: date-time */
+            archivedAt?: string | null;
+            /** Format: date-time */
+            removedAt?: string | null;
+        };
+        AdminListingDetailResponse: {
+            /** Format: uuid */
+            uuid: string;
+            title: string;
+            description?: string | null;
+            status: components["schemas"]["ItemStatus"];
+            condition: components["schemas"]["ItemCondition"];
+            category: components["schemas"]["CategoryResponse"];
+            tags: components["schemas"]["TagResponse"][];
+            /** Format: uuid */
+            ownerUuid: string;
+            ownerUsername: string;
+            primaryImageUrl?: string | null;
+            images: components["schemas"]["ItemImageResponse"][];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** Format: date-time */
+            archivedAt?: string | null;
+            /** Format: date-time */
+            removedAt?: string | null;
+            moderationSummary?: components["schemas"]["OwnerListingModerationSummary"];
+        };
+        AdminListingPagedResponse: {
+            content: components["schemas"]["AdminListingSummaryResponse"][];
             /** Format: int32 */
             page: number;
             /** Format: int32 */
@@ -1324,8 +1474,48 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        ListingModerationActionResponse: {
+            /** Format: uuid */
+            uuid: string;
+            /** Format: uuid */
+            listingUuid: string;
+            actionType: components["schemas"]["ListingModerationActionType"];
+            reasonCode: components["schemas"]["ListingModerationReasonCode"];
+            sourceType: components["schemas"]["ListingModerationSourceType"];
+            /** Format: uuid */
+            performedByUserUuid?: string | null;
+            performedByUsername?: string | null;
+            userMessage?: string | null;
+            internalNote?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
         /** @enum {string} */
-        TradeOfferStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "EXPIRED";
+        ListingModerationActionType: "REMOVE" | "RESTORE";
+        /** @enum {string} */
+        ListingModerationReasonCode: "POLICY_VIOLATION" | "PROHIBITED_ITEM" | "MISLEADING_CONTENT" | "DUPLICATE_LISTING" | "SPAM" | "SAFETY_CONCERN" | "OWNER_REQUEST" | "OTHER";
+        /** @enum {string} */
+        ListingModerationSourceType: "ADMIN" | "SYSTEM";
+        AdminRemoveListingRequest: {
+            reasonCode: components["schemas"]["ListingModerationReasonCode"];
+            userMessage?: string | null;
+            internalNote?: string | null;
+        };
+        AdminRestoreListingRequest: {
+            reasonCode: components["schemas"]["ListingModerationReasonCode"];
+            userMessage?: string | null;
+            internalNote?: string | null;
+        };
+        OwnerListingModerationSummary: {
+            actionType?: components["schemas"]["ListingModerationActionType"];
+            reasonCode?: components["schemas"]["ListingModerationReasonCode"];
+            sourceType?: components["schemas"]["ListingModerationSourceType"];
+            /** Format: date-time */
+            actionAt?: string | null;
+            userMessage?: string | null;
+        };
+        /** @enum {string} */
+        TradeOfferStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "EXPIRED" | "INVALIDATED";
         /** @enum {string} */
         TradeOfferMode: "ITEM_EXCHANGE" | "GIFT" | "NEGOTIABLE";
         CreateTradeOfferRequest: {
@@ -1424,7 +1614,7 @@ export interface components {
             createdAt: string;
         };
         /** @enum {string} */
-        NotificationType: "TRADE_OFFER_RECEIVED" | "TRADE_OFFER_ACCEPTED" | "TRADE_OFFER_REJECTED" | "TRADE_OFFER_CANCELLED";
+        NotificationType: "TRADE_OFFER_RECEIVED" | "TRADE_OFFER_ACCEPTED" | "TRADE_OFFER_REJECTED" | "TRADE_OFFER_CANCELLED" | "LISTING_REMOVED" | "LISTING_RESTORED";
         NotificationResponse: {
             /** Format: uuid */
             uuid: string;
@@ -2416,6 +2606,160 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminCategoryResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    listAdminListings: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Search by listing title. */
+                q?: string;
+                /** @description Search by owner username or email. */
+                ownerQuery?: string;
+                /** @description Filter by category UUID. */
+                categoryUuid?: string;
+                /** @description Filter by listing status. */
+                status?: components["schemas"]["ItemStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Listings returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminListingPagedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getAdminListingByUuid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Listing returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminListingDetailResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listListingModerationActions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Moderation actions returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListingModerationActionResponse"][];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    removeAdminListing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRemoveListingRequest"];
+            };
+        };
+        responses: {
+            /** @description Listing removed successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminListingDetailResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    restoreAdminListing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public item UUID. */
+                itemUuid: components["parameters"]["ItemUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminRestoreListingRequest"];
+            };
+        };
+        responses: {
+            /** @description Listing restored successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminListingDetailResponse"];
                 };
             };
             400: components["responses"]["BadRequest"];

@@ -170,7 +170,8 @@ class ItemImagesIntegrationTest {
                     .andExpect(status().isCreated());
         }
 
-        mockMvc.perform(apiGet("/catalog/items/" + itemUuid + "/images"))
+        mockMvc.perform(apiGet("/catalog/items/" + itemUuid + "/images")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(3)))
                 .andExpect(jsonPath("$[0].sortOrder").value(0))
@@ -199,7 +200,8 @@ class ItemImagesIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // List should have only 1 image left, and it's still primary
-        mockMvc.perform(apiGet("/catalog/items/" + itemUuid + "/images"))
+        mockMvc.perform(apiGet("/catalog/items/" + itemUuid + "/images")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].uuid").value(firstImageUuid))
@@ -227,7 +229,8 @@ class ItemImagesIntegrationTest {
                 .andExpect(status().isNoContent());
 
         // Second image should be promoted to primary
-        mockMvc.perform(apiGet("/catalog/items/" + itemUuid + "/images"))
+        mockMvc.perform(apiGet("/catalog/items/" + itemUuid + "/images")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].uuid").value(secondImageUuid))
@@ -257,7 +260,8 @@ class ItemImagesIntegrationTest {
                 .andExpect(jsonPath("$.uuid").value(secondImageUuid));
 
         // Verify first image is no longer primary
-        mockMvc.perform(apiGet("/catalog/items/" + itemUuid + "/images"))
+        mockMvc.perform(apiGet("/catalog/items/" + itemUuid + "/images")
+                        .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].uuid").value(firstImageUuid))
                 .andExpect(jsonPath("$[0].isPrimary").value(false))

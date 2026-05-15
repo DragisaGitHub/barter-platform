@@ -9,7 +9,7 @@ public interface ItemImageService {
 
     ItemImageResponse uploadImage(UUID currentUserUuid, UUID itemUuid, MultipartFile file);
 
-    List<ItemImageResponse> listImages(UUID itemUuid);
+    List<ItemImageResponse> listImages(UUID itemUuid, UUID requesterUuid, boolean isAdmin);
 
     void deleteImage(UUID currentUserUuid, UUID itemUuid, UUID imageUuid);
 

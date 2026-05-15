@@ -11,6 +11,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EntityScan(basePackages = {
         "com.barterplatform.domain.identity.entity",
         "com.barterplatform.domain.catalog.entity",
+        "com.barterplatform.domain.catalog.moderation",
         "com.barterplatform.domain.trade.entity",
         "com.barterplatform.domain.notification.entity"
 })

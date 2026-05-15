@@ -85,6 +85,12 @@ public class TradeOfferEntity extends AuditableEntity {
         this.respondedAt = OffsetDateTime.now();
     }
 
+    public void invalidate() {
+        assertPending("invalidate");
+        this.status = TradeOfferStatus.INVALIDATED;
+        this.respondedAt = OffsetDateTime.now();
+    }
+
     private void assertPending(String action) {
         if (status != TradeOfferStatus.PENDING) {
             throw new IllegalStateException(

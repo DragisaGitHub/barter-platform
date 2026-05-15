@@ -8,10 +8,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
 import com.barterplatform.api.model.AdminCategoryPagedResponse;
+import com.barterplatform.api.model.AdminListingPagedResponse;
 import com.barterplatform.api.model.PermissionCode;
 import com.barterplatform.api.model.PermissionResponse;
+import com.barterplatform.application.catalog.service.AdminListingQueryService;
 import com.barterplatform.api.model.UserPagedResponse;
 import com.barterplatform.application.catalog.service.AdminCategoryService;
+import com.barterplatform.web.admin.controller.AdminListingsController;
+import com.barterplatform.application.catalog.service.ListingModerationService;
 import com.barterplatform.web.admin.controller.AdminCategoriesController;
 import com.barterplatform.application.identity.service.PermissionService;
 import com.barterplatform.application.identity.service.UserManagementService;
@@ -128,6 +132,28 @@ class RoleBasedAuthorizationMvcTest {
                 .andExpect(status().isOk());
     }
 
+    // --- Admin listings endpoint ---
+
+    @Test
+    void unauthenticatedCannotListAdminListings() throws Exception {
+        mockMvc.perform(get("/admin/listings"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void userRoleCannotListAdminListings() throws Exception {
+        mockMvc.perform(get("/admin/listings"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void adminRoleCanListAdminListings() throws Exception {
+        mockMvc.perform(get("/admin/listings"))
+                .andExpect(status().isOk());
+    }
+
     @SpringBootConfiguration(proxyBeanMethods = false)
     @EnableAutoConfiguration(exclude = {
             DataSourceAutoConfiguration.class,
@@ -135,7 +161,7 @@ class RoleBasedAuthorizationMvcTest {
             DataJpaRepositoriesAutoConfiguration.class
     })
     @Import({SecurityConfig.class, JwtAuthenticationFilter.class,
-            UsersController.class, PermissionsController.class, AdminCategoriesController.class})
+            UsersController.class, PermissionsController.class, AdminCategoriesController.class, AdminListingsController.class})
     static class TestApplication {
 
         @Bean
@@ -181,6 +207,22 @@ class RoleBasedAuthorizationMvcTest {
                             .page(0).size(20).totalElements(0L).totalPages(0)
                             .first(true).last(true).sort("sortOrder,asc"));
             return service;
+        }
+
+        @Bean
+        AdminListingQueryService adminListingQueryService() {
+            AdminListingQueryService service = mock(AdminListingQueryService.class);
+            when(service.listListings(any(), any(), any(), any(), any(), any(), any())).thenReturn(
+                    new AdminListingPagedResponse()
+                            .content(List.of())
+                            .page(0).size(20).totalElements(0L).totalPages(0)
+                            .first(true).last(true).sort("createdAt,desc"));
+            return service;
+        }
+
+        @Bean
+        ListingModerationService listingModerationService() {
+            return mock(ListingModerationService.class);
         }
 
         /**

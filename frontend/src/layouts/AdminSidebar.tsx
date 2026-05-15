@@ -4,6 +4,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Lock,
+  Package,
   Settings,
   Shield,
   Tags,
@@ -32,6 +33,7 @@ const adminNavItems: AdminNavItem[] = [
   { to: routePaths.admin.permissions, label: "Permissions", icon: Lock },
   { to: routePaths.admin.system, label: "System", icon: Settings },
   { to: routePaths.admin.categories, label: "Categories", icon: FolderTree, end: true },
+  { to: routePaths.admin.listings, label: "Listings", icon: Package, end: true },
   { to: routePaths.admin.tags, label: "Tags", icon: Tags, end: true },
 ];
 

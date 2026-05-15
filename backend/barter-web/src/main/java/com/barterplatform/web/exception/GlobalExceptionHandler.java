@@ -11,6 +11,8 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +25,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     private static final String DEFAULT_VALIDATION_MESSAGE = "Please check the entered fields.";
     private static final String DEFAULT_PROCESSING_MESSAGE = "Request could not be processed.";
@@ -141,7 +145,10 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
+            Exception ex,
             HttpServletRequest request) {
+
+        log.error("Unhandled exception while processing {} {}", request.getMethod(), request.getRequestURI(), ex);
 
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,

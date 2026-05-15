@@ -1,0 +1,39 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - listingUuid
+  - actionType
+  - reasonCode
+  - sourceType
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  listingUuid:
+    type: string
+    format: uuid
+  actionType:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingModerationActionType'
+  reasonCode:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingModerationReasonCode'
+  sourceType:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingModerationSourceType'
+  performedByUserUuid:
+    type: string
+    format: uuid
+    nullable: true
+  performedByUsername:
+    type: string
+    nullable: true
+  userMessage:
+    type: string
+    nullable: true
+  internalNote:
+    type: string
+    nullable: true
+  createdAt:
+    type: string
+    format: date-time
+

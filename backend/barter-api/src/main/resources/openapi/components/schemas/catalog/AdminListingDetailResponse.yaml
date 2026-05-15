@@ -1,0 +1,63 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - title
+  - status
+  - condition
+  - category
+  - tags
+  - ownerUuid
+  - ownerUsername
+  - createdAt
+  - images
+properties:
+  uuid:
+    type: string
+    format: uuid
+  title:
+    type: string
+    maxLength: 255
+  description:
+    type: string
+    nullable: true
+  status:
+    $ref: '../../../openapi.yaml#/components/schemas/ItemStatus'
+  condition:
+    $ref: '../../../openapi.yaml#/components/schemas/ItemCondition'
+  category:
+    $ref: '../../../openapi.yaml#/components/schemas/CategoryResponse'
+  tags:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/TagResponse'
+  ownerUuid:
+    type: string
+    format: uuid
+  ownerUsername:
+    type: string
+  primaryImageUrl:
+    type: string
+    nullable: true
+  images:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/ItemImageResponse'
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    nullable: true
+  archivedAt:
+    type: string
+    format: date-time
+    nullable: true
+  removedAt:
+    type: string
+    format: date-time
+    nullable: true
+  moderationSummary:
+    $ref: '../../../openapi.yaml#/components/schemas/OwnerListingModerationSummary'
+

@@ -17,6 +17,7 @@ const STATUS_EXPLANATION: Record<TradeOfferStatus, string> = {
   REJECTED: "Trade rejected",
   CANCELLED: "Cancelled by sender",
   EXPIRED: "Expired",
+  INVALIDATED: "Invalidated because a referenced listing was removed",
 };
 
 function buildSummaryLine(

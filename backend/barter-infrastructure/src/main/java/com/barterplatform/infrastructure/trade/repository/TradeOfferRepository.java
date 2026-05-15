@@ -25,6 +25,16 @@ public interface TradeOfferRepository extends JpaRepository<TradeOfferEntity, Lo
 
     Page<TradeOfferEntity> findBySenderUserIdAndStatus(Long senderUserId, TradeOfferStatus status, Pageable pageable);
 
+    @Query("""
+            SELECT DISTINCT o FROM TradeOfferEntity o
+            LEFT JOIN o.items toi
+            WHERE o.status = 'PENDING'
+              AND (o.receiverItemId = :itemId
+                OR o.senderItemId = :itemId
+                OR toi.itemId = :itemId)
+            """)
+    List<TradeOfferEntity> findPendingOffersReferencingItem(@Param("itemId") Long itemId);
+
     long countBySenderUserIdAndStatus(Long senderUserId, TradeOfferStatus status);
 
     long countByReceiverUserIdAndStatus(Long receiverUserId, TradeOfferStatus status);

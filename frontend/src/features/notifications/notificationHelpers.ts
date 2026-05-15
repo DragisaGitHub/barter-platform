@@ -22,6 +22,10 @@ export function getNotificationIconName(type: NotificationType): string {
       return "x-circle";
     case "TRADE_OFFER_CANCELLED":
       return "ban";
+    case "LISTING_REMOVED":
+      return "shield-alert";
+    case "LISTING_RESTORED":
+      return "shield-check";
     default:
       return "bell";
   }
@@ -40,6 +44,10 @@ export function getNotificationColor(type: NotificationType): string {
       return "text-red-500 dark:text-red-400";
     case "TRADE_OFFER_CANCELLED":
       return "text-amber-500 dark:text-amber-400";
+    case "LISTING_REMOVED":
+      return "text-red-500 dark:text-red-400";
+    case "LISTING_RESTORED":
+      return "text-emerald-500 dark:text-emerald-400";
     default:
       return "text-slate-500 dark:text-slate-400";
   }
@@ -59,6 +67,10 @@ export function getNotificationTargetPath(notification: NotificationResponse): s
 
   if (normalizedReferenceType === "TRADE_OFFER" || notification.type.startsWith("TRADE_OFFER")) {
     return `${routePaths.offers}/${referenceUuid}`;
+  }
+
+  if (normalizedReferenceType === "ITEM" || notification.type.startsWith("LISTING_")) {
+    return routePaths.myItemDetail(referenceUuid);
   }
 
   return null;
