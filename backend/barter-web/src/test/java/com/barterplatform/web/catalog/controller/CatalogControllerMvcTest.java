@@ -143,13 +143,13 @@ class CatalogControllerMvcTest {
     void getItemByUuidShouldReturn200() throws Exception {
         UUID itemUuid = UUID.randomUUID();
         ItemDetailResponse detail = new ItemDetailResponse().uuid(itemUuid).title("My Book");
-        when(catalogQueryService.getItemByUuid(itemUuid)).thenReturn(detail);
+        when(catalogQueryService.getItemByUuid(itemUuid, null, false)).thenReturn(detail);
 
         mockMvc.perform(apiGet("/catalog/items/" + itemUuid))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.title").value("My Book"));
 
-        verify(catalogQueryService).getItemByUuid(itemUuid);
+        verify(catalogQueryService).getItemByUuid(itemUuid, null, false);
     }
 
     // ── Authenticated: createItem ────────────────────────────────
@@ -304,19 +304,6 @@ class CatalogControllerMvcTest {
         verify(itemCommandService).updateItem(eq(USER_UUID), eq(itemUuid), any());
     }
 
-    // ── removeItem returns 501 ───────────────────────────────────
-
-    @Test
-    void removeItemShouldReturn501() throws Exception {
-        setAuthenticatedUser();
-
-        UUID itemUuid = UUID.randomUUID();
-
-        mockMvc.perform(apiDelete("/catalog/items/" + itemUuid))
-                .andExpect(status().isNotImplemented());
-
-        verifyNoInteractions(itemCommandService);
-    }
 
     // ── Helpers ──────────────────────────────────────────────────
 

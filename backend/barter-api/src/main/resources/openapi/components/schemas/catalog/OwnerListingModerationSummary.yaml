@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+properties:
+  actionType:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingModerationActionType'
+  reasonCode:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingModerationReasonCode'
+  sourceType:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingModerationSourceType'
+  actionAt:
+    type: string
+    format: date-time
+    nullable: true
+  userMessage:
+    type: string
+    nullable: true
+

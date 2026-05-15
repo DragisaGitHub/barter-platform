@@ -44,6 +44,7 @@ export const routePaths = {
   favorites: "/favorites",
   myItems: "/my-items",
   myItemsNew: "/my-items/new",
+  myItemDetail: (uuid: string) => `/my-items/${uuid}`,
   myItemsEdit: (uuid: string) => `/my-items/${uuid}/edit`,
   offers: "/offers",
   offersIncoming: "/offers/incoming",
@@ -60,5 +61,7 @@ export const routePaths = {
     system: "/admin/system",
     categories: "/admin/categories",
     tags: "/admin/tags",
+    listings: "/admin/listings",
+    listingDetail: (uuid: string) => `/admin/listings/${uuid}`,
   },
 } as const;

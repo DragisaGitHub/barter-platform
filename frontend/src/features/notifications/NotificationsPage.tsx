@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck } from "lucide-react";
+import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from "./useNotifications";
 import { formatNotificationTime, getNotificationColor, getNotificationTargetPath } from "./notificationHelpers";
 import { Card } from "@/components/ui/Card";
@@ -25,6 +25,10 @@ function NotificationIcon({ type }: { type: NotificationType }) {
       return <XCircle className={iconClass} />;
     case "TRADE_OFFER_CANCELLED":
       return <Ban className={iconClass} />;
+    case "LISTING_REMOVED":
+      return <ShieldAlert className={iconClass} />;
+    case "LISTING_RESTORED":
+      return <ShieldCheck className={iconClass} />;
     default:
       return <Bell className={iconClass} />;
   }

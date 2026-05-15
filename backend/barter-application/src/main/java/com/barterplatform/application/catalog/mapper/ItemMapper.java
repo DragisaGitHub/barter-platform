@@ -68,6 +68,7 @@ public interface ItemMapper {
     @Mapping(target = "ownerUsername", ignore = true)
     @Mapping(target = "primaryImageUrl", ignore = true)
     @Mapping(target = "images", ignore = true)
+    @Mapping(target = "moderationSummary", ignore = true)
     ItemDetailResponse toDetailResponse(ItemEntity entity);
 
     default ItemDetailResponse toDetailResponse(ItemEntity entity,

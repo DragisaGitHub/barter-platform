@@ -131,8 +131,11 @@ public class ItemImageServiceImpl implements ItemImageService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ItemImageResponse> listImages(UUID itemUuid) {
-        ItemEntity item = resolveItem(itemUuid);
+    public List<ItemImageResponse> listImages(UUID itemUuid, UUID requesterUuid, boolean isAdmin) {
+        ItemEntity item = resolveItemForRead(itemUuid);
+        if (item.getStatus() != ItemStatus.ACTIVE && !canAccessNonActiveListing(item, requesterUuid, isAdmin)) {
+            throw notFound("Item with uuid '%s' was not found.", itemUuid);
+        }
         List<ItemImageEntity> images = itemImageRepository.findByItemIdOrderBySortOrderAsc(item.getId());
         return itemImageMapper.toResponseList(images);
     }
@@ -263,6 +266,15 @@ public class ItemImageServiceImpl implements ItemImageService {
         return item;
     }
 
+    private ItemEntity resolveItemForRead(UUID itemUuid) {
+        ItemEntity item = itemRepository.findByUuid(itemUuid)
+                .orElseThrow(() -> notFound("Item with uuid '%s' was not found.", itemUuid));
+        if (item.getDeletedAt() != null) {
+            throw notFound("Item with uuid '%s' was not found.", itemUuid);
+        }
+        return item;
+    }
+
     private UserEntity resolveUser(UUID userUuid) {
         return userRepository.findByUuid(userUuid)
                 .orElseThrow(() -> notFound("User with uuid '%s' was not found.", userUuid));
@@ -281,6 +293,17 @@ public class ItemImageServiceImpl implements ItemImageService {
             throw new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST,
                     "Images can only be modified when item status is DRAFT or ACTIVE.");
         }
+    }
+
+    private boolean canAccessNonActiveListing(ItemEntity item, UUID requesterUuid, boolean isAdmin) {
+        if (isAdmin) {
+            return true;
+        }
+        if (requesterUuid == null) {
+            return false;
+        }
+        UserEntity requester = resolveUser(requesterUuid);
+        return item.getOwnerId().equals(requester.getId());
     }
 
     private ApiException notFound(String messageTemplate, Object... args) {

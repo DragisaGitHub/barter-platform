@@ -10,6 +10,7 @@ const statusConfig: Record<
   REJECTED: { label: "Rejected", variant: "danger" },
   CANCELLED: { label: "Cancelled", variant: "default" },
   EXPIRED: { label: "Expired", variant: "secondary" },
+  INVALIDATED: { label: "Invalidated", variant: "secondary" },
 };
 
 export function TradeOfferStatusBadge({ status }: { status: TradeOfferStatus }) {

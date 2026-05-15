@@ -23,6 +23,8 @@ tags:
     description: Catalog browsing, item listings, and item management
   - name: AdminCategories
     description: Administrator category management operations
+  - name: AdminListings
+    description: Administrator listing moderation and governance operations
   - name: TradeOffers
     description: Trade offer creation, listing, and lifecycle management
   - name: Notifications
@@ -82,6 +84,16 @@ paths:
     $ref: './paths/admin-categories.yaml#/categories'
   /admin/categories/{categoryUuid}:
     $ref: './paths/admin-categories.yaml#/categoryByUuid'
+  /admin/listings:
+    $ref: './paths/admin-listings.yaml#/listings'
+  /admin/listings/{itemUuid}:
+    $ref: './paths/admin-listings.yaml#/listingByUuid'
+  /admin/listings/{itemUuid}/moderation-actions:
+    $ref: './paths/admin-listings.yaml#/listingModerationActions'
+  /admin/listings/{itemUuid}/remove:
+    $ref: './paths/admin-listings.yaml#/listingRemove'
+  /admin/listings/{itemUuid}/restore:
+    $ref: './paths/admin-listings.yaml#/listingRestore'
   /catalog/tags:
     $ref: './paths/catalog.yaml#/tags'
   /admin/tags:
@@ -207,6 +219,12 @@ components:
       $ref: './components/schemas/catalog/ItemDetailResponse.yaml'
     ItemPagedResponse:
       $ref: './components/schemas/catalog/ItemPagedResponse.yaml'
+    AdminListingSummaryResponse:
+      $ref: './components/schemas/catalog/AdminListingSummaryResponse.yaml'
+    AdminListingDetailResponse:
+      $ref: './components/schemas/catalog/AdminListingDetailResponse.yaml'
+    AdminListingPagedResponse:
+      $ref: './components/schemas/catalog/AdminListingPagedResponse.yaml'
     CreateItemRequest:
       $ref: './components/schemas/catalog/CreateItemRequest.yaml'
     CreateCategoryRequest:
@@ -223,6 +241,20 @@ components:
       $ref: './components/schemas/catalog/ArchiveItemRequest.yaml'
     ItemImageResponse:
       $ref: './components/schemas/catalog/ItemImageResponse.yaml'
+    ListingModerationActionResponse:
+      $ref: './components/schemas/catalog/ListingModerationActionResponse.yaml'
+    ListingModerationActionType:
+      $ref: './components/schemas/catalog/ListingModerationActionType.yaml'
+    ListingModerationReasonCode:
+      $ref: './components/schemas/catalog/ListingModerationReasonCode.yaml'
+    ListingModerationSourceType:
+      $ref: './components/schemas/catalog/ListingModerationSourceType.yaml'
+    AdminRemoveListingRequest:
+      $ref: './components/schemas/catalog/AdminRemoveListingRequest.yaml'
+    AdminRestoreListingRequest:
+      $ref: './components/schemas/catalog/AdminRestoreListingRequest.yaml'
+    OwnerListingModerationSummary:
+      $ref: './components/schemas/catalog/OwnerListingModerationSummary.yaml'
     TradeOfferStatus:
       $ref: './components/schemas/trade/TradeOfferStatus.yaml'
     TradeOfferMode:

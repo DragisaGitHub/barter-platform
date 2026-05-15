@@ -5,6 +5,7 @@ import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemImageResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
+import com.barterplatform.api.model.OwnerListingModerationSummary;
 import com.barterplatform.api.model.PopularCategoryResponse;
 import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.application.catalog.mapper.CategoryMapper;
@@ -24,11 +25,13 @@ import com.barterplatform.domain.catalog.entity.ItemTagEntity;
 import com.barterplatform.domain.catalog.entity.TagEntity;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
+import com.barterplatform.domain.catalog.moderation.ListingModerationActionEntity;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
+import com.barterplatform.infrastructure.catalog.repository.ListingModerationActionRepository;
 import com.barterplatform.infrastructure.catalog.repository.PopularCategoryProjection;
 import com.barterplatform.infrastructure.catalog.repository.TagRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
@@ -60,6 +63,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     private final ItemTagRepository itemTagRepository;
     private final UserRepository userRepository;
     private final ItemImageRepository itemImageRepository;
+    private final ListingModerationActionRepository listingModerationActionRepository;
     private final CategoryMapper categoryMapper;
     private final TagMapper tagMapper;
     private final ItemMapper itemMapper;
@@ -73,6 +77,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                                    ItemTagRepository itemTagRepository,
                                    UserRepository userRepository,
                                    ItemImageRepository itemImageRepository,
+                                   ListingModerationActionRepository listingModerationActionRepository,
                                    CategoryMapper categoryMapper,
                                    TagMapper tagMapper,
                                    ItemMapper itemMapper,
@@ -85,6 +90,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         this.itemTagRepository = itemTagRepository;
         this.userRepository = userRepository;
         this.itemImageRepository = itemImageRepository;
+        this.listingModerationActionRepository = listingModerationActionRepository;
         this.categoryMapper = categoryMapper;
         this.tagMapper = tagMapper;
         this.itemMapper = itemMapper;
@@ -125,7 +131,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         PageRequestFactory.ResolvedPageRequest pageRequest = pageRequestFactory.create(
                 page, size, sort, DEFAULT_ITEM_SORT_FIELD, ALLOWED_ITEM_SORT_FIELDS);
 
-        Specification<ItemEntity> spec = buildSearchSpecification(q, categoryUuid, tagUuids, status, condition);
+        Specification<ItemEntity> spec = buildSearchSpecification(q, categoryUuid, tagUuids, condition);
 
         Page<ItemEntity> itemPage = itemRepository.findAll(spec, pageRequest.pageable());
 
@@ -137,11 +143,11 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     // ── Item detail ──────────────────────────────────────────────
 
     @Override
-    public ItemDetailResponse getItemByUuid(UUID itemUuid) {
+    public ItemDetailResponse getItemByUuid(UUID itemUuid, UUID requesterUuid, boolean isAdmin) {
         ItemEntity item = itemRepository.findByUuid(itemUuid)
                 .orElseThrow(() -> notFound("Item with uuid '%s' was not found.", itemUuid));
 
-        if (item.getDeletedAt() != null || item.getStatus() == ItemStatus.REMOVED) {
+        if (item.getDeletedAt() != null) {
             throw notFound("Item with uuid '%s' was not found.", itemUuid);
         }
 
@@ -150,6 +156,12 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
 
         UserEntity owner = userRepository.findById(item.getOwnerId())
                 .orElseThrow(() -> notFound("Owner for item '%s' was not found.", itemUuid));
+
+        boolean ownerAccess = requesterUuid != null && owner.getUuid().equals(requesterUuid);
+        boolean elevatedAccess = isAdmin || ownerAccess;
+        if (!elevatedAccess && item.getStatus() != ItemStatus.ACTIVE) {
+            throw notFound("Item with uuid '%s' was not found.", itemUuid);
+        }
 
         List<TagEntity> tags = loadTagsForItem(item.getId());
 
@@ -161,8 +173,12 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                 .map(img -> itemImageMapper.toResponse(img).getUrl())
                 .orElse(null);
 
-        return itemMapper.toDetailResponse(item, category, tags, owner.getUuid(), owner.getUsername(),
-                primaryImageUrl, images);
+        ItemDetailResponse response = itemMapper.toDetailResponse(
+                item, category, tags, owner.getUuid(), owner.getUsername(), primaryImageUrl, images);
+        if (elevatedAccess) {
+            response.setModerationSummary(loadModerationSummary(item.getId()));
+        }
+        return response;
     }
 
     // ── My items ─────────────────────────────────────────────────
@@ -181,8 +197,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
             itemPage = itemRepository.findByOwnerIdAndStatusAndDeletedAtIsNull(
                     owner.getId(), status, pageRequest.pageable());
         } else {
-            itemPage = itemRepository.findByOwnerIdAndStatusNotAndDeletedAtIsNull(
-                    owner.getId(), ItemStatus.REMOVED, pageRequest.pageable());
+            itemPage = itemRepository.findByOwnerIdAndDeletedAtIsNull(owner.getId(), pageRequest.pageable());
         }
 
         List<ItemSummaryResponse> content = mapItemSummaries(itemPage.getContent());
@@ -194,17 +209,14 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
 
     private Specification<ItemEntity> buildSearchSpecification(String q, UUID categoryUuid,
                                                                List<UUID> tagUuids,
-                                                               ItemStatus status, ItemCondition condition) {
+                                                               ItemCondition condition) {
         List<Specification<ItemEntity>> specs = new ArrayList<>();
 
         // Always exclude soft-deleted items
         specs.add(ItemSpecifications.deletedAtIsNull());
 
-        // Always exclude REMOVED from public search
-        specs.add(ItemSpecifications.statusNotEqual(ItemStatus.REMOVED));
-
-        // Default to ACTIVE when no explicit status filter
-        specs.add(ItemSpecifications.statusEquals(Objects.requireNonNullElse(status, ItemStatus.ACTIVE)));
+        // Public marketplace visibility is ACTIVE only.
+        specs.add(ItemSpecifications.statusEquals(ItemStatus.ACTIVE));
 
         if (condition != null) {
             specs.add(ItemSpecifications.conditionEquals(condition));
@@ -311,6 +323,21 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                 .map(it -> it.getId().getTagId())
                 .toList();
         return tagRepository.findAllById(tagIds);
+    }
+
+    private OwnerListingModerationSummary loadModerationSummary(Long itemId) {
+        return listingModerationActionRepository.findFirstByItemIdOrderByCreatedAtDesc(itemId)
+                .map(this::toModerationSummary)
+                .orElse(null);
+    }
+
+    private OwnerListingModerationSummary toModerationSummary(ListingModerationActionEntity action) {
+        return new OwnerListingModerationSummary()
+                .actionType(com.barterplatform.api.model.ListingModerationActionType.valueOf(action.getActionType().name()))
+                .reasonCode(com.barterplatform.api.model.ListingModerationReasonCode.valueOf(action.getReasonCode().name()))
+                .sourceType(com.barterplatform.api.model.ListingModerationSourceType.valueOf(action.getSourceType().name()))
+                .actionAt(action.getCreatedAt())
+                .userMessage(action.getUserMessage());
     }
 
     private ApiException notFound(String messageTemplate, Object... args) {

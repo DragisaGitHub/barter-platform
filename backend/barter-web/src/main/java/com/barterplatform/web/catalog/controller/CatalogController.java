@@ -1,31 +1,22 @@
 package com.barterplatform.web.catalog.controller;
 
 import com.barterplatform.api.controller.CatalogApi;
-import com.barterplatform.api.model.ArchiveItemRequest;
-import com.barterplatform.api.model.CategoryResponse;
-import com.barterplatform.api.model.CreateItemRequest;
-import com.barterplatform.api.model.ItemCondition;
-import com.barterplatform.api.model.ItemDetailResponse;
-import com.barterplatform.api.model.ItemImageResponse;
-import com.barterplatform.api.model.ItemPagedResponse;
-import com.barterplatform.api.model.ItemStatus;
-import com.barterplatform.api.model.MessageResponse;
-import com.barterplatform.api.model.PopularCategoryResponse;
-import com.barterplatform.api.model.TagResponse;
-import com.barterplatform.api.model.UpdateItemRequest;
+import com.barterplatform.api.model.*;
 import com.barterplatform.application.catalog.service.CatalogQueryService;
 import com.barterplatform.application.catalog.service.FavoriteItemService;
 import com.barterplatform.application.catalog.service.ItemCommandService;
 import com.barterplatform.application.catalog.service.ItemImageService;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
-import java.util.List;
-import java.util.UUID;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.UUID;
 
 @RestController
 public class CatalogController implements CatalogApi {
@@ -53,7 +44,7 @@ public class CatalogController implements CatalogApi {
     }
 
     @Override
-    public ResponseEntity<List<PopularCategoryResponse>> listPopularCategories(@Nullable Integer limit) {
+    public ResponseEntity<List<PopularCategoryResponse>> listPopularCategories(Integer limit) {
         return ResponseEntity.ok(catalogQueryService.listPopularCategories(limit));
     }
 
@@ -64,10 +55,10 @@ public class CatalogController implements CatalogApi {
 
     @Override
     public ResponseEntity<ItemPagedResponse> searchItems(
-            Integer page, Integer size, @Nullable String sort,
-            @Nullable String q, @Nullable UUID categoryUuid,
-            @Nullable List<UUID> tagUuids, @Nullable ItemStatus status,
-            @Nullable ItemCondition condition) {
+            Integer page, Integer size, String sort,
+            String q, UUID categoryUuid,
+            List<UUID> tagUuids, ItemStatus status,
+            ItemCondition condition) {
         return ResponseEntity.ok(catalogQueryService.searchItems(
                 page, size, sort, q, categoryUuid, tagUuids,
                 mapStatusToDomain(status),
@@ -76,7 +67,10 @@ public class CatalogController implements CatalogApi {
 
     @Override
     public ResponseEntity<ItemDetailResponse> getItemByUuid(UUID itemUuid) {
-        return ResponseEntity.ok(catalogQueryService.getItemByUuid(itemUuid));
+        return ResponseEntity.ok(catalogQueryService.getItemByUuid(
+                itemUuid,
+                currentUserUuidOrNull(),
+                currentUserIsAdmin()));
     }
 
     // ── Authenticated item endpoints ─────────────────────────────
@@ -97,15 +91,15 @@ public class CatalogController implements CatalogApi {
 
     @Override
     public ResponseEntity<ItemDetailResponse> archiveItem(UUID itemUuid,
-                                                          @Nullable ArchiveItemRequest archiveItemRequest) {
+                                                          ArchiveItemRequest archiveItemRequest) {
         UUID ownerUuid = currentUserUuid();
         return ResponseEntity.ok(itemCommandService.archiveItem(ownerUuid, itemUuid, archiveItemRequest));
     }
 
     @Override
     public ResponseEntity<ItemPagedResponse> listMyItems(
-            Integer page, Integer size, @Nullable String sort,
-            @Nullable ItemStatus status) {
+            Integer page, Integer size, String sort,
+            ItemStatus status) {
         UUID ownerUuid = currentUserUuid();
         return ResponseEntity.ok(catalogQueryService.listMyItems(
                 ownerUuid, page, size, sort, mapStatusToDomain(status)));
@@ -113,7 +107,7 @@ public class CatalogController implements CatalogApi {
 
     @Override
     public ResponseEntity<ItemPagedResponse> listFavoriteItems(
-            Integer page, Integer size, @Nullable String sort) {
+            Integer page, Integer size, String sort) {
         UUID currentUserUuid = currentUserUuid();
         return ResponseEntity.ok(favoriteItemService.listFavoriteItems(currentUserUuid, page, size, sort));
     }
@@ -131,11 +125,6 @@ public class CatalogController implements CatalogApi {
         return ResponseEntity.noContent().build();
     }
 
-    @Override
-    public ResponseEntity<Void> removeItem(UUID itemUuid) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
-    }
-
     // ── Image endpoints ──────────────────────────────────────────
 
     @Override
@@ -147,7 +136,10 @@ public class CatalogController implements CatalogApi {
 
     @Override
     public ResponseEntity<List<ItemImageResponse>> listItemImages(UUID itemUuid) {
-        return ResponseEntity.ok(itemImageService.listImages(itemUuid));
+        return ResponseEntity.ok(itemImageService.listImages(
+                itemUuid,
+                currentUserUuidOrNull(),
+                currentUserIsAdmin()));
     }
 
     @Override
@@ -167,19 +159,36 @@ public class CatalogController implements CatalogApi {
     // ── Private helpers ──────────────────────────────────────────
 
     private UUID currentUserUuid() {
-        AuthenticatedUser principal = (AuthenticatedUser) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+        AuthenticatedUser principal = (AuthenticatedUser) Objects.requireNonNull(SecurityContextHolder.getContext()
+                .getAuthentication()).getPrincipal();
+        assert principal != null;
         return principal.getUserUuid();
     }
 
+    private UUID currentUserUuidOrNull() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof AuthenticatedUser principal)) {
+            return null;
+        }
+        return principal.getUserUuid();
+    }
+
+    private boolean currentUserIsAdmin() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof AuthenticatedUser principal)) {
+            return false;
+        }
+        return principal.getRoles().contains("ADMIN");
+    }
+
     private com.barterplatform.domain.catalog.enums.ItemStatus mapStatusToDomain(
-            @Nullable ItemStatus apiStatus) {
+            ItemStatus apiStatus) {
         return apiStatus == null ? null
                 : com.barterplatform.domain.catalog.enums.ItemStatus.valueOf(apiStatus.name());
     }
 
     private com.barterplatform.domain.catalog.enums.ItemCondition mapConditionToDomain(
-            @Nullable ItemCondition apiCondition) {
+            ItemCondition apiCondition) {
         return apiCondition == null ? null
                 : com.barterplatform.domain.catalog.enums.ItemCondition.valueOf(apiCondition.name());
     }

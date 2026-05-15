@@ -40,6 +40,11 @@ const STATUS_DETAIL: Record<TradeOfferStatus, { label: string; description: stri
     description: "This trade offer has expired without a response.",
     icon: <AlertTriangle className="size-4 text-slate-400" />,
   },
+  INVALIDATED: {
+    label: "Invalidated",
+    description: "This trade offer was automatically invalidated because a referenced listing was removed from the marketplace.",
+    icon: <Ban className="size-4 text-slate-500" />,
+  },
 };
 
 function ItemCard({ item}: { item: TradeOfferItemSummary; label: string; sublabel: string }) {

@@ -14,6 +14,8 @@ import { VerifyEmailPage } from "../features/auth/VerifyEmailPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { AdminDashboardPage } from "../features/admin/AdminDashboardPage";
 import { AdminCategoriesPage } from "../features/admin/AdminCategoriesPage";
+import { AdminListingsPage } from "../features/admin/AdminListingsPage";
+import { AdminListingDetailPage } from "../features/admin/AdminListingDetailPage";
 import { AdminTagsPage } from "../features/admin/AdminTagsPage";
 import { UsersListPage } from "../features/admin/UsersListPage";
 import { UserDetailPage } from "../features/admin/UserDetailPage";
@@ -225,6 +227,14 @@ export const router = createBrowserRouter([
       {
         path: "/admin/categories",
         element: <AdminCategoriesPage />,
+      },
+      {
+        path: "/admin/listings",
+        element: <AdminListingsPage />,
+      },
+      {
+        path: "/admin/listings/:uuid",
+        element: <AdminListingDetailPage />,
       },
       {
         path: "/admin/tags",

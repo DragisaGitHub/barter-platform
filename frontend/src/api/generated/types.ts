@@ -48,12 +48,17 @@ export type CategoryResponse = components["schemas"]["CategoryResponse"];
 export type PopularCategoryResponse = components["schemas"]["PopularCategoryResponse"];
 export type AdminCategoryResponse = components["schemas"]["AdminCategoryResponse"];
 export type AdminCategoryPagedResponse = components["schemas"]["AdminCategoryPagedResponse"];
+export type AdminListingSummaryResponse = components["schemas"]["AdminListingSummaryResponse"];
+export type AdminListingDetailResponse = components["schemas"]["AdminListingDetailResponse"];
+export type AdminListingPagedResponse = components["schemas"]["AdminListingPagedResponse"];
 export type TagResponse = components["schemas"]["TagResponse"];
 export type AdminTagResponse = components["schemas"]["AdminTagResponse"];
 export type AdminTagPagedResponse = components["schemas"]["AdminTagPagedResponse"];
 export type ItemSummaryResponse = components["schemas"]["ItemSummaryResponse"];
 export type ItemDetailResponse = components["schemas"]["ItemDetailResponse"];
 export type ItemPagedResponse = components["schemas"]["ItemPagedResponse"];
+export type ListingModerationActionResponse = components["schemas"]["ListingModerationActionResponse"];
+export type OwnerListingModerationSummary = components["schemas"]["OwnerListingModerationSummary"];
 
 // ─── Catalog Image Response DTOs ────────────────────────────────────────────
 
@@ -68,6 +73,14 @@ export type UpdateItemRequest = components["schemas"]["UpdateItemRequest"];
 export type UpdateCategoryRequest = components["schemas"]["UpdateCategoryRequest"];
 export type UpdateTagRequest = components["schemas"]["UpdateTagRequest"];
 export type ArchiveItemRequest = components["schemas"]["ArchiveItemRequest"];
+export type AdminRemoveListingRequest = components["schemas"]["AdminRemoveListingRequest"];
+export type AdminRestoreListingRequest = components["schemas"]["AdminRestoreListingRequest"];
+
+// ─── Moderation Enums ────────────────────────────────────────────────────────
+
+export type ListingModerationActionType = components["schemas"]["ListingModerationActionType"];
+export type ListingModerationReasonCode = components["schemas"]["ListingModerationReasonCode"];
+export type ListingModerationSourceType = components["schemas"]["ListingModerationSourceType"];
 
 // ─── Trade Offer Enums ──────────────────────────────────────────────────────
 

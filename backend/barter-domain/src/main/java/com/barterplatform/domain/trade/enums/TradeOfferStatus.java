@@ -5,6 +5,7 @@ public enum TradeOfferStatus {
     ACCEPTED,
     REJECTED,
     CANCELLED,
-    EXPIRED
+    EXPIRED,
+    INVALIDATED
 }
 

@@ -33,6 +33,7 @@ import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
+import com.barterplatform.infrastructure.catalog.repository.ListingModerationActionRepository;
 import com.barterplatform.infrastructure.catalog.repository.TagRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import java.time.OffsetDateTime;
@@ -62,6 +63,7 @@ class CatalogQueryServiceImplTest {
     @Mock private ItemTagRepository itemTagRepository;
     @Mock private UserRepository userRepository;
     @Mock private ItemImageRepository itemImageRepository;
+    @Mock private ListingModerationActionRepository listingModerationActionRepository;
     @Mock private CategoryMapper categoryMapper;
     @Mock private TagMapper tagMapper;
     @Mock private ItemMapper itemMapper;
@@ -77,6 +79,7 @@ class CatalogQueryServiceImplTest {
         service = new CatalogQueryServiceImpl(
                 categoryRepository, tagRepository, itemRepository,
                 itemTagRepository, userRepository, itemImageRepository,
+                listingModerationActionRepository,
                 categoryMapper, tagMapper, itemMapper, itemImageMapper,
                 pageRequestFactory, pageResponseMapper);
     }
@@ -191,7 +194,7 @@ class CatalogQueryServiceImplTest {
             when(itemRepository.findByUuid(uuid)).thenReturn(Optional.empty());
 
             ApiException ex = assertThrows(ApiException.class,
-                    () -> service.getItemByUuid(uuid));
+                    () -> service.getItemByUuid(uuid, null, false));
             assertEquals(404, ex.getStatus().value());
         }
 
@@ -205,7 +208,7 @@ class CatalogQueryServiceImplTest {
             when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(entity));
 
             ApiException ex = assertThrows(ApiException.class,
-                    () -> service.getItemByUuid(uuid));
+                    () -> service.getItemByUuid(uuid, null, false));
             assertEquals(404, ex.getStatus().value());
         }
 
@@ -218,7 +221,7 @@ class CatalogQueryServiceImplTest {
             when(itemRepository.findByUuid(uuid)).thenReturn(Optional.of(entity));
 
             ApiException ex = assertThrows(ApiException.class,
-                    () -> service.getItemByUuid(uuid));
+                    () -> service.getItemByUuid(uuid, null, false));
             assertEquals(404, ex.getStatus().value());
         }
 
@@ -254,7 +257,7 @@ class CatalogQueryServiceImplTest {
             when(itemMapper.toDetailResponse(entity, cat, List.of(t1), ownerUuid, "alice", null, List.of()))
                     .thenReturn(expectedResponse);
 
-            ItemDetailResponse result = service.getItemByUuid(itemUuid);
+            ItemDetailResponse result = service.getItemByUuid(itemUuid, null, false);
 
             assertNotNull(result);
             assertEquals(itemUuid, result.getUuid());
@@ -290,8 +293,7 @@ class CatalogQueryServiceImplTest {
                     PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt")), 1);
 
             when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
-            when(itemRepository.findByOwnerIdAndStatusNotAndDeletedAtIsNull(
-                    eq(10L), eq(ItemStatus.REMOVED), any(Pageable.class)))
+            when(itemRepository.findByOwnerIdAndDeletedAtIsNull(eq(10L), any(Pageable.class)))
                     .thenReturn(itemPage);
             when(categoryRepository.findAllById(any())).thenReturn(List.of(cat));
             when(userRepository.findAllById(any())).thenReturn(List.of(owner));

@@ -300,7 +300,7 @@ class ItemImageServiceImplTest {
             when(itemImageMapper.toResponseList(any())).thenReturn(
                     List.of(response(imgUuid1, true), response(imgUuid2, false)));
 
-            List<ItemImageResponse> result = service.listImages(itemUuid);
+            List<ItemImageResponse> result = service.listImages(itemUuid, null, false);
 
             assertEquals(2, result.size());
         }

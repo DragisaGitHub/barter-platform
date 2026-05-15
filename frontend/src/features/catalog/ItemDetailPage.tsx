@@ -12,6 +12,7 @@ import {
 import { format } from "date-fns";
 import { useItemDetail } from "./useCatalog";
 import { ItemStatusBadge, ItemConditionBadge } from "./ItemBadges";
+import { OwnerModerationPanel } from "./OwnerModerationPanel";
 import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Spinner } from "../../components/ui/Spinner";
@@ -133,6 +134,7 @@ export function ItemDetailPage() {
   }
 
   const isOwner = !!user && user.uuid === item.ownerUuid;
+  const ownerItemPath = routePaths.myItemDetail(item.uuid);
   const canProposeTrade = isAuthenticated && item.status === "ACTIVE" && !isOwner;
   const showGuestTradeCta = !isAuthenticated && item.status === "ACTIVE";
   const loginRedirectUrl = `${routePaths.login}?redirect=${encodeURIComponent(
@@ -161,6 +163,8 @@ export function ItemDetailPage() {
           </div>
 
           <section className="marketplace-panel p-4">
+            {isOwner ? <OwnerModerationPanel item={item} /> : null}
+
             <div className="flex flex-wrap gap-1.5">
               <ItemStatusBadge status={item.status} />
               <ItemConditionBadge condition={item.condition} />
@@ -285,6 +289,11 @@ export function ItemDetailPage() {
                   <div className="rounded-lg border border-violet-200 bg-violet-50 px-3.5 py-2.5 text-sm leading-5 text-violet-700">
                     This is your listing. You can manage it from your items dashboard.
                   </div>
+                  <Link to={ownerItemPath} className="block">
+                    <Button variant="outline" className="h-10 w-full rounded-lg border-slate-200">
+                      Open owner detail
+                    </Button>
+                  </Link>
                   <Link to={routePaths.myItemsEdit(item.uuid)} className="block">
                     <Button variant="outline" className="h-10 w-full rounded-lg border-slate-200">
                       Edit listing

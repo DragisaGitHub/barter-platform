@@ -43,7 +43,11 @@ export function AdminPageShell({
             </p>
           </div>
 
-          {actions && <div className="flex shrink-0 flex-wrap items-center gap-3">{actions}</div>}
+          {actions && (
+            <div className="flex w-full min-w-0 flex-wrap items-center gap-3 xl:w-auto xl:max-w-md xl:justify-end">
+              {actions}
+            </div>
+          )}
         </div>
       </section>
 

@@ -174,16 +174,25 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.status").value("ACCEPTED"))
                 .andExpect(jsonPath("$.respondedAt").isNotEmpty());
 
-        // ── 8. Both items become ARCHIVED ─────────────────────────
+        // ── 8. Archived items are hidden from public detail ───────
         mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+                .andExpect(status().isNotFound());
 
         mockMvc.perform(apiGet("/catalog/items/" + bobItemUuid))
+                .andExpect(status().isNotFound());
+
+        // ── 9. Both items remain visible to owners as ARCHIVED ────
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid)
+                        .header("Authorization", "Bearer " + aliceToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
 
-        // ── 9. Archived items disappear from public ACTIVE search ─
+        mockMvc.perform(apiGet("/catalog/items/" + bobItemUuid)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+
+        // ── 10. Archived items disappear from public ACTIVE search ─
         mockMvc.perform(apiGet("/catalog/items")
                         .queryParam("page", "0")
                         .queryParam("size", "20")
@@ -191,7 +200,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
 
-        // ── 10. Archived items remain visible in owner my-items ───
+        // ── 11. Archived items remain visible in owner my-items ───
         mockMvc.perform(apiGet("/catalog/items/mine")
                         .header("Authorization", "Bearer " + aliceToken))
                 .andExpect(status().isOk())
@@ -204,7 +213,7 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].uuid").value(bobItemUuid));
 
-        // ── 11. Accepted offer detail has respondedAt set ─────────
+        // ── 12. Accepted offer detail has respondedAt set ─────────
         mockMvc.perform(apiGet("/trade-offers/" + offerUuid)
                         .header("Authorization", "Bearer " + aliceToken))
                 .andExpect(status().isOk())
@@ -250,10 +259,20 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.status").value("ACCEPTED"));
 
         mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
-                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+                .andExpect(status().isNotFound());
         mockMvc.perform(apiGet("/catalog/items/" + bobItem1Uuid))
-                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+                .andExpect(status().isNotFound());
         mockMvc.perform(apiGet("/catalog/items/" + bobItem2Uuid))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+        mockMvc.perform(apiGet("/catalog/items/" + bobItem1Uuid)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+        mockMvc.perform(apiGet("/catalog/items/" + bobItem2Uuid)
+                        .header("Authorization", "Bearer " + bobToken))
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
     }
 
@@ -293,6 +312,10 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.status").value("ACCEPTED"));
 
         mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid)
+                        .header("Authorization", "Bearer " + aliceToken))
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
     }
 
@@ -354,6 +377,10 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.status").value("ACCEPTED"));
 
         mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid)
+                        .header("Authorization", "Bearer " + aliceToken))
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
     }
 
@@ -435,12 +462,22 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ACCEPTED"));
 
-        // All 3 items archived
+        // All 3 items archived and hidden from public detail
         mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid))
-                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+                .andExpect(status().isNotFound());
         mockMvc.perform(apiGet("/catalog/items/" + bobItem1Uuid))
-                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+                .andExpect(status().isNotFound());
         mockMvc.perform(apiGet("/catalog/items/" + bobItem2Uuid))
+                .andExpect(status().isNotFound());
+
+        mockMvc.perform(apiGet("/catalog/items/" + aliceItemUuid)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+        mockMvc.perform(apiGet("/catalog/items/" + bobItem1Uuid)
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(jsonPath("$.status").value("ARCHIVED"));
+        mockMvc.perform(apiGet("/catalog/items/" + bobItem2Uuid)
+                        .header("Authorization", "Bearer " + bobToken))
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
 
         // Charlie's item NOT archived
