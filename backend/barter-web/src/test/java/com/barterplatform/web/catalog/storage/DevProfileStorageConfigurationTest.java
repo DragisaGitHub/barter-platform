@@ -1,42 +1,47 @@
 package com.barterplatform.web.catalog.storage;
 
-import com.barterplatform.BarterApplication;
+import com.azure.storage.blob.BlobContainerClient;
 import com.barterplatform.application.catalog.storage.FileStorageService;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.context.ApplicationContext;
-import org.springframework.test.context.ActiveProfiles;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.mockito.Mockito.mock;
 
-@SpringBootTest(
-        classes = BarterApplication.class,
-        webEnvironment = SpringBootTest.WebEnvironment.MOCK,
-        properties = {
-                "spring.datasource.url=jdbc:postgresql://localhost:5432/barter_db",
-                "spring.datasource.username=barter_user",
-                "spring.datasource.password=barter_password",
-                "spring.datasource.driver-class-name=org.postgresql.Driver",
-                "azure.storage.connection-string=DefaultEndpointsProtocol=https;AccountName=devstoreaccount1;AccountKey=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==;EndpointSuffix=core.windows.net",
-                "azure.storage.container-name=item-images-dev"
-        }
-)
-@ActiveProfiles("dev")
 class DevProfileStorageConfigurationTest {
 
-    @Autowired
-    private ApplicationContext applicationContext;
-
-    @Autowired
-    private FileStorageService storageService;
+    private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
+            .withPropertyValues(
+                    "spring.profiles.active=dev",
+                    "azure.storage.connection-string=UseDevelopmentStorage=true",
+                    "azure.storage.container-name=item-images-dev",
+                    "storage.type=azure")
+            .withUserConfiguration(StorageTestConfiguration.class);
 
     @Test
     void devProfileUsesAzureStorageServiceOnly() {
-        assertInstanceOf(AzureBlobStorageService.class, storageService);
-        assertEquals(0, applicationContext.getBeansOfType(LocalFileStorageService.class).size());
-        assertEquals(1, applicationContext.getBeansOfType(AzureBlobStorageService.class).size());
+        contextRunner.run(applicationContext -> {
+            FileStorageService storageService = applicationContext.getBean(FileStorageService.class);
+
+            assertInstanceOf(AzureBlobStorageService.class, storageService);
+            assertEquals(0, applicationContext.getBeansOfType(LocalFileStorageService.class).size());
+            assertEquals(1, applicationContext.getBeansOfType(AzureBlobStorageService.class).size());
+            assertEquals(1, applicationContext.getBeansOfType(FileStorageService.class).size());
+        });
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    @Import({AzureBlobStorageService.class, LocalFileStorageService.class})
+    static class StorageTestConfiguration {
+
+        @Bean
+        BlobContainerClient blobContainerClient() {
+            return mock(BlobContainerClient.class);
+        }
     }
 }
 
