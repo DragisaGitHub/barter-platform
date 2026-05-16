@@ -27,6 +27,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+import java.net.URI;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -124,6 +125,33 @@ class ItemImagesIntegrationTest {
                 .andExpect(jsonPath("$.isPrimary").value(true))
                 .andExpect(jsonPath("$.sortOrder").value(0))
                 .andExpect(jsonPath("$.contentType").value("image/jpeg"));
+    }
+
+    @Test
+    void uploadedImageCanBeFetchedViaBackendFilesEndpoint() throws Exception {
+        String token = registerActivateAndLogin("alice", "alice@example.com", "P@ssword123");
+        String itemUuid = createItem(token, "Fetch Image Item");
+        MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", minimalJpeg());
+
+        MvcResult uploadResult = mockMvc.perform(multipartPost("/catalog/items/" + itemUuid + "/images")
+                        .file(file)
+                        .header("Authorization", "Bearer " + token))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.url").isNotEmpty())
+                .andReturn();
+
+        String imageUrl = extractField(uploadResult, "url");
+        String imagePath = toRelativePath(imageUrl);
+        String servletPath = imagePath.substring("/api/v1".length());
+
+        mockMvc.perform(get(imagePath)
+                        .contextPath("/api/v1")
+                        .servletPath(servletPath))
+                .andExpect(status().isOk())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .contentType("image/jpeg"))
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.content()
+                        .bytes(minimalJpeg()));
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -534,6 +562,13 @@ class ItemImagesIntegrationTest {
     private String extractField(MvcResult result, String field) throws Exception {
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
         return json.get(field).asText();
+    }
+
+    private String toRelativePath(String url) {
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            return URI.create(url).getPath();
+        }
+        return url;
     }
 
     private MockHttpServletRequestBuilder apiGet(String path) {

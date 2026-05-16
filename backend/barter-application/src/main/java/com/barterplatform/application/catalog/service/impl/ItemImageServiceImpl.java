@@ -31,6 +31,8 @@ import org.springframework.web.multipart.MultipartFile;
 public class ItemImageServiceImpl implements ItemImageService {
 
     private static final Logger log = LoggerFactory.getLogger(ItemImageServiceImpl.class);
+    private static final String IMAGE_STORAGE_UNAVAILABLE_MESSAGE =
+            "Image storage is currently unavailable. Please try again later.";
 
     private static final Map<String, String> ALLOWED_CONTENT_TYPES = Map.of(
             "image/jpeg", "jpg",
@@ -97,7 +99,7 @@ public class ItemImageServiceImpl implements ItemImageService {
         String storageKeySaved = null;
         try {
             try (InputStream is = file.getInputStream()) {
-                storageService.store(storageKey, is, detectedContentType);
+                storageService.store(storageKey, is, file.getSize(), detectedContentType);
                 storageKeySaved = storageKey;
             }
 
@@ -116,12 +118,21 @@ public class ItemImageServiceImpl implements ItemImageService {
 
         } catch (IOException e) {
             throw new ApiException(HttpStatus.INTERNAL_SERVER_ERROR, ErrorCode.INTERNAL_ERROR,
-                    "Failed to store image file.", e);
+                    IMAGE_STORAGE_UNAVAILABLE_MESSAGE, e);
         } catch (Exception e) {
             // Compensate: if DB save fails after file was stored, remove the file
             if (storageKeySaved != null) {
-                storageService.delete(storageKeySaved);
-                log.warn("Rolled back stored file '{}' after DB save failure: {}", storageKeySaved, e.getMessage());
+                try {
+                    storageService.delete(storageKeySaved);
+                    log.warn("Rolled back stored file '{}' after DB save failure: {}", storageKeySaved, e.getMessage());
+                } catch (RuntimeException rollbackException) {
+                    e.addSuppressed(rollbackException);
+                    log.error(
+                            "Failed to roll back stored file '{}'. rollbackExceptionClass={}, message={}",
+                            storageKeySaved,
+                            rollbackException.getClass().getName(),
+                            rollbackException.getMessage());
+                }
             }
             throw e;
         }
