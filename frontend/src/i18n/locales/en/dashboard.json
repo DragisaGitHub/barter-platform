@@ -1,0 +1,50 @@
+{
+  "welcome": "Welcome back, {{username}}!",
+  "subtitle": "Here’s what’s happening on your account.",
+  "stats": {
+    "activeItems": "Active Items",
+    "pendingIncoming": "Pending Incoming",
+    "pendingSent": "Pending Sent",
+    "archivedItems": "Archived Items"
+  },
+  "quickActions": "Quick Actions",
+  "actions": {
+    "browseMarketplace": "Browse Marketplace",
+    "createItem": "Create Item",
+    "viewIncomingOffers": "View Incoming Offers"
+  },
+  "recentMarketplaceItems": "Recent Marketplace Items",
+  "recentTradeActivity": "Recent Trade Activity",
+  "viewAll": "View all",
+  "emptyMarketplace": {
+    "title": "No tradeable items from other users right now.",
+    "description": "Check back soon — new items appear here as they’re listed."
+  },
+  "emptyTrade": {
+    "title": "No recent trade activity right now.",
+    "description": "Trade activity will appear here once you start trading."
+  },
+  "tradeSummary": {
+    "giftSender": "You requested {{receiverName}}'s {{receiverItemTitle}} as a gift",
+    "giftReceiver": "{{senderName}} requested your {{receiverItemTitle}} as a gift",
+    "negotiableSender": "You want to negotiate for {{receiverName}}'s {{receiverItemTitle}}",
+    "negotiableReceiver": "{{senderName}} wants to negotiate for your {{receiverItemTitle}}",
+    "exchangeSender": "You offered {{senderItemTitle}} for {{receiverName}}'s {{receiverItemTitle}}",
+    "exchangeReceiver": "{{senderName}} wants your {{receiverItemTitle}} for their {{senderItemTitle}}"
+  },
+  "statusExplanation": {
+    "PENDING": "Waiting for response",
+    "ACCEPTED": "Awaiting completion confirmation",
+    "COMPLETED": "Trade completed",
+    "REJECTED": "Trade rejected",
+    "CANCELLED": "Cancelled by sender",
+    "EXPIRED": "Expired",
+    "INVALIDATED": "No longer valid"
+  },
+  "adminAccess": {
+    "title": "Admin Access",
+    "description": "You have administrator privileges",
+    "cta": "Go to Admin Dashboard"
+  }
+}
+

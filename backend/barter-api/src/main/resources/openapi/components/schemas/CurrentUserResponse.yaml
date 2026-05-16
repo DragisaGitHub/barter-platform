@@ -7,6 +7,7 @@ required:
   - status
   - emailVerified
   - mfaEnabled
+  - preferredLanguage
   - roles
   - permissions
   - oauthAccounts
@@ -29,6 +30,8 @@ properties:
     type: boolean
   mfaEnabled:
     type: boolean
+  preferredLanguage:
+    $ref: './PreferredLanguage.yaml'
   lastLoginAt:
     type: string
     format: date-time

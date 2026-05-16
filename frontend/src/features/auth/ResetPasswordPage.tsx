@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { AxiosError } from "axios";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { resetPassword } from "@/api/authApi.ts";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
@@ -12,17 +13,10 @@ import { parseApiError } from "@/utils";
 import type { ErrorResponse } from "@/api/generated/types.ts";
 import { routePaths } from "@/routes/routePaths.ts";
 
-const resetPasswordSchema = z
-  .object({
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(1, "Confirm your password"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
+type ResetPasswordFormData = {
+  password: string;
+  confirmPassword: string;
+};
 
 function PasswordField({
   name,
@@ -39,6 +33,7 @@ function PasswordField({
   showPassword: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation(["auth", "common"]);
   const {
     register,
     formState: { errors },
@@ -71,7 +66,7 @@ function PasswordField({
           type="button"
           onClick={onToggle}
           className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-          aria-label={showPassword ? `Hide ${label.toLowerCase()}` : `Show ${label.toLowerCase()}`}
+          aria-label={showPassword ? t("auth:hidePassword") : t("auth:showPassword")}
         >
           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
@@ -83,6 +78,7 @@ function PasswordField({
 
 export function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation(["auth", "common"]);
   const email = searchParams.get("email") ?? "";
   const token = searchParams.get("token") ?? "";
   const hasValidLink = Boolean(email && token);
@@ -90,6 +86,16 @@ export function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+
+  const resetPasswordSchema = z
+    .object({
+      password: z.string().min(8, t("auth:passwordMinLength")),
+      confirmPassword: z.string().min(1, t("auth:confirmPasswordRequired")),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("auth:passwordsDoNotMatch"),
+      path: ["confirmPassword"],
+    });
 
   const methods = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
@@ -109,7 +115,7 @@ export function ResetPasswordPage() {
     methods.clearErrors("root");
 
     if (!hasValidLink) {
-      showFormError("This password reset link is incomplete. Please request a new password reset email.");
+      showFormError(t("auth:resetLinkInvalid"));
       return;
     }
 
@@ -126,13 +132,13 @@ export function ResetPasswordPage() {
               message: fieldError.message,
             });
           });
-          showFormError(errorData.message ?? "Please correct the highlighted errors.");
+          showFormError(errorData.message ?? t("auth:correctHighlightedErrors"));
         } else {
           const message = parseApiError(error);
           showFormError(message);
         }
       } else {
-        showFormError("An unexpected error occurred");
+        showFormError(t("auth:unexpectedError"));
       }
     } finally {
       setIsLoading(false);
@@ -143,7 +149,7 @@ export function ResetPasswordPage() {
     const firstErrorMessage =
       methods.formState.errors.password?.message ??
       methods.formState.errors.confirmPassword?.message ??
-      "Please fix the errors below.";
+      t("auth:fixErrors");
 
     showFormError(firstErrorMessage as string);
   };
@@ -157,23 +163,23 @@ export function ResetPasswordPage() {
               <ShieldCheck className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
             </div>
           </div>
-          <CardTitle className="text-center">Reset password</CardTitle>
+          <CardTitle className="text-center">{t("auth:resetPasswordTitle")}</CardTitle>
           <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-2">
-            Choose a new password for your account.
+            {t("auth:resetPasswordSubtitle")}
           </p>
         </CardHeader>
 
         <CardContent>
           {isSuccess ? (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
-              <p className="font-medium">Your password has been reset successfully.</p>
-              <p className="mt-1">You can now sign in with your new password.</p>
+              <p className="font-medium">{t("auth:resetPasswordSuccessTitle")}</p>
+              <p className="mt-1">{t("auth:resetPasswordSuccessBody")}</p>
               <div className="mt-4">
                 <Link
                   to={routePaths.login}
                   className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
-                  Back to sign in
+                  {t("common:backToSignIn")}
                 </Link>
               </div>
             </div>
@@ -188,14 +194,14 @@ export function ResetPasswordPage() {
 
                 {!hasValidLink && (
                   <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-                    This reset link is missing required details. Please request a new password reset email.
+                    {t("auth:resetLinkInvalid")}
                   </div>
                 )}
 
                 <PasswordField
                   name="password"
-                  label="New password"
-                  placeholder="Enter a new password"
+                  label={t("common:newPassword")}
+                  placeholder={t("common:newPassword")}
                   autoComplete="new-password"
                   showPassword={showPassword}
                   onToggle={() => setShowPassword((current) => !current)}
@@ -203,15 +209,15 @@ export function ResetPasswordPage() {
 
                 <PasswordField
                   name="confirmPassword"
-                  label="Confirm password"
-                  placeholder="Confirm your new password"
+                  label={t("common:confirmPassword")}
+                  placeholder={t("auth:confirmNewPasswordPlaceholder")}
                   autoComplete="new-password"
                   showPassword={showPassword}
                   onToggle={() => setShowPassword((current) => !current)}
                 />
 
                 <Button type="submit" fullWidth isLoading={isLoading}>
-                  Reset password
+                  {t("auth:resetPasswordButton")}
                 </Button>
               </form>
             </FormProvider>
@@ -223,7 +229,7 @@ export function ResetPasswordPage() {
                 to={routePaths.login}
                 className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
               >
-                Back to sign in
+                {t("common:backToSignIn")}
               </Link>
             </div>
           )}

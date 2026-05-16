@@ -15,41 +15,42 @@ import { useAuth } from "../../auth/AuthContext";
 import type { TradeOfferStatus, TradeOfferItemSummary } from "@/api/generated/types.ts";
 import {TradeOfferMessagesPanel} from "@/features/trade/TradeOfferMessagesPanel.tsx";
 import React from "react";
+import { useTranslation } from "react-i18next";
 
-const STATUS_DETAIL: Record<TradeOfferStatus, { label: string; description: string; icon: React.ReactNode }> = {
+const STATUS_DETAIL: Record<TradeOfferStatus, { labelKey: string; descriptionKey: string; icon: React.ReactNode }> = {
   PENDING: {
-    label: "Pending",
-    description: "Waiting for the receiver to respond to this trade offer.",
+    labelKey: "status.pending",
+    descriptionKey: "detail.statusDescription.pending",
     icon: <Clock className="size-4 text-amber-500" />,
   },
   ACCEPTED: {
-    label: "Awaiting completion",
-    description: "Trade agreed. The involved items are archived while both participants complete the exchange and confirm it.",
+    labelKey: "status.awaitingCompletion",
+    descriptionKey: "detail.statusDescription.accepted",
     icon: <Clock className="size-4 text-amber-500" />,
   },
   COMPLETED: {
-    label: "Completed",
-    description: "Both participants confirmed the exchange, and this trade is now complete.",
+    labelKey: "status.completed",
+    descriptionKey: "detail.statusDescription.completed",
     icon: <Check className="size-4 text-green-500" />,
   },
   REJECTED: {
-    label: "Rejected",
-    description: "This trade offer was rejected by the receiver.",
+    labelKey: "status.rejected",
+    descriptionKey: "detail.statusDescription.rejected",
     icon: <X className="size-4 text-red-500" />,
   },
   CANCELLED: {
-    label: "Cancelled",
-    description: "This trade offer was cancelled by the sender.",
+    labelKey: "status.cancelled",
+    descriptionKey: "detail.statusDescription.cancelled",
     icon: <Ban className="size-4 text-slate-500" />,
   },
   EXPIRED: {
-    label: "Expired",
-    description: "This trade offer has expired without a response.",
+    labelKey: "status.expired",
+    descriptionKey: "detail.statusDescription.expired",
     icon: <AlertTriangle className="size-4 text-slate-400" />,
   },
   INVALIDATED: {
-    label: "Invalidated",
-    description: "This trade offer was automatically invalidated because a referenced listing was removed from the marketplace.",
+    labelKey: "status.invalidated",
+    descriptionKey: "detail.statusDescription.invalidated",
     icon: <Ban className="size-4 text-slate-500" />,
   },
 };
@@ -80,6 +81,7 @@ export function TradeOfferDetailPage() {
   const { uuid } = useParams<{ uuid: string }>();
   const { user } = useAuth();
   const { data: offer, isLoading, isError } = useTradeOffer(uuid ?? "");
+  const { t } = useTranslation(["trade", "common"]);
 
   if (isLoading) {
     return (
@@ -93,11 +95,11 @@ export function TradeOfferDetailPage() {
     return (
       <div className="max-w-3xl mx-auto">
         <EmptyState
-          title="Trade offer not found"
-          description="This offer may have been removed or you don't have access."
+          title={t("trade:detail.notFoundTitle")}
+          description={t("trade:detail.notFoundDescription")}
           action={
             <Link to="/offers/incoming">
-              <Button variant="outline">Back to Offers</Button>
+              <Button variant="outline">{t("trade:detail.backToOffers")}</Button>
             </Link>
           }
         />
@@ -117,11 +119,11 @@ export function TradeOfferDetailPage() {
         className="inline-flex items-center gap-1 text-sm text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 mb-6"
       >
         <ArrowLeft className="size-4" />
-        Back to {isSender ? "Sent" : "Incoming"} Offers
+        {isSender ? t("trade:detail.backToSentOffers") : t("trade:detail.backToIncomingOffers")}
       </Link>
 
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Trade Offer Details</h1>
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("trade:detail.title")}</h1>
         <div className="flex items-center gap-2">
           <TradeOfferModeBadge mode={offer.mode} />
           <TradeOfferStatusBadge status={offer.status} />
@@ -133,8 +135,8 @@ export function TradeOfferDetailPage() {
         <div className="flex items-start gap-3">
           {statusInfo.icon}
           <div>
-            <p className="font-medium text-slate-900 dark:text-slate-100">{statusInfo.label}</p>
-            <p className="text-sm text-slate-600 dark:text-slate-400">{statusInfo.description}</p>
+            <p className="font-medium text-slate-900 dark:text-slate-100">{t(`trade:${statusInfo.labelKey}`)}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">{t(`trade:${statusInfo.descriptionKey}`)}</p>
           </div>
         </div>
       </Card>
@@ -160,7 +162,7 @@ export function TradeOfferDetailPage() {
             {offer.mode === "GIFT" && <Gift className="size-4 text-emerald-500 mt-0.5 shrink-0" />}
             <div>
               <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-                {offer.mode === "NEGOTIABLE" ? "Negotiation Terms" : offer.mode === "GIFT" ? "Gift Message" : "Message"}
+                {offer.mode === "NEGOTIABLE" ? t("trade:detail.negotiationTerms") : offer.mode === "GIFT" ? t("trade:detail.giftMessage") : t("trade:message")}
               </p>
               <p className="text-sm text-slate-700 dark:text-slate-300">"{offer.message}"</p>
             </div>
@@ -173,10 +175,10 @@ export function TradeOfferDetailPage() {
         {/* Requested item (receiver side) */}
         <Card>
           <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">
-            {isReceiver ? "Your Requested Item" : "Requested Item"}
+            {isReceiver ? t("trade:detail.yourRequestedItem") : t("trade:detail.requestedItem")}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            From: {isReceiver ? "You" : offer.receiver.username}
+            {t("trade:fromUser", { username: isReceiver ? t("trade:you") : offer.receiver.username })}
           </p>
           <ItemCard
             item={offer.receiverItem}
@@ -189,19 +191,19 @@ export function TradeOfferDetailPage() {
         <Card>
           <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
             {offer.offeredItems.length === 0
-              ? "No Items Offered"
+              ? t("trade:card.noItemsOffered")
               : isSender
-                ? `Your Offered Item${offer.offeredItems.length > 1 ? "s" : ""}`
-                : `Offered Item${offer.offeredItems.length > 1 ? "s" : ""}`}
+                ? t("trade:detail.yourOfferedItems", { count: offer.offeredItems.length })
+                : t("trade:detail.offeredItems", { count: offer.offeredItems.length })}
           </p>
           <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-            From: {isSender ? "You" : offer.sender.username}
+            {t("trade:fromUser", { username: isSender ? t("trade:you") : offer.sender.username })}
           </p>
 
           {offer.offeredItems.length === 0 ? (
             <div className="p-4 rounded-lg border border-dashed border-slate-300 dark:border-slate-600 text-center">
               <p className="text-sm text-slate-400 dark:text-slate-500 italic">
-                {offer.mode === "GIFT" ? "Gift request — no items offered" : "No items offered"}
+                {offer.mode === "GIFT" ? t("trade:detail.giftRequestNoItems") : t("trade:detail.noItemsOffered")}
               </p>
             </div>
           ) : (
@@ -231,23 +233,23 @@ export function TradeOfferDetailPage() {
         <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-              From
+              {t("trade:from")}
             </p>
             <p className="text-sm text-slate-900 dark:text-slate-100">
-              {isSender ? "You" : offer.sender.username}
+              {isSender ? t("trade:you") : offer.sender.username}
             </p>
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-              To
+              {t("trade:to")}
             </p>
             <p className="text-sm text-slate-900 dark:text-slate-100">
-              {isReceiver ? "You" : offer.receiver.username}
+              {isReceiver ? t("trade:you") : offer.receiver.username}
             </p>
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-              Created
+              {t("trade:created")}
             </p>
             <p className="text-sm text-slate-900 dark:text-slate-100">
               {new Date(offer.createdAt).toLocaleString()}
@@ -255,7 +257,7 @@ export function TradeOfferDetailPage() {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-              Responded
+              {t("trade:responded")}
             </p>
             <p className="text-sm text-slate-900 dark:text-slate-100">
               {offer.respondedAt ? new Date(offer.respondedAt).toLocaleString() : "—"}
@@ -263,7 +265,7 @@ export function TradeOfferDetailPage() {
           </div>
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
-              Completed
+              {t("trade:status.completed")}
             </p>
             <p className="text-sm text-slate-900 dark:text-slate-100">
               {offer.completedAt ? new Date(offer.completedAt).toLocaleString() : "—"}
@@ -276,7 +278,7 @@ export function TradeOfferDetailPage() {
       {(isReceiver && isPending) || (isSender && isPending) ? (
         <Card>
           <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">
-            {isReceiver ? "Respond to this trade offer:" : "You can cancel this offer:"}
+            {isReceiver ? t("trade:detail.respondPrompt") : t("trade:detail.cancelPrompt")}
           </p>
           <TradeOfferActionButtons
             offerUuid={offer.uuid}

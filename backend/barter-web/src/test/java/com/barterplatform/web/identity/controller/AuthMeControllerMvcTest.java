@@ -8,6 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.barterplatform.api.model.CurrentUserResponse;
+import com.barterplatform.api.model.PreferredLanguage;
 import com.barterplatform.api.model.UserStatus;
 import com.barterplatform.application.identity.service.AuthService;
 import com.barterplatform.web.exception.GlobalExceptionHandler;
@@ -58,6 +59,7 @@ class AuthMeControllerMvcTest {
                 .status(UserStatus.ACTIVE)
                 .emailVerified(true)
                 .mfaEnabled(false)
+                .preferredLanguage(PreferredLanguage.SR)
                 .roles(List.of())
                 .permissions(List.of())
                 .oauthAccounts(List.of())
@@ -76,6 +78,7 @@ class AuthMeControllerMvcTest {
                 .andExpect(jsonPath("$.status").value("ACTIVE"))
                 .andExpect(jsonPath("$.emailVerified").value(true))
                 .andExpect(jsonPath("$.mfaEnabled").value(false))
+                .andExpect(jsonPath("$.preferredLanguage").value("SR"))
                 .andExpect(jsonPath("$.roles").isArray())
                 .andExpect(jsonPath("$.permissions").isArray())
                 .andExpect(jsonPath("$.oauthAccounts").isArray())

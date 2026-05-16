@@ -9,6 +9,7 @@ import com.barterplatform.BarterApplication;
 import com.barterplatform.domain.identity.entity.RoleEntity;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.identity.entity.UserRoleEntity;
+import com.barterplatform.domain.identity.enums.PreferredLanguage;
 import com.barterplatform.domain.identity.enums.RoleCode;
 import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
 import com.barterplatform.infrastructure.identity.repository.RoleRepository;
@@ -91,6 +92,7 @@ class AuthRegistrationIntegrationTest {
                 .andExpect(jsonPath("$.uuid").isNotEmpty())
                 .andExpect(jsonPath("$.username").value("alex99"))
                 .andExpect(jsonPath("$.email").value("alex@example.com"))
+                .andExpect(jsonPath("$.preferredLanguage").value("SR"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist())
                 .andReturn();
 
@@ -103,6 +105,7 @@ class AuthRegistrationIntegrationTest {
         assertThat(savedUser.getEmail()).isEqualTo("alex@example.com");
         assertThat(savedUser.getPasswordHash()).isNotBlank();
         assertThat(savedUser.getPasswordHash()).isNotEqualTo(rawPassword);
+        assertThat(savedUser.getPreferredLanguage()).isEqualTo(PreferredLanguage.SR);
 
         RoleEntity userRole = roleRepository.findByCode(RoleCode.USER).orElseThrow();
         List<UserRoleEntity> roleAssignments = userRoleRepository.findAllByIdUserIdOrderByAssignedAtAsc(savedUser.getId());

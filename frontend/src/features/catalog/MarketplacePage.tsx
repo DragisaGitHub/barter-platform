@@ -11,7 +11,6 @@ import {
   User,
   UserPlus,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import type { SearchItemsParams } from "@/api/catalogApi";
 import type {
   CategoryResponse,
@@ -33,6 +32,7 @@ import {
   useUnfavoriteItem,
 } from "./useCatalog";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 const pageShellClassName = "marketplace-panel";
 
@@ -42,6 +42,7 @@ type SidebarCategoryEntry = CategoryResponse & {
 
 export function MarketplacePage() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation(["catalog", "common", "navigation"]);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const categoryUuidFromUrl = searchParams.get("categoryUuid") ?? undefined;
@@ -164,12 +165,12 @@ export function MarketplacePage() {
   }, [popularCategories, selectedCategory]);
 
   const resultsTitle = params.q
-    ? `Search results for “${params.q}”`
+    ? t("catalog:marketplace.results.searchResults", { query: params.q })
     : selectedCategory
-      ? `${selectedCategory.name} items`
-      : "Featured items";
+      ? t("catalog:marketplace.results.categoryItems", { category: selectedCategory.name })
+      : t("catalog:featuredItems");
 
-  const resultsMeta = filteredItems.length === 1 ? "1 live listing" : `${filteredItems.length} live listings`;
+  const resultsMeta = t("catalog:marketplace.results.liveListings", { count: filteredItems.length });
 
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
@@ -285,7 +286,7 @@ export function MarketplacePage() {
               <div className="flex size-8 items-center justify-center rounded-lg bg-violet-500">
                 <span className="text-base font-semibold text-white">⇄</span>
               </div>
-              <span className="text-xl font-semibold text-slate-900">Barter Platform</span>
+              <span className="text-xl font-semibold text-slate-900">{t("common:appName")}</span>
             </Link>
 
             {isAuthenticated ? (
@@ -300,14 +301,14 @@ export function MarketplacePage() {
               <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-slate-400" />
               <input
                 type="search"
-                placeholder="Search for items to trade..."
+                placeholder={t("catalog:searchPlaceholder")}
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
                 className="marketplace-search-input h-11 w-full pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:bg-white"
               />
             </div>
             <button type="submit" className="sr-only">
-              Search
+              {t("common:search")}
             </button>
           </form>
 
@@ -318,14 +319,14 @@ export function MarketplacePage() {
                 onClick={() => scrollToSection("popular-categories")}
                 className="transition hover:text-violet-600"
               >
-                Categories
+                {t("catalog:categories")}
               </button>
               <button
                 type="button"
                 onClick={() => scrollToSection("how-it-works")}
                 className="transition hover:text-violet-600"
               >
-                How it works
+                {t("catalog:howItWorks")}
               </button>
             </div>
 
@@ -333,13 +334,13 @@ export function MarketplacePage() {
               {isAuthenticated ? (
                 <>
                   <div className="hidden rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 xl:block">
-                    Welcome, {user?.username}
+                    {t("common:welcomeUser", { username: user?.username })}
                   </div>
                   <Link
                     to={routePaths.dashboard}
                     className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:text-violet-600"
                   >
-                    Dashboard
+                    {t("common:dashboard")}
                   </Link>
                 </>
               ) : (
@@ -349,14 +350,14 @@ export function MarketplacePage() {
                     className="inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium text-slate-700 transition hover:text-violet-600"
                   >
                     <LogIn className="size-4" />
-                    Login
+                    {t("common:login")}
                   </Link>
                   <Link
                     to={routePaths.register}
                     className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-violet-500 px-5 text-sm font-medium text-white transition hover:bg-violet-600"
                   >
                     <UserPlus className="size-4" />
-                    Sign up
+                    {t("common:signUp")}
                   </Link>
                 </>
               )}
@@ -369,14 +370,14 @@ export function MarketplacePage() {
         <aside className="hidden w-64 shrink-0 space-y-4 xl:sticky xl:top-[89px] xl:block">
           <div className={`${pageShellClassName} p-4`}>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-base font-medium text-slate-900">Categories</h2>
+              <h2 className="text-base font-medium text-slate-900">{t("catalog:categories")}</h2>
               <span className="rounded-md bg-slate-100 px-2 py-1 text-xs font-medium text-slate-500">
                 {orderedCategories.length}
               </span>
             </div>
 
             <p className="mb-3 text-xs leading-5 text-slate-500">
-              Quick shortcuts for the most active categories right now, plus fast access to the full directory.
+              {t("catalog:marketplace.categoriesHelper")}
             </p>
 
             <div className="space-y-1.5">
@@ -389,7 +390,7 @@ export function MarketplacePage() {
                     : "text-slate-700 hover:bg-slate-100"
                 }`}
               >
-                <span className="min-w-0 flex-1 truncate text-sm font-medium">All Categories</span>
+                <span className="min-w-0 flex-1 truncate text-sm font-medium">{t("catalog:allCategories")}</span>
               </button>
 
               {sidebarCategories.map((category) => {
@@ -410,7 +411,7 @@ export function MarketplacePage() {
                       <span className="block truncate text-sm font-medium">{category.name}</span>
                       {typeof category.activeItemCount === "number" ? (
                         <span className="text-xs text-slate-500">
-                          {category.activeItemCount} active {category.activeItemCount === 1 ? "listing" : "listings"}
+                          {t("catalog:marketplace.activeListings", { count: category.activeItemCount })}
                         </span>
                       ) : null}
                     </span>
@@ -423,7 +424,7 @@ export function MarketplacePage() {
               to={routePaths.marketplaceCategories}
               className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:text-violet-600"
             >
-              Show all categories
+              {t("catalog:showAllCategories")}
               <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -431,14 +432,14 @@ export function MarketplacePage() {
           {tags && tags.length > 0 ? (
             <div className={`${pageShellClassName} p-4`}>
               <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-base font-medium text-slate-900">Tags</h2>
+                <h2 className="text-base font-medium text-slate-900">{t("catalog:tags")}</h2>
                 {params.tagUuids && params.tagUuids.length > 0 ? (
                   <button
                     type="button"
                     onClick={clearTags}
                     className="text-xs font-medium text-violet-600 transition hover:text-violet-800"
                   >
-                    Clear
+                    {t("catalog:clear")}
                   </button>
                 ) : null}
               </div>
@@ -469,27 +470,27 @@ export function MarketplacePage() {
               <div className="mb-3 flex size-10 items-center justify-center rounded-lg bg-violet-500 text-white">
                 <Sparkles className="size-4.5" />
               </div>
-              <h3 className="text-base font-medium text-slate-900">Join our community</h3>
+              <h3 className="text-base font-medium text-slate-900">{t("catalog:joinCommunity")}</h3>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Create an account to list your own items, make offers, and trade with the community.
+                {t("catalog:joinCommunityBody")}
               </p>
               <Link
                 to={routePaths.register}
                 className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-violet-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-violet-600"
               >
-                Sign up free
+                {t("catalog:signUpFree")}
                 <ArrowRight className="size-4" />
               </Link>
             </div>
           ) : null}
 
           <div id="how-it-works" className={`${pageShellClassName} p-4`}>
-            <h3 className="text-base font-medium text-slate-900">How it works</h3>
+            <h3 className="text-base font-medium text-slate-900">{t("catalog:howItWorks")}</h3>
             <div className="mt-3 space-y-3">
               {[
-                "List items you want to trade",
-                "Browse and search community listings",
-                "Connect directly and arrange the exchange",
+                t("catalog:howItWorksStep1"),
+                t("catalog:howItWorksStep2"),
+                t("catalog:howItWorksStep3"),
               ].map((step, index) => (
                 <div key={step} className="flex gap-3">
                   <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-violet-50 text-sm font-medium text-violet-600">
@@ -506,9 +507,9 @@ export function MarketplacePage() {
           <section id="popular-categories" className={`${pageShellClassName} p-4`}>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="max-w-2xl">
-                <h2 className="text-lg font-medium text-slate-900">Popular Categories</h2>
+                <h2 className="text-lg font-medium text-slate-900">{t("catalog:popularCategories")}</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Compact discovery shortcuts based on live marketplace activity, so listings stay front and center.
+                  {t("catalog:marketplace.popularCategoriesDescription")}
                 </p>
               </div>
 
@@ -519,14 +520,14 @@ export function MarketplacePage() {
                     onClick={() => selectCategory("")}
                     className="inline-flex items-center gap-2 rounded-lg bg-violet-50 px-3 py-2 text-xs font-medium text-violet-600 transition hover:bg-violet-100"
                   >
-                    Clear filter
+                    {t("catalog:clearFilter")}
                   </button>
                 ) : null}
                 <Link
                   to={routePaths.marketplaceCategories}
                   className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:border-violet-200 hover:text-violet-600"
                 >
-                  View all categories
+                  {t("catalog:viewAllCategories")}
                   <ArrowRight className="size-4" />
                 </Link>
               </div>
@@ -540,7 +541,7 @@ export function MarketplacePage() {
 
             {!isPopularCategoriesLoading && featuredPopularCategories.length === 0 ? (
               <div className="mt-5 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-5 text-sm text-slate-500">
-                Popular categories will appear here as active listings build momentum across the marketplace.
+                {t("catalog:marketplace.noPopularCategories")}
               </div>
             ) : null}
 
@@ -565,12 +566,12 @@ export function MarketplacePage() {
                           {category.name}
                         </div>
                         <div className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
-                          {category.description?.trim() || "Jump straight into the most active listings in this category."}
+                          {category.description?.trim() || t("catalog:marketplace.defaultCategoryDescription")}
                         </div>
                       </div>
 
                       <div className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
-                        {category.activeItemCount} active
+                        {t("catalog:marketplace.activeCount", { count: category.activeItemCount })}
                       </div>
                     </button>
                   );
@@ -585,13 +586,13 @@ export function MarketplacePage() {
                 <h2 className="text-lg font-medium text-slate-900">{resultsTitle}</h2>
                 <p className="mt-1 text-sm text-slate-500">
                   {resultsMeta}
-                  {params.categoryUuid && selectedCategory ? ` in ${selectedCategory.name}` : " from the community"}
-                  {params.q ? ` matching “${params.q}”` : ""}
+                  {params.categoryUuid && selectedCategory ? t("catalog:marketplace.results.inCategory", { category: selectedCategory.name }) : t("catalog:marketplace.results.fromCommunity")}
+                  {params.q ? t("catalog:marketplace.results.matchingQuery", { query: params.q }) : ""}
                 </p>
               </div>
 
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                {data?.last ? "Latest listings loaded" : "Fresh listings updated regularly"}
+                {data?.last ? t("catalog:latestListingsLoaded") : t("catalog:freshListings")}
               </div>
             </div>
 
@@ -603,11 +604,11 @@ export function MarketplacePage() {
 
             {isError ? (
               <EmptyState
-                title="Failed to load items"
-                description="Something went wrong while loading the marketplace. Please try again."
+                title={t("catalog:failedToLoadItems")}
+                description={t("catalog:failedToLoadItemsBody")}
                 action={
                   <Button variant="outline" onClick={() => window.location.reload()}>
-                    Retry
+                    {t("common:tryAgain")}
                   </Button>
                 }
               />
@@ -616,8 +617,8 @@ export function MarketplacePage() {
             {!isError && data && filteredItems.length === 0 ? (
               <EmptyState
                 icon={<Package className="size-16" />}
-                title="No tradeable items found"
-                description="There are no active items from other users right now. Try another search or choose a different category."
+                title={t("catalog:noTradeableItems")}
+                description={t("catalog:noTradeableItemsBody")}
               />
             ) : null}
 
@@ -643,7 +644,7 @@ export function MarketplacePage() {
                       isLoading={isFetching && (params.page ?? 0) > 0}
                       className="h-10 rounded-lg border-slate-200 bg-white px-6 text-slate-700 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
                     >
-                      Load more items
+                      {t("catalog:loadMoreItems")}
                     </Button>
                   </div>
                 ) : null}
@@ -667,13 +668,14 @@ function MarketplaceItemCard({
   isFavoritePending: boolean;
   onToggleFavorite: (itemUuid: string) => void;
 }) {
-  const timeAgo = useMemo(() => {
+  const { t, i18n } = useTranslation("catalog");
+  const createdLabel = useMemo(() => {
     try {
-      return formatDistanceToNow(new Date(item.createdAt), { addSuffix: true });
+      return new Date(item.createdAt).toLocaleDateString(i18n.language === "sr" ? "sr-Latn-RS" : "en-US");
     } catch {
-      return "recently";
+      return t("recently");
     }
-  }, [item.createdAt]);
+  }, [i18n.language, item.createdAt, t]);
 
   return (
     <div className="group relative">
@@ -684,7 +686,7 @@ function MarketplaceItemCard({
         className={`absolute right-2.5 top-2.5 z-10 inline-flex size-9 items-center justify-center rounded-full border border-white/80 bg-white/95 shadow-sm backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60 ${
           isFavorite ? "text-rose-500" : "text-slate-500 hover:text-rose-500"
         }`}
-        aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+        aria-label={isFavorite ? t("removeFromFavorites") : t("addToFavorites")}
       >
         <Heart className={`size-4.5 ${isFavorite ? "fill-current" : ""}`} />
       </button>
@@ -708,7 +710,7 @@ function MarketplaceItemCard({
           )}
 
           <div className="marketplace-soft-badge absolute left-2.5 top-2.5 inline-flex items-center bg-white/95 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-emerald-700">
-            {item.status}
+            {t(`status.${item.status.toLowerCase()}`)}
           </div>
         </div>
 
@@ -718,7 +720,7 @@ function MarketplaceItemCard({
               <span className="truncate">{item.categoryName}</span>
             </span>
             <span className="marketplace-soft-badge inline-flex items-center bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
-              {formatEnumLabel(item.condition)}
+              {t(conditionTranslationKey(item.condition))}
             </span>
           </div>
 
@@ -735,7 +737,7 @@ function MarketplaceItemCard({
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
                 <Clock className="size-3.5 text-slate-400" />
-                <span>{timeAgo}</span>
+                <span>{createdLabel}</span>
               </div>
             </div>
           </div>
@@ -749,11 +751,14 @@ function dedupeItemsByUuid(items: ItemSummaryResponse[]) {
   return Array.from(new Map(items.map((item) => [item.uuid, item])).values());
 }
 
-function formatEnumLabel(value: string) {
-  return value
-    .toLowerCase()
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function conditionTranslationKey(value: string) {
+  const keys: Record<string, string> = {
+    NEW: "condition.new",
+    LIKE_NEW: "condition.likeNew",
+    GOOD: "condition.good",
+    USED: "condition.used",
+    FOR_PARTS: "condition.forParts",
+  };
+  return keys[value] ?? value;
 }
 

@@ -28,23 +28,24 @@ import { cn } from "@/utils";
 import type { ItemStatus, ItemCondition } from "@/api/generated/types.ts";
 import type { MyItemsParams } from "@/api/catalogApi.ts";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
-const STATUS_OPTIONS: { value: ItemStatus | ""; label: string }[] = [
-  { value: "", label: "All Statuses" },
-  { value: "DRAFT", label: "Draft" },
-  { value: "ACTIVE", label: "Active" },
-  { value: "RESERVED", label: "Reserved" },
-  { value: "ARCHIVED", label: "Archived" },
-  { value: "REMOVED", label: "Removed" },
+const STATUS_OPTIONS: { value: ItemStatus | ""; labelKey: string }[] = [
+  { value: "", labelKey: "myItems.filters.allStatuses" },
+  { value: "DRAFT", labelKey: "status.draft" },
+  { value: "ACTIVE", labelKey: "status.active" },
+  { value: "RESERVED", labelKey: "status.reserved" },
+  { value: "ARCHIVED", labelKey: "status.archived" },
+  { value: "REMOVED", labelKey: "status.removed" },
 ];
 
-const CONDITION_OPTIONS: { value: ItemCondition | ""; label: string }[] = [
-  { value: "", label: "Any Condition" },
-  { value: "NEW", label: "New" },
-  { value: "LIKE_NEW", label: "Like New" },
-  { value: "GOOD", label: "Good" },
-  { value: "USED", label: "Used" },
-  { value: "FOR_PARTS", label: "For Parts" },
+const CONDITION_OPTIONS: { value: ItemCondition | ""; labelKey: string }[] = [
+  { value: "", labelKey: "myItems.filters.anyCondition" },
+  { value: "NEW", labelKey: "condition.new" },
+  { value: "LIKE_NEW", labelKey: "condition.likeNew" },
+  { value: "GOOD", labelKey: "condition.good" },
+  { value: "USED", labelKey: "condition.used" },
+  { value: "FOR_PARTS", labelKey: "condition.forParts" },
 ];
 
 type ViewMode = "grid" | "table";
@@ -107,6 +108,7 @@ export function MyItemsPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [conditionFilter, setConditionFilter] = useState<ItemCondition | "">("");
   const [categoryFilter, setCategoryFilter] = useState("");
+  const { t } = useTranslation(["catalog", "common"]);
 
   const { data, isLoading, isError } = useMyItems(params);
   const { data: categories } = useCategories();
@@ -167,7 +169,7 @@ export function MyItemsPage() {
   }, [data, debouncedSearch, conditionFilter, categoryFilter]);
 
   const hasActiveFilters = !!debouncedSearch || !!conditionFilter || !!categoryFilter || !!params.status;
-  const selectedStatusLabel = STATUS_OPTIONS.find((option) => option.value === (params.status ?? ""))?.label ?? "All Statuses";
+  const selectedStatusLabelKey = STATUS_OPTIONS.find((option) => option.value === (params.status ?? ""))?.labelKey ?? "myItems.filters.allStatuses";
   const pageStart = data ? data.page * data.size + 1 : 0;
   const pageEnd = data ? data.page * data.size + filteredItems.length : 0;
 
@@ -193,12 +195,12 @@ export function MyItemsPage() {
       { uuid: archiveUuid, data: archiveReason ? { reason: archiveReason } : undefined },
       {
         onSuccess: () => {
-          toast.success("Item archived successfully");
+          toast.success(t("catalog:myItems.archive.success"));
           setArchiveUuid(null);
           setArchiveReason("");
         },
         onError: () => {
-          toast.error("Failed to archive item");
+          toast.error(t("catalog:myItems.archive.error"));
         },
       }
     );
@@ -211,23 +213,23 @@ export function MyItemsPage() {
           <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
             <div className="max-w-2xl">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="primary">Seller dashboard</Badge>
-                <Badge variant="default">Inventory management</Badge>
+                <Badge variant="primary">{t("catalog:myItems.badges.sellerDashboard")}</Badge>
+                <Badge variant="default">{t("catalog:myItems.badges.inventoryManagement")}</Badge>
               </div>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-                My Items
+                {t("catalog:myItems.title")}
               </h1>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
-                Manage your listings, keep statuses current, and move quickly between drafts, active items, and archived inventory.
+                {t("catalog:myItems.subtitle")}
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-slate-500 dark:text-slate-400">
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm dark:bg-slate-900/50">
                   <Layers3 className="size-4" />
-                  {totalLoading ? "Loading inventory…" : `${totalData?.totalElements ?? 0} total listings`}
+                  {totalLoading ? t("catalog:myItems.loadingInventory") : t("catalog:myItems.totalListings", { count: totalData?.totalElements ?? 0 })}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5 shadow-sm dark:bg-slate-900/50">
                   <Filter className="size-4" />
-                  {selectedStatusLabel}
+                  {t(`catalog:${selectedStatusLabelKey}`)}
                 </span>
               </div>
             </div>
@@ -236,52 +238,52 @@ export function MyItemsPage() {
               <Link to="/my-items/new" className="w-full">
                 <Button className="w-full justify-center">
                   <Plus className="size-4" />
-                  New Item
+                  {t("catalog:myItems.newItem")}
                 </Button>
               </Link>
               <p className="text-xs leading-5 text-slate-500 dark:text-slate-400 xl:text-right">
-                Create a detailed listing to attract better trade offers and present your inventory professionally.
+                {t("catalog:myItems.newItemHelper")}
               </p>
             </div>
           </div>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <SummaryCard
-              title="Total Listings"
+              title={t("catalog:myItems.summary.totalListings")}
               value={totalData?.totalElements}
-              helper="All listings in your seller inventory"
+              helper={t("catalog:myItems.summary.totalListingsHelper")}
               icon={Package}
               iconClassName="bg-slate-100 text-slate-700 dark:bg-slate-700/70 dark:text-slate-200"
               isLoading={totalLoading}
             />
             <SummaryCard
-              title="Active"
+              title={t("catalog:status.active")}
               value={activeData?.totalElements}
-              helper="Currently visible in the marketplace"
+              helper={t("catalog:myItems.summary.activeHelper")}
               icon={BadgeCheck}
               iconClassName="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
               isLoading={activeLoading}
             />
             <SummaryCard
-              title="Drafts"
+              title={t("catalog:myItems.summary.drafts")}
               value={draftData?.totalElements}
-              helper="Still being prepared before publishing"
+              helper={t("catalog:myItems.summary.draftsHelper")}
               icon={Edit3}
               iconClassName="bg-amber-100 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
               isLoading={draftLoading}
             />
             <SummaryCard
-              title="Archived"
+              title={t("catalog:status.archived")}
               value={archivedData?.totalElements}
-              helper="No longer shown in public browsing"
+              helper={t("catalog:myItems.summary.archivedHelper")}
               icon={FolderArchive}
               iconClassName="bg-violet-100 text-violet-700 dark:bg-violet-950/30 dark:text-violet-300"
               isLoading={archivedLoading}
             />
             <SummaryCard
-              title="Removed"
+              title={t("catalog:status.removed")}
               value={removedData?.totalElements}
-              helper="Hidden by moderation but still visible to you"
+              helper={t("catalog:myItems.summary.removedHelper")}
               icon={Archive}
               iconClassName="bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300"
               isLoading={removedLoading}
@@ -294,16 +296,16 @@ export function MyItemsPage() {
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">Filter and browse your inventory</h2>
+              <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">{t("catalog:myItems.filters.title")}</h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                Search listings, narrow by status or condition, and switch views without breaking your workflow.
+                {t("catalog:myItems.filters.subtitle")}
               </p>
             </div>
 
             <div className="inline-flex items-center rounded-2xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-900/50">
               <button
                 onClick={() => setViewMode("grid")}
-                title="Grid view"
+                title={t("catalog:myItems.view.gridView")}
                 aria-pressed={viewMode === "grid"}
                 className={cn(
                   "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
@@ -313,11 +315,11 @@ export function MyItemsPage() {
                 )}
               >
                 <LayoutGrid className="size-4" />
-                Grid
+                {t("catalog:myItems.view.grid")}
               </button>
               <button
                 onClick={() => setViewMode("table")}
-                title="Table view"
+                title={t("catalog:myItems.view.tableView")}
                 aria-pressed={viewMode === "table"}
                 className={cn(
                   "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition-colors",
@@ -327,7 +329,7 @@ export function MyItemsPage() {
                 )}
               >
                 <List className="size-4" />
-                Table
+                {t("catalog:myItems.view.table")}
               </button>
             </div>
           </div>
@@ -337,7 +339,7 @@ export function MyItemsPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" />
               <input
                 type="text"
-                placeholder="Search listings by title or category"
+                placeholder={t("catalog:myItems.filters.searchPlaceholder")}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 className="w-full rounded-2xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20"
@@ -351,7 +353,7 @@ export function MyItemsPage() {
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(`catalog:${opt.labelKey}`)}
                 </option>
               ))}
             </select>
@@ -363,7 +365,7 @@ export function MyItemsPage() {
             >
               {CONDITION_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(`catalog:${opt.labelKey}`)}
                 </option>
               ))}
             </select>
@@ -373,7 +375,7 @@ export function MyItemsPage() {
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
             >
-              <option value="">All Categories</option>
+              <option value="">{t("catalog:allCategories")}</option>
               {categories?.map((cat) => (
                 <option key={cat.uuid} value={cat.uuid}>
                   {cat.name}
@@ -385,20 +387,20 @@ export function MyItemsPage() {
           <div className="flex flex-col gap-3 rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/40 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
               <span className="font-medium text-slate-900 dark:text-slate-100">
-                {data ? `${filteredItems.length} item${filteredItems.length === 1 ? "" : "s"}` : "Loading items…"}
+                {data ? t("catalog:myItems.itemsCount", { count: filteredItems.length }) : t("catalog:myItems.loadingItems")}
               </span>
               {data && filteredItems.length > 0 && (
                 <span>
-                  showing {pageStart}-{pageEnd} on this page
+                  {t("catalog:myItems.showingPageRange", { start: pageStart, end: pageEnd })}
                 </span>
               )}
-              {hasActiveFilters && <Badge variant="secondary">Filters applied</Badge>}
+              {hasActiveFilters && <Badge variant="secondary">{t("catalog:myItems.filters.applied")}</Badge>}
             </div>
 
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={resetFilters} className="self-start rounded-xl px-3 sm:self-auto">
                 <RefreshCw className="size-4" />
-                Reset filters
+                {t("catalog:clearFilters")}
               </Button>
             )}
           </div>
@@ -409,11 +411,11 @@ export function MyItemsPage() {
 
       {isError && (
         <EmptyState
-          title="Failed to load your items"
-          description="Something went wrong while loading your seller inventory. Please try again."
+          title={t("catalog:myItems.error.title")}
+          description={t("catalog:myItems.error.description")}
           action={
             <Button variant="outline" onClick={() => window.location.reload()}>
-              Retry
+              {t("common:tryAgain")}
             </Button>
           }
         />
@@ -422,23 +424,23 @@ export function MyItemsPage() {
       {data && filteredItems.length === 0 && (
         <EmptyState
           icon={<Package className="size-16" />}
-          title={hasActiveFilters ? "No items match your filters" : "No items yet"}
+          title={hasActiveFilters ? t("catalog:myItems.empty.filteredTitle") : t("catalog:myItems.empty.title")}
           description={
             hasActiveFilters
-              ? "Try broadening your filters or search terms to surface more listings in your seller inventory."
-              : "Start your seller catalog with a detailed listing so other traders can quickly understand what you offer."
+              ? t("catalog:myItems.empty.filteredDescription")
+              : t("catalog:myItems.empty.description")
           }
           action={
             hasActiveFilters ? (
               <Button variant="outline" onClick={resetFilters}>
                 <RefreshCw className="size-4" />
-                Reset filters
+                {t("catalog:clearFilters")}
               </Button>
             ) : (
               <Link to="/my-items/new">
                 <Button>
                   <Plus className="size-4" />
-                  Create your first listing
+                  {t("catalog:myItems.empty.createFirst")}
                 </Button>
               </Link>
             )
@@ -458,7 +460,7 @@ export function MyItemsPage() {
                   <Link to={`/my-items/${item.uuid}/edit`}>
                     <Button variant="outline" size="sm" className="rounded-full border-0 bg-transparent px-2.5 shadow-none">
                       <Edit3 className="size-3.5" />
-                      <span className="sr-only sm:not-sr-only sm:inline">Edit</span>
+                      <span className="sr-only sm:not-sr-only sm:inline">{t("common:edit")}</span>
                     </Button>
                   </Link>
                   {item.status !== "ARCHIVED" && item.status !== "REMOVED" && (
@@ -471,7 +473,7 @@ export function MyItemsPage() {
                         e.stopPropagation();
                         setArchiveUuid(item.uuid);
                       }}
-                      aria-label={`Archive ${item.title}`}
+                      aria-label={t("catalog:myItems.archive.ariaLabel", { title: item.title })}
                     >
                       <Archive className="size-3.5" />
                     </Button>
@@ -492,22 +494,22 @@ export function MyItemsPage() {
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50/80 dark:border-slate-700 dark:bg-slate-900/40">
                   <th className="px-5 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Title
+                    {t("catalog:fields.title")}
                   </th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Category
+                    {t("catalog:fields.category")}
                   </th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Condition
+                    {t("catalog:fields.condition")}
                   </th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Status
+                    {t("catalog:fields.status")}
                   </th>
                   <th className="px-4 py-3.5 text-left text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Created
+                    {t("catalog:fields.created")}
                   </th>
                   <th className="px-5 py-3.5 text-right text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                    Actions
+                    {t("common:actions")}
                   </th>
                 </tr>
               </thead>
@@ -521,7 +523,7 @@ export function MyItemsPage() {
                       >
                         <span className="block max-w-xs truncate">{item.title}</span>
                         <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">
-                          Seller listing
+                          {t("catalog:myItems.table.sellerListing")}
                         </span>
                       </Link>
                     </td>
@@ -540,7 +542,7 @@ export function MyItemsPage() {
                         <Link to={`/my-items/${item.uuid}/edit`}>
                           <Button variant="outline" size="sm" className="rounded-xl">
                             <Edit3 className="size-3.5" />
-                            Edit
+                            {t("common:edit")}
                           </Button>
                         </Link>
                         {item.status !== "ARCHIVED" && item.status !== "REMOVED" && (
@@ -549,7 +551,7 @@ export function MyItemsPage() {
                             size="sm"
                             className="rounded-xl"
                             onClick={() => setArchiveUuid(item.uuid)}
-                            aria-label={`Archive ${item.title}`}
+                            aria-label={t("catalog:myItems.archive.ariaLabel", { title: item.title })}
                           >
                             <Archive className="size-3.5" />
                           </Button>
@@ -580,22 +582,22 @@ export function MyItemsPage() {
           setArchiveUuid(null);
           setArchiveReason("");
         }}
-        title="Archive Item"
+        title={t("catalog:myItems.archive.title")}
         size="sm"
       >
         <p className="mb-4 text-sm text-slate-600 dark:text-slate-400">
-          Are you sure you want to archive this item? It will no longer appear in the public marketplace.
+          {t("catalog:myItems.archive.description")}
         </p>
         <div className="mb-4">
           <label className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
-            Reason (optional)
+            {t("catalog:myItems.archive.reasonLabel")}
           </label>
           <textarea
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             rows={3}
             value={archiveReason}
             onChange={(e) => setArchiveReason(e.target.value)}
-            placeholder="Why are you archiving this item?"
+            placeholder={t("catalog:myItems.archive.reasonPlaceholder")}
           />
         </div>
         <div className="flex justify-end gap-2">
@@ -606,10 +608,10 @@ export function MyItemsPage() {
               setArchiveReason("");
             }}
           >
-            Cancel
+            {t("common:cancel")}
           </Button>
           <Button variant="danger" isLoading={archiveMutation.isPending} onClick={handleArchive}>
-            Archive
+            {t("catalog:myItems.archive.confirm")}
           </Button>
         </div>
       </Modal>

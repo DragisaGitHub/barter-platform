@@ -27,5 +27,9 @@ public abstract class BaseEntity {
         if (uuid == null) {
             uuid = UUID.randomUUID();
         }
+        onBeforePersist();
+    }
+
+    protected void onBeforePersist() {
     }
 }

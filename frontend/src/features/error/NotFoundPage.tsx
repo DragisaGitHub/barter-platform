@@ -10,10 +10,12 @@ import {
 } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { routePaths } from "@/routes/routePaths.ts";
+import { useTranslation } from "react-i18next";
 
 export function NotFoundPage() {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
+  const { t } = useTranslation(["errors", "common"]);
 
   const handleGoBack = () => {
     if (window.history.length > 1) {
@@ -34,9 +36,9 @@ export function NotFoundPage() {
             </div>
             <div>
               <div className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                Barter Platform
+                {t("common:appName")}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Marketplace</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">{t("common:marketplace")}</div>
             </div>
           </Link>
 
@@ -44,7 +46,7 @@ export function NotFoundPage() {
             <Link to={routePaths.marketplace}>
               <Button variant="ghost" size="sm">
                 <Store className="size-4" />
-                Marketplace
+                {t("common:marketplace")}
               </Button>
             </Link>
 
@@ -52,7 +54,7 @@ export function NotFoundPage() {
               <Link to={routePaths.dashboard}>
                 <Button variant="outline" size="sm">
                   <LayoutDashboard className="size-4" />
-                  Dashboard
+                  {t("common:dashboard")}
                 </Button>
               </Link>
             ) : null}
@@ -62,13 +64,13 @@ export function NotFoundPage() {
                 <Link to={routePaths.login}>
                   <Button variant="ghost" size="sm">
                     <LogIn className="size-4" />
-                    Login
+                    {t("common:login")}
                   </Button>
                 </Link>
                 <Link to={routePaths.register}>
                   <Button size="sm">
                     <UserPlus className="size-4" />
-                    Sign up
+                    {t("common:signUp")}
                   </Button>
                 </Link>
               </>
@@ -87,16 +89,16 @@ export function NotFoundPage() {
                 <SearchX className="size-8" />
               </div>
               <CardTitle className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-                Page not found
+                {t("errors:notFound.title")}
               </CardTitle>
               <CardDescription className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
-                The page you are looking for does not exist or has been moved.
+                {t("errors:notFound.description")}
               </CardDescription>
             </CardHeader>
 
             <CardContent className="px-6 pb-8 sm:px-10 sm:pb-10">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm leading-6 text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-                The listing may have been removed, archived, or the link may be incorrect.
+                {t("errors:notFound.helper")}
               </div>
 
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
@@ -107,7 +109,7 @@ export function NotFoundPage() {
                   onClick={() => navigate(routePaths.marketplace)}
                 >
                   <Store className="size-4" />
-                  Back to Marketplace
+                  {t("common:backToMarketplace")}
                 </Button>
 
                 <Button
@@ -118,7 +120,7 @@ export function NotFoundPage() {
                   onClick={handleGoBack}
                 >
                   <ArrowLeft className="size-4" />
-                  Go back
+                  {t("common:goBack")}
                 </Button>
               </div>
             </CardContent>

@@ -76,3 +76,47 @@ status:
       '404':
         $ref: '../components/responses/NotFound.yaml'
 
+mePreferences:
+  get:
+    tags:
+      - Users
+    operationId: getCurrentUserPreferences
+    summary: Get current user preferences
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: User preferences returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/UserPreferencesResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+  patch:
+    tags:
+      - Users
+    operationId: updateCurrentUserPreferences
+    summary: Update current user preferences
+    security:
+      - bearerJwt: []
+    requestBody:
+      $ref: '../openapi.yaml#/components/requestBodies/UpdateUserPreferencesRequest'
+    responses:
+      '200':
+        description: User preferences updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../components/schemas/UserPreferencesResponse.yaml'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+

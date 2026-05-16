@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Pagination } from "@/components/data/Pagination";
 import { cn } from "@/utils";
 import type { NotificationResponse, NotificationType } from "@/api/generated/types.ts";
+import { useTranslation } from "react-i18next";
 
 function NotificationIcon({ type }: { type: NotificationType }) {
   const colorClass = getNotificationColor(type);
@@ -41,6 +42,7 @@ function NotificationIcon({ type }: { type: NotificationType }) {
 }
 
 export function NotificationsPage() {
+  const { t, i18n } = useTranslation("notifications");
   const [page, setPage] = useState(0);
   const navigate = useNavigate();
 
@@ -76,27 +78,27 @@ export function NotificationsPage() {
 
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">Notifications</h1>
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">{t("notifications")}</h1>
               <Badge
                 variant={hasUnread ? "primary" : "default"}
                 className="px-2 py-1 text-[11px] font-semibold"
               >
                 {hasUnread
-                  ? `${unreadCount} unread`
-                  : "All caught up"}
+                  ? t("unreadCount", { count: unreadCount })
+                  : t("allCaughtUp")}
               </Badge>
             </div>
 
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Stay on top of offers, responses, and marketplace activity in one place.
+              {t("pageDescription")}
             </p>
 
             <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-              <span>Newest activity first</span>
+              <span>{t("newestFirst")}</span>
               {hasUnread && (
                 <>
                   <span className="hidden sm:inline text-slate-300 dark:text-slate-600">•</span>
-                  <span>{unreadCount} update{unreadCount === 1 ? "" : "s"} still need your attention</span>
+                  <span>{t("updatesNeedAttention", { count: unreadCount })}</span>
                 </>
               )}
             </div>
@@ -112,7 +114,7 @@ export function NotificationsPage() {
             className="self-start sm:self-auto"
           >
             <CheckCheck className="size-4" />
-            Mark all as read
+            {t("markAllRead")}
           </Button>
         )}
       </div>
@@ -126,14 +128,14 @@ export function NotificationsPage() {
         ) : notifications.length === 0 ? (
           <EmptyState
             icon={<Bell className="size-12" />}
-            title="No notifications yet"
-              description="You’re all caught up. Trade offer, completion, and marketplace updates will appear here."
+            title={t("noNotifications")}
+              description={t("noNotificationsPageBody")}
             className="py-16"
           />
         ) : (
           <>
             <div className="border-b border-slate-200 bg-slate-50/80 px-4 py-3 text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-400 sm:px-6">
-              Recent activity
+              {t("recentActivity")}
             </div>
 
             <div className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -174,7 +176,7 @@ export function NotificationsPage() {
                       {!notification.isRead && (
                         <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600/10 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
                           <span className="size-1.5 rounded-full bg-indigo-500" />
-                          Unread
+                          {t("unread")}
                         </span>
                       )}
                     </div>
@@ -186,9 +188,9 @@ export function NotificationsPage() {
                     )}
 
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
-                      <span>{formatNotificationTime(notification.createdAt)}</span>
+                      <span>{formatNotificationTime(notification.createdAt, i18n.language)}</span>
                       <span className="text-slate-300 dark:text-slate-600">•</span>
-                      <span>Open details</span>
+                      <span>{t("openDetails")}</span>
                     </div>
                   </div>
                   {!notification.isRead && (

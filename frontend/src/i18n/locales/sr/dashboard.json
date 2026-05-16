@@ -1,0 +1,50 @@
+{
+  "welcome": "Dobrodošao/la nazad, {{username}}!",
+  "subtitle": "Evo šta se dešava na tvom nalogu.",
+  "stats": {
+    "activeItems": "Aktivni oglasi",
+    "pendingIncoming": "Primljene na čekanju",
+    "pendingSent": "Poslate na čekanju",
+    "archivedItems": "Arhivirani oglasi"
+  },
+  "quickActions": "Brze akcije",
+  "actions": {
+    "browseMarketplace": "Pregledaj marketplace",
+    "createItem": "Kreiraj oglas",
+    "viewIncomingOffers": "Prikaži primljene ponude"
+  },
+  "recentMarketplaceItems": "Nedavni oglasi na marketplace-u",
+  "recentTradeActivity": "Nedavne aktivnosti razmene",
+  "viewAll": "Prikaži sve",
+  "emptyMarketplace": {
+    "title": "Trenutno nema oglasa drugih korisnika za razmenu.",
+    "description": "Proveri uskoro — novi oglasi će se pojaviti ovde čim budu objavljeni."
+  },
+  "emptyTrade": {
+    "title": "Trenutno nema nedavnih aktivnosti razmene.",
+    "description": "Aktivnosti razmene će se pojaviti ovde kada počneš da razmenjuješ."
+  },
+  "tradeSummary": {
+    "giftSender": "Zatražio/la si {{receiverItemTitle}} od korisnika {{receiverName}} kao poklon",
+    "giftReceiver": "{{senderName}} traži tvoj oglas {{receiverItemTitle}} kao poklon",
+    "negotiableSender": "Želiš da pregovaraš za {{receiverItemTitle}} korisnika {{receiverName}}",
+    "negotiableReceiver": "{{senderName}} želi da pregovara za tvoj oglas {{receiverItemTitle}}",
+    "exchangeSender": "Ponudio/la si {{senderItemTitle}} za {{receiverItemTitle}} korisnika {{receiverName}}",
+    "exchangeReceiver": "{{senderName}} želi tvoj oglas {{receiverItemTitle}} za svoj oglas {{senderItemTitle}}"
+  },
+  "statusExplanation": {
+    "PENDING": "Čeka odgovor",
+    "ACCEPTED": "Čeka potvrdu završetka",
+    "COMPLETED": "Razmena završena",
+    "REJECTED": "Razmena odbijena",
+    "CANCELLED": "Pošiljalac je otkazao",
+    "EXPIRED": "Isteklo",
+    "INVALIDATED": "Više nije važeće"
+  },
+  "adminAccess": {
+    "title": "Admin pristup",
+    "description": "Imaš administratorske privilegije",
+    "cta": "Idi na admin kontrolnu tablu"
+  }
+}
+

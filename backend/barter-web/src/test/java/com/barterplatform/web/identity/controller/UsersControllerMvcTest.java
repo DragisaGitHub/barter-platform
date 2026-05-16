@@ -12,25 +12,33 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.barterplatform.api.model.PermissionCode;
+import com.barterplatform.api.model.PreferredLanguage;
 import com.barterplatform.api.model.PermissionResponse;
 import com.barterplatform.api.model.RoleResponse;
+import com.barterplatform.api.model.UpdateUserPreferencesRequest;
 import com.barterplatform.api.model.UpdateUserStatusRequest;
 import com.barterplatform.api.model.UserPagedResponse;
+import com.barterplatform.api.model.UserPreferencesResponse;
 import com.barterplatform.api.model.UserResponse;
 import com.barterplatform.api.model.UserStatus;
 import com.barterplatform.api.model.UserSummaryResponse;
 import com.barterplatform.application.identity.service.UserManagementService;
+import com.barterplatform.application.identity.service.UserPreferenceService;
 import com.barterplatform.application.identity.service.UserQueryService;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.web.exception.GlobalExceptionHandler;
+import com.barterplatform.web.security.jwt.AuthenticatedUser;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -40,14 +48,23 @@ class UsersControllerMvcTest {
     private MockMvc mockMvc;
     private UserQueryService userQueryService;
     private UserManagementService userManagementService;
+    private UserPreferenceService userPreferenceService;
+    private static final UUID CURRENT_USER_UUID = UUID.fromString("11111111-1111-1111-1111-111111111111");
 
     @BeforeEach
     void setUp() {
         userQueryService = mock(UserQueryService.class);
         userManagementService = mock(UserManagementService.class);
-        mockMvc = MockMvcBuilders.standaloneSetup(new UsersController(userQueryService, userManagementService))
+        userPreferenceService = mock(UserPreferenceService.class);
+        mockMvc = MockMvcBuilders.standaloneSetup(new UsersController(userQueryService, userManagementService, userPreferenceService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
+        SecurityContextHolder.clearContext();
+    }
+
+    @AfterEach
+    void tearDown() {
+        SecurityContextHolder.clearContext();
     }
 
     @Test
@@ -171,6 +188,49 @@ class UsersControllerMvcTest {
                 new UpdateUserStatusRequest(UserStatus.ACTIVE));
     }
 
+    @Test
+    void shouldGetCurrentUserPreferences() throws Exception {
+        setAuthenticatedUser();
+        when(userPreferenceService.getCurrentUserPreferences(CURRENT_USER_UUID))
+                .thenReturn(new UserPreferencesResponse().preferredLanguage(PreferredLanguage.SR));
+
+        mockMvc.perform(apiGet("/users/me/preferences"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.preferredLanguage").value("SR"));
+
+        verify(userPreferenceService).getCurrentUserPreferences(CURRENT_USER_UUID);
+    }
+
+    @Test
+    void shouldUpdateCurrentUserPreferences() throws Exception {
+        setAuthenticatedUser();
+        UpdateUserPreferencesRequest request = new UpdateUserPreferencesRequest(PreferredLanguage.EN);
+        when(userPreferenceService.updateCurrentUserPreferences(CURRENT_USER_UUID, request))
+                .thenReturn(new UserPreferencesResponse().preferredLanguage(PreferredLanguage.EN));
+
+        mockMvc.perform(apiPatch("/users/me/preferences")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"preferredLanguage\":\"EN\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.preferredLanguage").value("EN"));
+
+        verify(userPreferenceService).updateCurrentUserPreferences(CURRENT_USER_UUID, request);
+    }
+
+    @Test
+    void shouldReturnBadRequestForInvalidPreferredLanguage() throws Exception {
+        setAuthenticatedUser();
+
+        mockMvc.perform(apiPatch("/users/me/preferences")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"preferredLanguage\":\"DE\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.path").value("/api/v1/users/me/preferences"));
+
+        verifyNoInteractions(userPreferenceService);
+    }
+
     private MockHttpServletRequestBuilder apiGet(String path) {
         return get("/api/v1" + path)
                 .contextPath("/api/v1")
@@ -216,6 +276,12 @@ class UsersControllerMvcTest {
                 .emailVerified(true)
                 .mfaEnabled(false)
                 .createdAt(OffsetDateTime.parse("2026-05-07T10:15:30Z"));
+    }
+
+    private void setAuthenticatedUser() {
+        AuthenticatedUser principal = new AuthenticatedUser(CURRENT_USER_UUID, "alex99", List.of("USER"));
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(principal, null, principal.getAuthorities()));
     }
 }
 

@@ -2,6 +2,7 @@ import { CheckCircle, Package, Percent, ThumbsDown, ThumbsUp, XCircle } from "lu
 import { Card } from "../../components/ui/Card";
 import React from "react";
 import type { ReputationSummaryResponse } from "@/api/generated/types.ts";
+import { useTranslation } from "react-i18next";
 
 interface TrustSummaryProps {
   activeItemCount: number;
@@ -42,57 +43,58 @@ export function TrustSummary({
   cancelledTradeCount,
   reputationSummary,
 }: TrustSummaryProps) {
+  const { t } = useTranslation("profile");
   const positivePercentage = reputationSummary.positivePercentage;
   const stats = [
     {
       icon: <Package className="size-5 text-violet-600 dark:text-violet-300" />,
-      label: "Active listings",
+      label: t("trust.activeListings"),
       value: String(activeItemCount),
       description:
         activeItemCount === 1
-          ? "Listing currently available for browsing."
-          : "Listings currently available for browsing.",
+          ? t("trust.activeListingsDescription_one")
+          : t("trust.activeListingsDescription_other"),
       accentClassName: "bg-violet-100 text-violet-600 dark:bg-violet-950/30 dark:text-violet-300",
     },
     {
       icon: <CheckCircle className="size-5 text-emerald-600 dark:text-emerald-300" />,
-      label: "Completed trades",
+      label: t("trust.completedTrades"),
       value: String(completedTradeCount),
       description:
         completedTradeCount === 1
-          ? "Successful trade recorded on this profile."
-          : "Successful trades recorded on this profile.",
+          ? t("trust.completedTradesDescription_one")
+          : t("trust.completedTradesDescription_other"),
       accentClassName: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300",
     },
     {
       icon: <XCircle className="size-5 text-rose-600 dark:text-rose-300" />,
-      label: "Cancelled trades",
+      label: t("trust.cancelledTrades"),
       value: String(cancelledTradeCount),
       description:
         cancelledTradeCount === 1
-          ? "Cancelled trade associated with this profile."
-          : "Cancelled trades associated with this profile.",
+          ? t("trust.cancelledTradesDescription_one")
+          : t("trust.cancelledTradesDescription_other"),
       accentClassName: "bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:text-rose-300",
     },
     {
       icon: <ThumbsUp className="size-5 text-emerald-600 dark:text-emerald-300" />,
-      label: "Positive reviews",
+      label: t("trust.positiveReviews"),
       value: String(reputationSummary.positiveReviewCount),
-      description: "Completed-trade reviews marked positive by trading partners.",
+      description: t("trust.positiveReviewsDescription"),
       accentClassName: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300",
     },
     {
       icon: <ThumbsDown className="size-5 text-rose-600 dark:text-rose-300" />,
-      label: "Negative reviews",
+      label: t("trust.negativeReviews"),
       value: String(reputationSummary.negativeReviewCount),
-      description: "Negative completed-trade reviews visible to admins for governance.",
+      description: t("trust.negativeReviewsDescription"),
       accentClassName: "bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:text-rose-300",
     },
     {
       icon: <Percent className="size-5 text-sky-600 dark:text-sky-300" />,
-      label: "Positive percentage",
+      label: t("trust.positivePercentage"),
       value: positivePercentage == null ? "—" : `${positivePercentage.toFixed(0)}%`,
-      description: `${reputationSummary.totalReviewCount} total completed-trade review${reputationSummary.totalReviewCount === 1 ? "" : "s"}.`,
+      description: t("trust.totalReviews", { count: reputationSummary.totalReviewCount }),
       accentClassName: "bg-sky-100 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300",
     },
   ] as const;
@@ -101,10 +103,10 @@ export function TrustSummary({
     <section>
       <div className="mb-4">
         <h2 className="text-sm font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
-          Trust &amp; activity
+          {t("trust.title")}
         </h2>
         <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
-          A quick marketplace summary based on the public profile activity available right now.
+          {t("trust.description")}
         </p>
       </div>
 

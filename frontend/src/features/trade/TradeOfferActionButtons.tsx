@@ -9,6 +9,7 @@ import {
 } from "./useTradeOffers";
 import { toast } from "sonner";
 import type { TradeOfferMode } from "@/api/generated/types.ts";
+import { useTranslation } from "react-i18next";
 
 interface TradeOfferActionButtonsProps {
   offerUuid: string;
@@ -20,15 +21,15 @@ interface TradeOfferActionButtonsProps {
 
 type ConfirmAction = "accept" | "reject" | "cancel" | null;
 
-function getAcceptDescription(mode?: TradeOfferMode): string {
+function getAcceptDescriptionKey(mode?: TradeOfferMode): string {
   switch (mode) {
     case "GIFT":
-      return "Are you sure you want to accept this gift request? Your requested item will be archived.";
+      return "actions.acceptGiftDescription";
     case "NEGOTIABLE":
-      return "Are you sure you want to accept this negotiation? All involved items will be archived and competing offers will be rejected.";
+      return "actions.acceptNegotiationDescription";
     case "ITEM_EXCHANGE":
     default:
-      return "Are you sure you want to accept this trade offer? All involved items will be archived and competing offers will be rejected.";
+      return "actions.acceptDescription";
   }
 }
 
@@ -39,6 +40,7 @@ export function TradeOfferActionButtons({
   canCancel,
   mode,
 }: TradeOfferActionButtonsProps) {
+  const { t } = useTranslation(["trade", "common"]);
   const [confirmAction, setConfirmAction] = useState<ConfirmAction>(null);
 
   const acceptMutation = useAcceptTradeOffer();
@@ -50,21 +52,21 @@ export function TradeOfferActionButtons({
 
   const confirmConfig = {
     accept: {
-      title: "Accept Trade Offer",
-      description: getAcceptDescription(mode),
-      buttonLabel: "Accept",
+      title: t("trade:actions.acceptTitle"),
+      description: t(`trade:${getAcceptDescriptionKey(mode)}`),
+      buttonLabel: t("trade:actions.accept"),
       buttonVariant: "primary" as const,
     },
     reject: {
-      title: "Reject Trade Offer",
-      description: "Are you sure you want to reject this trade offer?",
-      buttonLabel: "Reject",
+      title: t("trade:actions.rejectTitle"),
+      description: t("trade:actions.rejectDescription"),
+      buttonLabel: t("trade:actions.reject"),
       buttonVariant: "danger" as const,
     },
     cancel: {
-      title: "Cancel Trade Offer",
-      description: "Are you sure you want to cancel this trade offer?",
-      buttonLabel: "Cancel Offer",
+      title: t("trade:actions.cancelTitle"),
+      description: t("trade:actions.cancelDescription"),
+      buttonLabel: t("trade:actions.cancelOffer"),
       buttonVariant: "danger" as const,
     },
   };
@@ -79,9 +81,9 @@ export function TradeOfferActionButtons({
     };
 
     const successMessages = {
-      accept: "Trade offer accepted!",
-      reject: "Trade offer rejected.",
-      cancel: "Trade offer cancelled.",
+      accept: t("trade:actions.acceptSuccess"),
+      reject: t("trade:actions.rejectSuccess"),
+      cancel: t("trade:actions.cancelSuccess"),
     };
 
     mutations[confirmAction].mutate(offerUuid, {
@@ -90,7 +92,7 @@ export function TradeOfferActionButtons({
         setConfirmAction(null);
       },
       onError: () => {
-        toast.error(`Failed to ${confirmAction} trade offer.`);
+        toast.error(t("trade:actions.error", { action: t(`trade:actions.${confirmAction}`) }));
         setConfirmAction(null);
       },
     });
@@ -106,19 +108,19 @@ export function TradeOfferActionButtons({
         {canAccept && (
           <Button size="sm" onClick={() => setConfirmAction("accept")}>
             <Check className="size-4" />
-            Accept Trade
+            {t("trade:actions.acceptTrade")}
           </Button>
         )}
         {canReject && (
           <Button variant="danger" size="sm" onClick={() => setConfirmAction("reject")}>
             <X className="size-4" />
-            Reject
+            {t("trade:actions.reject")}
           </Button>
         )}
         {canCancel && (
           <Button variant="outline" size="sm" onClick={() => setConfirmAction("cancel")}>
             <Ban className="size-4" />
-            Cancel Offer
+            {t("trade:actions.cancelOffer")}
           </Button>
         )}
       </div>
@@ -134,7 +136,7 @@ export function TradeOfferActionButtons({
         </p>
         <div className="flex justify-end gap-2">
           <Button variant="outline" onClick={() => setConfirmAction(null)}>
-            Go Back
+            {t("common:goBack")}
           </Button>
           <Button
             variant={config?.buttonVariant ?? "primary"}

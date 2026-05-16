@@ -7,6 +7,11 @@ import {
 } from "react";
 import { apiClient } from "../api/axios";
 import { tokenService } from "./token.service";
+import i18n from "@/i18n";
+import {
+  DEFAULT_LANGUAGE,
+  mapBackendToFrontendLanguage,
+} from "@/i18n/languageMapping";
 import type {
   CurrentUserResponse,
   LoginRequest,
@@ -42,6 +47,7 @@ interface AuthContextValue extends AuthState {
   login: (credentials: LoginRequest) => Promise<void>;
   register: (data: RegisterRequest) => Promise<void>;
   logout: () => Promise<void>;
+  replaceUser: (user: CurrentUserResponse) => Promise<void>;
   hasRole: (role: string) => boolean;
   hasPermission: (permission: string) => boolean;
 }
@@ -55,18 +61,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading: true,
   });
 
+  const syncLanguageWithUser = async (user: CurrentUserResponse | null) => {
+    const language = user
+      ? mapBackendToFrontendLanguage(user.preferredLanguage)
+      : DEFAULT_LANGUAGE;
+
+    if (i18n.language !== language) {
+      await i18n.changeLanguage(language);
+    }
+  };
+
+  const replaceUser = async (user: CurrentUserResponse) => {
+    await syncLanguageWithUser(user);
+    dispatch({ type: "SET_USER", payload: user });
+  };
+
   useEffect(() => {
     const initAuth = async () => {
       if (!tokenService.hasTokens()) {
+        await syncLanguageWithUser(null);
         dispatch({ type: "SET_LOADING", payload: false });
         return;
       }
 
       try {
         const response = await apiClient.get<CurrentUserResponse>("/auth/me");
-        dispatch({ type: "SET_USER", payload: response.data });
+        await replaceUser(response.data);
       } catch (error) {
         tokenService.clearTokens();
+        await syncLanguageWithUser(null);
         dispatch({ type: "LOGOUT" });
       }
     };
@@ -84,11 +107,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // TokenResponse includes the authenticated user directly
     if (user) {
-      dispatch({ type: "SET_USER", payload: user });
+      await replaceUser(user);
     } else {
       // Fallback: fetch user profile separately
       const userResponse = await apiClient.get<CurrentUserResponse>("/auth/me");
-      dispatch({ type: "SET_USER", payload: userResponse.data });
+      await replaceUser(userResponse.data);
     }
   };
 
@@ -106,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Continue logout even if API call fails
     } finally {
       tokenService.clearTokens();
+      await syncLanguageWithUser(null);
       dispatch({ type: "LOGOUT" });
     }
   };
@@ -125,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        replaceUser,
         hasRole,
         hasPermission,
       }}

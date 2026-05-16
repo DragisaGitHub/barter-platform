@@ -3,7 +3,8 @@ import { MessageSquareWarning, ThumbsDown, ThumbsUp } from "lucide-react";
 import type { TradeOfferResponse, TradeOfferSummaryResponse } from "@/api/generated/types.ts";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { TradeReviewDialog, formatNegativeReason } from "./TradeReviewDialog";
+import { TradeReviewDialog, negativeReasonTranslationKey } from "./TradeReviewDialog";
+import { useTranslation } from "react-i18next";
 
 interface TradeReviewSectionProps {
   offer: TradeOfferResponse | TradeOfferSummaryResponse;
@@ -16,19 +17,22 @@ function getCounterpartyUsername(offer: TradeOfferResponse | TradeOfferSummaryRe
 }
 
 function ReviewStatusLine({ offer }: { offer: TradeOfferResponse | TradeOfferSummaryResponse }) {
+  const { t } = useTranslation("trade");
+
   if (offer.currentUserHasReviewed) {
-    return <span>You reviewed this trade</span>;
+    return <span>{t("reviews.youReviewed")}</span>;
   }
 
   if (offer.canCurrentUserReview) {
-    return <span>Waiting for your review</span>;
+    return <span>{t("reviews.waitingForYourReview")}</span>;
   }
 
-  return <span>Review unavailable</span>;
+  return <span>{t("reviews.unavailable")}</span>;
 }
 
 export function TradeReviewSection({ offer, currentUserUuid, compact = false }: TradeReviewSectionProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { t } = useTranslation("trade");
   const counterpartyUsername = getCounterpartyUsername(offer, currentUserUuid);
   const completed = offer.status === "COMPLETED";
 
@@ -49,11 +53,11 @@ export function TradeReviewSection({ offer, currentUserUuid, compact = false }: 
               <ThumbsDown className="size-4 text-slate-400" />
             )}
             <ReviewStatusLine offer={offer} />
-            {offer.counterpartyHasReviewed ? <span className="text-slate-400">• Counterparty has reviewed</span> : null}
+            {offer.counterpartyHasReviewed ? <span className="text-slate-400">• {t("reviews.counterpartyReviewed")}</span> : null}
           </div>
           {offer.canCurrentUserReview ? (
             <Button size="sm" onClick={() => setDialogOpen(true)}>
-              Review trade
+              {t("reviews.reviewTrade")}
             </Button>
           ) : null}
         </div>
@@ -73,9 +77,9 @@ export function TradeReviewSection({ offer, currentUserUuid, compact = false }: 
     <Card className="mb-6 border-indigo-100 bg-indigo-50/40 dark:border-indigo-900/50 dark:bg-indigo-950/10">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h2 className="font-semibold text-slate-900 dark:text-slate-100">Trade review</h2>
+          <h2 className="font-semibold text-slate-900 dark:text-slate-100">{t("reviews.title")}</h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            Completed trades can be reviewed once by each participant.
+            {t("reviews.description")}
           </p>
           <div className="mt-3 flex flex-wrap gap-2 text-xs font-medium">
             <span className="rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">
@@ -83,22 +87,22 @@ export function TradeReviewSection({ offer, currentUserUuid, compact = false }: 
             </span>
             {offer.counterpartyHasReviewed ? (
               <span className="rounded-full bg-white px-3 py-1 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700">
-                Counterparty has reviewed
+                {t("reviews.counterpartyReviewed")}
               </span>
             ) : null}
           </div>
         </div>
         {offer.canCurrentUserReview ? (
-          <Button onClick={() => setDialogOpen(true)}>Review {counterpartyUsername}</Button>
+          <Button onClick={() => setDialogOpen(true)}>{t("reviews.reviewUser", { username: counterpartyUsername })}</Button>
         ) : null}
       </div>
 
       {detailOffer.currentUserReview ? (
         <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/60">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Your review</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{t("reviews.yourReview")}</p>
           <p className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">
-            {detailOffer.currentUserReview.rating === "POSITIVE" ? "Positive" : "Negative"}
-            {detailOffer.currentUserReview.negativeReason ? ` • ${formatNegativeReason(detailOffer.currentUserReview.negativeReason)}` : ""}
+            {detailOffer.currentUserReview.rating === "POSITIVE" ? t("reviews.positive") : t("reviews.negative")}
+            {detailOffer.currentUserReview.negativeReason ? ` • ${t(negativeReasonTranslationKey(detailOffer.currentUserReview.negativeReason))}` : ""}
           </p>
           {detailOffer.currentUserReview.comment ? (
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{detailOffer.currentUserReview.comment}</p>

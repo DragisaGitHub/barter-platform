@@ -1,12 +1,16 @@
 import { formatDistanceToNow } from "date-fns";
+import { enUS, srLatn } from "date-fns/locale";
 import type { NotificationResponse, NotificationType } from "@/api/generated/types.ts";
 import { routePaths } from "@/routes/routePaths.ts";
 
 /**
  * Format notification createdAt to a relative time string (e.g. "5 minutes ago").
  */
-export function formatNotificationTime(createdAt: string): string {
-  return formatDistanceToNow(new Date(createdAt), { addSuffix: true });
+export function formatNotificationTime(createdAt: string, language: string = "sr"): string {
+  return formatDistanceToNow(new Date(createdAt), {
+    addSuffix: true,
+    locale: language === "en" ? enUS : srLatn,
+  });
 }
 
 /**

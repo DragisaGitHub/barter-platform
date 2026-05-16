@@ -58,6 +58,8 @@ paths:
     $ref: './paths/users.yaml#/byUuid'
   /users/{userUuid}/status:
     $ref: './paths/users.yaml#/status'
+  /users/me/preferences:
+    $ref: './paths/users.yaml#/mePreferences'
   /roles:
     $ref: './paths/roles.yaml#/list'
   /roles/{code}:
@@ -199,6 +201,10 @@ components:
       $ref: './components/schemas/MfaRecoveryCodeResponse.yaml'
     CurrentUserResponse:
       $ref: './components/schemas/CurrentUserResponse.yaml'
+    PreferredLanguage:
+      $ref: './components/schemas/PreferredLanguage.yaml'
+    UserPreferencesResponse:
+      $ref: './components/schemas/UserPreferencesResponse.yaml'
     TokenResponse:
       $ref: './components/schemas/TokenResponse.yaml'
     MessageResponse:
@@ -338,6 +344,12 @@ components:
         application/json:
           schema:
             $ref: './components/requests/UpdateUserStatusRequest.yaml'
+    UpdateUserPreferencesRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: './components/requests/UpdateUserPreferencesRequest.yaml'
     VerifyEmailRequest:
       content:
         application/json:

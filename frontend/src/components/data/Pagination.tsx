@@ -1,5 +1,6 @@
 import { type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "../ui/Button";
 import { cn } from "@/utils";
 
@@ -18,6 +19,7 @@ export function Pagination({
   statusContent,
   className,
 }: PaginationProps) {
+  const { t } = useTranslation(["common"]);
   const pages = [];
   const maxVisible = 5;
   const hasMultiplePages = totalPages > 1;
@@ -48,7 +50,7 @@ export function Pagination({
                 disabled={currentPage === 0}
               >
                 <ChevronLeft className="size-4" />
-                Previous
+                {t("common:previous")}
               </Button>
 
               <div className="flex items-center gap-1">
@@ -73,7 +75,7 @@ export function Pagination({
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={currentPage === totalPages - 1}
               >
-                Next
+                {t("common:next")}
                 <ChevronRight className="size-4" />
               </Button>
             </div>
@@ -81,7 +83,7 @@ export function Pagination({
         </div>
 
         <p className="text-sm text-slate-600 dark:text-slate-400">
-          Page {currentPage + 1} of {totalPages}
+          {t("common:page")} {currentPage + 1} {t("common:of")} {totalPages}
         </p>
       </div>
     </div>

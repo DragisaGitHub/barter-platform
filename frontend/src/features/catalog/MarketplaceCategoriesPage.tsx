@@ -7,11 +7,13 @@ import { useAuth } from "@/auth/AuthContext";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { useCategories, usePopularCategories } from "./useCatalog";
+import { useTranslation } from "react-i18next";
 
 const pageShellClassName = "marketplace-panel";
 
 export function MarketplaceCategoriesPage() {
   const { user, isAuthenticated } = useAuth();
+  const { t } = useTranslation(["catalog", "common"]);
   const [searchInput, setSearchInput] = useState("");
   const { data: categories, isLoading, isError } = useCategories();
   const { data: popularCategories } = usePopularCategories({ limit: 20 });
@@ -42,7 +44,7 @@ export function MarketplaceCategoriesPage() {
     });
   }, [orderedCategories, searchInput]);
 
-  const visibleCategoriesLabel = filteredCategories.length === 1 ? "1 category" : `${filteredCategories.length} categories`;
+  const visibleCategoriesLabel = t("catalog:categoriesPage.matchingCategories", { count: filteredCategories.length });
 
   return (
     <div className="marketplace-page min-h-screen text-slate-900">
@@ -53,7 +55,7 @@ export function MarketplaceCategoriesPage() {
               <div className="flex size-8 items-center justify-center rounded-lg bg-violet-500">
                 <span className="text-base font-semibold text-white">⇄</span>
               </div>
-              <span className="text-xl font-semibold text-slate-900">Barter Platform</span>
+              <span className="text-xl font-semibold text-slate-900">{t("common:appName")}</span>
             </Link>
 
             {isAuthenticated ? (
@@ -70,16 +72,16 @@ export function MarketplaceCategoriesPage() {
                 className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-600 transition hover:border-violet-200 hover:text-violet-600"
               >
                 <ArrowLeft className="size-4" />
-                Back to marketplace
+                {t("common:backToMarketplace")}
               </Link>
               <span className="rounded-full bg-violet-50 px-3 py-1.5 font-medium text-violet-700">
-                All Categories
+                {t("catalog:allCategories")}
               </span>
             </div>
             <div>
-              <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">Browse every marketplace category</h1>
+              <h1 className="text-2xl font-semibold text-slate-900 sm:text-3xl">{t("catalog:categoriesPage.title")}</h1>
               <p className="mt-1 text-sm text-slate-500 sm:text-base">
-                Search the full category directory and jump back into the marketplace with the right filter already applied.
+                {t("catalog:categoriesPage.subtitle")}
               </p>
             </div>
           </div>
@@ -88,13 +90,13 @@ export function MarketplaceCategoriesPage() {
             {isAuthenticated ? (
               <>
                 <div className="hidden rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 xl:block">
-                  Welcome, {user?.username}
+                  {t("common:welcomeUser", { username: user?.username })}
                 </div>
                 <Link
                   to={routePaths.dashboard}
                   className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:text-violet-600"
                 >
-                  Dashboard
+                  {t("common:dashboard")}
                 </Link>
               </>
             ) : (
@@ -104,14 +106,14 @@ export function MarketplaceCategoriesPage() {
                   className="inline-flex h-10 items-center justify-center gap-2 px-4 text-sm font-medium text-slate-700 transition hover:text-violet-600"
                 >
                   <LogIn className="size-4" />
-                  Login
+                  {t("common:login")}
                 </Link>
                 <Link
                   to={routePaths.register}
                   className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-violet-500 px-5 text-sm font-medium text-white transition hover:bg-violet-600"
                 >
                   <UserPlus className="size-4" />
-                  Sign up
+                  {t("common:signUp")}
                 </Link>
               </>
             )}
@@ -125,16 +127,16 @@ export function MarketplaceCategoriesPage() {
             <div className="max-w-3xl">
               <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-violet-50 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-violet-700">
                 <Sparkles className="size-3.5" />
-                Scalable category discovery
+                {t("catalog:categoriesPage.badge")}
               </div>
-              <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">Find the right lane before you browse listings</h2>
+              <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">{t("catalog:categoriesPage.discoveryTitle")}</h2>
               <p className="mt-2 text-sm leading-6 text-slate-500 sm:text-base">
-                The marketplace highlights popular categories on the homepage, while this directory keeps the full catalog searchable and easy to scan as the platform grows.
+                {t("catalog:categoriesPage.discoveryDescription")}
               </p>
             </div>
 
             <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-              <div className="font-medium text-slate-900">{orderedCategories.length} total categories</div>
+              <div className="font-medium text-slate-900">{t("catalog:categoriesPage.totalCategories", { count: orderedCategories.length })}</div>
               <div className="mt-1">{visibleCategoriesLabel} matching your search</div>
             </div>
           </div>
@@ -145,7 +147,7 @@ export function MarketplaceCategoriesPage() {
               type="search"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="Search categories by name or description..."
+              placeholder={t("catalog:categoriesPage.searchPlaceholder")}
               className="marketplace-search-input h-12 w-full pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:bg-white"
             />
           </div>
@@ -154,14 +156,14 @@ export function MarketplaceCategoriesPage() {
         <section className={`${pageShellClassName} p-5 sm:p-6`}>
           <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-lg font-medium text-slate-900">Category directory</h2>
-              <p className="text-sm text-slate-500">Choose a category to return to the marketplace with that filter applied.</p>
+              <h2 className="text-lg font-medium text-slate-900">{t("catalog:categoriesPage.directoryTitle")}</h2>
+              <p className="text-sm text-slate-500">{t("catalog:categoriesPage.directoryDescription")}</p>
             </div>
             <Link
               to={routePaths.marketplace}
               className="inline-flex items-center gap-2 self-start text-sm font-medium text-violet-600 transition hover:text-violet-700 sm:self-auto"
             >
-              View marketplace listings
+              {t("catalog:categoriesPage.viewMarketplace")}
               <ArrowRight className="size-4" />
             </Link>
           </div>
@@ -174,23 +176,23 @@ export function MarketplaceCategoriesPage() {
 
           {isError ? (
             <EmptyState
-              title="Failed to load categories"
-              description="Something went wrong while loading the category directory. Please refresh and try again."
+              title={t("catalog:categoriesPage.errorTitle")}
+              description={t("catalog:categoriesPage.errorDescription")}
             />
           ) : null}
 
           {!isLoading && !isError && filteredCategories.length === 0 ? (
             <EmptyState
               icon={<Search className="size-16" />}
-              title="No matching categories"
-              description="Try a broader search term or clear the search box to see the full category directory."
+              title={t("catalog:categoriesPage.emptyTitle")}
+              description={t("catalog:categoriesPage.emptyDescription")}
               action={
                 <button
                   type="button"
                   onClick={() => setSearchInput("")}
                   className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:text-violet-600"
                 >
-                  Clear search
+                  {t("catalog:categoriesPage.clearSearch")}
                 </button>
               }
             />
@@ -220,6 +222,7 @@ function MarketplaceCategoryCard({
   category: CategoryResponse;
   activeItemCount?: number;
 }) {
+  const { t } = useTranslation("catalog");
   return (
     <Link
       to={buildPathWithQuery(routePaths.marketplace, { categoryUuid: category.uuid })}
@@ -232,23 +235,23 @@ function MarketplaceCategoryCard({
         </div>
         {typeof activeItemCount === "number" ? (
           <span className="rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">
-            Popular now
+            {t("categoriesPage.popularNow")}
           </span>
         ) : null}
       </div>
 
       <p className="mt-4 line-clamp-3 text-sm leading-6 text-slate-600">
-        {category.description?.trim() || "Browse active listings and discover trade opportunities in this category."}
+        {category.description?.trim() || t("categoriesPage.defaultCardDescription")}
       </p>
 
       <div className="mt-auto flex items-center justify-between gap-3 pt-6 text-sm text-slate-500">
         <span>
           {typeof activeItemCount === "number"
-            ? `${activeItemCount} active ${activeItemCount === 1 ? "listing" : "listings"}`
-            : "Explore category"}
+            ? t("marketplace.activeListings", { count: activeItemCount })
+            : t("categoriesPage.exploreCategory")}
         </span>
         <span className="inline-flex items-center gap-1 font-medium text-violet-600 transition group-hover:translate-x-0.5">
-          Browse
+          {t("categoriesPage.browse")}
           <ArrowRight className="size-4" />
         </span>
       </div>

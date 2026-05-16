@@ -16,6 +16,7 @@ import {
   useRemoveAdminListing,
   useRestoreAdminListing,
 } from "./useAdminListings";
+import { useTranslation } from "react-i18next";
 
 function formatDateTime(value?: string | null) {
   if (!value) {
@@ -34,6 +35,7 @@ function formatReasonCode(reasonCode?: string) {
 }
 
 export function AdminListingDetailPage() {
+  const { t } = useTranslation(["admin", "common", "catalog"]);
   const { uuid } = useParams<{ uuid: string }>();
   const [removeOpen, setRemoveOpen] = useState(false);
   const [restoreOpen, setRestoreOpen] = useState(false);
@@ -57,11 +59,11 @@ export function AdminListingDetailPage() {
     return (
       <EmptyState
         icon={<ShieldAlert className="size-12" />}
-        title="Listing not found"
-        description="The requested listing could not be loaded or may no longer exist."
+        title={t("admin:listingDetail.notFoundTitle")}
+        description={t("admin:listingDetail.notFoundDescription")}
         action={
           <Link to={routePaths.admin.listings}>
-            <Button variant="outline">Back to listings</Button>
+            <Button variant="outline">{t("admin:listingDetail.backToListings")}</Button>
           </Link>
         }
       />
@@ -74,24 +76,24 @@ export function AdminListingDetailPage() {
     <>
       <AdminPageShell
         title={listing.title}
-        description="Review the full listing record, owner context, visibility status, uploaded images, and chronological moderation actions."
+        description={t("admin:listingDetail.description")}
         actions={
           <div className="flex flex-wrap items-center gap-3">
             <Link to={routePaths.admin.listings}>
               <Button variant="outline">
                 <ArrowLeft className="size-4" />
-                Back to listings
+                {t("admin:listingDetail.backToListings")}
               </Button>
             </Link>
             {isRemoved ? (
               <Button onClick={() => setRestoreOpen(true)}>
                 <ShieldCheck className="size-4" />
-                Restore listing
+                {t("admin:listingDetail.restoreListing")}
               </Button>
             ) : (
               <Button variant="danger" onClick={() => setRemoveOpen(true)}>
                 <ShieldAlert className="size-4" />
-                Remove listing
+                {t("admin:listingDetail.removeListing")}
               </Button>
             )}
           </div>
@@ -100,30 +102,30 @@ export function AdminListingDetailPage() {
           <>
             <ItemStatusBadge status={listing.status} />
             <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-              Admin detail
+              {t("admin:listingDetail.adminDetail")}
             </span>
           </>
         }
         contentClassName="grid gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(340px,0.85fr)]"
       >
         <div className="space-y-6">
-          <AdminSurface title="Listing overview" description="Core listing data and current marketplace lifecycle state.">
+          <AdminSurface title={t("admin:listingDetail.overviewTitle")} description={t("admin:listingDetail.overviewDescription")}>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                  Title
+                  {t("catalog:fields.title")}
                 </p>
                 <p className="mt-1 text-base font-semibold text-slate-900 dark:text-slate-100">{listing.title}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                  Category
+                  {t("catalog:fields.category")}
                 </p>
                 <p className="mt-1 text-base text-slate-900 dark:text-slate-100">{listing.category.name}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                  Status
+                  {t("catalog:fields.status")}
                 </p>
                 <div className="mt-1 flex items-center gap-2">
                   <ItemStatusBadge status={listing.status} />
@@ -132,7 +134,7 @@ export function AdminListingDetailPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                  Owner
+                  {t("admin:listingsPage.owner")}
                 </p>
                 <div className="mt-1 flex items-center gap-2 text-slate-900 dark:text-slate-100">
                   <UserRound className="size-4 text-slate-400" />
@@ -141,25 +143,25 @@ export function AdminListingDetailPage() {
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                  Created
+                  {t("admin:created")}
                 </p>
                 <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{formatDateTime(listing.createdAt)}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                  Updated
+                  {t("admin:updated")}
                 </p>
                 <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{formatDateTime(listing.updatedAt)}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                  Archived at
+                  {t("admin:archivedAt")}
                 </p>
                 <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{formatDateTime(listing.archivedAt)}</p>
               </div>
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                  Removed at
+                  {t("admin:removedAt")}
                 </p>
                 <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{formatDateTime(listing.removedAt)}</p>
               </div>
@@ -167,15 +169,15 @@ export function AdminListingDetailPage() {
 
             <div className="mt-5">
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                Description
+                {t("catalog:fields.description")}
               </p>
               <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-700 dark:text-slate-300">
-                {listing.description?.trim() || "No description provided."}
+                {listing.description?.trim() || t("admin:noDescriptionProvided")}
               </p>
             </div>
 
             <div className="mt-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">Tags</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">{t("admin:tags")}</p>
               <div className="mt-2 flex flex-wrap gap-2">
                 {listing.tags.length > 0 ? (
                   listing.tags.map((tag) => (
@@ -187,17 +189,17 @@ export function AdminListingDetailPage() {
                     </span>
                   ))
                 ) : (
-                  <span className="text-sm text-slate-500 dark:text-slate-400">No tags assigned.</span>
+                  <span className="text-sm text-slate-500 dark:text-slate-400">{t("admin:listingDetail.noTagsAssigned")}</span>
                 )}
               </div>
             </div>
           </AdminSurface>
 
-          <AdminSurface title="Listing images" description="Uploaded media that currently represents this listing.">
+          <AdminSurface title={t("admin:listingDetail.imagesTitle")} description={t("admin:listingDetail.imagesDescription")}>
             {listing.images.length === 0 ? (
               <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center dark:border-slate-700">
                 <ImageIcon className="size-10 text-slate-300 dark:text-slate-600" />
-                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">No images uploaded for this listing.</p>
+                <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">{t("admin:listingDetail.noImages")}</p>
               </div>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -206,7 +208,7 @@ export function AdminListingDetailPage() {
                     <img src={image.url} alt={image.originalFilename} className="aspect-square w-full object-cover" />
                     <div className="space-y-1 px-3 py-3 text-xs text-slate-500 dark:text-slate-400">
                       <div className="font-medium text-slate-700 dark:text-slate-200">{image.originalFilename}</div>
-                      <div>{image.isPrimary ? "Primary image" : `Sort order ${image.sortOrder}`}</div>
+                      <div>{image.isPrimary ? t("catalog:images.primaryImage") : t("admin:sortOrderValue", { value: image.sortOrder })}</div>
                     </div>
                   </div>
                 ))}
@@ -216,7 +218,7 @@ export function AdminListingDetailPage() {
         </div>
 
         <div className="space-y-6">
-          <AdminSurface title="Owner-facing moderation summary" description="What the listing owner currently sees when this listing is removed or restored.">
+          <AdminSurface title={t("admin:listingDetail.ownerSummaryTitle")} description={t("admin:listingDetail.ownerSummaryDescription")}>
             {listing.moderationSummary ? (
               <div className="space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60">
                 <div className="flex flex-wrap items-center gap-2">
@@ -226,18 +228,18 @@ export function AdminListingDetailPage() {
                   </span>
                 </div>
                 <p className="text-sm text-slate-700 dark:text-slate-300">
-                  {listing.moderationSummary.userMessage || "No owner-facing message was included for the latest moderation action."}
+                  {listing.moderationSummary.userMessage || t("admin:listingDetail.noOwnerMessage")}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">
                   {formatDateTime(listing.moderationSummary.actionAt)} • {listing.moderationSummary.actionType}
                 </p>
               </div>
             ) : (
-              <p className="text-sm text-slate-500 dark:text-slate-400">No owner-facing moderation summary is available yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">{t("admin:listingDetail.noOwnerSummary")}</p>
             )}
           </AdminSurface>
 
-          <AdminSurface title="Moderation timeline" description="Chronological record of remove and restore actions for this listing.">
+          <AdminSurface title={t("admin:listingDetail.timelineTitle")} description={t("admin:listingDetail.timelineDescription")}>
             <AdminListingModerationTimeline actions={actionsQuery.data ?? []} isLoading={actionsQuery.isLoading} />
           </AdminSurface>
         </div>
@@ -254,10 +256,10 @@ export function AdminListingDetailPage() {
             { listingUuid: listing.uuid, data: payload },
             {
               onSuccess: () => {
-                toast.success("Listing removed and pending offers invalidated.");
+                toast.success(t("admin:listingDetail.removeSuccess"));
                 setRemoveOpen(false);
               },
-              onError: () => toast.error("Failed to remove listing."),
+              onError: () => toast.error(t("admin:listingDetail.removeError")),
             }
           );
         }}
@@ -274,10 +276,10 @@ export function AdminListingDetailPage() {
             { listingUuid: listing.uuid, data: payload },
             {
               onSuccess: () => {
-                toast.success("Listing restored successfully.");
+                toast.success(t("admin:listingDetail.restoreSuccess"));
                 setRestoreOpen(false);
               },
-              onError: () => toast.error("Failed to restore listing."),
+              onError: () => toast.error(t("admin:listingDetail.restoreError")),
             }
           );
         }}

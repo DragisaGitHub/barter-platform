@@ -3,6 +3,7 @@ import type { ListingModerationActionResponse } from "@/api/generated/types.ts";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
 import { cn } from "@/utils";
+import { useTranslation } from "react-i18next";
 
 interface AdminListingModerationTimelineProps {
   actions: ListingModerationActionResponse[];
@@ -17,24 +18,18 @@ function formatDateTime(value?: string | null) {
   return new Date(value).toLocaleString();
 }
 
-function formatReason(reasonCode: string) {
-  return reasonCode
-    .toLowerCase()
-    .split("_")
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
-}
-
 export function AdminListingModerationTimeline({
   actions,
   isLoading = false,
 }: AdminListingModerationTimelineProps) {
+  const { t } = useTranslation("admin");
+
   if (isLoading) {
-    return <div className="text-sm text-slate-500 dark:text-slate-400">Loading moderation history…</div>;
+    return <div className="text-sm text-slate-500 dark:text-slate-400">{t("moderationTimeline.loading")}</div>;
   }
 
   if (actions.length === 0) {
-    return <div className="text-sm text-slate-500 dark:text-slate-400">No moderation actions recorded for this listing.</div>;
+    return <div className="text-sm text-slate-500 dark:text-slate-400">{t("moderationTimeline.empty")}</div>;
   }
 
   return (
@@ -66,9 +61,9 @@ export function AdminListingModerationTimeline({
                     {isRemove ? <ShieldAlert className="size-4" /> : <ShieldCheck className="size-4" />}
                   </div>
                   <Badge variant={isRemove ? "danger" : "success"}>
-                    {isRemove ? "Removed" : "Restored"}
+                    {isRemove ? t("moderationTimeline.removed") : t("moderationTimeline.restored")}
                   </Badge>
-                  <Badge variant="secondary">{formatReason(action.reasonCode)}</Badge>
+                  <Badge variant="secondary">{t(`moderation.reasons.${action.reasonCode}`)}</Badge>
                   <Badge variant="default">{action.sourceType}</Badge>
                 </div>
 
@@ -76,8 +71,8 @@ export function AdminListingModerationTimeline({
                   <div className="flex items-center gap-2">
                     <UserRound className="size-4 text-slate-400" />
                     <span>
-                      {action.performedByUsername ?? "System"}
-                      {action.performedByUserUuid ? " • moderator action" : ""}
+                      {action.performedByUsername ?? t("moderationTimeline.system")}
+                      {action.performedByUserUuid ? ` • ${t("moderationTimeline.moderatorAction")}` : ""}
                     </span>
                   </div>
                 </div>
@@ -85,7 +80,7 @@ export function AdminListingModerationTimeline({
                 {action.userMessage ? (
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                      Owner message
+                      {t("moderationTimeline.ownerMessage")}
                     </p>
                     <p className="mt-1 whitespace-pre-line text-sm text-slate-700 dark:text-slate-200">
                       {action.userMessage}
@@ -96,7 +91,7 @@ export function AdminListingModerationTimeline({
                 {action.internalNote ? (
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
-                      Internal note
+                      {t("moderationDialog.internalNote")}
                     </p>
                     <p className="mt-1 whitespace-pre-line text-sm text-slate-700 dark:text-slate-200">
                       {action.internalNote}

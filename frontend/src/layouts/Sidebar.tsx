@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
   Store,
@@ -34,19 +35,20 @@ function NavBadge({ count }: { count: number }) {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const { t } = useTranslation(["common", "navigation"]);
   const { data: incomingData } = usePendingIncomingCount();
   const { data: sentData } = usePendingSentCount();
   const pendingIncoming = incomingData?.totalElements ?? 0;
   const pendingSent = sentData?.totalElements ?? 0;
 
   const navItems: NavItem[] = [
-    { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { to: "/marketplace", icon: Store, label: "Marketplace" },
-    { to: "/favorites", icon: Heart, label: "Favorites" },
-    { to: "/my-items", icon: List, label: "My Items" },
-    { to: "/offers/incoming", icon: Inbox, label: "Incoming Offers", badge: pendingIncoming },
-    { to: "/offers/sent", icon: Send, label: "Sent Offers", badge: pendingSent },
-    { to: "/profile", icon: User, label: "Profile" },
+    { to: "/dashboard", icon: LayoutDashboard, label: t("navigation:dashboard") },
+    { to: "/marketplace", icon: Store, label: t("navigation:marketplaceLabel") },
+    { to: "/favorites", icon: Heart, label: t("navigation:favorites") },
+    { to: "/my-items", icon: List, label: t("navigation:myItems") },
+    { to: "/offers/incoming", icon: Inbox, label: t("navigation:incomingOffers"), badge: pendingIncoming },
+    { to: "/offers/sent", icon: Send, label: t("navigation:sentOffers"), badge: pendingSent },
+    { to: "/profile", icon: User, label: t("navigation:profile") },
   ];
 
 
@@ -73,7 +75,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               <button
                 onClick={onClose}
                 className="lg:hidden text-slate-400 hover:text-white transition-colors"
-                aria-label="Close sidebar"
+                aria-label={t("navigation:closeSidebar")}
               >
                 <X className="size-5" />
               </button>

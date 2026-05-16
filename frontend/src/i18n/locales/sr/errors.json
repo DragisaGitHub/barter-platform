@@ -1,0 +1,20 @@
+{
+  "defaultDescription": "Došlo je do neočekivanog problema prilikom učitavanja ove stranice. Pokušajte ponovo ili se vratite na oglase.",
+  "somethingWentWrong": "Došlo je do greške",
+  "temporaryUnavailable": "Ako ste otvarali oglas ili profil korisnika, sadržaj može biti privremeno nedostupan. Možete se vratiti na oglase i nastaviti pregledanje aktivnih ponuda.",
+  "notFoundTitle": "Stranica nije pronađena",
+  "notFoundDescription": "Stranica koju tražite ne postoji ili je premeštena.",
+  "notFoundListingHint": "Oglas je možda uklonjen, arhiviran ili link nije ispravan.",
+  "routeNotFoundDescription": "Stranica koju ste tražili nije mogla biti učitana. Možda više nije dostupna.",
+  "generic": {
+    "title": "Došlo je do greške",
+    "description": "Došlo je do neočekivanog problema prilikom učitavanja ove stranice. Pokušaj ponovo ili se vrati na marketplace.",
+    "helper": "Ako si otvarao/la oglas ili profil korisnika, sadržaj može biti privremeno nedostupan. Možeš se vratiti na marketplace i nastaviti pregled aktivnih ponuda.",
+    "notFoundDescription": "Stranica koju si tražio/la nije mogla biti učitana. Možda više nije dostupna."
+  },
+  "notFound": {
+    "title": "Stranica nije pronađena",
+    "description": "Stranica koju tražiš ne postoji ili je premeštena.",
+    "helper": "Oglas je možda uklonjen, arhiviran ili link nije ispravan."
+  }
+}

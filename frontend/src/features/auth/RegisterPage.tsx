@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
@@ -16,30 +17,36 @@ import {
   routePaths,
 } from "@/routes/routePaths.ts";
 
-const registerSchema = z
-  .object({
-    username: z
-      .string()
-      .min(3, "Username must be at least 3 characters")
-      .max(50, "Username must be less than 50 characters"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type RegisterFormData = z.infer<typeof registerSchema>;
+type RegisterFormData = {
+  username: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+};
 
 export function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { register: registerUser } = useAuth();
+  const { t } = useTranslation(["auth", "common"]);
   const [isLoading, setIsLoading] = useState(false);
   const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
   const loginHref = buildPathWithQuery(routePaths.login, { redirect: redirectPath });
+
+  const registerSchema = z
+    .object({
+      username: z
+        .string()
+        .min(3, t("auth:usernameMinLength"))
+        .max(50, t("auth:usernameMaxLength")),
+      email: z.string().email(t("auth:invalidEmail")),
+      password: z.string().min(8, t("auth:passwordMinLength")),
+      confirmPassword: z.string(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: t("auth:passwordsDoNotMatch"),
+      path: ["confirmPassword"],
+    });
 
   const methods = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -59,7 +66,7 @@ export function RegisterPage() {
         email: data.email,
         password: data.password,
       });
-      toast.success("Account created! Please verify your email.");
+      toast.success(t("auth:accountCreated"));
       navigate(
         buildPathWithQuery(routePaths.verifyEmail, {
           email: data.email,
@@ -80,10 +87,10 @@ export function RegisterPage() {
         } else if (errorData?.message) {
           toast.error(errorData.message);
         } else {
-          toast.error("Registration failed. Please try again.");
+          toast.error(t("auth:registrationFailed"));
         }
       } else {
-        toast.error("An unexpected error occurred");
+        toast.error(t("auth:unexpectedError"));
       }
     } finally {
       setIsLoading(false);
@@ -96,19 +103,19 @@ export function RegisterPage() {
         <Card className="w-full max-w-md border-slate-200/80 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-none">
           <CardHeader>
             <div className="mx-auto mb-3 inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-700 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300">
-              Marketplace onboarding
+              {t("auth:marketplaceOnboarding")}
             </div>
-            <CardTitle className="text-center">Create Account</CardTitle>
+            <CardTitle className="text-center">{t("auth:createAccount")}</CardTitle>
             <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-2">
               {redirectPath
-                ? "Create your account to unlock trade offers and jump back into the listing you selected."
-                : "Join the marketplace to list items, send offers, and trade with confidence."}
+                ? t("auth:redirectRegisterCta")
+                : t("auth:registerCta")}
             </p>
           </CardHeader>
           <CardContent>
             {redirectPath && (
               <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-sm text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
-                Finish sign up now and we’ll keep your marketplace destination ready for after login.
+                {t("auth:finishSignup")}
               </div>
             )}
 
@@ -116,55 +123,55 @@ export function RegisterPage() {
             <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
               <FormInput
                 name="username"
-                label="Username"
+                label={t("auth:username")}
                 type="text"
-                placeholder="Choose a username"
+                placeholder={t("auth:usernamePlaceholder")}
                 autoComplete="username"
               />
 
               <FormInput
                 name="email"
-                label="Email"
+                label={t("common:email")}
                 type="email"
-                placeholder="Enter your email"
+                placeholder={t("auth:emailPlaceholder")}
                 autoComplete="email"
               />
 
               <FormInput
                 name="password"
-                label="Password"
+                label={t("common:password")}
                 type="password"
-                placeholder="Create a password"
+                placeholder={t("auth:createPassword")}
                 autoComplete="new-password"
               />
 
               <FormInput
                 name="confirmPassword"
-                label="Confirm Password"
+                label={t("common:confirmPassword")}
                 type="password"
-                placeholder="Confirm your password"
+                placeholder={t("common:confirmPassword")}
                 autoComplete="new-password"
               />
 
               <Button type="submit" fullWidth isLoading={isLoading}>
-                Create Account
+                {t("auth:createAccountButton")}
               </Button>
 
               <p className="text-center text-xs leading-5 text-slate-500 dark:text-slate-400">
-                We’ll email you a 6-digit verification code before your first sign in.
+                {t("auth:verificationHint")}
               </p>
             </form>
           </FormProvider>
 
           <div className="mt-6 text-center text-sm">
             <span className="text-slate-600 dark:text-slate-400">
-              Already have an account?{" "}
+              {t("auth:alreadyHaveAccount")} {" "}
             </span>
             <Link
               to={loginHref}
               className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
             >
-              Sign in
+              {t("auth:signIn")}
             </Link>
           </div>
 
@@ -173,7 +180,7 @@ export function RegisterPage() {
               to={routePaths.marketplace}
               className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             >
-              Back to marketplace
+              {t("common:backToMarketplace")}
             </Link>
           </div>
           </CardContent>

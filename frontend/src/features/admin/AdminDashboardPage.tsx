@@ -14,10 +14,11 @@ import { Badge } from "../../components/ui/Badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/Card";
 import { routePaths } from "@/routes/routePaths.ts";
 import { AdminPageShell, AdminSurface } from "./components/AdminPageShell";
+import { useTranslation } from "react-i18next";
 
 interface AdminModule {
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   to: string;
   icon: LucideIcon;
   tone: string;
@@ -26,43 +27,43 @@ interface AdminModule {
 
 const adminModules: AdminModule[] = [
   {
-    title: "Users",
-    description: "Review accounts, investigate access, and open individual user records.",
+    titleKey: "users",
+    descriptionKey: "dashboard.modules.users",
     to: routePaths.admin.users,
     icon: Users,
     tone: "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-300",
   },
   {
-    title: "Roles",
-    description: "Inspect platform role definitions and role assignments.",
+    titleKey: "roles",
+    descriptionKey: "dashboard.modules.roles",
     to: routePaths.admin.roles,
     icon: KeyRound,
     tone: "bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-300",
   },
   {
-    title: "Permissions",
-    description: "Audit permission coverage used across the authorization model.",
+    titleKey: "permissions",
+    descriptionKey: "dashboard.modules.permissions",
     to: routePaths.admin.permissions,
     icon: Lock,
     tone: "bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-300",
   },
   {
-    title: "System",
-    description: "Check platform status and review operational configuration surfaces.",
+    titleKey: "system",
+    descriptionKey: "dashboard.modules.system",
     to: routePaths.admin.system,
     icon: Settings,
     tone: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300",
   },
   {
-    title: "Categories",
-    description: "Manage category taxonomy, parent structure, ordering, and archive state.",
+    titleKey: "categories",
+    descriptionKey: "dashboard.modules.categories",
     to: routePaths.admin.categories,
     icon: FolderTree,
     tone: "bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
   },
   {
-    title: "Tags",
-    description: "Manage reusable item metadata labels, slugs, and archive state.",
+    titleKey: "tags",
+    descriptionKey: "dashboard.modules.tags",
     to: routePaths.admin.tags,
     icon: Tags,
     tone: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300",
@@ -70,25 +71,26 @@ const adminModules: AdminModule[] = [
 ];
 
 export function AdminDashboardPage() {
+  const { t } = useTranslation("admin");
   return (
     <AdminPageShell
-      title="Admin Control Panel"
-      description="Operate moderation, access control, taxonomy, and platform governance from a dedicated internal control panel."
+      title={t("adminControlPanel")}
+      description={t("dashboard.description")}
       badges={
         <>
-          <Badge variant="primary">Operations</Badge>
-          <Badge>Internal workspace</Badge>
+          <Badge variant="primary">{t("dashboard.badges.operations")}</Badge>
+          <Badge>{t("dashboard.badges.internalWorkspace")}</Badge>
         </>
       }
       actions={
         <div className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 xl:max-w-md">
-          Use this workspace for access review, operational oversight, governance, and controlled platform configuration.
+          {t("dashboard.actionsHelper")}
         </div>
       }
     >
       <AdminSurface
-        title="Operational modules"
-        description="Open focused backoffice modules for administration, moderation, and platform control."
+        title={t("dashboard.operationalModules")}
+        description={t("dashboard.operationalModulesDescription")}
         contentClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
       >
         {adminModules.map((module) => {
@@ -99,13 +101,13 @@ export function AdminDashboardPage() {
                   <div className={`flex size-12 items-center justify-center rounded-xl ${module.tone}`}>
                     <module.icon className="size-5" />
                   </div>
-                  <Badge variant="success">Ready</Badge>
+                  <Badge variant="success">{t("dashboard.ready")}</Badge>
                 </div>
-                <CardTitle>{module.title}</CardTitle>
-                <CardDescription>{module.description}</CardDescription>
+                <CardTitle>{t(module.titleKey)}</CardTitle>
+                <CardDescription>{t(module.descriptionKey)}</CardDescription>
               </CardHeader>
               <CardContent className="mt-auto flex items-center justify-between pt-2 text-sm font-medium text-indigo-600 dark:text-indigo-300">
-                <span>Open module</span>
+                <span>{t("dashboard.openModule")}</span>
                 <ArrowRight className="size-4" />
               </CardContent>
             </Card>
@@ -124,8 +126,8 @@ export function AdminDashboardPage() {
       </AdminSurface>
 
       <AdminSurface
-        title="Foundation status"
-        description="This phase focuses on admin separation, navigation clarity, and consistent control-panel UX without changing backend contracts."
+        title={t("dashboard.foundationStatus")}
+        description={t("dashboard.foundationStatusDescription")}
         contentClassName="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]"
       >
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
@@ -135,10 +137,10 @@ export function AdminDashboardPage() {
             </div>
             <div>
               <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                Dedicated admin experience
+                {t("dashboard.dedicatedExperience.title")}
               </h3>
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Administrative workflows are isolated inside a dedicated shell with consistent navigation, operational context, and governance-focused tooling.
+                {t("dashboard.dedicatedExperience.description")}
               </p>
             </div>
           </div>
@@ -146,15 +148,15 @@ export function AdminDashboardPage() {
 
         <div className="grid gap-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Current scope</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("dashboard.currentScope.title")}</p>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Users, roles, permissions, system health, category administration, and tag administration.
+              {t("dashboard.currentScope.description")}
             </p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Preserved behavior</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("dashboard.preservedBehavior.title")}</p>
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Existing admin pages and routes remain intact while the control panel stays focused on moderation, access control, and platform operations.
+              {t("dashboard.preservedBehavior.description")}
             </p>
           </div>
         </div>

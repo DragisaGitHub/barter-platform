@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { parseApiError } from "@/utils/parseApiError.ts";
 import { useCreateTradeReview } from "./useTradeOffers";
+import { useTranslation } from "react-i18next";
 
 interface TradeReviewDialogProps {
   tradeOfferUuid: string;
@@ -17,24 +18,25 @@ interface TradeReviewDialogProps {
   onClose: () => void;
 }
 
-const NEGATIVE_REASON_OPTIONS: { value: TradeReviewNegativeReason; label: string }[] = [
-  { value: "NO_SHOW", label: "No-show" },
-  { value: "ITEM_NOT_AS_DESCRIBED", label: "Item not as described" },
-  { value: "DAMAGED_OR_UNSAFE_ITEM", label: "Damaged or unsafe item" },
-  { value: "RUDE_OR_ABUSIVE_BEHAVIOR", label: "Rude or abusive behavior" },
-  { value: "SPAM_OR_SCAM_BEHAVIOR", label: "Spam or scam behavior" },
-  { value: "OTHER", label: "Other" },
+const NEGATIVE_REASON_OPTIONS: { value: TradeReviewNegativeReason; labelKey: string }[] = [
+  { value: "NO_SHOW", labelKey: "reviews.reasons.noShow" },
+  { value: "ITEM_NOT_AS_DESCRIBED", labelKey: "reviews.reasons.itemNotAsDescribed" },
+  { value: "DAMAGED_OR_UNSAFE_ITEM", labelKey: "reviews.reasons.damagedOrUnsafeItem" },
+  { value: "RUDE_OR_ABUSIVE_BEHAVIOR", labelKey: "reviews.reasons.rudeOrAbusiveBehavior" },
+  { value: "SPAM_OR_SCAM_BEHAVIOR", labelKey: "reviews.reasons.spamOrScamBehavior" },
+  { value: "OTHER", labelKey: "reviews.reasons.other" },
 ];
 
-export function formatNegativeReason(reason?: TradeReviewNegativeReason | null) {
+export function negativeReasonTranslationKey(reason?: TradeReviewNegativeReason | null) {
   if (!reason) {
-    return "—";
+    return "";
   }
 
-  return NEGATIVE_REASON_OPTIONS.find((option) => option.value === reason)?.label ?? reason.replace(/_/g, " ");
+  return NEGATIVE_REASON_OPTIONS.find((option) => option.value === reason)?.labelKey ?? "";
 }
 
 export function TradeReviewDialog({ tradeOfferUuid, counterpartyUsername, isOpen, onClose }: TradeReviewDialogProps) {
+  const { t } = useTranslation(["trade", "common"]);
   const [rating, setRating] = useState<TradeReviewRating>("POSITIVE");
   const [negativeReason, setNegativeReason] = useState<TradeReviewNegativeReason | "">("");
   const [comment, setComment] = useState("");
@@ -43,13 +45,13 @@ export function TradeReviewDialog({ tradeOfferUuid, counterpartyUsername, isOpen
 
   const validationError = useMemo(() => {
     if (rating === "NEGATIVE" && !negativeReason) {
-      return "Choose a negative review reason.";
+      return t("trade:reviews.validation.chooseReason");
     }
     if (rating === "NEGATIVE" && negativeReason === "OTHER" && !comment.trim()) {
-      return "Add a comment when using Other as the reason.";
+      return t("trade:reviews.validation.commentForOther");
     }
     return null;
-  }, [comment, negativeReason, rating]);
+  }, [comment, negativeReason, rating, t]);
 
   const resetAndClose = () => {
     if (createReview.isPending) {
@@ -79,15 +81,18 @@ export function TradeReviewDialog({ tradeOfferUuid, counterpartyUsername, isOpen
       await createReview.mutateAsync({ tradeOfferUuid, data: payload });
       resetAndClose();
     } catch (err) {
-      setError(parseApiError(err));
+      const apiError = parseApiError(err);
+      const isGenericUnexpectedError = apiError.toLowerCase().includes("unexpected")
+        || apiError.toLowerCase().includes("internal error");
+      setError(isGenericUnexpectedError ? t("trade:reviews.submitError") : apiError);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title={`Review ${counterpartyUsername}`} size="md">
+    <Modal isOpen={isOpen} onClose={resetAndClose} title={t("trade:reviews.dialogTitle", { username: counterpartyUsername })} size="md">
       <div className="space-y-5">
         <p className="text-sm text-slate-600 dark:text-slate-300">
-          Reviews are final and can only be submitted once per completed trade.
+          {t("trade:reviews.finalNotice")}
         </p>
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -105,8 +110,8 @@ export function TradeReviewDialog({ tradeOfferUuid, counterpartyUsername, isOpen
             }`}
           >
             <ThumbsUp className="mb-2 size-5" />
-            <div className="font-semibold">Positive</div>
-            <div className="mt-1 text-xs opacity-80">The completed trade went well.</div>
+            <div className="font-semibold">{t("trade:reviews.positive")}</div>
+            <div className="mt-1 text-xs opacity-80">{t("trade:reviews.positiveDescription")}</div>
           </button>
           <button
             type="button"
@@ -121,23 +126,23 @@ export function TradeReviewDialog({ tradeOfferUuid, counterpartyUsername, isOpen
             }`}
           >
             <ThumbsDown className="mb-2 size-5" />
-            <div className="font-semibold">Negative</div>
-            <div className="mt-1 text-xs opacity-80">Flag the trade for admin visibility.</div>
+            <div className="font-semibold">{t("trade:reviews.negative")}</div>
+            <div className="mt-1 text-xs opacity-80">{t("trade:reviews.negativeDescription")}</div>
           </button>
         </div>
 
         {rating === "NEGATIVE" ? (
           <label className="block">
-            <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">Reason</span>
+            <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">{t("trade:reviews.reason")}</span>
             <select
               value={negativeReason}
               onChange={(event) => setNegativeReason(event.target.value as TradeReviewNegativeReason | "")}
               className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             >
-              <option value="">Select a reason</option>
+              <option value="">{t("trade:reviews.selectReason")}</option>
               {NEGATIVE_REASON_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
-                  {option.label}
+                  {t(`trade:${option.labelKey}`)}
                 </option>
               ))}
             </select>
@@ -146,7 +151,7 @@ export function TradeReviewDialog({ tradeOfferUuid, counterpartyUsername, isOpen
 
         <label className="block">
           <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
-            Comment {rating === "NEGATIVE" && negativeReason === "OTHER" ? "(required)" : "(optional)"}
+            {t("trade:reviews.comment")} {rating === "NEGATIVE" && negativeReason === "OTHER" ? t("common:requiredParenthesized") : t("common:optionalParenthesized")}
           </span>
           <textarea
             value={comment}
@@ -156,8 +161,8 @@ export function TradeReviewDialog({ tradeOfferUuid, counterpartyUsername, isOpen
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             placeholder={
               rating === "POSITIVE"
-                ? "Optionally share a short note about the completed trade."
-                : "Add details for admins and the other participant."
+                ? t("trade:reviews.positivePlaceholder")
+                : t("trade:reviews.negativePlaceholder")
             }
           />
         </label>
@@ -171,10 +176,10 @@ export function TradeReviewDialog({ tradeOfferUuid, counterpartyUsername, isOpen
 
         <div className="flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={resetAndClose} disabled={createReview.isPending}>
-            Cancel
+            {t("common:cancel")}
           </Button>
           <Button type="button" onClick={handleSubmit} isLoading={createReview.isPending}>
-            Submit review
+            {t("trade:reviews.submit")}
           </Button>
         </div>
       </div>

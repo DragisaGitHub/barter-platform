@@ -4,6 +4,7 @@ import type { ItemSummaryResponse } from "@/api/generated/types.ts";
 import { Card } from "../../components/ui/Card";
 import { ItemStatusBadge, ItemConditionBadge } from "./ItemBadges";
 import { routePaths } from "@/routes/routePaths.ts";
+import { useTranslation } from "react-i18next";
 
 interface ItemCardProps {
   item: ItemSummaryResponse;
@@ -11,6 +12,7 @@ interface ItemCardProps {
 }
 
 export function ItemCard({ item, linkPrefix = "/marketplace/items" }: ItemCardProps) {
+  const { t } = useTranslation("catalog");
   return (
     <Link to={`${linkPrefix}/${item.uuid}`} className="block group">
       <Card className="h-full transition-shadow hover:shadow-md">
@@ -45,10 +47,10 @@ export function ItemCard({ item, linkPrefix = "/marketplace/items" }: ItemCardPr
               onClick={(e) => e.stopPropagation()}
               className="hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline"
             >
-              by {item.ownerUsername}
+              {t("itemCard.byOwner", { username: item.ownerUsername })}
             </Link>
           ) : (
-            <span>by {item.ownerUsername}</span>
+            <span>{t("itemCard.byOwner", { username: item.ownerUsername })}</span>
           )}
         </div>
       </Card>

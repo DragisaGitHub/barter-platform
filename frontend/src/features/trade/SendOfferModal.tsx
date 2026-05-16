@@ -8,6 +8,7 @@ import { useMyItems } from "@/features/catalog/useCatalog.ts";
 import { useCreateTradeOffer } from "./useTradeOffers";
 import type { ItemDetailResponse, TradeOfferMode } from "@/api/generated/types.ts";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface SendOfferModalProps {
   isOpen: boolean;
@@ -15,28 +16,29 @@ interface SendOfferModalProps {
   receiverItem: ItemDetailResponse;
 }
 
-const MODE_OPTIONS: { value: TradeOfferMode; label: string; icon: React.ReactNode; description: string }[] = [
+const MODE_OPTIONS: { value: TradeOfferMode; labelKey: string; icon: React.ReactNode; descriptionKey: string }[] = [
   {
     value: "ITEM_EXCHANGE",
-    label: "Item Exchange",
+    labelKey: "mode.itemExchange",
     icon: <ArrowRightLeft className="size-5" />,
-    description: "Offer one or more of your items in exchange.",
+    descriptionKey: "sendOffer.modeDescription.itemExchange",
   },
   {
     value: "GIFT",
-    label: "Gift",
+    labelKey: "mode.gift",
     icon: <Gift className="size-5" />,
-    description: "Request the item without offering your own item.",
+    descriptionKey: "sendOffer.modeDescription.gift",
   },
   {
     value: "NEGOTIABLE",
-    label: "Negotiable",
+    labelKey: "mode.negotiable",
     icon: <MessageSquare className="size-5" />,
-    description: "Start a flexible negotiation. You may optionally include items.",
+    descriptionKey: "sendOffer.modeDescription.negotiable",
   },
 ];
 
 export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModalProps) {
+  const { t } = useTranslation(["trade", "common", "catalog"]);
   const [mode, setMode] = useState<TradeOfferMode>("ITEM_EXCHANGE");
   const [selectedItemUuids, setSelectedItemUuids] = useState<string[]>([]);
   const [message, setMessage] = useState("");
@@ -98,11 +100,11 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
       },
       {
         onSuccess: () => {
-          toast.success("Trade offer sent!");
+          toast.success(t("trade:sendOffer.toast.success"));
           resetAndClose();
         },
         onError: (error: any) => {
-          const msg = error?.response?.data?.message ?? "Failed to send trade offer.";
+          const msg = error?.response?.data?.message ?? t("trade:sendOffer.toast.error");
           toast.error(msg);
         },
       },
@@ -120,22 +122,22 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
   const selectedItemDetails = activeItems.filter((i) => selectedItemUuids.includes(i.uuid));
 
   return (
-    <Modal isOpen={isOpen} onClose={resetAndClose} title="Send Trade Offer" size="lg">
+    <Modal isOpen={isOpen} onClose={resetAndClose} title={t("trade:sendOffer.title")} size="lg">
       {/* ── You Want (requested item) ───────────────────────── */}
       <div className="mb-5 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800">
         <p className="text-xs font-medium text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">
-          You want
+          {t("trade:sendOffer.youWant")}
         </p>
         <p className="font-semibold text-slate-900 dark:text-white">{receiverItem.title}</p>
         <p className="text-xs text-slate-500 dark:text-slate-400">
-          by {receiverItem.ownerUsername} • {receiverItem.category?.name}
+          {t("trade:byUser", { username: receiverItem.ownerUsername })} • {receiverItem.category?.name}
         </p>
       </div>
 
       {/* ── Trade Mode Selector ─────────────────────────────── */}
       <div className="mb-5">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Trade Mode
+          {t("trade:sendOffer.tradeMode")}
         </label>
         <div className="grid grid-cols-3 gap-2">
           {MODE_OPTIONS.map((opt) => (
@@ -150,12 +152,12 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
               }`}
             >
               {opt.icon}
-              <span className="text-xs font-medium">{opt.label}</span>
+              <span className="text-xs font-medium">{t(`trade:${opt.labelKey}`)}</span>
             </button>
           ))}
         </div>
         <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-          {MODE_OPTIONS.find((o) => o.value === mode)?.description}
+          {t(`trade:${MODE_OPTIONS.find((o) => o.value === mode)?.descriptionKey}`)}
         </p>
       </div>
 
@@ -163,9 +165,9 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
       {!itemsForbidden && (
         <div className="mb-5">
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            You offer
+            {t("trade:sendOffer.youOffer")}
             {itemsRequired && <span className="text-red-500 ml-1">*</span>}
-            {!itemsRequired && <span className="text-slate-400 ml-1">(optional)</span>}
+            {!itemsRequired && <span className="text-slate-400 ml-1">{t("common:optionalParenthesized")}</span>}
           </label>
 
           {/* Selected items chips */}
@@ -191,7 +193,7 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
 
           {selectedItemUuids.length === 0 && (
             <p className="text-xs text-slate-400 dark:text-slate-500 mb-3 italic">
-              No offered items selected yet.
+              {t("trade:sendOffer.noOfferedItemsSelected")}
             </p>
           )}
 
@@ -201,7 +203,7 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
             <input
               type="text"
               className="w-full pl-9 pr-3 py-2 rounded-lg border border-slate-300 bg-white text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-              placeholder="Search your items..."
+              placeholder={t("trade:sendOffer.searchYourItems")}
               value={itemSearch}
               onChange={(e) => setItemSearch(e.target.value)}
             />
@@ -216,8 +218,8 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
           {!isLoading && activeItems.length === 0 && (
             <EmptyState
               icon={<Package className="size-10" />}
-              title="No active items"
-              description="You need at least one active item to offer."
+              title={t("trade:sendOffer.noActiveItems")}
+              description={t("trade:sendOffer.noActiveItemsDescription")}
             />
           )}
 
@@ -254,14 +256,14 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
                         {item.title}
                       </p>
                       <p className="text-xs text-slate-500 dark:text-slate-400">
-                        {item.categoryName} • {item.condition}
+                         {item.categoryName} • {t(`catalog:condition.${item.condition === "LIKE_NEW" ? "likeNew" : item.condition === "FOR_PARTS" ? "forParts" : item.condition.toLowerCase()}`)}
                       </p>
                     </div>
                   </button>
                 );
               })}
               {filteredItems.length === 0 && (
-                <p className="text-xs text-slate-400 text-center py-4">No items match your search.</p>
+                <p className="text-xs text-slate-400 text-center py-4">{t("trade:sendOffer.noItemsMatchSearch")}</p>
               )}
             </div>
           )}
@@ -273,7 +275,7 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
         <div className="mb-5 p-3 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800">
           <p className="text-sm text-emerald-700 dark:text-emerald-300">
             <Gift className="size-4 inline mr-1 -mt-0.5" />
-            Gift mode — no items to offer. Your message will explain the arrangement.
+            {t("trade:sendOffer.giftModeExplanation")}
           </p>
         </div>
       )}
@@ -281,11 +283,11 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
       {/* ── Message ─────────────────────────────────────────── */}
       <div className="mb-5">
         <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-          Message
+          {t("trade:message")}
           {messageRequired ? (
             <span className="text-red-500 ml-1">*</span>
           ) : (
-            <span className="text-slate-400 ml-1">(optional)</span>
+            <span className="text-slate-400 ml-1">{t("common:optionalParenthesized")}</span>
           )}
         </label>
         <textarea
@@ -295,22 +297,22 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
           onChange={(e) => setMessage(e.target.value)}
           placeholder={
             mode === "GIFT"
-              ? "Explain why you'd like this item as a gift..."
+              ? t("trade:sendOffer.placeholders.gift")
               : mode === "NEGOTIABLE"
-                ? "Describe your proposed terms..."
-                : "Add a message to your trade offer..."
+                ? t("trade:sendOffer.placeholders.negotiable")
+                : t("trade:sendOffer.placeholders.itemExchange")
           }
           maxLength={1000}
         />
         {messageRequired && !message.trim() && (
-          <p className="text-xs text-red-500 mt-1">Message is required for {mode === "GIFT" ? "Gift" : "Negotiable"} mode.</p>
+          <p className="text-xs text-red-500 mt-1">{t("trade:sendOffer.messageRequired", { mode: mode === "GIFT" ? t("trade:mode.gift") : t("trade:mode.negotiable") })}</p>
         )}
       </div>
 
       {/* ── Footer ──────────────────────────────────────────── */}
       <div className="flex justify-end gap-2">
         <Button variant="outline" onClick={resetAndClose}>
-          Cancel
+          {t("common:cancel")}
         </Button>
         <Button
           disabled={!isFormValid}
@@ -320,7 +322,7 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
           {mode === "ITEM_EXCHANGE" && <ArrowRightLeft className="size-4" />}
           {mode === "GIFT" && <Gift className="size-4" />}
           {mode === "NEGOTIABLE" && <MessageSquare className="size-4" />}
-          Send Offer
+          {t("trade:sendOffer.submit")}
         </Button>
       </div>
     </Modal>

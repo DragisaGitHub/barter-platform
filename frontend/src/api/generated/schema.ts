@@ -208,6 +208,24 @@ export interface paths {
         patch: operations["updateUserStatus"];
         trace?: never;
     };
+    "/users/me/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get current user preferences */
+        get: operations["getCurrentUserPreferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update current user preferences */
+        patch: operations["updateCurrentUserPreferences"];
+        trace?: never;
+    };
     "/roles": {
         parameters: {
             query?: never;
@@ -1228,6 +1246,7 @@ export interface components {
             status: components["schemas"]["UserStatus"];
             emailVerified: boolean;
             mfaEnabled: boolean;
+            preferredLanguage: components["schemas"]["PreferredLanguage"];
             /** Format: date-time */
             lastLoginAt?: string | null;
             roles: components["schemas"]["RoleResponse"][];
@@ -1238,6 +1257,11 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             updatedAt?: string | null;
+        };
+        /** @enum {string} */
+        PreferredLanguage: "SR" | "EN";
+        UserPreferencesResponse: {
+            preferredLanguage: components["schemas"]["PreferredLanguage"];
         };
         TokenResponse: {
             accessToken: string;
@@ -1866,6 +1890,9 @@ export interface components {
             /** @description Optional moderation reason for the status change. */
             reason?: string | null;
         };
+        UpdateUserPreferencesRequest: {
+            preferredLanguage: components["schemas"]["PreferredLanguage"];
+        };
         MfaVerifyRequest: {
             /** @description One-time MFA verification code. */
             code: string;
@@ -1983,6 +2010,11 @@ export interface components {
                 "application/json": components["schemas"]["UpdateUserStatusRequest"];
             };
         };
+        UpdateUserPreferencesRequest: {
+            content: {
+                "application/json": components["schemas"]["UpdateUserPreferencesRequest"];
+            };
+        };
         VerifyEmailRequest: {
             content: {
                 "application/json": components["schemas"]["VerifyEmailRequest"];
@@ -2041,6 +2073,11 @@ export interface components {
         "requestBodies-UpdateUserStatusRequest": {
             content: {
                 "application/json": components["schemas"]["UpdateUserStatusRequest"];
+            };
+        };
+        "requestBodies-UpdateUserPreferencesRequest": {
+            content: {
+                "application/json": components["schemas"]["UpdateUserPreferencesRequest"];
             };
         };
         "requestBodies-MfaVerifyRequest": {
@@ -2337,6 +2374,52 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    getCurrentUserPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description User preferences returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPreferencesResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    updateCurrentUserPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: components["requestBodies"]["requestBodies-UpdateUserPreferencesRequest"];
+        responses: {
+            /** @description User preferences updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserPreferencesResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     listRoles: {
