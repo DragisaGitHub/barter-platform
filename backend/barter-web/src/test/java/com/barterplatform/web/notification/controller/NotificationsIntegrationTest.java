@@ -1,11 +1,5 @@
 package com.barterplatform.web.notification.controller;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.barterplatform.BarterApplication;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
@@ -19,8 +13,8 @@ import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -34,6 +28,11 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest(
         classes = BarterApplication.class,
@@ -194,7 +193,7 @@ class NotificationsIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Alice accepts
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
@@ -212,6 +211,99 @@ class NotificationsIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].type").value("TRADE_OFFER_ACCEPTED"))
                 .andExpect(jsonPath("$.content[0].referenceType").value("TRADE_OFFER"))
+                .andExpect(jsonPath("$.content[0].referenceUuid").value(offerUuid));
+    }
+
+    @Test
+    void firstCompletionConfirmationCreatesCounterpartyNotification() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Book");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Gadget");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+        mockMvc.perform(apiGet("/notifications/unread-count")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(2));
+
+        mockMvc.perform(apiGet("/notifications")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].type").value("TRADE_OFFER_COMPLETION_CONFIRMED"))
+                .andExpect(jsonPath("$.content[0].referenceUuid").value(offerUuid));
+    }
+
+    @Test
+    void finalCompletionCreatesNotificationsForBothParticipants() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Book");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Gadget");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+
+        mockMvc.perform(apiGet("/notifications")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].type").value("TRADE_OFFER_COMPLETED"))
+                .andExpect(jsonPath("$.content[0].referenceUuid").value(offerUuid));
+
+        mockMvc.perform(apiGet("/notifications")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].type").value("TRADE_OFFER_COMPLETED"))
                 .andExpect(jsonPath("$.content[0].referenceUuid").value(offerUuid));
     }
 
@@ -240,7 +332,7 @@ class NotificationsIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Alice rejects
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/reject")
@@ -285,7 +377,7 @@ class NotificationsIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String offerUuid = extractField(offerResult, "uuid");
+        String offerUuid = extractField(offerResult);
 
         // Bob cancels their own offer
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/cancel")
@@ -336,7 +428,7 @@ class NotificationsIntegrationTest {
                 .andReturn();
 
         JsonNode listJson = objectMapper.readTree(listResult.getResponse().getContentAsString());
-        String notifUuid = listJson.get("content").get(0).get("uuid").asText();
+        String notifUuid = listJson.get("content").get(0).get("uuid").asString();
 
         // Mark as read
         mockMvc.perform(apiPost("/notifications/" + notifUuid + "/read")
@@ -449,7 +541,7 @@ class NotificationsIntegrationTest {
                 .andReturn();
 
         JsonNode listJson = objectMapper.readTree(listResult.getResponse().getContentAsString());
-        String aliceNotifUuid = listJson.get("content").get(0).get("uuid").asText();
+        String aliceNotifUuid = listJson.get("content").get(0).get("uuid").asString();
 
         // Bob tries to mark Alice's notification as read → 404 (not found for Bob)
         mockMvc.perform(apiPost("/notifications/" + aliceNotifUuid + "/read")
@@ -498,7 +590,7 @@ class NotificationsIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        String carolOfferUuid = extractField(carolOfferResult, "uuid");
+        String carolOfferUuid = extractField(carolOfferResult);
 
         // Alice accepts Carol's offer → Bob's competing offer is auto-rejected
         mockMvc.perform(apiPost("/trade-offers/" + carolOfferUuid + "/accept")
@@ -582,12 +674,12 @@ class NotificationsIntegrationTest {
                 .andExpect(status().isCreated())
                 .andReturn();
 
-        return extractField(result, "uuid");
+        return extractField(result);
     }
 
-    private String extractField(MvcResult result, String field) throws Exception {
+    private String extractField(MvcResult result) throws Exception {
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
-        return json.get(field).asText();
+        return json.get("uuid").asString();
     }
 
     private MockHttpServletRequestBuilder apiGet(String path) {

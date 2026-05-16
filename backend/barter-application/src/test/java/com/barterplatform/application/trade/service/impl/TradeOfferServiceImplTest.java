@@ -3,6 +3,7 @@ package com.barterplatform.application.trade.service.impl;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
@@ -43,6 +44,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -127,6 +130,19 @@ class TradeOfferServiceImplTest {
                 any(ItemEntity.class), any(CategoryEntity.class),
                 anyList(), anyList()))
                 .thenReturn(new TradeOfferResponse().uuid(UUID.randomUUID()));
+    }
+
+    private void stubOfferDetailResolution(TradeOfferEntity offer, UserEntity sender, UserEntity receiver,
+                                           ItemEntity offeredItem, ItemEntity receiverItem) {
+        CategoryEntity cat = category();
+        when(userRepository.findById(sender.getId())).thenReturn(Optional.of(sender));
+        when(userRepository.findById(receiver.getId())).thenReturn(Optional.of(receiver));
+        when(itemRepository.findById(receiverItem.getId())).thenReturn(Optional.of(receiverItem));
+        when(itemRepository.findById(offeredItem.getId())).thenReturn(Optional.of(offeredItem));
+        when(categoryRepository.findById(100L)).thenReturn(Optional.of(cat));
+        when(tradeOfferItemRepository.findItemIdsByTradeOfferIdAndSide(offer.getId(), TradeOfferItemSide.OFFERED))
+                .thenReturn(List.of(offeredItem.getId()));
+        stubMapperToResponse();
     }
 
     private CreateTradeOfferRequest createItemExchangeRequest(UUID receiverItemUuid, UUID... senderItemUuids) {
@@ -400,6 +416,164 @@ class TradeOfferServiceImplTest {
                     () -> service.acceptOffer(attackerUuid, offerUuid));
             assertEquals(403, ex.getStatus().value());
             verify(itemRepository, never()).save(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("confirmCompletion")
+    class ConfirmCompletion {
+
+        @Test
+        @DisplayName("accepted trade can be confirmed by sender and stays accepted after first confirmation")
+        void senderCanConfirmFirstWithoutCompleting() {
+            UUID senderUuid = UUID.randomUUID();
+            UUID offerUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, senderUuid, "alice");
+            UserEntity receiver = user(2L, UUID.randomUUID(), "bob");
+            TradeOfferEntity acceptedOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
+            acceptedOffer.setStatus(TradeOfferStatus.ACCEPTED);
+            acceptedOffer.setRespondedAt(OffsetDateTime.now());
+            ItemEntity offeredItem = item(10L, UUID.randomUUID(), 1L, ItemStatus.ARCHIVED);
+            ItemEntity receiverItem = item(20L, UUID.randomUUID(), 2L, ItemStatus.ARCHIVED);
+
+            when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
+            when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(acceptedOffer));
+            when(tradeOfferRepository.save(any(TradeOfferEntity.class))).thenAnswer(i -> i.getArgument(0));
+            stubOfferDetailResolution(acceptedOffer, sender, receiver, offeredItem, receiverItem);
+
+            TradeOfferResponse result = service.confirmCompletion(senderUuid, offerUuid);
+
+            assertNotNull(result);
+            assertEquals(TradeOfferStatus.ACCEPTED, acceptedOffer.getStatus());
+            assertNotNull(acceptedOffer.getSenderCompletedAt());
+            assertEquals(null, acceptedOffer.getReceiverCompletedAt());
+
+            verify(notificationService).createNotification(
+                    eq(2L), eq(NotificationType.TRADE_OFFER_COMPLETION_CONFIRMED),
+                    any(String.class), any(String.class), eq(offerUuid), eq("TRADE_OFFER"));
+        }
+
+        @Test
+        @DisplayName("accepted trade can be confirmed by receiver and stays accepted after first confirmation")
+        void receiverCanConfirmFirstWithoutCompleting() {
+            UUID receiverUuid = UUID.randomUUID();
+            UUID offerUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, UUID.randomUUID(), "alice");
+            UserEntity receiver = user(2L, receiverUuid, "bob");
+            TradeOfferEntity acceptedOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
+            acceptedOffer.setStatus(TradeOfferStatus.ACCEPTED);
+            acceptedOffer.setRespondedAt(OffsetDateTime.now());
+            ItemEntity offeredItem = item(10L, UUID.randomUUID(), 1L, ItemStatus.ARCHIVED);
+            ItemEntity receiverItem = item(20L, UUID.randomUUID(), 2L, ItemStatus.ARCHIVED);
+
+            when(userRepository.findByUuid(receiverUuid)).thenReturn(Optional.of(receiver));
+            when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(acceptedOffer));
+            when(tradeOfferRepository.save(any(TradeOfferEntity.class))).thenAnswer(i -> i.getArgument(0));
+            stubOfferDetailResolution(acceptedOffer, sender, receiver, offeredItem, receiverItem);
+
+            service.confirmCompletion(receiverUuid, offerUuid);
+
+            assertEquals(TradeOfferStatus.ACCEPTED, acceptedOffer.getStatus());
+            assertNotNull(acceptedOffer.getReceiverCompletedAt());
+            assertEquals(null, acceptedOffer.getSenderCompletedAt());
+
+            verify(notificationService).createNotification(
+                    eq(1L), eq(NotificationType.TRADE_OFFER_COMPLETION_CONFIRMED),
+                    any(String.class), any(String.class), eq(offerUuid), eq("TRADE_OFFER"));
+        }
+
+        @Test
+        @DisplayName("second confirmation completes trade and notifies both participants")
+        void secondConfirmationCompletesTrade() {
+            UUID receiverUuid = UUID.randomUUID();
+            UUID offerUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, UUID.randomUUID(), "alice");
+            UserEntity receiver = user(2L, receiverUuid, "bob");
+            TradeOfferEntity acceptedOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
+            acceptedOffer.setStatus(TradeOfferStatus.ACCEPTED);
+            acceptedOffer.setRespondedAt(OffsetDateTime.now());
+            acceptedOffer.setSenderCompletedAt(OffsetDateTime.now().minusHours(1));
+            ItemEntity offeredItem = item(10L, UUID.randomUUID(), 1L, ItemStatus.ARCHIVED);
+            ItemEntity receiverItem = item(20L, UUID.randomUUID(), 2L, ItemStatus.ARCHIVED);
+
+            when(userRepository.findByUuid(receiverUuid)).thenReturn(Optional.of(receiver));
+            when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(acceptedOffer));
+            when(tradeOfferRepository.save(any(TradeOfferEntity.class))).thenAnswer(i -> i.getArgument(0));
+            stubOfferDetailResolution(acceptedOffer, sender, receiver, offeredItem, receiverItem);
+
+            service.confirmCompletion(receiverUuid, offerUuid);
+
+            assertEquals(TradeOfferStatus.COMPLETED, acceptedOffer.getStatus());
+            assertNotNull(acceptedOffer.getReceiverCompletedAt());
+            assertNotNull(acceptedOffer.getCompletedAt());
+
+            verify(notificationService, times(2)).createNotification(
+                    any(Long.class), eq(NotificationType.TRADE_OFFER_COMPLETED),
+                    any(String.class), any(String.class), eq(offerUuid), eq("TRADE_OFFER"));
+        }
+
+        @Test
+        @DisplayName("duplicate confirmation returns conflict")
+        void duplicateConfirmationReturnsConflict() {
+            UUID senderUuid = UUID.randomUUID();
+            UUID offerUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, senderUuid, "alice");
+            TradeOfferEntity acceptedOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
+            acceptedOffer.setStatus(TradeOfferStatus.ACCEPTED);
+            acceptedOffer.setSenderCompletedAt(OffsetDateTime.now());
+
+            when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
+            when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(acceptedOffer));
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> service.confirmCompletion(senderUuid, offerUuid));
+
+            assertEquals(409, ex.getStatus().value());
+            assertTrue(ex.getMessage().contains("already confirmed"));
+        }
+
+        @Test
+        @DisplayName("non participant cannot confirm completion")
+        void nonParticipantForbidden() {
+            UUID attackerUuid = UUID.randomUUID();
+            UUID offerUuid = UUID.randomUUID();
+
+            UserEntity attacker = user(3L, attackerUuid, "eve");
+            TradeOfferEntity acceptedOffer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
+            acceptedOffer.setStatus(TradeOfferStatus.ACCEPTED);
+
+            when(userRepository.findByUuid(attackerUuid)).thenReturn(Optional.of(attacker));
+            when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(acceptedOffer));
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> service.confirmCompletion(attackerUuid, offerUuid));
+
+            assertEquals(403, ex.getStatus().value());
+        }
+
+        @ParameterizedTest
+        @EnumSource(value = TradeOfferStatus.class, names = {"PENDING", "REJECTED", "CANCELLED", "EXPIRED", "INVALIDATED", "COMPLETED"})
+        @DisplayName("cannot confirm non accepted statuses")
+        void nonAcceptedStatusesConflict(TradeOfferStatus status) {
+            UUID senderUuid = UUID.randomUUID();
+            UUID offerUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, senderUuid, "alice");
+            TradeOfferEntity offer = offer(50L, offerUuid, 1L, 2L, 10L, 20L);
+            offer.setStatus(status);
+
+            when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
+            when(tradeOfferRepository.findByUuid(offerUuid)).thenReturn(Optional.of(offer));
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> service.confirmCompletion(senderUuid, offerUuid));
+
+            assertEquals(409, ex.getStatus().value());
+            assertTrue(ex.getMessage().contains("must be ACCEPTED"));
         }
     }
 

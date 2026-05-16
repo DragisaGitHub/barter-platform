@@ -2,6 +2,7 @@ type: string
 enum:
   - PENDING
   - ACCEPTED
+  - COMPLETED
   - REJECTED
   - CANCELLED
   - EXPIRED

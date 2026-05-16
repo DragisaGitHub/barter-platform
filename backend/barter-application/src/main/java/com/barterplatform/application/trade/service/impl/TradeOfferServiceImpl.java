@@ -148,7 +148,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
                 saved.getUuid(),
                 "TRADE_OFFER");
 
-        return toResponse(saved, sender, receiver, senderItems, receiverItem);
+        return toResponse(saved, sender, receiver, senderItems, receiverItem, sender.getId());
     }
 
     // ── List Incoming ────────────────────────────────────────────
@@ -166,7 +166,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
                 : tradeOfferRepository.findByReceiverUserId(user.getId(), resolved.pageable());
 
         List<TradeOfferSummaryResponse> content = offers.getContent().stream()
-                .map(this::toSummaryResponse)
+                .map(offer -> toSummaryResponse(offer, user.getId()))
                 .toList();
 
         return pageResponseMapper.toTradeOfferPagedResponse(offers, content, resolved.sort());
@@ -187,7 +187,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
                 : tradeOfferRepository.findBySenderUserId(user.getId(), resolved.pageable());
 
         List<TradeOfferSummaryResponse> content = offers.getContent().stream()
-                .map(this::toSummaryResponse)
+                .map(offer -> toSummaryResponse(offer, user.getId()))
                 .toList();
 
         return pageResponseMapper.toTradeOfferPagedResponse(offers, content, resolved.sort());
@@ -206,7 +206,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
             throw forbidden("You are not a participant of this trade offer.");
         }
 
-        return toFullResponse(offer);
+        return toFullResponse(offer, user.getId());
     }
 
     // ── Accept ───────────────────────────────────────────────────
@@ -285,7 +285,55 @@ public class TradeOfferServiceImpl implements TradeOfferService {
                 saved.getUuid(),
                 "TRADE_OFFER");
 
-        return toResponse(saved, sender, user, offeredItems, receiverItem);
+        return toResponse(saved, sender, user, offeredItems, receiverItem, user.getId());
+    }
+
+    @Override
+    public TradeOfferResponse confirmCompletion(UUID currentUserUuid, UUID offerUuid) {
+        UserEntity user = resolveUser(currentUserUuid);
+        TradeOfferEntity offer = resolveOffer(offerUuid);
+
+        if (!isParticipant(offer, user)) {
+            throw forbidden("You are not a participant of this trade offer.");
+        }
+
+        boolean actorIsSender = offer.getSenderUserId().equals(user.getId());
+
+        try {
+            if (actorIsSender) {
+                offer.confirmCompletionBySender();
+            } else {
+                offer.confirmCompletionByReceiver();
+            }
+        } catch (IllegalStateException e) {
+            throw conflict(e.getMessage());
+        }
+
+        TradeOfferEntity saved = tradeOfferRepository.save(offer);
+
+        UserEntity sender = userRepository.findById(saved.getSenderUserId())
+                .orElseThrow(() -> notFound("Sender user was not found."));
+        UserEntity receiver = userRepository.findById(saved.getReceiverUserId())
+                .orElseThrow(() -> notFound("Receiver user was not found."));
+        ItemEntity receiverItem = itemRepository.findById(saved.getReceiverItemId())
+                .orElseThrow(() -> notFound("Receiver item was not found."));
+        List<ItemEntity> offeredItems = resolveOfferedItems(saved);
+
+        if (saved.isCompleted()) {
+            notifyTradeCompleted(saved, sender, receiver, receiverItem);
+        } else {
+            UserEntity counterparty = actorIsSender ? receiver : sender;
+            notificationService.createNotification(
+                    counterparty.getId(),
+                    NotificationType.TRADE_OFFER_COMPLETION_CONFIRMED,
+                    user.getUsername() + " confirmed trade completion",
+                    user.getUsername() + " confirmed completion for the trade involving \""
+                            + receiverItem.getTitle() + "\". Confirm once your side of the exchange is complete.",
+                    saved.getUuid(),
+                    "TRADE_OFFER");
+        }
+
+        return toResponse(saved, sender, receiver, offeredItems, receiverItem, user.getId());
     }
 
     // ── Reject ───────────────────────────────────────────────────
@@ -319,7 +367,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
                 saved.getUuid(),
                 "TRADE_OFFER");
 
-        return toFullResponse(saved);
+        return toFullResponse(saved, user.getId());
     }
 
     // ── Cancel ───────────────────────────────────────────────────
@@ -353,7 +401,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
                 saved.getUuid(),
                 "TRADE_OFFER");
 
-        return toFullResponse(saved);
+        return toFullResponse(saved, user.getId());
     }
 
     // ── Private helpers ──────────────────────────────────────────
@@ -436,6 +484,15 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         itemRepository.save(item);
     }
 
+    private List<ItemEntity> resolveOfferedItems(TradeOfferEntity offer) {
+        List<Long> offeredItemIds = tradeOfferItemRepository.findItemIdsByTradeOfferIdAndSide(
+                offer.getId(), TradeOfferItemSide.OFFERED);
+        return offeredItemIds.stream()
+                .map(id -> itemRepository.findById(id)
+                        .orElseThrow(() -> notFound("Offered item was not found.")))
+                .toList();
+    }
+
     private CategoryEntity resolveCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> notFound("Category was not found."));
@@ -444,7 +501,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
     /**
      * Build a full TradeOfferResponse with all embedded summaries.
      */
-    private TradeOfferResponse toFullResponse(TradeOfferEntity offer) {
+    private TradeOfferResponse toFullResponse(TradeOfferEntity offer, Long currentUserId) {
         UserEntity sender = userRepository.findById(offer.getSenderUserId())
                 .orElseThrow(() -> notFound("Sender user was not found."));
         UserEntity receiver = userRepository.findById(offer.getReceiverUserId())
@@ -452,35 +509,32 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         ItemEntity receiverItem = itemRepository.findById(offer.getReceiverItemId())
                 .orElseThrow(() -> notFound("Receiver item was not found."));
 
-        // Resolve offered items from trade_offer_items
-        List<Long> offeredItemIds = tradeOfferItemRepository.findItemIdsByTradeOfferIdAndSide(
-                offer.getId(), TradeOfferItemSide.OFFERED);
-        List<ItemEntity> offeredItems = offeredItemIds.stream()
-                .map(id -> itemRepository.findById(id)
-                        .orElseThrow(() -> notFound("Offered item was not found.")))
-                .toList();
+        List<ItemEntity> offeredItems = resolveOfferedItems(offer);
 
-        return toResponse(offer, sender, receiver, offeredItems, receiverItem);
+        return toResponse(offer, sender, receiver, offeredItems, receiverItem, currentUserId);
     }
 
     private TradeOfferResponse toResponse(TradeOfferEntity offer,
                                            UserEntity sender,
                                            UserEntity receiver,
                                            List<ItemEntity> offeredItems,
-                                           ItemEntity receiverItem) {
+                                           ItemEntity receiverItem,
+                                           Long currentUserId) {
         CategoryEntity receiverCategory = resolveCategory(receiverItem.getCategoryId());
         List<CategoryEntity> offeredCategories = offeredItems.stream()
                 .map(item -> resolveCategory(item.getCategoryId()))
                 .toList();
 
-        return tradeOfferMapper.toResponse(offer, sender, receiver,
+        TradeOfferResponse response = tradeOfferMapper.toResponse(offer, sender, receiver,
                 receiverItem, receiverCategory, offeredItems, offeredCategories);
+        enrichCompletionState(response, offer, currentUserId);
+        return response;
     }
 
     /**
      * Build a TradeOfferSummaryResponse for list endpoints.
      */
-    private TradeOfferSummaryResponse toSummaryResponse(TradeOfferEntity offer) {
+    private TradeOfferSummaryResponse toSummaryResponse(TradeOfferEntity offer, Long currentUserId) {
         UserEntity sender = userRepository.findById(offer.getSenderUserId())
                 .orElseThrow(() -> notFound("Sender user was not found."));
         UserEntity receiver = userRepository.findById(offer.getReceiverUserId())
@@ -489,19 +543,63 @@ public class TradeOfferServiceImpl implements TradeOfferService {
                 .orElseThrow(() -> notFound("Receiver item was not found."));
         CategoryEntity receiverCategory = resolveCategory(receiverItem.getCategoryId());
 
-        // Resolve offered items from trade_offer_items
-        List<Long> offeredItemIds = tradeOfferItemRepository.findItemIdsByTradeOfferIdAndSide(
-                offer.getId(), TradeOfferItemSide.OFFERED);
-        List<ItemEntity> offeredItems = offeredItemIds.stream()
-                .map(id -> itemRepository.findById(id)
-                        .orElseThrow(() -> notFound("Offered item was not found.")))
-                .toList();
+        List<ItemEntity> offeredItems = resolveOfferedItems(offer);
         List<CategoryEntity> offeredCategories = offeredItems.stream()
                 .map(item -> resolveCategory(item.getCategoryId()))
                 .toList();
 
-        return tradeOfferMapper.toSummaryResponse(offer, sender, receiver,
+        TradeOfferSummaryResponse response = tradeOfferMapper.toSummaryResponse(offer, sender, receiver,
                 receiverItem, receiverCategory, offeredItems, offeredCategories);
+        enrichCompletionState(response, offer, currentUserId);
+        return response;
+    }
+
+    private void enrichCompletionState(TradeOfferResponse response, TradeOfferEntity offer, Long currentUserId) {
+        boolean participant = offer.getSenderUserId().equals(currentUserId) || offer.getReceiverUserId().equals(currentUserId);
+        boolean confirmed = hasCurrentUserConfirmedCompletion(offer, currentUserId);
+        response.setCurrentUserCompletionConfirmed(participant && confirmed);
+        response.setCanConfirmCompletion(participant && offer.isAccepted() && !confirmed);
+    }
+
+    private void enrichCompletionState(TradeOfferSummaryResponse response, TradeOfferEntity offer, Long currentUserId) {
+        boolean participant = offer.getSenderUserId().equals(currentUserId) || offer.getReceiverUserId().equals(currentUserId);
+        boolean confirmed = hasCurrentUserConfirmedCompletion(offer, currentUserId);
+        response.setCurrentUserCompletionConfirmed(participant && confirmed);
+        response.setCanConfirmCompletion(participant && offer.isAccepted() && !confirmed);
+    }
+
+    private boolean hasCurrentUserConfirmedCompletion(TradeOfferEntity offer, Long currentUserId) {
+        if (offer.getSenderUserId().equals(currentUserId)) {
+            return offer.getSenderCompletedAt() != null;
+        }
+        if (offer.getReceiverUserId().equals(currentUserId)) {
+            return offer.getReceiverCompletedAt() != null;
+        }
+        return false;
+    }
+
+    private void notifyTradeCompleted(
+            TradeOfferEntity offer,
+            UserEntity sender,
+            UserEntity receiver,
+            ItemEntity receiverItem) {
+        notificationService.createNotification(
+                sender.getId(),
+                NotificationType.TRADE_OFFER_COMPLETED,
+                "Trade completed with " + receiver.getUsername(),
+                "Your trade with " + receiver.getUsername() + " for \"" + receiverItem.getTitle()
+                        + "\" has been marked completed.",
+                offer.getUuid(),
+                "TRADE_OFFER");
+
+        notificationService.createNotification(
+                receiver.getId(),
+                NotificationType.TRADE_OFFER_COMPLETED,
+                "Trade completed with " + sender.getUsername(),
+                "Your trade with " + sender.getUsername() + " for \"" + receiverItem.getTitle()
+                        + "\" has been marked completed.",
+                offer.getUuid(),
+                "TRADE_OFFER");
     }
 
     private ApiException notFound(String messageTemplate, Object... args) {

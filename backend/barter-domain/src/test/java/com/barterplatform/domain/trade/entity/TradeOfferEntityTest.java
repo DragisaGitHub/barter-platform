@@ -30,10 +30,16 @@ class TradeOfferEntityTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "REJECTED", "CANCELLED", "EXPIRED"})
+    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED", "INVALIDATED"})
     void isPending_whenTerminalStatus_returnsFalse(TradeOfferStatus status) {
         offer.setStatus(status);
         assertFalse(offer.isPending());
+    }
+
+    @Test
+    void isCompleted_whenStatusIsCompleted_returnsTrue() {
+        offer.setStatus(TradeOfferStatus.COMPLETED);
+        assertTrue(offer.isCompleted());
     }
 
     @Test
@@ -65,7 +71,7 @@ class TradeOfferEntityTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "REJECTED", "CANCELLED", "EXPIRED"})
+    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED", "INVALIDATED"})
     void accept_fromTerminalStatus_throwsException(TradeOfferStatus status) {
         offer.setStatus(status);
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> offer.accept());
@@ -74,7 +80,7 @@ class TradeOfferEntityTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "REJECTED", "CANCELLED", "EXPIRED"})
+    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED", "INVALIDATED"})
     void reject_fromTerminalStatus_throwsException(TradeOfferStatus status) {
         offer.setStatus(status);
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> offer.reject());
@@ -82,7 +88,7 @@ class TradeOfferEntityTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "REJECTED", "CANCELLED", "EXPIRED"})
+    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED", "INVALIDATED"})
     void cancel_fromTerminalStatus_throwsException(TradeOfferStatus status) {
         offer.setStatus(status);
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> offer.cancel());
@@ -90,10 +96,55 @@ class TradeOfferEntityTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "REJECTED", "CANCELLED", "EXPIRED"})
+    @EnumSource(value = TradeOfferStatus.class, names = {"ACCEPTED", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED", "INVALIDATED"})
     void expire_fromTerminalStatus_throwsException(TradeOfferStatus status) {
         offer.setStatus(status);
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> offer.expire());
         assertTrue(ex.getMessage().contains("Cannot expire"));
+    }
+
+    @Test
+    void confirmCompletionBySender_fromAccepted_setsSenderCompletionOnly() {
+        offer.accept();
+
+        offer.confirmCompletionBySender();
+
+        assertEquals(TradeOfferStatus.ACCEPTED, offer.getStatus());
+        assertNotNull(offer.getSenderCompletedAt());
+        assertNull(offer.getReceiverCompletedAt());
+        assertNull(offer.getCompletedAt());
+    }
+
+    @Test
+    void confirmCompletionByReceiver_afterSenderConfirmation_completesTrade() {
+        offer.accept();
+        offer.confirmCompletionBySender();
+
+        offer.confirmCompletionByReceiver();
+
+        assertEquals(TradeOfferStatus.COMPLETED, offer.getStatus());
+        assertNotNull(offer.getSenderCompletedAt());
+        assertNotNull(offer.getReceiverCompletedAt());
+        assertNotNull(offer.getCompletedAt());
+    }
+
+    @Test
+    void confirmCompletionBySender_twice_throwsException() {
+        offer.accept();
+        offer.confirmCompletionBySender();
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, offer::confirmCompletionBySender);
+
+        assertTrue(ex.getMessage().contains("already confirmed"));
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TradeOfferStatus.class, names = {"PENDING", "COMPLETED", "REJECTED", "CANCELLED", "EXPIRED", "INVALIDATED"})
+    void confirmCompletion_fromNonAcceptedStatus_throwsException(TradeOfferStatus status) {
+        offer.setStatus(status);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class, offer::confirmCompletionBySender);
+
+        assertTrue(ex.getMessage().contains("must be ACCEPTED"));
     }
 }

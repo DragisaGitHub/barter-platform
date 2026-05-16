@@ -41,6 +41,11 @@ public interface TradeOfferService {
     TradeOfferResponse acceptOffer(UUID currentUserUuid, UUID offerUuid);
 
     /**
+     * Confirm exchange completion for an accepted trade offer. Only the sender or receiver may confirm.
+     */
+    TradeOfferResponse confirmCompletion(UUID currentUserUuid, UUID offerUuid);
+
+    /**
      * Reject a pending trade offer. Only the receiver may reject.
      */
     TradeOfferResponse rejectOffer(UUID currentUserUuid, UUID offerUuid);

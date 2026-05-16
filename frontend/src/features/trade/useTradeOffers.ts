@@ -5,6 +5,7 @@ import {
   listSentTradeOffers,
   getTradeOfferByUuid,
   acceptTradeOffer,
+  confirmTradeOfferCompletion,
   rejectTradeOffer,
   cancelTradeOffer,
   type ListTradeOffersParams,
@@ -15,6 +16,8 @@ import type {
   CreateTradeOfferRequest,
 } from "@/api/generated/types.ts";
 import { catalogKeys } from "@/features/catalog/useCatalog.ts";
+import { profileKeys } from "@/features/profile/useProfile.ts";
+import { notificationKeys } from "@/features/notifications/useNotifications.ts";
 
 // ─── Query keys ─────────────────────────────────────────────────────────────
 
@@ -102,6 +105,18 @@ export function useRejectTradeOffer() {
     mutationFn: (uuid: string) => rejectTradeOffer(uuid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tradeOfferKeys.all });
+    },
+  });
+}
+
+export function useConfirmTradeOfferCompletion() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (uuid: string) => confirmTradeOfferCompletion(uuid),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tradeOfferKeys.all });
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
   });
 }

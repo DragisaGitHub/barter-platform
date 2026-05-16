@@ -13,10 +13,12 @@ import type { ListTradeOffersParams } from "@/api/tradeOfferApi.ts";
 const STATUS_OPTIONS: { value: TradeOfferStatus | ""; label: string }[] = [
   { value: "", label: "All Statuses" },
   { value: "PENDING", label: "Pending" },
-  { value: "ACCEPTED", label: "Accepted" },
+  { value: "ACCEPTED", label: "Awaiting completion" },
+  { value: "COMPLETED", label: "Completed" },
   { value: "REJECTED", label: "Rejected" },
   { value: "CANCELLED", label: "Cancelled" },
   { value: "EXPIRED", label: "Expired" },
+  { value: "INVALIDATED", label: "Invalidated" },
 ];
 
 export function IncomingOffersPage() {

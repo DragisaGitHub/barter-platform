@@ -128,6 +128,8 @@ paths:
     $ref: './paths/trade-offers.yaml#/byUuid'
   /trade-offers/{tradeOfferUuid}/accept:
     $ref: './paths/trade-offers.yaml#/accept'
+  /trade-offers/{tradeOfferUuid}/confirm-completion:
+    $ref: './paths/trade-offers.yaml#/confirmCompletion'
   /trade-offers/{tradeOfferUuid}/reject:
     $ref: './paths/trade-offers.yaml#/reject'
   /trade-offers/{tradeOfferUuid}/cancel:

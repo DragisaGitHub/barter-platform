@@ -79,7 +79,7 @@ public class TradeOfferMessageServiceImpl implements TradeOfferMessageService {
 
         validateParticipant(currentUser, tradeOffer);
 
-        if (tradeOffer.getStatus() != TradeOfferStatus.PENDING) {
+        if (!isWritableStatus(tradeOffer.getStatus())) {
             throw conflict();
         }
 
@@ -156,6 +156,10 @@ public class TradeOfferMessageServiceImpl implements TradeOfferMessageService {
         return normalized;
     }
 
+    private boolean isWritableStatus(TradeOfferStatus status) {
+        return status == TradeOfferStatus.PENDING || status == TradeOfferStatus.ACCEPTED;
+    }
+
     private ApiException badRequest(String message) {
         return new ApiException(
                 HttpStatus.BAD_REQUEST,
@@ -174,7 +178,7 @@ public class TradeOfferMessageServiceImpl implements TradeOfferMessageService {
         return new ApiException(
                 HttpStatus.CONFLICT,
                 ErrorCode.CONFLICT,
-                "Messages can only be sent while the trade offer is pending.");
+                "Messages can only be sent while the trade offer is pending or awaiting completion.");
     }
 
     private ApiException notFound(String message) {

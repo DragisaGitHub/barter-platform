@@ -185,6 +185,23 @@ class TradeOffersControllerMvcTest {
         verify(tradeOfferService).acceptOffer(USER_UUID, offerUuid);
     }
 
+    @Test
+    void confirmTradeOfferCompletionShouldDelegate() throws Exception {
+        setAuthenticatedUser();
+
+        UUID offerUuid = UUID.randomUUID();
+        TradeOfferResponse response = new TradeOfferResponse()
+                .uuid(offerUuid)
+                .status(com.barterplatform.api.model.TradeOfferStatus.COMPLETED);
+        when(tradeOfferService.confirmCompletion(USER_UUID, offerUuid)).thenReturn(response);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+
+        verify(tradeOfferService).confirmCompletion(USER_UUID, offerUuid);
+    }
+
     // ── rejectTradeOffer ──────────────────────────────────────────
 
     @Test

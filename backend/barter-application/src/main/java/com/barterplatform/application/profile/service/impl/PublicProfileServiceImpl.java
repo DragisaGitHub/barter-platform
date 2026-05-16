@@ -77,9 +77,9 @@ public class PublicProfileServiceImpl implements PublicProfileService {
         int activeItemCount = (int) itemRepository.countByOwnerIdAndStatus(user.getId(), ItemStatus.ACTIVE);
 
         long completedAsSender = tradeOfferRepository.countBySenderUserIdAndStatus(
-                user.getId(), TradeOfferStatus.ACCEPTED);
+                user.getId(), TradeOfferStatus.COMPLETED);
         long completedAsReceiver = tradeOfferRepository.countByReceiverUserIdAndStatus(
-                user.getId(), TradeOfferStatus.ACCEPTED);
+                user.getId(), TradeOfferStatus.COMPLETED);
         int completedTradeCount = (int) (completedAsSender + completedAsReceiver);
 
         long cancelledAsSender = tradeOfferRepository.countBySenderUserIdAndStatus(

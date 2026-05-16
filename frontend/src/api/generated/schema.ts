@@ -824,10 +824,30 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Accept a pending trade offer (receiver only)
-         * @description Accepts a pending trade offer. Only the receiver can accept. On acceptance, the requested item and all offered items are archived. All other PENDING offers involving any of the accepted items are automatically rejected.
+         * Accept a pending trade offer and move it to awaiting completion (receiver only)
+         * @description Accepts a pending trade offer. Only the receiver can accept. On acceptance, the requested item and all offered items are archived. All other PENDING offers involving any of the accepted items are automatically rejected. The trade offer remains ACCEPTED until both participants confirm that the exchange was completed.
          */
         post: operations["acceptTradeOffer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/trade-offers/{tradeOfferUuid}/confirm-completion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm completion for an accepted trade offer (participant only)
+         * @description Records the authenticated participant's completion confirmation for an ACCEPTED trade offer. The first confirmation keeps the trade in ACCEPTED status. The second confirmation sets the trade status to COMPLETED and stores completedAt.
+         */
+        post: operations["confirmTradeOfferCompletion"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1515,7 +1535,7 @@ export interface components {
             userMessage?: string | null;
         };
         /** @enum {string} */
-        TradeOfferStatus: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | "EXPIRED" | "INVALIDATED";
+        TradeOfferStatus: "PENDING" | "ACCEPTED" | "COMPLETED" | "REJECTED" | "CANCELLED" | "EXPIRED" | "INVALIDATED";
         /** @enum {string} */
         TradeOfferMode: "ITEM_EXCHANGE" | "GIFT" | "NEGOTIABLE";
         CreateTradeOfferRequest: {
@@ -1560,6 +1580,14 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             respondedAt?: string | null;
+            /** Format: date-time */
+            senderCompletedAt?: string | null;
+            /** Format: date-time */
+            receiverCompletedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+            currentUserCompletionConfirmed?: boolean;
+            canConfirmCompletion?: boolean;
         };
         TradeOfferResponse: {
             /** Format: uuid */
@@ -1578,6 +1606,14 @@ export interface components {
             createdAt: string;
             /** Format: date-time */
             respondedAt?: string | null;
+            /** Format: date-time */
+            senderCompletedAt?: string | null;
+            /** Format: date-time */
+            receiverCompletedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+            currentUserCompletionConfirmed?: boolean;
+            canConfirmCompletion?: boolean;
             /** Format: date-time */
             expiresAt?: string | null;
         };
@@ -1614,7 +1650,7 @@ export interface components {
             createdAt: string;
         };
         /** @enum {string} */
-        NotificationType: "TRADE_OFFER_RECEIVED" | "TRADE_OFFER_ACCEPTED" | "TRADE_OFFER_REJECTED" | "TRADE_OFFER_CANCELLED" | "LISTING_REMOVED" | "LISTING_RESTORED";
+        NotificationType: "TRADE_OFFER_RECEIVED" | "TRADE_OFFER_ACCEPTED" | "TRADE_OFFER_COMPLETION_CONFIRMED" | "TRADE_OFFER_COMPLETED" | "TRADE_OFFER_REJECTED" | "TRADE_OFFER_CANCELLED" | "LISTING_REMOVED" | "LISTING_RESTORED";
         NotificationResponse: {
             /** Format: uuid */
             uuid: string;
@@ -3453,6 +3489,33 @@ export interface operations {
         requestBody?: never;
         responses: {
             /** @description Trade offer accepted successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    confirmTradeOfferCompletion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public trade offer UUID. */
+                tradeOfferUuid: components["parameters"]["TradeOfferUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Trade offer completion confirmation recorded successfully */
             200: {
                 headers: {
                     [name: string]: unknown;

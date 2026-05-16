@@ -18,6 +18,10 @@ export function getNotificationIconName(type: NotificationType): string {
       return "inbox";
     case "TRADE_OFFER_ACCEPTED":
       return "check-circle";
+    case "TRADE_OFFER_COMPLETION_CONFIRMED":
+      return "clock-3";
+    case "TRADE_OFFER_COMPLETED":
+      return "badge-check";
     case "TRADE_OFFER_REJECTED":
       return "x-circle";
     case "TRADE_OFFER_CANCELLED":
@@ -39,6 +43,10 @@ export function getNotificationColor(type: NotificationType): string {
     case "TRADE_OFFER_RECEIVED":
       return "text-indigo-500 dark:text-indigo-400";
     case "TRADE_OFFER_ACCEPTED":
+      return "text-emerald-500 dark:text-emerald-400";
+    case "TRADE_OFFER_COMPLETION_CONFIRMED":
+      return "text-amber-500 dark:text-amber-400";
+    case "TRADE_OFFER_COMPLETED":
       return "text-emerald-500 dark:text-emerald-400";
     case "TRADE_OFFER_REJECTED":
       return "text-red-500 dark:text-red-400";

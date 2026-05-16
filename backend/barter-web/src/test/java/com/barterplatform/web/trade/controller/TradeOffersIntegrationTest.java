@@ -550,6 +550,121 @@ class TradeOffersIntegrationTest {
                 .andExpect(jsonPath("$.status").value("REJECTED"));
     }
 
+    @Test
+    void acceptedTradeRequiresBothParticipantsToConfirmCompletion() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.currentUserCompletionConfirmed").value(true))
+                .andExpect(jsonPath("$.canConfirmCompletion").value(false))
+                .andExpect(jsonPath("$.senderCompletedAt").isNotEmpty());
+
+        mockMvc.perform(apiGet("/trade-offers/" + offerUuid)
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"))
+                .andExpect(jsonPath("$.currentUserCompletionConfirmed").value(false))
+                .andExpect(jsonPath("$.canConfirmCompletion").value(true));
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.currentUserCompletionConfirmed").value(true))
+                .andExpect(jsonPath("$.canConfirmCompletion").value(false))
+                .andExpect(jsonPath("$.completedAt").isNotEmpty())
+                .andExpect(jsonPath("$.senderCompletedAt").isNotEmpty())
+                .andExpect(jsonPath("$.receiverCompletedAt").isNotEmpty());
+    }
+
+    @Test
+    void nonParticipantCannotConfirmCompletion() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+        String charlieToken = registerActivateAndLogin("charlie", "charlie@test.com", "P@ssword789");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion")
+                        .header("Authorization", "Bearer " + charlieToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void cannotConfirmPendingTrade() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isConflict());
+    }
+
     // ══════════════════════════════════════════════════════════════
     //  Status filter on list endpoints
     // ══════════════════════════════════════════════════════════════
@@ -979,7 +1094,7 @@ class TradeOffersIntegrationTest {
     }
 
     @Test
-    void cannotSendMessageForNonPendingOffer() throws Exception {
+    void cannotSendMessageForCompletedOffer() throws Exception {
         String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
         String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
 
@@ -1005,6 +1120,16 @@ class TradeOffersIntegrationTest {
                         .header("Authorization", "Bearer " + aliceToken))
                 .andExpect(status().isOk());
 
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion")
+                        .header("Authorization", "Bearer " + bobToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/confirm-completion")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("COMPLETED"));
+
         mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/messages")
                         .header("Authorization", "Bearer " + bobToken)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -1014,6 +1139,46 @@ class TradeOffersIntegrationTest {
                             }
                             """))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void messagesRemainWritableAfterAcceptUntilCompleted() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice Item");
+        String bobItemUuid = createActiveItem(bobToken, "Bob Item");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "receiverItemUuid": "%s",
+                              "senderItemUuids": ["%s"],
+                              "mode": "ITEM_EXCHANGE"
+                            }
+                            """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/accept")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("ACCEPTED"));
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/messages")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "content": "Let's meet this afternoon"
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.content").value("Let's meet this afternoon"));
     }
 
     @Test
@@ -1099,7 +1264,7 @@ class TradeOffersIntegrationTest {
                 .andReturn();
 
         JsonNode loginJson = objectMapper.readTree(loginResult.getResponse().getContentAsString());
-        return loginJson.get("accessToken").asText();
+        return loginJson.get("accessToken").asString();
     }
 
     private String createActiveItem(String token, String title) throws Exception {
@@ -1123,7 +1288,7 @@ class TradeOffersIntegrationTest {
 
     private String extractField(MvcResult result) throws Exception {
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
-        return json.get("uuid").asText();
+        return json.get("uuid").asString();
     }
 
     private MockHttpServletRequestBuilder apiGet(String path) {

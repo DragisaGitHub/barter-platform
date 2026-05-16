@@ -46,6 +46,11 @@ export async function acceptTradeOffer(uuid: string): Promise<TradeOfferResponse
   return response.data;
 }
 
+export async function confirmTradeOfferCompletion(uuid: string): Promise<TradeOfferResponse> {
+  const response = await apiClient.post<TradeOfferResponse>(`/trade-offers/${uuid}/confirm-completion`);
+  return response.data;
+}
+
 export async function rejectTradeOffer(uuid: string): Promise<TradeOfferResponse> {
   const response = await apiClient.post<TradeOfferResponse>(`/trade-offers/${uuid}/reject`);
   return response.data;

@@ -4,6 +4,7 @@ import { useTradeOffer } from "./useTradeOffers";
 import { TradeOfferStatusBadge } from "./TradeOfferStatusBadge";
 import { TradeOfferModeBadge } from "./TradeOfferModeBadge";
 import { TradeOfferActionButtons } from "./TradeOfferActionButtons";
+import { TradeOfferCompletionActions } from "./TradeOfferCompletionActions";
 import { ItemStatusBadge, ItemConditionBadge } from "../catalog/ItemBadges";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -21,8 +22,13 @@ const STATUS_DETAIL: Record<TradeOfferStatus, { label: string; description: stri
     icon: <Clock className="size-4 text-amber-500" />,
   },
   ACCEPTED: {
-    label: "Accepted",
-    description: "Trade accepted. All involved items are now archived.",
+    label: "Awaiting completion",
+    description: "Trade agreed. The involved items are archived while both participants complete the exchange and confirm it.",
+    icon: <Clock className="size-4 text-amber-500" />,
+  },
+  COMPLETED: {
+    label: "Completed",
+    description: "Both participants confirmed the exchange, and this trade is now complete.",
     icon: <Check className="size-4 text-green-500" />,
   },
   REJECTED: {
@@ -132,6 +138,13 @@ export function TradeOfferDetailPage() {
         </div>
       </Card>
 
+      <div className="mb-6">
+        <TradeOfferCompletionActions
+          offer={offer}
+          currentUserUuid={user?.uuid ?? ""}
+        />
+      </div>
+
       {/* Message (prominent for GIFT/NEGOTIABLE) */}
       {offer.message && (
         <Card className={`mb-6 ${
@@ -212,7 +225,7 @@ export function TradeOfferDetailPage() {
 
       {/* Metadata */}
       <Card className="mb-6">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
           <div>
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               From
@@ -243,6 +256,14 @@ export function TradeOfferDetailPage() {
             </p>
             <p className="text-sm text-slate-900 dark:text-slate-100">
               {offer.respondedAt ? new Date(offer.respondedAt).toLocaleString() : "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+              Completed
+            </p>
+            <p className="text-sm text-slate-900 dark:text-slate-100">
+              {offer.completedAt ? new Date(offer.completedAt).toLocaleString() : "—"}
             </p>
           </div>
         </div>

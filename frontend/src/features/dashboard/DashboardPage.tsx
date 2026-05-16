@@ -53,7 +53,8 @@ function getTradeOfferSummary(
 
 const STATUS_EXPLANATION: Record<TradeOfferStatus, string> = {
   PENDING: "Waiting for response",
-  ACCEPTED: "Trade accepted",
+  ACCEPTED: "Awaiting completion confirmation",
+  COMPLETED: "Trade completed",
   REJECTED: "Trade rejected",
   CANCELLED: "Cancelled by sender",
   EXPIRED: "Expired",
@@ -333,7 +334,7 @@ export function DashboardPage() {
               <div className="text-center py-8">
                 <ArrowRightLeft className="size-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
                 <p className="text-sm text-slate-500 dark:text-slate-400">
-                  No pending trade offers right now.
+                  No recent trade activity right now.
                 </p>
                 <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
                   Trade activity will appear here once you start trading.

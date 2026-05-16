@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck, Clock3, BadgeCheck } from "lucide-react";
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from "./useNotifications";
 import { formatNotificationTime, getNotificationColor, getNotificationTargetPath } from "./notificationHelpers";
 import { Spinner } from "@/components/ui/Spinner";
@@ -17,6 +17,10 @@ function NotificationIcon({ type, className }: { type: NotificationType; classNa
       return <Inbox className={iconClass} />;
     case "TRADE_OFFER_ACCEPTED":
       return <CheckCircle className={iconClass} />;
+    case "TRADE_OFFER_COMPLETION_CONFIRMED":
+      return <Clock3 className={iconClass} />;
+    case "TRADE_OFFER_COMPLETED":
+      return <BadgeCheck className={iconClass} />;
     case "TRADE_OFFER_REJECTED":
       return <XCircle className={iconClass} />;
     case "TRADE_OFFER_CANCELLED":
@@ -212,7 +216,7 @@ export function NotificationBell() {
                   No notifications yet
                 </p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Trade offer updates will show up here as soon as someone responds.
+                  Trade offer and completion updates will show up here as soon as something changes.
                 </p>
               </div>
             ) : (
