@@ -89,6 +89,7 @@ class AuthControllerMvcTest {
                 .andExpect(jsonPath("$.status").value("PENDING_VERIFICATION"))
                 .andExpect(jsonPath("$.emailVerified").value(false))
                 .andExpect(jsonPath("$.mfaEnabled").value(false))
+                .andExpect(jsonPath("$.preferredLanguage").value("SR"))
                 .andExpect(jsonPath("$.roles").isArray())
                 .andExpect(jsonPath("$.permissions").isArray())
                 .andExpect(jsonPath("$.oauthAccounts").isArray())
@@ -134,7 +135,8 @@ class AuthControllerMvcTest {
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.expiresIn").value(1800))
                 .andExpect(jsonPath("$.user").exists())
-                .andExpect(jsonPath("$.user.uuid").value("11111111-1111-1111-1111-111111111111"));
+                .andExpect(jsonPath("$.user.uuid").value("11111111-1111-1111-1111-111111111111"))
+                .andExpect(jsonPath("$.user.preferredLanguage").value("EN"));
 
         verify(authService).login(request);
         verifyNoMoreInteractions(authService);
@@ -340,6 +342,7 @@ class AuthControllerMvcTest {
                 .status(UserStatus.PENDING_VERIFICATION)
                 .emailVerified(false)
                 .mfaEnabled(false)
+                .preferredLanguage(PreferredLanguage.SR)
                 .roles(List.of())
                 .permissions(List.of())
                 .oauthAccounts(List.of())
@@ -360,6 +363,7 @@ class AuthControllerMvcTest {
                         .status(UserStatus.ACTIVE)
                         .emailVerified(true)
                         .mfaEnabled(false)
+                        .preferredLanguage(PreferredLanguage.EN)
                         .roles(List.of())
                         .permissions(List.of())
                         .oauthAccounts(List.of())

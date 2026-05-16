@@ -2,6 +2,7 @@ import { type ReactNode } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
 import { cn } from "@/utils";
+import { useTranslation } from "react-i18next";
 
 interface AdminPageShellProps {
   title: string;
@@ -24,6 +25,7 @@ export function AdminPageShell({
   className,
   contentClassName,
 }: AdminPageShellProps) {
+  const { t } = useTranslation("admin");
   return (
     <div className={cn("mx-auto flex w-full max-w-7xl flex-col gap-6", className)}>
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
@@ -32,8 +34,8 @@ export function AdminPageShell({
             <div className="mb-3 flex flex-wrap items-center gap-2">
               {badges ?? (
                 <>
-                  <Badge variant="primary">Admin</Badge>
-                  <Badge>Control panel</Badge>
+                  <Badge variant="primary">{t("admin")}</Badge>
+                  <Badge>{t("controlPanel")}</Badge>
                 </>
               )}
             </div>

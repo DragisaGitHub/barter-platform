@@ -11,6 +11,7 @@ import type {components} from "./schema";
 // ─── Enums ──────────────────────────────────────────────────────────────────
 
 export type UserStatus = components["schemas"]["UserStatus"];
+export type PreferredLanguage = components["schemas"]["PreferredLanguage"];
 
 // ─── Response DTOs ──────────────────────────────────────────────────────────
 
@@ -22,6 +23,7 @@ export type UserSummaryResponse = components["schemas"]["UserSummaryResponse"];
 export type UserPagedResponse = components["schemas"]["UserPagedResponse"];
 export type UserResponse = components["schemas"]["UserResponse"];
 export type CurrentUserResponse = components["schemas"]["CurrentUserResponse"];
+export type UserPreferencesResponse = components["schemas"]["UserPreferencesResponse"];
 export type TokenResponse = components["schemas"]["TokenResponse"];
 
 // ─── Request DTOs ───────────────────────────────────────────────────────────
@@ -32,6 +34,7 @@ export type ForgotPasswordRequest = components["schemas"]["ForgotPasswordRequest
 export type ResetPasswordRequest = components["schemas"]["ResetPasswordRequest"];
 export type VerifyEmailRequest = components["schemas"]["VerifyEmailRequest"];
 export type ResendVerificationCodeRequest = components["schemas"]["ResendVerificationCodeRequest"];
+export type UpdateUserPreferencesRequest = components["schemas"]["UpdateUserPreferencesRequest"];
 
 // ─── Misc Response DTOs ─────────────────────────────────────────────────────
 

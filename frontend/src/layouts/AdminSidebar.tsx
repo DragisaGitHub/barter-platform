@@ -1,4 +1,5 @@
 import { NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   FolderTree,
   KeyRound,
@@ -27,19 +28,21 @@ interface AdminNavItem {
   end?: boolean;
 }
 
-const adminNavItems: AdminNavItem[] = [
-  { to: routePaths.admin.dashboard, label: "Admin Dashboard", icon: LayoutDashboard, end: true },
-  { to: routePaths.admin.users, label: "Users", icon: Users },
-  { to: routePaths.admin.roles, label: "Roles", icon: KeyRound },
-  { to: routePaths.admin.permissions, label: "Permissions", icon: Lock },
-  { to: routePaths.admin.system, label: "System", icon: Settings },
-  { to: routePaths.admin.categories, label: "Categories", icon: FolderTree, end: true },
-  { to: routePaths.admin.listings, label: "Listings", icon: Package, end: true },
-  { to: routePaths.admin.reviews, label: "Reviews", icon: MessageSquareWarning, end: true },
-  { to: routePaths.admin.tags, label: "Tags", icon: Tags, end: true },
-];
-
 export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
+  const { t } = useTranslation(["navigation"]);
+
+  const adminNavItems: AdminNavItem[] = [
+    { to: routePaths.admin.dashboard, label: t("navigation:adminControlPanel"), icon: LayoutDashboard, end: true },
+    { to: routePaths.admin.users, label: t("navigation:users"), icon: Users },
+    { to: routePaths.admin.roles, label: t("navigation:roles"), icon: KeyRound },
+    { to: routePaths.admin.permissions, label: t("navigation:permissions"), icon: Lock },
+    { to: routePaths.admin.system, label: t("navigation:system"), icon: Settings },
+    { to: routePaths.admin.categories, label: t("navigation:categories"), icon: FolderTree, end: true },
+    { to: routePaths.admin.listings, label: t("navigation:listings"), icon: Package, end: true },
+    { to: routePaths.admin.reviews, label: t("navigation:reviews"), icon: MessageSquareWarning, end: true },
+    { to: routePaths.admin.tags, label: t("navigation:tags"), icon: Tags, end: true },
+  ];
+
   return (
     <>
       {isOpen && onClose && (
@@ -47,7 +50,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           type="button"
           className="fixed inset-0 z-40 bg-slate-950/60 backdrop-blur-sm lg:hidden"
           onClick={onClose}
-          aria-label="Close admin navigation"
+          aria-label={t("navigation:closeAdminNavigation")}
         />
       )}
 
@@ -56,7 +59,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           "fixed inset-y-0 left-0 z-50 flex h-screen w-72 flex-col border-r border-slate-800 bg-slate-950 text-slate-100 transition-transform duration-200 lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        aria-label="Admin navigation"
+        aria-label={t("navigation:adminControlShort")}
       >
         <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
           <div className="min-w-0">
@@ -66,7 +69,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-white">Barter Platform</p>
-                <p className="truncate text-xs text-slate-400">Admin control panel</p>
+                <p className="truncate text-xs text-slate-400">{t("navigation:adminControlPanel")}</p>
               </div>
             </div>
           </div>
@@ -76,7 +79,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
               type="button"
               onClick={onClose}
               className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-900 hover:text-white lg:hidden"
-              aria-label="Close sidebar"
+              aria-label={t("navigation:closeSidebar")}
             >
               <X className="size-5" />
             </button>
@@ -86,7 +89,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         <div className="flex flex-1 flex-col overflow-hidden">
           <div className="border-b border-slate-800/80 px-5 py-4">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">
-              Platform management
+              {t("navigation:platformManagement")}
             </p>
           </div>
 

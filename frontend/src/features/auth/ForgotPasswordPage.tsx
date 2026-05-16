@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { AxiosError } from "axios";
 import { Mail } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { forgotPassword } from "@/api/authApi.ts";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
@@ -17,18 +18,21 @@ import {
   routePaths,
 } from "@/routes/routePaths.ts";
 
-const forgotPasswordSchema = z.object({
-  email: z.email("Enter a valid email address"),
-});
-
-type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
+type ForgotPasswordFormData = {
+  email: string;
+};
 
 export function ForgotPasswordPage() {
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation(["auth", "common"]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
   const loginHref = buildPathWithQuery(routePaths.login, { redirect: redirectPath });
+
+  const forgotPasswordSchema = z.object({
+    email: z.string().email(t("auth:invalidEmail")),
+  });
 
   const methods = useForm<ForgotPasswordFormData>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -55,7 +59,7 @@ export function ForgotPasswordPage() {
           methods.setError("email", { message: parseApiError(error) });
         }
       } else {
-        methods.setError("email", { message: "An unexpected error occurred" });
+          methods.setError("email", { message: t("auth:unexpectedError") });
       }
     } finally {
       setIsLoading(false);
@@ -71,9 +75,9 @@ export function ForgotPasswordPage() {
               <Mail className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
             </div>
           </div>
-          <CardTitle className="text-center">Forgot password</CardTitle>
+          <CardTitle className="text-center">{t("auth:forgotPasswordTitle")}</CardTitle>
           <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-2">
-            Enter your email address and we’ll send you a reset link.
+            {t("auth:forgotPasswordSubtitle")}
           </p>
         </CardHeader>
 
@@ -81,14 +85,14 @@ export function ForgotPasswordPage() {
           {isSuccess ? (
             <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
               <p className="font-medium">
-                If an account exists for this email, a password reset link has been sent.
+                {t("auth:forgotPasswordSuccess")}
               </p>
               <div className="mt-4">
                 <Link
                   to={loginHref}
                   className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                 >
-                  Back to sign in
+                  {t("common:backToSignIn")}
                 </Link>
               </div>
             </div>
@@ -97,14 +101,14 @@ export function ForgotPasswordPage() {
               <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
                 <FormInput
                   name="email"
-                  label="Email"
+                  label={t("common:email")}
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t("auth:emailPlaceholder")}
                   autoComplete="email"
                 />
 
                 <Button type="submit" fullWidth isLoading={isLoading}>
-                  Send reset link
+                  {t("auth:sendResetLink")}
                 </Button>
               </form>
             </FormProvider>
@@ -116,7 +120,7 @@ export function ForgotPasswordPage() {
                 to={loginHref}
                 className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
               >
-                Back to sign in
+                {t("common:backToSignIn")}
               </Link>
             </div>
           )}

@@ -8,6 +8,7 @@ import { TradeOfferModeBadge } from "./TradeOfferModeBadge";
 import { TradeOfferActionButtons } from "./TradeOfferActionButtons";
 import { TradeOfferCompletionActions } from "./TradeOfferCompletionActions";
 import { TradeReviewSection } from "./TradeReviewSection";
+import { useTranslation } from "react-i18next";
 
 interface TradeOfferCardProps {
   offer: TradeOfferSummaryResponse;
@@ -15,18 +16,19 @@ interface TradeOfferCardProps {
 }
 
 const STATUS_EXPLANATION: Record<TradeOfferStatus, string> = {
-  PENDING: "Waiting for response",
-  ACCEPTED: "Trade agreed. Items are archived while both participants coordinate the exchange and confirm completion.",
-  COMPLETED: "Trade completed by both participants.",
-  REJECTED: "Trade rejected",
-  CANCELLED: "Cancelled by sender",
-  EXPIRED: "Expired",
-  INVALIDATED: "Invalidated because a referenced listing was removed",
+  PENDING: "card.statusExplanation.pending",
+  ACCEPTED: "card.statusExplanation.accepted",
+  COMPLETED: "card.statusExplanation.completed",
+  REJECTED: "card.statusExplanation.rejected",
+  CANCELLED: "card.statusExplanation.cancelled",
+  EXPIRED: "card.statusExplanation.expired",
+  INVALIDATED: "card.statusExplanation.invalidated",
 };
 
 function buildSummaryLine(
   offer: TradeOfferSummaryResponse,
   isSender: boolean,
+  t: (key: string, options?: Record<string, unknown>) => string,
 ): string {
   const receiverItemTitle = offer.receiverItem.title;
   const senderName = offer.sender.username;
@@ -36,23 +38,23 @@ function buildSummaryLine(
   switch (offer.mode) {
     case "GIFT":
       return isSender
-        ? `You requested ${receiverName}'s ${receiverItemTitle} as a gift`
-        : `${senderName} requested your ${receiverItemTitle} as a gift`;
+        ? t("card.summary.giftSender", { receiverName, receiverItemTitle })
+        : t("card.summary.giftReceiver", { senderName, receiverItemTitle });
     case "NEGOTIABLE":
       return isSender
-        ? `You started a negotiation for ${receiverName}'s ${receiverItemTitle}`
-        : `${senderName} started a negotiation for your ${receiverItemTitle}`;
+        ? t("card.summary.negotiableSender", { receiverName, receiverItemTitle })
+        : t("card.summary.negotiableReceiver", { senderName, receiverItemTitle });
     case "ITEM_EXCHANGE":
     default:
       if (offeredCount === 1) {
         const offeredTitle = offer.offeredItems[0].title;
         return isSender
-          ? `You offered your ${offeredTitle} for ${receiverName}'s ${receiverItemTitle}`
-          : `${senderName} offered their ${offeredTitle} for your ${receiverItemTitle}`;
+          ? t("card.summary.exchangeSingleSender", { offeredTitle, receiverName, receiverItemTitle })
+          : t("card.summary.exchangeSingleReceiver", { senderName, offeredTitle, receiverItemTitle });
       }
       return isSender
-        ? `You offered ${offeredCount} items for ${receiverName}'s ${receiverItemTitle}`
-        : `${senderName} offered ${offeredCount} items for your ${receiverItemTitle}`;
+        ? t("card.summary.exchangeMultipleSender", { count: offeredCount, receiverName, receiverItemTitle })
+        : t("card.summary.exchangeMultipleReceiver", { senderName, count: offeredCount, receiverItemTitle });
   }
 }
 
@@ -63,11 +65,12 @@ const MODE_ICON: Record<TradeOfferMode, ReactNode> = {
 };
 
 export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) {
+  const { t } = useTranslation("trade");
   const isSender = offer.sender.uuid === currentUserUuid;
   const isReceiver = offer.receiver.uuid === currentUserUuid;
   const isPending = offer.status === "PENDING";
 
-  const summaryLine = buildSummaryLine(offer, isSender);
+  const summaryLine = buildSummaryLine(offer, isSender, t);
 
   return (
     <Card className="transition-shadow hover:shadow-md">
@@ -92,11 +95,11 @@ export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) 
           {/* Offered items (sender side) */}
           <div className="flex-1 min-w-0 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">
-              {offer.mode === "GIFT" ? "No Items Offered" : `Offered${offer.offeredItems.length > 1 ? ` (${offer.offeredItems.length})` : ""}`}
+              {offer.mode === "GIFT" ? t("card.noItemsOffered") : t("card.offered", { count: offer.offeredItems.length })}
             </p>
             {offer.offeredItems.length === 0 ? (
               <p className="text-xs text-slate-400 dark:text-slate-500 italic">
-                {offer.mode === "GIFT" ? "Gift request" : "None"}
+                {offer.mode === "GIFT" ? t("card.giftRequest") : t("card.none")}
               </p>
             ) : offer.offeredItems.length === 1 ? (
               <>
@@ -104,7 +107,7 @@ export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) 
                   {offer.offeredItems[0].title}
                 </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  {isSender ? "Your item" : `From ${offer.sender.username}`}
+                  {isSender ? t("yourItem") : t("fromUser", { username: offer.sender.username })}
                 </p>
               </>
             ) : (
@@ -115,7 +118,7 @@ export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) 
                   </p>
                 ))}
                 {offer.offeredItems.length > 2 && (
-                  <p className="text-xs text-slate-500">+{offer.offeredItems.length - 2} more</p>
+                  <p className="text-xs text-slate-500">{t("card.moreItems", { count: offer.offeredItems.length - 2 })}</p>
                 )}
               </div>
             )}
@@ -126,13 +129,13 @@ export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) 
           {/* Requested item (receiver) */}
           <div className="flex-1 min-w-0 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50">
             <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wider">
-              Requested Item
+              {t("card.requestedItem")}
             </p>
             <p className="font-medium text-slate-900 dark:text-slate-100 truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
               {offer.receiverItem.title}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {isReceiver ? "Your item" : `To ${offer.receiver.username}`}
+              {isReceiver ? t("yourItem") : t("toUser", { username: offer.receiver.username })}
             </p>
           </div>
         </div>
@@ -146,7 +149,7 @@ export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) 
 
       {/* Status explanation */}
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-        {STATUS_EXPLANATION[offer.status]}
+        {t(STATUS_EXPLANATION[offer.status])}
       </p>
 
       <div className="mb-3">
@@ -163,7 +166,7 @@ export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) 
 
       {offer.respondedAt && (
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-          Responded: {new Date(offer.respondedAt).toLocaleDateString()}
+          {t("card.responded", { date: new Date(offer.respondedAt).toLocaleDateString() })}
         </p>
       )}
 

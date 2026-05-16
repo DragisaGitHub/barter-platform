@@ -19,6 +19,7 @@ import com.barterplatform.application.catalog.service.ListingModerationService;
 import com.barterplatform.web.admin.controller.AdminCategoriesController;
 import com.barterplatform.application.identity.service.PermissionService;
 import com.barterplatform.application.identity.service.UserManagementService;
+import com.barterplatform.application.identity.service.UserPreferenceService;
 import com.barterplatform.application.identity.service.UserQueryService;
 import com.barterplatform.web.identity.controller.PermissionsController;
 import com.barterplatform.web.identity.controller.UsersController;
@@ -183,6 +184,11 @@ class RoleBasedAuthorizationMvcTest {
         @Bean
         UserManagementService userManagementService() {
             return mock(UserManagementService.class);
+        }
+
+        @Bean
+        UserPreferenceService userPreferenceService() {
+            return mock(UserPreferenceService.class);
         }
 
         @Bean

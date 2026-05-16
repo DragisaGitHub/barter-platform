@@ -1,0 +1,262 @@
+{
+  "popularCategories": "Popular categories",
+  "featuredItems": "Featured items",
+  "searchPlaceholder": "Search for items to trade...",
+  "allCategories": "All categories",
+  "showAllCategories": "Show all categories",
+  "clearFilter": "Clear filter",
+  "clear": "Clear",
+  "tags": "Tags",
+  "joinCommunity": "Join our community",
+  "joinCommunityBody": "Create an account to list your own items, make offers, and trade with the community.",
+  "signUpFree": "Sign up free",
+  "howItWorks": "How it works",
+  "howItWorksStep1": "List items you want to trade",
+  "howItWorksStep2": "Browse and search community listings",
+  "howItWorksStep3": "Connect directly and arrange the exchange",
+  "latestListingsLoaded": "Latest listings loaded",
+  "freshListings": "Fresh listings updated regularly",
+  "failedToLoadItems": "Failed to load items",
+  "failedToLoadItemsBody": "Something went wrong while loading the marketplace. Please try again.",
+  "retry": "Retry",
+  "noTradeableItems": "No tradeable items found",
+  "noTradeableItemsBody": "There are no active items from other users right now. Try another search or choose a different category.",
+  "loadMoreItems": "Load more items",
+  "addToFavorites": "Add to favorites",
+  "removeFromFavorites": "Remove from favorites",
+  "active": "Active",
+  "recently": "recently",
+  "categories": "Categories",
+  "viewAllCategories": "View all categories",
+  "clearFilters": "Clear filters",
+  "listingDetails": "Listing details",
+  "itemNotFound": "Item not found",
+  "status": {
+    "active": "Active",
+    "draft": "Draft",
+    "reserved": "Reserved",
+    "archived": "Archived",
+    "removed": "Removed"
+  },
+  "condition": {
+    "new": "New",
+    "likeNew": "Like New",
+    "good": "Good",
+    "used": "Used",
+    "forParts": "For Parts"
+  },
+  "fields": {
+    "title": "Title",
+    "description": "Description",
+    "category": "Category",
+    "condition": "Condition",
+    "status": "Status",
+    "created": "Created"
+  },
+  "myItems": {
+    "title": "My Items",
+    "subtitle": "Manage your listings, keep statuses current, and move quickly between drafts, active items, and archived inventory.",
+    "badges": { "sellerDashboard": "Seller dashboard", "inventoryManagement": "Inventory management" },
+    "loadingInventory": "Loading inventory…",
+    "loadingItems": "Loading items…",
+    "totalListings": "{{count}} total listing",
+    "totalListings_plural": "{{count}} total listings",
+    "newItem": "New Item",
+    "newItemHelper": "Create a detailed listing to attract better trade offers and present your inventory professionally.",
+    "backToMyItems": "Back to My Items",
+    "itemsCount": "{{count}} item",
+    "itemsCount_plural": "{{count}} items",
+    "showingPageRange": "showing {{start}}-{{end}} on this page",
+    "summary": {
+      "totalListings": "Total Listings",
+      "totalListingsHelper": "All listings in your seller inventory",
+      "activeHelper": "Currently visible in the marketplace",
+      "drafts": "Drafts",
+      "draftsHelper": "Still being prepared before publishing",
+      "archivedHelper": "No longer shown in public browsing",
+      "removedHelper": "Hidden by moderation but still visible to you"
+    },
+    "filters": {
+      "title": "Filter and browse your inventory",
+      "subtitle": "Search listings, narrow by status or condition, and switch views without breaking your workflow.",
+      "searchPlaceholder": "Search listings by title or category",
+      "allStatuses": "All Statuses",
+      "anyCondition": "Any Condition",
+      "applied": "Filters applied"
+    },
+    "view": { "grid": "Grid", "table": "Table", "gridView": "Grid view", "tableView": "Table view" },
+    "error": { "title": "Failed to load your items", "description": "Something went wrong while loading your seller inventory. Please try again." },
+    "empty": {
+      "title": "No items yet",
+      "description": "Start your seller catalog with a detailed listing so other traders can quickly understand what you offer.",
+      "filteredTitle": "No items match your filters",
+      "filteredDescription": "Try broadening your filters or search terms to surface more listings in your seller inventory.",
+      "createFirst": "Create your first listing"
+    },
+    "table": { "sellerListing": "Seller listing" },
+    "archive": {
+      "title": "Archive Item",
+      "description": "Are you sure you want to archive this item? It will no longer appear in the public marketplace.",
+      "reasonLabel": "Reason (optional)",
+      "reasonPlaceholder": "Why are you archiving this item?",
+      "confirm": "Archive",
+      "success": "Item archived successfully",
+      "error": "Failed to archive item",
+      "ariaLabel": "Archive {{title}}"
+    }
+  },
+  "marketplace": {
+    "categoriesHelper": "Quick shortcuts for the most active categories right now, plus fast access to the full directory.",
+    "activeListings": "{{count}} active listing",
+    "activeListings_plural": "{{count}} active listings",
+    "activeCount": "{{count}} active",
+    "popularCategoriesDescription": "Compact discovery shortcuts based on live marketplace activity, so listings stay front and center.",
+    "noPopularCategories": "Popular categories will appear here as active listings build momentum across the marketplace.",
+    "defaultCategoryDescription": "Jump straight into the most active listings in this category.",
+    "results": {
+      "searchResults": "Search results for “{{query}}”",
+      "categoryItems": "{{category}} items",
+      "liveListings": "{{count}} live listing",
+      "liveListings_plural": "{{count}} live listings",
+      "inCategory": " in {{category}}",
+      "fromCommunity": " from the community",
+      "matchingQuery": " matching “{{query}}”"
+    }
+  },
+  "categoriesPage": {
+    "title": "Browse every marketplace category",
+    "subtitle": "Search the full category directory and jump back into the marketplace with the right filter already applied.",
+    "badge": "Scalable category discovery",
+    "discoveryTitle": "Find the right lane before you browse listings",
+    "discoveryDescription": "The marketplace highlights popular categories on the homepage, while this directory keeps the full catalog searchable and easy to scan as the platform grows.",
+    "totalCategories": "{{count}} total category",
+    "totalCategories_plural": "{{count}} total categories",
+    "matchingCategories": "{{count}} category matching your search",
+    "matchingCategories_plural": "{{count}} categories matching your search",
+    "searchPlaceholder": "Search categories by name or description...",
+    "directoryTitle": "Category directory",
+    "directoryDescription": "Choose a category to return to the marketplace with that filter applied.",
+    "viewMarketplace": "View marketplace listings",
+    "errorTitle": "Failed to load categories",
+    "errorDescription": "Something went wrong while loading the category directory. Please refresh and try again.",
+    "emptyTitle": "No matching categories",
+    "emptyDescription": "Try a broader search term or clear the search box to see the full category directory.",
+    "clearSearch": "Clear search",
+    "popularNow": "Popular now",
+    "defaultCardDescription": "Browse active listings and discover trade opportunities in this category.",
+    "exploreCategory": "Explore category",
+    "browse": "Browse"
+  },
+  "itemDetail": {
+    "noPhotos": "No photos available",
+    "noPhotosDescription": "The seller has not uploaded images for this listing yet.",
+    "notFoundDescription": "This item may have been removed or does not exist.",
+    "listedOn": "Listed on",
+    "listingPreview": "Listing preview",
+    "noDescription": "The seller has not added a description for this item yet.",
+    "seller": "Seller",
+    "memberTrader": "Member trader on Barter Platform",
+    "tradeSafely": "Trade safely",
+    "tradeSafelyDescription": "Sign up to contact the owner and send a trade offer.",
+    "createAccountToTrade": "Create account to propose trade",
+    "alreadyHaveAccount": "Already have an account? Login",
+    "proposeTrade": "Propose Trade",
+    "proposeTradeDescription": "Send your offer directly to the owner and continue the conversation after signing in.",
+    "ownerNotice": "This is your listing. You can manage it from your items dashboard.",
+    "openOwnerDetail": "Open owner detail",
+    "editListing": "Edit listing"
+  },
+  "itemForm": {
+    "titlePlaceholder": "What are you listing?",
+    "descriptionPlaceholder": "Describe your item...",
+    "selectCategory": "Select a category",
+    "selectCondition": "Select condition",
+    "loadingTags": "Loading tags...",
+    "noTags": "No tags available"
+  },
+  "validation": {
+    "titleRequired": "Title is required",
+    "titleTooLong": "Title must be 255 characters or fewer",
+    "categoryRequired": "Category is required",
+    "conditionRequired": "Condition is required"
+  },
+  "createItem": {
+    "title": "Create New Item",
+    "subtitle": "Create a detailed listing to attract better trade offers. Clear titles, accurate condition details, and the right category help your item get noticed faster.",
+    "badges": { "newListing": "New listing", "sellerWorkflow": "Seller workflow" },
+    "tips": {
+      "clarity": { "title": "Lead with clarity", "description": "Use a title and description that quickly explain why the item is worth trading for." },
+      "status": { "title": "Choose the right status", "description": "Save as draft if you want to refine the listing first, or publish when it is ready." },
+      "images": { "title": "Images come next", "description": "After saving, you will move straight into editing so you can upload product photos." }
+    },
+    "formDescription": "Add the essential information buyers and traders need before you publish your item.",
+    "submit": "Create Item",
+    "toast": { "success": "Item created! You can now add images.", "error": "Failed to create item" }
+  },
+  "editItem": {
+    "title": "Edit Item",
+    "subtitle": "Keep this listing accurate and up to date. Refresh details, improve presentation, and manage images so the item stays marketplace-ready.",
+    "notFoundDescription": "This item may have been removed or you don't have access to edit it.",
+    "badges": { "sellerManagement": "Seller management" },
+    "tips": {
+      "refine": { "title": "Refine listing details", "description": "Update copy, condition, or status whenever the listing changes." },
+      "ready": { "title": "Stay marketplace ready", "description": "Accurate statuses and strong photos make your listing easier to trust." }
+    },
+    "images": {
+      "title": "Listing images",
+      "description": "Add or update images to make the listing more trustworthy and easier to evaluate. You currently have {{count}} image attached.",
+      "description_plural": "Add or update images to make the listing more trustworthy and easier to evaluate. You currently have {{count}} images attached."
+    },
+    "formDescription": "Review the information below and save changes when the listing is ready.",
+    "submit": "Update Item",
+    "toast": { "success": "Item updated successfully", "error": "Failed to update item" }
+  },
+  "favorites": {
+    "badge": "Wishlist",
+    "title": "My Favorites",
+    "subtitle": "Keep track of the listings you want to revisit and trade for later.",
+    "savedItems": "{{count}} saved item",
+    "savedItems_plural": "{{count}} saved items",
+    "errorTitle": "Failed to load favorites",
+    "errorDescription": "Something went wrong while loading your saved items. Please try again.",
+    "emptyTitle": "No favorites yet",
+    "emptyDescription": "Save listings from the marketplace to build your shortlist and come back when you're ready to trade.",
+    "browseMarketplace": "Browse Marketplace",
+    "savedListings": "Saved listings",
+    "savedListingsDescription": "Your favorites are ordered by the most recently saved items first.",
+    "continueBrowsing": "Continue browsing"
+  },
+  "itemCard": { "byOwner": "by {{username}}" },
+  "images": {
+    "primaryImage": "Primary image",
+    "primary": "Primary",
+    "setAsPrimary": "Set as primary",
+    "deleteImage": "Delete image",
+    "delete": "Delete",
+    "uploading": "Uploading…",
+    "clickToBrowse": "Click to browse or drag & drop",
+    "uploadHelper": "JPEG, PNG, WebP · max 5 MB · {{current}}/{{max}} images",
+    "maxReached": "Maximum of {{max}} images reached",
+    "noImagesYet": "No images yet",
+    "uploadUsingUploader": "Upload images using the uploader above",
+    "validation": {
+      "allowedTypes": "Only JPEG, PNG, and WebP images are allowed.",
+      "maxFileSize": "File must be smaller than 5 MB.",
+      "maxImages": "Maximum {{max}} images allowed per item."
+    },
+    "deleteDialog": { "title": "Delete image?", "description": "This action cannot be undone." }
+  },
+  "moderation": {
+    "removedTitle": "This listing has been removed from the marketplace.",
+    "removedDescription": "Only you and administrators can view it right now.",
+    "moderatorMessage": "Moderator message",
+    "reasonUnavailable": "Reason unavailable",
+    "reasons": {
+      "PROHIBITED_ITEM": "Prohibited item",
+      "MISLEADING_CONTENT": "Misleading content",
+      "DUPLICATE_LISTING": "Duplicate listing",
+      "SPAM": "Spam",
+      "OTHER": "Other"
+    }
+  }
+}

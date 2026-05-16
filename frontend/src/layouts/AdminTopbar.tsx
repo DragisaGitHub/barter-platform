@@ -1,64 +1,81 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { LogOut, Menu } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
 import { Button } from "../components/ui/Button";
 import { routePaths } from "../routes/routePaths";
+import { LanguageSwitcher } from "@/features/preferences/LanguageSwitcher";
+import {TFunction} from "i18next";
 
 interface AdminTopbarProps {
   onMenuClick: () => void;
 }
 
-function getAdminSectionMeta(pathname: string) {
+function getAdminSectionMeta(pathname: string, t: TFunction<["navigation"]>) {
   if (pathname.startsWith(routePaths.admin.users)) {
     return pathname === routePaths.admin.users
       ? {
-          title: "Users",
-          description: "Review access, user status, and account details.",
+          title: t("navigation:users"),
+          description: t("navigation:adminUsersDescription"),
         }
       : {
-          title: "User Details",
-          description: "Inspect account context and administrative access details.",
+          title: t("navigation:userDetails"),
+          description: t("navigation:userDetailsDescription"),
         };
   }
 
   if (pathname.startsWith(routePaths.admin.roles)) {
     return {
-      title: "Roles",
-      description: "Audit and review role definitions used across the platform.",
+      title: t("navigation:roles"),
+      description: t("navigation:rolesDescription"),
     };
   }
 
   if (pathname.startsWith(routePaths.admin.permissions)) {
     return {
-      title: "Permissions",
-      description: "Inspect granted capabilities and authorization coverage.",
+      title: t("navigation:permissions"),
+      description: t("navigation:permissionsDescription"),
     };
   }
 
   if (pathname.startsWith(routePaths.admin.system)) {
     return {
-      title: "System",
-      description: "Check operational health and platform-level configuration.",
+      title: t("navigation:system"),
+      description: t("navigation:systemDescription"),
     };
   }
 
   if (pathname.startsWith(routePaths.admin.categories)) {
     return {
-      title: "Categories",
-      description: "Manage platform taxonomy and archive state within the admin control plane.",
+      title: t("navigation:categories"),
+      description: t("navigation:categoriesDescription"),
     };
   }
 
   if (pathname.startsWith(routePaths.admin.tags)) {
     return {
-      title: "Tags",
-      description: "Manage reusable metadata tags and archive state within the admin control plane.",
+      title: t("navigation:tags"),
+      description: t("navigation:tagsDescription"),
+    };
+  }
+
+  if (pathname.startsWith(routePaths.admin.listings)) {
+    return {
+      title: t("navigation:listings"),
+      description: t("navigation:listingsDescription"),
+    };
+  }
+
+  if (pathname.startsWith(routePaths.admin.reviews)) {
+    return {
+      title: t("navigation:reviews"),
+      description: t("navigation:reviewsDescription"),
     };
   }
 
   return {
-    title: "Admin Control Panel",
-    description: "Operate platform access, configuration, and core administration from one focused workspace.",
+    title: t("navigation:adminControlPanel"),
+    description: t("navigation:adminControlPanelDescription"),
   };
 }
 
@@ -66,9 +83,10 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const section = getAdminSectionMeta(location.pathname);
+  const { t } = useTranslation(["common", "navigation"]);
+  const section = getAdminSectionMeta(location.pathname, t);
   const identityLabel = user?.username ?? user?.email ?? "Admin";
-  const identitySubtitle = user?.email && user.email !== identityLabel ? user.email : "Administrator";
+  const identitySubtitle = user?.email && user.email !== identityLabel ? user.email : t("navigation:administrator");
 
   const handleLogout = async () => {
     await logout();
@@ -83,7 +101,7 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
             type="button"
             onClick={onMenuClick}
             className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white lg:hidden"
-            aria-label="Toggle admin menu"
+            aria-label={t("navigation:toggleAdminMenu")}
           >
             <Menu className="size-6" />
           </button>
@@ -94,7 +112,7 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
                 {section.title}
               </h1>
               <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                Admin
+                {t("common:adminBadge")}
               </span>
             </div>
             <p className="hidden text-sm text-slate-600 dark:text-slate-400 sm:block">
@@ -104,6 +122,8 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <LanguageSwitcher />
+
           <div className="hidden rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-right dark:border-slate-800 dark:bg-slate-900 md:block">
             <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{identityLabel}</p>
             <p className="text-xs text-slate-600 dark:text-slate-400">{identitySubtitle}</p>
@@ -116,9 +136,9 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
             </p>
           </div>
 
-          <Button variant="ghost" size="sm" onClick={handleLogout} aria-label="Logout">
+          <Button variant="ghost" size="sm" onClick={handleLogout} aria-label={t("common:logout")}>
             <LogOut className="size-4" />
-            <span className="hidden sm:inline">Logout</span>
+            <span className="hidden sm:inline">{t("common:logout")}</span>
           </Button>
         </div>
       </div>

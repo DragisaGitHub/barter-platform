@@ -1,29 +1,32 @@
 import type { ItemStatus, ItemCondition } from "../../api/generated/types";
 import { Badge } from "../../components/ui/Badge";
+import { useTranslation } from "react-i18next";
 
-const statusConfig: Record<ItemStatus, { label: string; variant: "success" | "warning" | "danger" | "default" | "primary" | "secondary" }> = {
-  ACTIVE: { label: "Active", variant: "success" },
-  DRAFT: { label: "Draft", variant: "default" },
-  RESERVED: { label: "Reserved", variant: "warning" },
-  ARCHIVED: { label: "Archived", variant: "secondary" },
-  REMOVED: { label: "Removed", variant: "danger" },
+const statusConfig: Record<ItemStatus, { key: string; variant: "success" | "warning" | "danger" | "default" | "primary" | "secondary" }> = {
+  ACTIVE: { key: "status.active", variant: "success" },
+  DRAFT: { key: "status.draft", variant: "default" },
+  RESERVED: { key: "status.reserved", variant: "warning" },
+  ARCHIVED: { key: "status.archived", variant: "secondary" },
+  REMOVED: { key: "status.removed", variant: "danger" },
 };
 
-const conditionConfig: Record<ItemCondition, { label: string; variant: "success" | "primary" | "warning" | "default" | "secondary" }> = {
-  NEW: { label: "New", variant: "success" },
-  LIKE_NEW: { label: "Like New", variant: "primary" },
-  GOOD: { label: "Good", variant: "warning" },
-  USED: { label: "Used", variant: "default" },
-  FOR_PARTS: { label: "For Parts", variant: "secondary" },
+const conditionConfig: Record<ItemCondition, { key: string; variant: "success" | "primary" | "warning" | "default" | "secondary" }> = {
+  NEW: { key: "condition.new", variant: "success" },
+  LIKE_NEW: { key: "condition.likeNew", variant: "primary" },
+  GOOD: { key: "condition.good", variant: "warning" },
+  USED: { key: "condition.used", variant: "default" },
+  FOR_PARTS: { key: "condition.forParts", variant: "secondary" },
 };
 
 export function ItemStatusBadge({ status }: { status: ItemStatus }) {
-  const { label, variant } = statusConfig[status];
-  return <Badge variant={variant}>{label}</Badge>;
+  const { t } = useTranslation("catalog");
+  const { key, variant } = statusConfig[status];
+  return <Badge variant={variant}>{t(key)}</Badge>;
 }
 
 export function ItemConditionBadge({ condition }: { condition: ItemCondition }) {
-  const { label, variant } = conditionConfig[condition];
-  return <Badge variant={variant}>{label}</Badge>;
+  const { t } = useTranslation("catalog");
+  const { key, variant } = conditionConfig[condition];
+  return <Badge variant={variant}>{t(key)}</Badge>;
 }
 

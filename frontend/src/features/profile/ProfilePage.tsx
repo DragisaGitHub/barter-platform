@@ -29,6 +29,7 @@ import { routePaths } from "@/routes/routePaths";
 import { cn } from "@/utils";
 import type { RoleResponse, UserStatus } from "@/api/generated/types";
 import type { LucideIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 function getUserInitials(username?: string, email?: string): string {
   const source = username?.trim() || email?.trim() || "Profile";
@@ -87,17 +88,6 @@ function getRoleVariant(index: number): "primary" | "secondary" {
   return index === 0 ? "primary" : "secondary";
 }
 
-function formatStatusLabel(status?: UserStatus): string {
-  if (!status) {
-    return "Unknown status";
-  }
-
-  return status
-    .toLowerCase()
-    .split("_")
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(" ");
-}
 
 function InfoRow({
   label,
@@ -192,6 +182,7 @@ interface OverviewItem {
 export function ProfilePage() {
   const { user, isLoading, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation(["profile", "common", "catalog", "trade", "navigation"]);
 
   const favoritesQuery = useFavoriteItems({ page: 0, size: 1 }, !!user);
   const myItemsQuery = useMyItems({ page: 0, size: 1 });
@@ -218,15 +209,15 @@ export function ProfilePage() {
         <Card>
           <EmptyState
             icon={<UserCircle2 className="size-12" />}
-            title="Profile unavailable"
-            description="We couldn't load your account details right now. Return to the marketplace or sign in again to continue."
+            title={t("profile:unavailable.title")}
+            description={t("profile:unavailable.description")}
             action={
               <div className="flex flex-wrap items-center justify-center gap-3">
                 <Link to={routePaths.marketplace} className="inline-flex items-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700">
-                  Go to Marketplace
+                  {t("profile:quickActions.marketplace.title")}
                 </Link>
                 <Link to={routePaths.login} className="inline-flex items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:border-slate-600 dark:text-slate-200 dark:hover:bg-slate-800">
-                  Sign in again
+                  {t("profile:unavailable.signInAgain")}
                 </Link>
               </div>
             }
@@ -238,8 +229,8 @@ export function ProfilePage() {
 
   const overviewItems: OverviewItem[] = [
     {
-      title: "Favorites",
-      description: "Saved items to revisit",
+      title: t("navigation:favorites"),
+      description: t("profile:overview.favorites"),
       to: routePaths.favorites,
       icon: Heart,
       value: favoritesQuery.data?.totalElements,
@@ -248,8 +239,8 @@ export function ProfilePage() {
       accentClassName: "bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:text-rose-300",
     },
     {
-      title: "My Items",
-      description: "Listings you're managing",
+      title: t("navigation:myItems"),
+      description: t("profile:overview.myItems"),
       to: routePaths.myItems,
       icon: Package,
       value: myItemsQuery.data?.totalElements,
@@ -258,8 +249,8 @@ export function ProfilePage() {
       accentClassName: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300",
     },
     {
-      title: "Incoming Offers",
-      description: "Trades waiting on your review",
+      title: t("trade:incomingOffers"),
+      description: t("profile:overview.incomingOffers"),
       to: routePaths.offersIncoming,
       icon: Inbox,
       value: incomingOffersQuery.data?.totalElements,
@@ -268,8 +259,8 @@ export function ProfilePage() {
       accentClassName: "bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-300",
     },
     {
-      title: "Sent Offers",
-      description: "Offers you've sent out",
+      title: t("trade:sentOffers"),
+      description: t("profile:overview.sentOffers"),
       to: routePaths.offersSent,
       icon: Send,
       value: sentOffersQuery.data?.totalElements,
@@ -278,8 +269,8 @@ export function ProfilePage() {
       accentClassName: "bg-indigo-100 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-300",
     },
     {
-      title: "Notifications",
-      description: "Unread account updates",
+      title: t("navigation:notifications"),
+      description: t("profile:overview.notifications"),
       to: routePaths.notifications,
       icon: Bell,
       value: notificationsQuery.data?.count,
@@ -305,7 +296,7 @@ export function ProfilePage() {
                   </h1>
                   {user.status === "ACTIVE" && (
                     <Badge variant="success" className="px-2.5 py-1">
-                      Active account
+                      {t("profile:status.activeAccount")}
                     </Badge>
                   )}
                 </div>
@@ -314,13 +305,13 @@ export function ProfilePage() {
                   <span className="truncate">{user.email}</span>
                 </div>
                 <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  Manage your listings and trade activity. Track favorites, offers, and conversations from one place.
+                  {t("profile:hero.subtitle")}
                 </p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Badge variant={user.emailVerified ? "success" : "warning"}>
-                    {user.emailVerified ? "Email verified" : "Email verification pending"}
+                    {user.emailVerified ? t("profile:email.verified") : t("profile:email.pending")}
                   </Badge>
-                  <Badge variant={getStatusVariant(user.status)}>{formatStatusLabel(user.status)}</Badge>
+                  <Badge variant={getStatusVariant(user.status)}>{t(`profile:status.${user.status ?? "UNKNOWN"}`)}</Badge>
                   {user.roles.map((role, index) => (
                     <Badge key={role.uuid} variant={getRoleVariant(index)}>
                       {role.code}
@@ -333,7 +324,7 @@ export function ProfilePage() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:w-[26rem]">
               <div className="rounded-2xl border border-white/60 bg-white/80 p-4 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/50">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  Member since
+                  {t("profile:memberSince")}
                 </p>
                 <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {formatMemberSince(user.createdAt)}
@@ -341,7 +332,7 @@ export function ProfilePage() {
               </div>
               <div className="rounded-2xl border border-white/60 bg-white/80 p-4 backdrop-blur dark:border-slate-700/80 dark:bg-slate-900/50">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400">
-                  Last sign in
+                  {t("profile:lastSignIn")}
                 </p>
                 <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {formatDateLabel(user.lastLoginAt)}
@@ -355,9 +346,9 @@ export function ProfilePage() {
       <section>
         <div className="mb-3 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Account overview</h2>
+            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">{t("profile:accountOverview")}</h2>
             <p className="text-sm text-slate-600 dark:text-slate-400">
-              Quick shortcuts for the sections you use most often.
+              {t("profile:accountOverviewDescription")}
             </p>
           </div>
         </div>
@@ -398,17 +389,17 @@ export function ProfilePage() {
       <section className="grid gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <Card className="rounded-3xl">
           <CardHeader className="mb-0 border-b border-slate-200 pb-4 dark:border-slate-700">
-            <CardTitle className="text-xl">Account details</CardTitle>
+            <CardTitle className="text-xl">{t("profile:accountDetails")}</CardTitle>
             <CardDescription>
-              Review your current account identity, access, and sign-in details.
+              {t("profile:accountDetailsDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-2">
             <dl>
-              <InfoRow label="Username" value={user.username} />
-              <InfoRow label="Email" value={user.email} />
+              <InfoRow label={t("profile:fields.username")} value={user.username} />
+              <InfoRow label={t("common:email")} value={user.email} />
               <InfoRow
-                label="Roles"
+                label={t("profile:fields.roles")}
                 value={
                   <div className="flex flex-wrap gap-2 sm:justify-end">
                     {user.roles.map((role: RoleResponse, index) => (
@@ -419,23 +410,23 @@ export function ProfilePage() {
                   </div>
                 }
               />
-              <InfoRow label="Account status" value={formatStatusLabel(user.status)} />
+              <InfoRow label={t("profile:fields.accountStatus")} value={t(`profile:status.${user.status ?? "UNKNOWN"}`)} />
               <InfoRow
-                label="Email confirmation"
+                label={t("profile:fields.emailConfirmation")}
                 value={
                   <span className="inline-flex items-center gap-2 sm:justify-end">
                     <CheckCircle2 className={cn("size-4", user.emailVerified ? "text-emerald-500" : "text-amber-500")} />
-                    {user.emailVerified ? "Verified" : "Pending verification"}
+                    {user.emailVerified ? t("profile:email.verifiedShort") : t("profile:email.pendingShort")}
                   </span>
                 }
               />
               <InfoRow
-                label="Multi-factor authentication"
-                value={user.mfaEnabled ? "Enabled" : "Not enabled"}
+                label={t("profile:fields.mfa")}
+                value={user.mfaEnabled ? t("profile:enabled") : t("profile:notEnabled")}
               />
               {user.oauthAccounts.length > 0 && (
                 <InfoRow
-                  label="Connected providers"
+                  label={t("profile:fields.connectedProviders")}
                   value={
                     <div className="flex flex-wrap gap-2 sm:justify-end">
                       {user.oauthAccounts.map((account) => (
@@ -447,15 +438,15 @@ export function ProfilePage() {
                   }
                 />
               )}
-              <InfoRow label="Created" value={formatDateLabel(user.createdAt)} />
-              <InfoRow label="Last sign in" value={formatDateLabel(user.lastLoginAt)} />
+              <InfoRow label={t("profile:fields.created")} value={formatDateLabel(user.createdAt)} />
+              <InfoRow label={t("profile:lastSignIn")} value={formatDateLabel(user.lastLoginAt)} />
               <InfoRow
-                label="Permissions"
+                label={t("profile:fields.permissions")}
                 multiLine
                 value={
                   user.permissions.length > 0
-                    ? `${user.permissions.length} permission${user.permissions.length === 1 ? "" : "s"} assigned`
-                    : "No permissions available"
+                    ? t("profile:permissionsAssigned", { count: user.permissions.length })
+                    : t("profile:noPermissions")
                 }
               />
             </dl>
@@ -465,23 +456,23 @@ export function ProfilePage() {
         <div className="space-y-6">
           <Card className="rounded-3xl">
             <CardHeader>
-              <CardTitle className="text-xl">Quick actions</CardTitle>
+              <CardTitle className="text-xl">{t("profile:quickActions.title")}</CardTitle>
               <CardDescription>
-                Jump back into the marketplace or continue managing your listings.
+                {t("profile:quickActions.description")}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <ActionLink
                 to={routePaths.marketplace}
                 icon={Store}
-                title="Go to Marketplace"
-                description="Browse active listings and discover new trade opportunities."
+                title={t("profile:quickActions.marketplace.title")}
+                description={t("profile:quickActions.marketplace.description")}
               />
               <ActionLink
                 to={routePaths.myItemsNew}
                 icon={Plus}
-                title="Create New Listing"
-                description="Post a new item and start receiving trade offers."
+                title={t("profile:quickActions.createListing.title")}
+                description={t("profile:quickActions.createListing.description")}
               />
               <Button
                 type="button"
@@ -494,9 +485,9 @@ export function ProfilePage() {
                     <LogOut className="size-[18px]" />
                   </span>
                   <span>
-                    <span className="block text-sm font-semibold">Logout</span>
+                    <span className="block text-sm font-semibold">{t("common:logout")}</span>
                     <span className="block text-xs text-slate-500 dark:text-slate-400">
-                      Securely end your current session.
+                      {t("profile:quickActions.logoutDescription")}
                     </span>
                   </span>
                 </span>
@@ -513,10 +504,10 @@ export function ProfilePage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Marketplace account center
+                    {t("profile:accountCenter.title")}
                   </h3>
                   <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                    Keep an eye on saved items, offer activity, and notifications so you can respond quickly when a trade moves forward.
+                    {t("profile:accountCenter.description")}
                   </p>
                 </div>
               </div>
@@ -531,10 +522,10 @@ export function ProfilePage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Account snapshot
+                    {t("profile:snapshot.title")}
                   </h3>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                    Your profile reflects live authentication data only. No hidden settings, no placeholder metrics.
+                    {t("profile:snapshot.description")}
                   </p>
                 </div>
               </div>

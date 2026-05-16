@@ -1,0 +1,128 @@
+{
+  "profile": "Profil",
+  "publicProfile": "Javni profil",
+  "settings": "Podešavanja",
+  "trustSummary": "Sažetak poverenja",
+  "languageSection": "Jezik",
+  "unavailable": {
+    "title": "Profil nije dostupan",
+    "description": "Trenutno nije moguće učitati detalje naloga. Vrati se na marketplace ili se ponovo prijavi za nastavak.",
+    "signInAgain": "Prijavi se ponovo"
+  },
+  "hero": {
+    "subtitle": "Upravljaj oglasima i aktivnostima razmene. Prati omiljene oglase, ponude i razgovore sa jednog mesta."
+  },
+  "overview": {
+    "favorites": "Sačuvani oglasi za kasnije",
+    "myItems": "Oglasi kojima upravljaš",
+    "incomingOffers": "Razmene koje čekaju tvoj pregled",
+    "sentOffers": "Ponude koje si poslao/la",
+    "notifications": "Nepročitana ažuriranja naloga"
+  },
+  "status": {
+    "activeAccount": "Aktivan nalog",
+    "ACTIVE": "Aktivan",
+    "PENDING_VERIFICATION": "Čeka verifikaciju",
+    "SUSPENDED": "Suspendovan",
+    "BANNED": "Blokiran",
+    "UNKNOWN": "Nepoznat status"
+  },
+  "email": {
+    "verified": "Email je verifikovan",
+    "pending": "Verifikacija emaila je na čekanju",
+    "verifiedShort": "Verifikovano",
+    "pendingShort": "Čeka verifikaciju"
+  },
+  "memberSince": "Član od",
+  "lastSignIn": "Poslednja prijava",
+  "accountOverview": "Pregled naloga",
+  "accountOverviewDescription": "Brze prečice do sekcija koje najčešće koristiš.",
+  "accountDetails": "Detalji naloga",
+  "accountDetailsDescription": "Pregledaj trenutni identitet naloga, pristup i detalje prijave.",
+  "fields": {
+    "username": "Korisničko ime",
+    "roles": "Uloge",
+    "accountStatus": "Status naloga",
+    "emailConfirmation": "Potvrda emaila",
+    "mfa": "Višefaktorska autentifikacija",
+    "connectedProviders": "Povezani provajderi",
+    "created": "Kreirano",
+    "permissions": "Dozvole"
+  },
+  "enabled": "Omogućeno",
+  "notEnabled": "Nije omogućeno",
+  "permissionsAssigned": "{{count}} dozvola dodeljena",
+  "permissionsAssigned_plural": "{{count}} dozvola dodeljeno",
+  "noPermissions": "Nema dostupnih dozvola",
+  "quickActions": {
+    "title": "Brze akcije",
+    "description": "Vrati se na marketplace ili nastavi upravljanje oglasima.",
+    "marketplace": {
+      "title": "Idi na marketplace",
+      "description": "Pregledaj aktivne oglase i otkrij nove prilike za razmenu."
+    },
+    "createListing": {
+      "title": "Kreiraj novi oglas",
+      "description": "Objavi novi predmet i počni da primaš ponude za razmenu."
+    },
+    "logoutDescription": "Bezbedno završi trenutnu sesiju."
+  },
+  "accountCenter": {
+    "title": "Centar naloga za marketplace",
+    "description": "Prati sačuvane oglase, aktivnosti ponuda i obaveštenja kako bi brzo reagovao/la kada razmena napreduje."
+  },
+  "snapshot": {
+    "title": "Snimak naloga",
+    "description": "Profil prikazuje samo žive podatke autentifikacije. Bez skrivenih podešavanja i lažnih metrika."
+  },
+  "public": {
+    "notFoundTitle": "Korisnik nije pronađen",
+    "notFoundDescription": "Ovaj javni profil za razmenu je možda uklonjen, nedostupan ili je link zastareo.",
+    "manageMyItems": "Upravljaj mojim oglasima",
+    "badge": "Javni profil za razmenu",
+    "subtitle": "Ovo je javni profil za razmenu koji prikazuje trenutnu aktivnost na marketplace-u i aktivne oglase.",
+    "joined": "Član od {{date}}",
+    "activeListings": "{{count}} aktivan oglas",
+    "activeListings_plural": "{{count}} aktivnih oglasa",
+    "completedTrades": "{{count}} završena razmena",
+    "completedTrades_plural": "{{count}} završenih razmena",
+    "cancelledTrades": "{{count}} otkazana razmena",
+    "cancelledTrades_plural": "{{count}} otkazanih razmena",
+    "reviews": "{{count}} ocena",
+    "reviews_plural": "{{count}} ocena",
+    "positiveReviewsPercent": "{{percent}}% pozitivnih ocena",
+    "marketplaceViewTitle": "Javni prikaz marketplace-a",
+    "marketplaceViewDescription": "Pregledaj aktivne oglase, brojke istorije razmena i stekni brz uvid u aktivnost ovog korisnika.",
+    "liveInventory": "Aktivni inventar",
+    "listingAvailable": "Oglas je trenutno dostupan za pregled.",
+    "listingsAvailable": "Oglasi su trenutno dostupni za pregled.",
+    "activeListingsTitle": "Aktivni oglasi",
+    "activeListingsDescription": "Pregledaj predmete koje ovaj korisnik trenutno nudi na marketplace-u.",
+    "liveListings": "{{count}} aktivan oglas",
+    "liveListings_plural": "{{count}} aktivnih oglasa",
+    "listingsErrorTitle": "Učitavanje aktivnih oglasa nije uspelo",
+    "listingsErrorDescription": "Trenutno nije moguće učitati oglase ovog korisnika. Pokušaj ponovo.",
+    "noActiveListings": "Nema aktivnih oglasa",
+    "noActiveListingsDescription": "Ovaj korisnik trenutno nema aktivnih oglasa."
+  },
+  "trust": {
+    "title": "Poverenje i aktivnost",
+    "description": "Kratak sažetak marketplace aktivnosti zasnovan na trenutno dostupnom javnom profilu.",
+    "activeListings": "Aktivni oglasi",
+    "activeListingsDescription_one": "Oglas je trenutno dostupan za pregled.",
+    "activeListingsDescription_other": "Oglasi su trenutno dostupni za pregled.",
+    "completedTrades": "Završene razmene",
+    "completedTradesDescription_one": "Uspešna razmena zabeležena na ovom profilu.",
+    "completedTradesDescription_other": "Uspešne razmene zabeležene na ovom profilu.",
+    "cancelledTrades": "Otkazane razmene",
+    "cancelledTradesDescription_one": "Otkazana razmena povezana sa ovim profilom.",
+    "cancelledTradesDescription_other": "Otkazane razmene povezane sa ovim profilom.",
+    "positiveReviews": "Pozitivne ocene",
+    "positiveReviewsDescription": "Ocene završenih razmena koje su partneri označili kao pozitivne.",
+    "negativeReviews": "Negativne ocene",
+    "negativeReviewsDescription": "Negativne ocene završenih razmena vidljive administratorima za upravljanje.",
+    "positivePercentage": "Procenat pozitivnih",
+    "totalReviews": "{{count}} ukupna ocena završene razmene.",
+    "totalReviews_plural": "{{count}} ukupnih ocena završenih razmena."
+  }
+}

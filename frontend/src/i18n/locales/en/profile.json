@@ -1,0 +1,128 @@
+{
+  "profile": "Profile",
+  "publicProfile": "Public profile",
+  "settings": "Settings",
+  "trustSummary": "Trust summary",
+  "languageSection": "Language",
+  "unavailable": {
+    "title": "Profile unavailable",
+    "description": "We couldn't load your account details right now. Return to the marketplace or sign in again to continue.",
+    "signInAgain": "Sign in again"
+  },
+  "hero": {
+    "subtitle": "Manage your listings and trade activity. Track favorites, offers, and conversations from one place."
+  },
+  "overview": {
+    "favorites": "Saved items to revisit",
+    "myItems": "Listings you're managing",
+    "incomingOffers": "Trades waiting on your review",
+    "sentOffers": "Offers you've sent out",
+    "notifications": "Unread account updates"
+  },
+  "status": {
+    "activeAccount": "Active account",
+    "ACTIVE": "Active",
+    "PENDING_VERIFICATION": "Pending verification",
+    "SUSPENDED": "Suspended",
+    "BANNED": "Banned",
+    "UNKNOWN": "Unknown status"
+  },
+  "email": {
+    "verified": "Email verified",
+    "pending": "Email verification pending",
+    "verifiedShort": "Verified",
+    "pendingShort": "Pending verification"
+  },
+  "memberSince": "Member since",
+  "lastSignIn": "Last sign in",
+  "accountOverview": "Account overview",
+  "accountOverviewDescription": "Quick shortcuts for the sections you use most often.",
+  "accountDetails": "Account details",
+  "accountDetailsDescription": "Review your current account identity, access, and sign-in details.",
+  "fields": {
+    "username": "Username",
+    "roles": "Roles",
+    "accountStatus": "Account status",
+    "emailConfirmation": "Email confirmation",
+    "mfa": "Multi-factor authentication",
+    "connectedProviders": "Connected providers",
+    "created": "Created",
+    "permissions": "Permissions"
+  },
+  "enabled": "Enabled",
+  "notEnabled": "Not enabled",
+  "permissionsAssigned": "{{count}} permission assigned",
+  "permissionsAssigned_plural": "{{count}} permissions assigned",
+  "noPermissions": "No permissions available",
+  "quickActions": {
+    "title": "Quick actions",
+    "description": "Jump back into the marketplace or continue managing your listings.",
+    "marketplace": {
+      "title": "Go to Marketplace",
+      "description": "Browse active listings and discover new trade opportunities."
+    },
+    "createListing": {
+      "title": "Create New Listing",
+      "description": "Post a new item and start receiving trade offers."
+    },
+    "logoutDescription": "Securely end your current session."
+  },
+  "accountCenter": {
+    "title": "Marketplace account center",
+    "description": "Keep an eye on saved items, offer activity, and notifications so you can respond quickly when a trade moves forward."
+  },
+  "snapshot": {
+    "title": "Account snapshot",
+    "description": "Your profile reflects live authentication data only. No hidden settings, no placeholder metrics."
+  },
+  "public": {
+    "notFoundTitle": "User not found",
+    "notFoundDescription": "This public trading profile may have been removed, is unavailable, or you may have followed an outdated link.",
+    "manageMyItems": "Manage my items",
+    "badge": "Public trader profile",
+    "subtitle": "This is a public trading profile showing live marketplace activity and currently listed items.",
+    "joined": "Joined {{date}}",
+    "activeListings": "{{count}} active listing",
+    "activeListings_plural": "{{count}} active listings",
+    "completedTrades": "{{count}} completed trade",
+    "completedTrades_plural": "{{count}} completed trades",
+    "cancelledTrades": "{{count}} cancelled trade",
+    "cancelledTrades_plural": "{{count}} cancelled trades",
+    "reviews": "{{count}} review",
+    "reviews_plural": "{{count}} reviews",
+    "positiveReviewsPercent": "{{percent}}% positive reviews",
+    "marketplaceViewTitle": "Public marketplace view",
+    "marketplaceViewDescription": "Browse active listings, review trade history counts, and get a quick sense of this trader’s marketplace activity.",
+    "liveInventory": "Live inventory",
+    "listingAvailable": "Listing currently available to browse.",
+    "listingsAvailable": "Listings currently available to browse.",
+    "activeListingsTitle": "Active listings",
+    "activeListingsDescription": "Browse the items this trader currently has available on the marketplace.",
+    "liveListings": "{{count}} live listing",
+    "liveListings_plural": "{{count}} live listings",
+    "listingsErrorTitle": "Unable to load active listings",
+    "listingsErrorDescription": "We couldn't load this trader's listings right now. Please try again.",
+    "noActiveListings": "No active listings",
+    "noActiveListingsDescription": "This trader has no active listings right now."
+  },
+  "trust": {
+    "title": "Trust & activity",
+    "description": "A quick marketplace summary based on the public profile activity available right now.",
+    "activeListings": "Active listings",
+    "activeListingsDescription_one": "Listing currently available for browsing.",
+    "activeListingsDescription_other": "Listings currently available for browsing.",
+    "completedTrades": "Completed trades",
+    "completedTradesDescription_one": "Successful trade recorded on this profile.",
+    "completedTradesDescription_other": "Successful trades recorded on this profile.",
+    "cancelledTrades": "Cancelled trades",
+    "cancelledTradesDescription_one": "Cancelled trade associated with this profile.",
+    "cancelledTradesDescription_other": "Cancelled trades associated with this profile.",
+    "positiveReviews": "Positive reviews",
+    "positiveReviewsDescription": "Completed-trade reviews marked positive by trading partners.",
+    "negativeReviews": "Negative reviews",
+    "negativeReviewsDescription": "Negative completed-trade reviews visible to admins for governance.",
+    "positivePercentage": "Positive percentage",
+    "totalReviews": "{{count}} total completed-trade review.",
+    "totalReviews_plural": "{{count}} total completed-trade reviews."
+  }
+}

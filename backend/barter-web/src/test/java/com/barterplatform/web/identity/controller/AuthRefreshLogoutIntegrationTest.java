@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.barterplatform.BarterApplication;
+import com.barterplatform.domain.identity.enums.PreferredLanguage;
 import com.barterplatform.domain.identity.entity.RefreshTokenEntity;
 import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
@@ -108,6 +109,7 @@ class AuthRefreshLogoutIntegrationTest {
                 .andExpect(jsonPath("$.expiresIn").isNumber())
                 .andExpect(jsonPath("$.refreshExpiresIn").isNumber())
                 .andExpect(jsonPath("$.user").exists())
+                .andExpect(jsonPath("$.user.preferredLanguage").value("EN"))
                 .andReturn();
 
         JsonNode refreshJson = objectMapper.readTree(refreshResult.getResponse().getContentAsString());
@@ -207,6 +209,7 @@ class AuthRefreshLogoutIntegrationTest {
         var user = userRepository.findByEmail(email).orElseThrow();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
         user.setEmailVerified(true);
+        user.setPreferredLanguage(PreferredLanguage.EN);
         userRepository.save(user);
     }
 

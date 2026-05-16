@@ -4,6 +4,7 @@ import type { ItemImageResponse } from "@/api/generated/types.ts";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils";
 import { useDeleteItemImage, useSetPrimaryItemImage } from "../useItemImages";
+import { useTranslation } from "react-i18next";
 
 interface ItemImageGalleryProps {
   itemUuid: string;
@@ -30,6 +31,7 @@ function ImageTile({
   isDeleting,
 }: ImageTileProps) {
   const [imgError, setImgError] = useState(false);
+  const { t } = useTranslation("catalog");
 
   return (
     <div className="relative group rounded-lg overflow-hidden aspect-square bg-slate-100 dark:bg-slate-700">
@@ -51,7 +53,7 @@ function ImageTile({
       {image.isPrimary && (
         <div className="absolute top-1.5 left-1.5 bg-indigo-600 text-white text-xs font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
           <Star className="size-3" />
-          Primary
+          {t("images.primary")}
         </div>
       )}
 
@@ -63,10 +65,10 @@ function ImageTile({
               className="flex items-center gap-1 text-xs bg-white/90 dark:bg-slate-800/90 text-slate-800 dark:text-slate-100 rounded px-2 py-1 hover:bg-white transition-colors disabled:opacity-50"
               onClick={onSetPrimary}
               disabled={isSettingPrimary || isDeleting}
-              title="Set as primary"
+              title={t("images.setAsPrimary")}
             >
               <Star className="size-3" />
-              Primary
+              {t("images.primary")}
             </button>
           )}
           <button
@@ -76,10 +78,10 @@ function ImageTile({
             )}
             onClick={onDelete}
             disabled={isSettingPrimary || isDeleting}
-            title="Delete image"
+            title={t("images.deleteImage")}
           >
             <Trash2 className="size-3" />
-            Delete
+            {t("images.delete")}
           </button>
         </div>
       )}
@@ -94,6 +96,7 @@ function ImageTile({
 }
 
 export function ItemImageGallery({ itemUuid, images, readOnly = false }: ItemImageGalleryProps) {
+  const { t } = useTranslation(["catalog", "common"]);
   const deleteMutation = useDeleteItemImage(itemUuid);
   const setPrimaryMutation = useSetPrimaryItemImage(itemUuid);
   const [confirmDeleteUuid, setConfirmDeleteUuid] = useState<string | null>(null);
@@ -102,9 +105,9 @@ export function ItemImageGallery({ itemUuid, images, readOnly = false }: ItemIma
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center text-slate-500 dark:text-slate-400 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-lg">
         <Package className="size-10 mb-2 text-slate-300 dark:text-slate-600" />
-        <p className="text-sm">No images yet</p>
+        <p className="text-sm">{t("catalog:images.noImagesYet")}</p>
         {!readOnly && (
-          <p className="text-xs mt-0.5">Upload images using the uploader above</p>
+          <p className="text-xs mt-0.5">{t("catalog:images.uploadUsingUploader")}</p>
         )}
       </div>
     );
@@ -153,14 +156,14 @@ export function ItemImageGallery({ itemUuid, images, readOnly = false }: ItemIma
           />
           <div className="relative bg-white dark:bg-slate-800 rounded-xl shadow-xl p-6 m-4 max-w-sm w-full">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100 mb-2">
-              Delete image?
+              {t("catalog:images.deleteDialog.title")}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">
-              This action cannot be undone.
+              {t("catalog:images.deleteDialog.description")}
             </p>
             <div className="flex justify-end gap-2">
               <Button variant="outline" size="sm" onClick={() => setConfirmDeleteUuid(null)}>
-                Cancel
+                {t("common:cancel")}
               </Button>
               <Button
                 variant="danger"
@@ -168,7 +171,7 @@ export function ItemImageGallery({ itemUuid, images, readOnly = false }: ItemIma
                 onClick={confirmDelete}
                 isLoading={deleteMutation.isPending}
               >
-                Delete
+                {t("catalog:images.delete")}
               </Button>
             </div>
           </div>

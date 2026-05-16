@@ -20,6 +20,7 @@ import {
   useUpdateAdminTag,
 } from "./useAdminTags";
 import { AdminPageShell, AdminSurface, AdminToolbar } from "./components/AdminPageShell";
+import { useTranslation } from "react-i18next";
 
 type SortField = "name" | "slug" | "createdAt";
 type SortState = { field: SortField; direction: "asc" | "desc" };
@@ -109,6 +110,7 @@ function validateTagForm(values: TagFormValues): { errors: TagFormErrors; payloa
 }
 
 export function AdminTagsPage() {
+  const { t } = useTranslation(["admin", "common", "catalog"]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [searchInput, setSearchInput] = useState("");
@@ -281,19 +283,19 @@ export function AdminTagsPage() {
   return (
     <>
       <AdminPageShell
-        title="Tags"
-        description="Manage platform tags with backend search, sorting, pagination, and archive-aware administrative control."
+        title={t("admin:tags")}
+        description={t("admin:tagsPage.description")}
         badges={
           <>
-            <Badge variant="primary">Metadata</Badge>
-            <Badge>{totalTags} tags</Badge>
-            {includeDeleted && <Badge variant="warning">Archived visible</Badge>}
+            <Badge variant="primary">{t("admin:tagsPage.metadata")}</Badge>
+            <Badge>{t("admin:tagsPage.tagCount", { count: totalTags })}</Badge>
+            {includeDeleted && <Badge variant="warning">{t("admin:archivedVisible")}</Badge>}
           </>
         }
         actions={
           <Button type="button" onClick={openCreateModal}>
             <Plus className="size-4" />
-            Create tag
+            {t("admin:tagsPage.createTag")}
           </Button>
         }
       >
@@ -304,7 +306,7 @@ export function AdminTagsPage() {
               <Input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search tags by name or slug"
+                placeholder={t("admin:tagsPage.searchPlaceholder")}
                 className="pl-9"
                 aria-label="Search tags"
               />
@@ -320,11 +322,11 @@ export function AdminTagsPage() {
                 }}
               >
                 <Archive className="size-4" />
-                {includeDeleted ? "Hide archived" : "Include archived"}
+                {includeDeleted ? t("admin:hideArchived") : t("admin:includeArchived")}
               </Button>
 
               <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                <span>Rows</span>
+                <span>{t("admin:rows")}</span>
                 <select
                   value={pageSize}
                   onChange={(event) => {
@@ -347,14 +349,14 @@ export function AdminTagsPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" onClick={() => tagsQuery.refetch()}>
               <RefreshCw className="size-4" />
-              Refresh
+              {t("admin:refresh")}
             </Button>
           </div>
         </AdminToolbar>
 
         <AdminSurface
-          title="Tag directory"
-          description="All list interactions use the live admin tag APIs, including query filtering, backend sorting, pagination, and archived visibility."
+          title={t("admin:tagsPage.directoryTitle")}
+          description={t("admin:tagsPage.directoryDescription")}
           contentClassName="space-y-0"
         >
           {isInitialLoading ? (
@@ -366,27 +368,27 @@ export function AdminTagsPage() {
           ) : tagsQuery.isError || !data ? (
             <EmptyState
               icon={<Tag className="size-16" />}
-              title="Unable to load tags"
+              title={t("admin:tagsPage.loadErrorTitle")}
               description={parseApiError(tagsQuery.error)}
               action={
                 <Button type="button" variant="outline" onClick={() => tagsQuery.refetch()}>
-                  Retry
+                  {t("common:tryAgain")}
                 </Button>
               }
             />
           ) : tags.length === 0 ? (
             <EmptyState
               icon={<Tag className="size-16" />}
-              title={query || includeDeleted ? "No tags match this view" : "No tags created yet"}
+              title={query || includeDeleted ? t("admin:tagsPage.emptyFilteredTitle") : t("admin:tagsPage.emptyTitle")}
               description={
                 query || includeDeleted
-                  ? "Try a different search term or change the archived filter to widen the tag result set."
-                  : "Create the first tag to start managing item metadata from this control panel."
+                  ? t("admin:tagsPage.emptyFilteredDescription")
+                  : t("admin:tagsPage.emptyDescription")
               }
               action={
                 <Button type="button" onClick={openCreateModal}>
                   <Plus className="size-4" />
-                  Create tag
+                  {t("admin:tagsPage.createTag")}
                 </Button>
               }
             />
@@ -396,18 +398,18 @@ export function AdminTagsPage() {
                 columns={[
                   {
                     key: "name",
-                    label: "Tag",
+                    label: t("admin:tagsPage.tag"),
                     sortable: true,
                     render: (tag: AdminTagResponse) => (
                       <div>
                         <p className="font-semibold text-slate-900 dark:text-slate-100">{tag.name}</p>
-                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Reusable item metadata label</p>
+                        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t("admin:tagsPage.reusableLabel")}</p>
                       </div>
                     ),
                   },
                   {
                     key: "slug",
-                    label: "Slug",
+                    label: t("admin:slug"),
                     sortable: true,
                     render: (tag: AdminTagResponse) => (
                       <code className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
@@ -417,31 +419,31 @@ export function AdminTagsPage() {
                   },
                   {
                     key: "createdAt",
-                    label: "Created",
+                    label: t("admin:created"),
                     sortable: true,
                     render: (tag: AdminTagResponse) => (
                       <div className="whitespace-normal">
                         <p>{formatDateTime(tag.createdAt)}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {tag.updatedAt ? `Updated ${formatDateTime(tag.updatedAt)}` : "No updates recorded"}
+                          {tag.updatedAt ? t("admin:updatedAt", { date: formatDateTime(tag.updatedAt) }) : t("admin:noUpdatesRecorded")}
                         </p>
                       </div>
                     ),
                   },
                   {
                     key: "status",
-                    label: "Status",
+                    label: t("catalog:fields.status"),
                     sortable: false,
                     render: (tag: AdminTagResponse) => (
                       <div className="flex flex-wrap gap-2 whitespace-normal">
-                        <Badge variant={tag.deleted ? "warning" : "success"}>{tag.deleted ? "Archived" : "Active"}</Badge>
+                        <Badge variant={tag.deleted ? "warning" : "success"}>{tag.deleted ? t("catalog:status.archived") : t("catalog:status.active")}</Badge>
                         {tag.deletedAt && <Badge variant="default">{formatDateTime(tag.deletedAt)}</Badge>}
                       </div>
                     ),
                   },
                   {
                     key: "actions",
-                    label: "Actions",
+                    label: t("common:actions"),
                     sortable: false,
                     render: (tag: AdminTagResponse) => (
                       <div className="flex flex-wrap items-center gap-2">
@@ -455,7 +457,7 @@ export function AdminTagsPage() {
                           }}
                         >
                           <Pencil className="size-4" />
-                          Edit
+                          {t("common:edit")}
                         </Button>
                         <Button
                           type="button"
@@ -468,7 +470,7 @@ export function AdminTagsPage() {
                           }}
                         >
                           <Trash2 className="size-4" />
-                          Archive
+                          {t("admin:archive")}
                         </Button>
                       </div>
                     ),
@@ -486,11 +488,11 @@ export function AdminTagsPage() {
                 statusContent={
                   <>
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                      Sort: {sort.field} ({sort.direction})
+                      {t("admin:sortStatus", { field: sort.field, direction: sort.direction })}
                     </span>
                     {tagsQuery.isFetching && !isInitialLoading && (
                       <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                        Refreshing…
+                        {t("admin:refreshing")}
                       </span>
                     )}
                   </>
@@ -501,7 +503,7 @@ export function AdminTagsPage() {
         </AdminSurface>
       </AdminPageShell>
 
-      <Modal isOpen={modalMode !== null} onClose={closeFormModal} size="md" title={modalMode === "create" ? "Create tag" : "Edit tag"}>
+      <Modal isOpen={modalMode !== null} onClose={closeFormModal} size="md" title={modalMode === "create" ? t("admin:tagsPage.createTag") : t("admin:tagsPage.editTag")}>
         {isFormLoading ? (
           <div className="space-y-3">
             {[...Array(3)].map((_, index) => (
@@ -511,20 +513,20 @@ export function AdminTagsPage() {
         ) : (
           <form onSubmit={handleSubmitForm} className="space-y-4">
             <Input
-              label="Name"
+              label={t("admin:name")}
               value={formValues.name}
               onChange={(event) => handleFormFieldChange("name", event.target.value)}
               error={formErrors.name}
-              placeholder="e.g. Vintage"
+              placeholder={t("admin:tagsPage.namePlaceholder")}
               autoFocus
             />
 
             <Input
-              label="Slug"
+              label={t("admin:slug")}
               value={formValues.slug}
               onChange={(event) => handleFormFieldChange("slug", event.target.value)}
               error={formErrors.slug}
-              placeholder="Optional — generated by backend if blank"
+              placeholder={t("admin:optionalGeneratedSlug")}
             />
 
             {formErrors.form && (
@@ -535,18 +537,18 @@ export function AdminTagsPage() {
 
             <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={closeFormModal}>
-                Cancel
+                {t("common:cancel")}
               </Button>
               <Button type="submit" isLoading={isSubmittingForm}>
                 {modalMode === "create" ? (
                   <>
                     <Plus className="size-4" />
-                    Create tag
+                    {t("admin:tagsPage.createTag")}
                   </>
                 ) : (
                   <>
                     <Pencil className="size-4" />
-                    Save changes
+                    {t("admin:saveChanges")}
                   </>
                 )}
               </Button>
@@ -555,28 +557,28 @@ export function AdminTagsPage() {
         )}
       </Modal>
 
-      <Modal isOpen={!!deleteCandidate} onClose={() => setDeleteCandidate(null)} size="sm" title="Archive tag">
+      <Modal isOpen={!!deleteCandidate} onClose={() => setDeleteCandidate(null)} size="sm" title={t("admin:tagsPage.archiveTag")}>
         <div className="space-y-4">
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-            This action performs a soft delete. The tag will be archived and will remain visible when archived results are included.
+            {t("admin:tagsPage.archiveSoftDelete")}
           </div>
 
           <div>
             <p className="text-sm text-slate-700 dark:text-slate-300">
-              Archive <span className="font-semibold text-slate-900 dark:text-slate-100">{deleteCandidate?.name}</span>?
+              {t("admin:archivePromptPrefix")} <span className="font-semibold text-slate-900 dark:text-slate-100">{deleteCandidate?.name}</span>?
             </p>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Use this when a tag should no longer appear in active metadata lists without permanently removing its record.
+              {t("admin:tagsPage.archiveHelper")}
             </p>
           </div>
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={() => setDeleteCandidate(null)}>
-              Cancel
+              {t("common:cancel")}
             </Button>
             <Button type="button" variant="danger" isLoading={deleteMutation.isPending} onClick={confirmDelete}>
               <Archive className="size-4" />
-              Archive tag
+              {t("admin:tagsPage.archiveTag")}
             </Button>
           </div>
         </div>

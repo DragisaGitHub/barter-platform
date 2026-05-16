@@ -11,6 +11,7 @@ import com.barterplatform.application.identity.service.MailSender;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.identity.entity.*;
+import com.barterplatform.domain.identity.enums.PreferredLanguage;
 import com.barterplatform.domain.identity.enums.RoleCode;
 import com.barterplatform.domain.identity.enums.UserStatus;
 import com.barterplatform.infrastructure.identity.repository.PasswordResetTokenRepository;
@@ -66,6 +67,7 @@ public class AuthServiceImpl implements AuthService {
         user.setStatus(UserStatus.PENDING_VERIFICATION);
         user.setEmailVerified(false);
         user.setMfaEnabled(false);
+        user.setPreferredLanguage(PreferredLanguage.SR);
 
         UserEntity savedUser = userRepository.save(user);
         RoleEntity userRole = resolveUserRole();
@@ -93,6 +95,7 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateAccessToken(user.getUuid(), user.getUsername(), roles);
         RefreshTokenService.RefreshTokenResult refreshResult = refreshTokenService.createRefreshToken(user.getId());
 
+        ensurePreferredLanguage(user);
         user.setLastLoginAt(OffsetDateTime.now());
         userRepository.save(user);
 
@@ -168,6 +171,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        ensurePreferredLanguage(user);
         userRepository.save(user);
 
         tokenEntity.setUsedAt(OffsetDateTime.now());
@@ -187,6 +191,7 @@ public class AuthServiceImpl implements AuthService {
                         "User not found."));
 
         validateUserStatus(user);
+        ensurePreferredLanguage(user);
 
         List<String> roles = resolveRoleNames(user.getId());
         String accessToken = jwtService.generateAccessToken(user.getUuid(), user.getUsername(), roles);
@@ -221,6 +226,7 @@ public class AuthServiceImpl implements AuthService {
                         ErrorCode.NOT_FOUND,
                         "User not found."));
 
+        ensurePreferredLanguage(user);
         return buildCurrentUserResponse(user);
     }
 
@@ -286,6 +292,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private CurrentUserResponse buildCurrentUserResponse(UserEntity user) {
+        ensurePreferredLanguage(user);
         List<UserRoleEntity> userRoles = userRoleRepository.findAllByIdUserIdOrderByAssignedAtAsc(user.getId());
         List<RoleEntity> roles = userRoles.stream()
                 .map(ur -> roleRepository.findById(ur.getId().getRoleId()))
@@ -299,6 +306,12 @@ public class AuthServiceImpl implements AuthService {
         response.setOauthAccounts(List.of());
         response.setMfaSettings(null);
         return response;
+    }
+
+    private void ensurePreferredLanguage(UserEntity user) {
+        if (user.getPreferredLanguage() == null) {
+            user.setPreferredLanguage(PreferredLanguage.SR);
+        }
     }
 
     private void validateEmailIsAvailable(String email) {

@@ -1,0 +1,20 @@
+{
+  "defaultDescription": "We hit an unexpected problem while loading this page. Please try again or return to the marketplace.",
+  "somethingWentWrong": "Something went wrong",
+  "temporaryUnavailable": "If you were opening a listing or trader page, the content may be temporarily unavailable. You can return to the marketplace and continue browsing active offers.",
+  "notFoundTitle": "Page not found",
+  "notFoundDescription": "The page you are looking for does not exist or has been moved.",
+  "notFoundListingHint": "The listing may have been removed, archived, or the link may be incorrect.",
+  "routeNotFoundDescription": "The page you requested could not be loaded. It may no longer be available.",
+  "generic": {
+    "title": "Something went wrong",
+    "description": "We hit an unexpected problem while loading this page. Please try again or return to the marketplace.",
+    "helper": "If you were opening a listing or trader page, the content may be temporarily unavailable. You can return to the marketplace and continue browsing active offers.",
+    "notFoundDescription": "The page you requested could not be loaded. It may no longer be available."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "description": "The page you are looking for does not exist or has been moved.",
+    "helper": "The listing may have been removed, archived, or the link may be incorrect."
+  }
+}

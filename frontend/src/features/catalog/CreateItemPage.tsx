@@ -5,10 +5,12 @@ import { ItemForm, type ItemFormValues } from "./ItemForm";
 import { Card, CardContent } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export function CreateItemPage() {
   const navigate = useNavigate();
   const createMutation = useCreateItem();
+  const { t } = useTranslation(["catalog", "common"]);
 
   const handleSubmit = (data: ItemFormValues) => {
     createMutation.mutate(
@@ -22,11 +24,11 @@ export function CreateItemPage() {
       },
       {
         onSuccess: (item) => {
-          toast.success("Item created! You can now add images.");
+          toast.success(t("catalog:createItem.toast.success"));
           navigate(`/my-items/${item.uuid}/edit`);
         },
         onError: () => {
-          toast.error("Failed to create item");
+          toast.error(t("catalog:createItem.toast.error"));
         },
       }
     );
@@ -40,7 +42,7 @@ export function CreateItemPage() {
           className="inline-flex items-center gap-1 text-sm text-slate-600 transition-colors hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400"
         >
           <ArrowLeft className="size-4" />
-          Back to My Items
+          {t("catalog:myItems.backToMyItems")}
         </Link>
       </div>
 
@@ -49,16 +51,14 @@ export function CreateItemPage() {
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-2xl">
               <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="primary">New listing</Badge>
-                <Badge variant="default">Seller workflow</Badge>
+                <Badge variant="primary">{t("catalog:createItem.badges.newListing")}</Badge>
+                <Badge variant="default">{t("catalog:createItem.badges.sellerWorkflow")}</Badge>
               </div>
               <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-4xl">
-                Create New Item
+                {t("catalog:createItem.title")}
               </h1>
               <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300 sm:text-base">
-                Create a detailed listing to attract better trade offers. Clear
-                titles, accurate condition details, and the right category help
-                your item get noticed faster.
+                {t("catalog:createItem.subtitle")}
               </p>
             </div>
 
@@ -70,11 +70,10 @@ export function CreateItemPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      Lead with clarity
+                      {t("catalog:createItem.tips.clarity.title")}
                     </p>
                     <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                      Use a title and description that quickly explain why the item
-                      is worth trading for.
+                      {t("catalog:createItem.tips.clarity.description")}
                     </p>
                   </div>
                 </div>
@@ -86,11 +85,10 @@ export function CreateItemPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      Choose the right status
+                      {t("catalog:createItem.tips.status.title")}
                     </p>
                     <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                      Save as draft if you want to refine the listing first, or
-                      publish when it is ready.
+                      {t("catalog:createItem.tips.status.description")}
                     </p>
                   </div>
                 </div>
@@ -102,11 +100,10 @@ export function CreateItemPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                      Images come next
+                      {t("catalog:createItem.tips.images.title")}
                     </p>
                     <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-400">
-                      After saving, you will move straight into editing so you can
-                      upload product photos.
+                      {t("catalog:createItem.tips.images.description")}
                     </p>
                   </div>
                 </div>
@@ -120,18 +117,17 @@ export function CreateItemPage() {
         <CardContent className="p-5 sm:p-6 lg:p-8">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-              Listing details
+              {t("catalog:listingDetails")}
             </h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-              Add the essential information buyers and traders need before you
-              publish your item.
+              {t("catalog:createItem.formDescription")}
             </p>
           </div>
 
           <ItemForm
             onSubmit={handleSubmit}
             isSubmitting={createMutation.isPending}
-            submitLabel="Create Item"
+            submitLabel={t("catalog:createItem.submit")}
           />
         </CardContent>
       </Card>

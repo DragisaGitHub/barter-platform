@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Upload, X } from "lucide-react";
 import { cn } from "@/utils";
 import { useUploadItemImage } from "../useItemImages";
+import { useTranslation } from "react-i18next";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
@@ -13,6 +14,7 @@ interface ImageUploaderProps {
 }
 
 export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProps) {
+  const { t } = useTranslation("catalog");
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
@@ -24,13 +26,13 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
 
   function validate(file: File): string | null {
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return "Only JPEG, PNG, and WebP images are allowed.";
+      return t("images.validation.allowedTypes");
     }
     if (file.size > MAX_FILE_SIZE) {
-      return "File must be smaller than 5 MB.";
+      return t("images.validation.maxFileSize");
     }
     if (currentImageCount >= MAX_IMAGES) {
-      return `Maximum ${MAX_IMAGES} images allowed per item.`;
+      return t("images.validation.maxImages", { max: MAX_IMAGES });
     }
     return null;
   }
@@ -116,7 +118,7 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
 
         {isUploading ? (
           <div className="space-y-2">
-            <p className="text-sm text-slate-600 dark:text-slate-400">Uploading…</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">{t("images.uploading")}</p>
             {progress !== null && (
               <div className="w-full max-w-xs mx-auto h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
                 <div
@@ -132,15 +134,15 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
         ) : canUpload ? (
           <>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
-              Click to browse or drag & drop
+              {t("images.clickToBrowse")}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              JPEG, PNG, WebP · max 5 MB · {currentImageCount}/{MAX_IMAGES} images
+              {t("images.uploadHelper", { current: currentImageCount, max: MAX_IMAGES })}
             </p>
           </>
         ) : (
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Maximum of {MAX_IMAGES} images reached
+            {t("images.maxReached", { max: MAX_IMAGES })}
           </p>
         )}
       </div>

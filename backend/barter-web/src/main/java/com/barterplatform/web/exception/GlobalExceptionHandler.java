@@ -1,5 +1,7 @@
 package com.barterplatform.web.exception;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.barterplatform.api.model.ErrorResponse;
 import com.barterplatform.api.model.FieldErrorResponse;
 import com.barterplatform.common.exception.ApiException;
@@ -19,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -113,6 +116,43 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 ErrorCode.BAD_REQUEST,
                 message,
+                request,
+                List.of());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request) {
+
+        Throwable cause = ex.getCause();
+        if (cause instanceof InvalidFormatException invalidFormatException
+                && invalidFormatException.getTargetType() != null
+                && invalidFormatException.getTargetType().isEnum()) {
+            String fieldName = invalidFormatException.getPath().stream()
+                    .map(JsonMappingException.Reference::getFieldName)
+                    .filter(field -> field != null && !field.isBlank())
+                    .reduce((first, second) -> second)
+                    .orElse("request");
+
+            String message = invalidFormatException.getValue() == null
+                    ? DEFAULT_VALIDATION_MESSAGE
+                    : "Unsupported value '%s' for field '%s'.".formatted(
+                            invalidFormatException.getValue(),
+                            fieldName);
+
+            return buildResponse(
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCode.BAD_REQUEST,
+                    message,
+                    request,
+                    List.of(new FieldErrorResponse(fieldName, message)));
+        }
+
+        return buildResponse(
+                HttpStatus.BAD_REQUEST,
+                ErrorCode.BAD_REQUEST,
+                DEFAULT_PROCESSING_MESSAGE,
                 request,
                 List.of());
     }

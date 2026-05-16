@@ -9,20 +9,22 @@ import { Spinner } from "../../components/ui/Spinner";
 import { useAuth } from "../../auth/AuthContext";
 import type { TradeOfferStatus } from "@/api/generated/types.ts";
 import type { ListTradeOffersParams } from "@/api/tradeOfferApi.ts";
+import { useTranslation } from "react-i18next";
 
-const STATUS_OPTIONS: { value: TradeOfferStatus | ""; label: string }[] = [
-  { value: "", label: "All Statuses" },
-  { value: "PENDING", label: "Pending" },
-  { value: "ACCEPTED", label: "Awaiting completion" },
-  { value: "COMPLETED", label: "Completed" },
-  { value: "REJECTED", label: "Rejected" },
-  { value: "CANCELLED", label: "Cancelled" },
-  { value: "EXPIRED", label: "Expired" },
-  { value: "INVALIDATED", label: "Invalidated" },
+const STATUS_OPTIONS: { value: TradeOfferStatus | ""; labelKey: string }[] = [
+  { value: "", labelKey: "allStatuses" },
+  { value: "PENDING", labelKey: "status.pending" },
+  { value: "ACCEPTED", labelKey: "status.awaitingCompletion" },
+  { value: "COMPLETED", labelKey: "status.completed" },
+  { value: "REJECTED", labelKey: "status.rejected" },
+  { value: "CANCELLED", labelKey: "status.cancelled" },
+  { value: "EXPIRED", labelKey: "status.expired" },
+  { value: "INVALIDATED", labelKey: "status.invalidated" },
 ];
 
 export function IncomingOffersPage() {
   const { user } = useAuth();
+  const { t } = useTranslation(["trade", "common"]);
   const [params, setParams] = useState<ListTradeOffersParams>({
     page: 0,
     size: 12,
@@ -42,7 +44,7 @@ export function IncomingOffersPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">Incoming Offers</h1>
+      <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-6">{t("trade:incomingOffers")}</h1>
 
       <div className="mb-6">
         <select
@@ -52,7 +54,7 @@ export function IncomingOffersPage() {
         >
           {STATUS_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
-              {opt.label}
+              {t(`trade:${opt.labelKey}`)}
             </option>
           ))}
         </select>
@@ -66,11 +68,11 @@ export function IncomingOffersPage() {
 
       {isError && (
         <EmptyState
-          title="Failed to load offers"
-          description="Something went wrong. Please try again."
+          title={t("trade:failedToLoadOffers")}
+          description={t("trade:failedToLoadOffersBody")}
           action={
             <Button variant="outline" onClick={() => window.location.reload()}>
-              Retry
+              {t("common:tryAgain")}
             </Button>
           }
         />
@@ -79,8 +81,8 @@ export function IncomingOffersPage() {
       {data && data.content.length === 0 && (
         <EmptyState
           icon={<Inbox className="size-16" />}
-          title="No incoming offers"
-          description="When someone sends you a trade offer, it will appear here."
+          title={t("trade:noIncomingOffers")}
+          description={t("trade:noIncomingOffersBody")}
         />
       )}
 

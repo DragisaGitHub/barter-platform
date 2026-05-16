@@ -12,14 +12,15 @@ import { Spinner } from "@/components/ui/Spinner";
 import { routePaths } from "@/routes/routePaths.ts";
 import { AdminPageShell, AdminSurface, AdminToolbar } from "./components/AdminPageShell";
 import { useAdminListings } from "./useAdminListings";
+import { useTranslation } from "react-i18next";
 
-const STATUS_OPTIONS: { value: ItemStatus | ""; label: string }[] = [
-  { value: "", label: "All statuses" },
-  { value: "DRAFT", label: "Draft" },
-  { value: "ACTIVE", label: "Active" },
-  { value: "RESERVED", label: "Reserved" },
-  { value: "ARCHIVED", label: "Archived" },
-  { value: "REMOVED", label: "Removed" },
+const STATUS_OPTIONS: { value: ItemStatus | ""; labelKey: string }[] = [
+  { value: "", labelKey: "admin:allStatuses" },
+  { value: "DRAFT", labelKey: "catalog:status.draft" },
+  { value: "ACTIVE", labelKey: "catalog:status.active" },
+  { value: "RESERVED", labelKey: "catalog:status.reserved" },
+  { value: "ARCHIVED", labelKey: "catalog:status.archived" },
+  { value: "REMOVED", labelKey: "catalog:status.removed" },
 ];
 
 const DEFAULT_PAGE_SIZE = 20;
@@ -34,6 +35,7 @@ function formatDateTime(value?: string | null) {
 }
 
 export function AdminListingsPage() {
+  const { t } = useTranslation(["admin", "common", "catalog"]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [sort] = useState("createdAt,desc");
@@ -79,15 +81,15 @@ export function AdminListingsPage() {
 
   return (
     <AdminPageShell
-      title="Listing moderation"
-      description="Review listings across all lifecycle states, inspect moderation history, and perform focused governance actions without leaving the admin workspace."
+      title={t("admin:listingsPage.title")}
+      description={t("admin:listingsPage.description")}
       badges={
         <>
           <span className="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-semibold text-red-700 dark:bg-red-950/30 dark:text-red-300">
-            Admin listings
+            {t("admin:listingsPage.adminListings")}
           </span>
           <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
-            Governance foundation
+            {t("admin:listingsPage.governanceFoundation")}
           </span>
         </>
       }
@@ -99,14 +101,14 @@ export function AdminListingsPage() {
               <Input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search listing title"
+                placeholder={t("admin:listingsPage.searchPlaceholder")}
                 className="pl-9"
               />
             </div>
             <Input
               value={ownerInput}
               onChange={(event) => setOwnerInput(event.target.value)}
-              placeholder="Owner username or email"
+              placeholder={t("admin:listingsPage.ownerPlaceholder")}
             />
             <select
               value={status}
@@ -117,8 +119,8 @@ export function AdminListingsPage() {
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             >
               {STATUS_OPTIONS.map((option) => (
-                <option key={option.label} value={option.value}>
-                  {option.label}
+                <option key={option.labelKey} value={option.value}>
+                  {t(option.labelKey)}
                 </option>
               ))}
             </select>
@@ -133,7 +135,7 @@ export function AdminListingsPage() {
               }}
               className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             >
-              <option value="">All categories</option>
+              <option value="">{t("catalog:allCategories")}</option>
               {(categoriesQuery.data ?? []).map((category) => (
                 <option key={category.uuid} value={category.uuid}>
                   {category.name}
@@ -141,7 +143,7 @@ export function AdminListingsPage() {
               ))}
             </select>
             <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-              <span>Rows</span>
+              <span>{t("admin:rows")}</span>
               <select
                 value={pageSize}
                 onChange={(event) => {
@@ -171,15 +173,15 @@ export function AdminListingsPage() {
               }}
               disabled={!hasFilters}
             >
-              Reset filters
+              {t("admin:resetFilters")}
             </Button>
           </div>
         </AdminToolbar>
       }
     >
       <AdminSurface
-        title="All listings"
-        description={`${data?.totalElements ?? 0} listing${(data?.totalElements ?? 0) === 1 ? "" : "s"} matched the current moderation filters.`}
+        title={t("admin:listingsPage.allListings")}
+        description={t("admin:listingsPage.matchedListings", { count: data?.totalElements ?? 0 })}
         contentClassName="space-y-0"
       >
         {listingsQuery.isLoading ? (
@@ -189,22 +191,22 @@ export function AdminListingsPage() {
         ) : listingsQuery.isError || !data ? (
           <EmptyState
             icon={<ShieldAlert className="size-12" />}
-            title="Unable to load listings"
-            description="Unable to load listings. The server could not apply the current filters. Clear filters or try again."
+            title={t("admin:listingsPage.loadErrorTitle")}
+            description={t("admin:listingsPage.loadErrorDescription")}
             action={
               <Button variant="outline" onClick={() => listingsQuery.refetch()}>
-                Retry
+                {t("common:tryAgain")}
               </Button>
             }
           />
         ) : listings.length === 0 ? (
           <EmptyState
             icon={<ShieldAlert className="size-12" />}
-            title="No listings found"
+            title={t("admin:listingsPage.emptyTitle")}
             description={
               hasFilters
-                ? "Try broadening the moderation filters or clearing the current search terms."
-                : "Listings will appear here once users start publishing inventory."
+                ? t("admin:listingsPage.emptyFilteredDescription")
+                : t("admin:listingsPage.emptyDescription")
             }
             action={
               hasFilters ? (
@@ -220,7 +222,7 @@ export function AdminListingsPage() {
                     setPage(0);
                   }}
                 >
-                  Clear filters
+                  {t("admin:clearFilters")}
                 </Button>
               ) : undefined
             }
@@ -231,13 +233,13 @@ export function AdminListingsPage() {
               <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-800">
                 <thead className="bg-slate-50 dark:bg-slate-900/60">
                   <tr>
-                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Listing</th>
-                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Owner</th>
-                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Category</th>
-                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Status</th>
-                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Created</th>
-                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">Removed</th>
-                    <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">Actions</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t("admin:listingsPage.listing")}</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t("admin:listingsPage.owner")}</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t("catalog:fields.category")}</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t("catalog:fields.status")}</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t("admin:created")}</th>
+                    <th className="px-4 py-3 text-left font-semibold text-slate-600 dark:text-slate-300">{t("admin:listingsPage.removed")}</th>
+                    <th className="px-4 py-3 text-right font-semibold text-slate-600 dark:text-slate-300">{t("common:actions")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white dark:divide-slate-800 dark:bg-slate-950">
@@ -266,7 +268,7 @@ export function AdminListingsPage() {
                       <td className="px-4 py-3 text-right">
                         <Link to={routePaths.admin.listingDetail(listing.uuid)}>
                           <Button variant="outline" size="sm">
-                            Open detail
+                            {t("admin:openDetail")}
                           </Button>
                         </Link>
                       </td>
@@ -283,11 +285,11 @@ export function AdminListingsPage() {
               statusContent={
                 <>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    {totalListings === 0 ? "No listings matched" : `Showing ${rangeStart}–${rangeEnd} of ${totalListings}`}
+                    {totalListings === 0 ? t("admin:listingsPage.noListingsMatched") : t("admin:showingRange", { start: rangeStart, end: rangeEnd, total: totalListings })}
                   </span>
                   {listingsQuery.isFetching && (
                     <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                      Refreshing…
+                      {t("admin:refreshing")}
                     </span>
                   )}
                 </>

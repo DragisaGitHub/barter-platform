@@ -2,6 +2,7 @@ package com.barterplatform.application.reputation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -15,6 +16,7 @@ import com.barterplatform.api.model.TradeReviewResponse;
 import com.barterplatform.application.notification.service.NotificationService;
 import com.barterplatform.application.reputation.mapper.TradeReviewMapper;
 import com.barterplatform.common.exception.ApiException;
+import com.barterplatform.common.persistence.BaseEntity;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.domain.reputation.entity.TradeReviewEntity;
@@ -24,9 +26,11 @@ import com.barterplatform.domain.trade.enums.TradeOfferStatus;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
+import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -99,6 +103,43 @@ class TradeReviewServiceImplTest {
     }
 
     @Test
+    @DisplayName("creates a positive review with non-null audit timestamps")
+    void createPositiveReviewPersistsWithAuditTimestamps() {
+        UUID reviewerUuid = UUID.randomUUID();
+        UUID tradeOfferUuid = UUID.randomUUID();
+        UserEntity reviewer = user(1L, reviewerUuid, "alice");
+        UserEntity reviewed = user(2L, UUID.randomUUID(), "bob");
+        TradeOfferEntity offer = completedOffer(10L, tradeOfferUuid, 1L, 2L);
+        CreateTradeReviewRequest request = new CreateTradeReviewRequest(TradeReviewRating.POSITIVE);
+        AtomicReference<TradeReviewEntity> persistedReview = new AtomicReference<>();
+
+        when(userRepository.findByUuid(reviewerUuid)).thenReturn(Optional.of(reviewer));
+        when(tradeOfferRepository.findByUuid(tradeOfferUuid)).thenReturn(Optional.of(offer));
+        when(tradeReviewRepository.existsByTradeOfferIdAndReviewerUserId(10L, 1L)).thenReturn(false);
+        when(userRepository.findById(2L)).thenReturn(Optional.of(reviewed));
+        when(tradeReviewRepository.save(any(TradeReviewEntity.class))).thenAnswer(invocation -> {
+            TradeReviewEntity entity = invocation.getArgument(0);
+            emulateJpaPrePersist(entity);
+            assertNotNull(entity.getCreatedAt());
+            assertNotNull(entity.getUpdatedAt());
+            entity.setId(101L);
+            persistedReview.set(entity);
+            return entity;
+        });
+
+        TradeReviewResponse response = service.createReview(reviewerUuid, tradeOfferUuid, request);
+
+        assertNotNull(response.getUuid());
+        assertEquals(tradeOfferUuid, response.getTradeOfferUuid());
+        assertEquals(TradeReviewRating.POSITIVE, response.getRating());
+        assertNull(response.getNegativeReason());
+        assertNotNull(response.getCreatedAt());
+        assertNotNull(persistedReview.get());
+        assertNotNull(persistedReview.get().getCreatedAt());
+        assertNotNull(persistedReview.get().getUpdatedAt());
+    }
+
+    @Test
     @DisplayName("rejects duplicate reviews from the same participant")
     void rejectDuplicateReview() {
         UUID reviewerUuid = UUID.randomUUID();
@@ -163,6 +204,16 @@ class TradeReviewServiceImplTest {
         offer.setCreatedAt(OffsetDateTime.now().minusDays(2));
         offer.setCompletedAt(OffsetDateTime.now().minusDays(1));
         return offer;
+    }
+
+    private void emulateJpaPrePersist(TradeReviewEntity entity) throws ReflectiveOperationException {
+        invokeLifecycleCallback(entity);
+    }
+
+    private void invokeLifecycleCallback(TradeReviewEntity entity) throws ReflectiveOperationException {
+        Method method = BaseEntity.class.getDeclaredMethod("prePersist");
+        method.setAccessible(true);
+        method.invoke(entity);
     }
 }
 

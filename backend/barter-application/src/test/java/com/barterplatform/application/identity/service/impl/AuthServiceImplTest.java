@@ -28,6 +28,7 @@ import com.barterplatform.domain.identity.entity.RoleEntity;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.identity.entity.UserRoleEntity;
 import com.barterplatform.domain.identity.entity.UserRoleId;
+import com.barterplatform.domain.identity.enums.PreferredLanguage;
 import com.barterplatform.domain.identity.enums.RoleCode;
 import com.barterplatform.infrastructure.identity.repository.RoleRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
@@ -121,6 +122,7 @@ class AuthServiceImplTest {
                     .status(UserStatus.PENDING_VERIFICATION)
                     .emailVerified(false)
                     .mfaEnabled(false)
+                    .preferredLanguage(com.barterplatform.api.model.PreferredLanguage.SR)
                     .createdAt(user.getCreatedAt());
         });
         when(roleMapper.toResponse(userRole)).thenReturn(userRoleResponse);
@@ -134,6 +136,7 @@ class AuthServiceImplTest {
         assertEquals("alex@example.com", savedUser.getEmail());
         assertEquals("hashed-password", savedUser.getPasswordHash());
         assertEquals(com.barterplatform.domain.identity.enums.UserStatus.PENDING_VERIFICATION, savedUser.getStatus());
+        assertEquals(PreferredLanguage.SR, savedUser.getPreferredLanguage());
         assertFalse(savedUser.isEmailVerified());
         assertFalse(savedUser.isMfaEnabled());
 
@@ -149,6 +152,7 @@ class AuthServiceImplTest {
         assertEquals("alex99", response.getUsername());
         assertEquals("alex@example.com", response.getEmail());
         assertEquals(UserStatus.PENDING_VERIFICATION, response.getStatus());
+        assertEquals(com.barterplatform.api.model.PreferredLanguage.SR, response.getPreferredLanguage());
         assertFalse(response.getEmailVerified());
         assertFalse(response.getMfaEnabled());
         assertEquals(1, response.getRoles().size());
@@ -261,7 +265,11 @@ class AuthServiceImplTest {
         when(refreshTokenService.getRefreshTokenExpirationSeconds()).thenReturn(604800L);
         when(userRepository.save(any(UserEntity.class))).thenAnswer(inv -> inv.getArgument(0));
         when(userMapper.toCurrentUserResponse(any(UserEntity.class))).thenReturn(
-                new CurrentUserResponse().uuid(user.getUuid()).username(user.getUsername()).email(user.getEmail()));
+                new CurrentUserResponse()
+                        .uuid(user.getUuid())
+                        .username(user.getUsername())
+                        .email(user.getEmail())
+                        .preferredLanguage(com.barterplatform.api.model.PreferredLanguage.EN));
         when(roleMapper.toResponseList(anyList())).thenReturn(List.of());
 
         TokenResponse response = authService.login(request);
@@ -271,6 +279,7 @@ class AuthServiceImplTest {
         assertEquals(TokenResponse.TokenTypeEnum.BEARER, response.getTokenType());
         assertEquals(1800L, response.getExpiresIn());
         assertNotNull(response.getUser());
+        assertEquals(com.barterplatform.api.model.PreferredLanguage.EN, response.getUser().getPreferredLanguage());
 
         verify(userRepository).findByEmail("alex@example.com");
         verify(passwordEncoder).matches("P@ssword123", user.getPasswordHash());
@@ -388,7 +397,10 @@ class AuthServiceImplTest {
                 .thenReturn(new RefreshTokenService.RefreshTokenResult("new-raw-refresh-token", new RefreshTokenEntity()));
         when(refreshTokenService.getRefreshTokenExpirationSeconds()).thenReturn(604800L);
         when(userMapper.toCurrentUserResponse(any(UserEntity.class))).thenReturn(
-                new CurrentUserResponse().uuid(user.getUuid()).username(user.getUsername()));
+                new CurrentUserResponse()
+                        .uuid(user.getUuid())
+                        .username(user.getUsername())
+                        .preferredLanguage(com.barterplatform.api.model.PreferredLanguage.EN));
         when(roleMapper.toResponseList(anyList())).thenReturn(List.of());
 
         TokenResponse response = authService.refreshToken(request);
@@ -399,9 +411,34 @@ class AuthServiceImplTest {
         assertEquals(1800L, response.getExpiresIn());
         assertEquals(604800L, response.getRefreshExpiresIn());
         assertNotNull(response.getUser());
+        assertEquals(com.barterplatform.api.model.PreferredLanguage.EN, response.getUser().getPreferredLanguage());
 
         verify(refreshTokenService).revoke(existingToken);
         verify(refreshTokenService).createRefreshToken(user.getId());
+    }
+
+    @Test
+    void shouldReturnCurrentUserWithPreferredLanguage() {
+        UserEntity user = activeUser();
+        RoleEntity role = userRoleEntity();
+        UserRoleEntity userRoleEntity = createTestUserRoleEntity(user.getId(), role.getId());
+
+        when(userRepository.findByUuid(user.getUuid())).thenReturn(Optional.of(user));
+        when(userRoleRepository.findAllByIdUserIdOrderByAssignedAtAsc(user.getId()))
+                .thenReturn(List.of(userRoleEntity));
+        when(roleRepository.findById(role.getId())).thenReturn(Optional.of(role));
+        when(userMapper.toCurrentUserResponse(any(UserEntity.class))).thenReturn(
+                new CurrentUserResponse()
+                        .uuid(user.getUuid())
+                        .username(user.getUsername())
+                        .email(user.getEmail())
+                        .preferredLanguage(com.barterplatform.api.model.PreferredLanguage.EN));
+        when(roleMapper.toResponseList(anyList())).thenReturn(List.of());
+
+        CurrentUserResponse response = authService.getCurrentUser(user.getUuid());
+
+        assertEquals(com.barterplatform.api.model.PreferredLanguage.EN, response.getPreferredLanguage());
+        assertEquals(user.getUuid(), response.getUuid());
     }
 
     @Test
@@ -584,6 +621,7 @@ class AuthServiceImplTest {
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
         user.setEmailVerified(true);
         user.setMfaEnabled(false);
+        user.setPreferredLanguage(PreferredLanguage.EN);
         user.setCreatedAt(OffsetDateTime.parse("2026-05-08T10:15:30Z"));
         return user;
     }

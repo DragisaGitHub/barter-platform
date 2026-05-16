@@ -18,6 +18,7 @@ import com.barterplatform.application.trade.service.TradeOfferService;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
 import com.barterplatform.web.exception.GlobalExceptionHandler;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
@@ -203,6 +204,39 @@ class TradeOffersControllerMvcTest {
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 
         verify(tradeOfferService).confirmCompletion(USER_UUID, offerUuid);
+    }
+
+    @Test
+    void createTradeOfferReviewShouldDelegateAndReturnCreated() throws Exception {
+        setAuthenticatedUser();
+
+        UUID offerUuid = UUID.randomUUID();
+        UUID reviewUuid = UUID.randomUUID();
+        TradeReviewResponse response = new TradeReviewResponse()
+                .uuid(reviewUuid)
+                .tradeOfferUuid(offerUuid)
+                .reviewerUserUuid(USER_UUID)
+                .reviewerUsername("alice")
+                .reviewedUserUuid(UUID.randomUUID())
+                .reviewedUsername("bob")
+                .rating(TradeReviewRating.POSITIVE)
+                .createdAt(OffsetDateTime.now());
+        when(tradeReviewService.createReview(eq(USER_UUID), eq(offerUuid), any(CreateTradeReviewRequest.class)))
+                .thenReturn(response);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/reviews")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                              "rating": "POSITIVE"
+                            }
+                            """))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.uuid").value(reviewUuid.toString()))
+                .andExpect(jsonPath("$.tradeOfferUuid").value(offerUuid.toString()))
+                .andExpect(jsonPath("$.rating").value("POSITIVE"));
+
+        verify(tradeReviewService).createReview(eq(USER_UUID), eq(offerUuid), any(CreateTradeReviewRequest.class));
     }
 
     // ── rejectTradeOffer ──────────────────────────────────────────

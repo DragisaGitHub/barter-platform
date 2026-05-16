@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck, Clock3, BadgeCheck, MessageSquareHeart } from "lucide-react";
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from "./useNotifications";
 import { formatNotificationTime, getNotificationColor, getNotificationTargetPath } from "./notificationHelpers";
@@ -39,9 +40,13 @@ function NotificationIcon({ type, className }: { type: NotificationType; classNa
 function NotificationRow({
   notification,
   onClickNotification,
+  unreadLabel,
+  currentLanguage,
 }: {
   notification: NotificationResponse;
   onClickNotification: (notification: NotificationResponse) => void;
+  unreadLabel: string;
+  currentLanguage: string;
 }) {
   return (
     <button
@@ -78,7 +83,7 @@ function NotificationRow({
           {!notification.isRead && (
             <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
               <span className="size-1.5 rounded-full bg-indigo-500" />
-              Unread
+              {unreadLabel}
             </span>
           )}
         </div>
@@ -88,7 +93,7 @@ function NotificationRow({
           </p>
         )}
         <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-          {formatNotificationTime(notification.createdAt)}
+          {formatNotificationTime(notification.createdAt, currentLanguage)}
         </p>
       </div>
       {!notification.isRead && (
@@ -104,6 +109,7 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation(["notifications"]);
 
   const { data: unreadData } = useUnreadNotificationCount();
   const { data: notificationsData, isLoading } = useNotifications({ page: 0, size: 5, sort: "createdAt,desc" });
@@ -154,8 +160,8 @@ export function NotificationBell() {
         )}
         aria-label={
           unreadCount > 0
-            ? `${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}`
-            : "Notifications"
+            ? t("notifications:unreadUpdates", { count: unreadCount })
+            : t("notifications:notifications")
         }
       >
         <Bell className="size-5" />
@@ -180,12 +186,12 @@ export function NotificationBell() {
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                    Notifications
+                    {t("notifications:notifications")}
                   </h3>
                   <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                     {unreadCount > 0
-                      ? `${unreadCount} unread update${unreadCount === 1 ? "" : "s"}`
-                      : "You’re all caught up"}
+                      ? t("notifications:unreadUpdates", { count: unreadCount })
+                      : t("notifications:caughtUp")}
                   </p>
                 </div>
               </div>
@@ -197,7 +203,7 @@ export function NotificationBell() {
                   className="inline-flex shrink-0 items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700 transition-colors hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-indigo-900/60 dark:bg-indigo-950/30 dark:text-indigo-300 dark:hover:bg-indigo-950/50"
                 >
                   <CheckCheck className="size-3.5" />
-                  Mark all read
+                  {t("notifications:markAllRead")}
                 </button>
               )}
             </div>
@@ -215,10 +221,10 @@ export function NotificationBell() {
                   <Bell className="size-7" />
                 </div>
                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                  No notifications yet
+                  {t("notifications:noNotifications")}
                 </p>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                  Trade offer and completion updates will show up here as soon as something changes.
+                  {t("notifications:noNotificationsBody")}
                 </p>
               </div>
             ) : (
@@ -227,6 +233,8 @@ export function NotificationBell() {
                   key={notification.uuid}
                   notification={notification}
                   onClickNotification={handleNotificationClick}
+                  unreadLabel={t("notifications:unread")}
+                  currentLanguage={i18n.language}
                 />
               ))
             )}
@@ -241,7 +249,7 @@ export function NotificationBell() {
               }}
               className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200 dark:hover:bg-slate-700/70"
             >
-              View all notifications
+              {t("notifications:viewAllNotifications")}
             </button>
           </div>
         </div>

@@ -21,6 +21,7 @@ import { Pagination } from "../../components/data/Pagination";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { PublicProfileListingCard } from "./PublicProfileListingCard";
 import { PublicProfilePageSkeleton } from "./PublicProfilePageSkeleton";
+import { useTranslation } from "react-i18next";
 
 function formatJoinDate(iso?: string | null): string | null {
   if (!iso) {
@@ -52,11 +53,8 @@ function getInitials(username: string): string {
     .join("");
 }
 
-function formatCount(value: number, singular: string, plural: string) {
-  return `${value} ${value === 1 ? singular : plural}`;
-}
-
 export function PublicProfilePage() {
+  const { t } = useTranslation(["profile", "common"]);
   const { uuid } = useParams<{ uuid: string }>();
   const { user } = useAuth();
   const [itemsPageIndex, setItemsPageIndex] = useState(0);
@@ -93,20 +91,20 @@ export function PublicProfilePage() {
           className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-violet-700 transition hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200"
         >
           <ArrowLeft className="size-4" />
-          Back to Marketplace
+          {t("common:backToMarketplace")}
         </Link>
         <EmptyState
           icon={<ShieldCheck className="size-12" />}
-          title="User not found"
-          description="This public trading profile may have been removed, is unavailable, or you may have followed an outdated link."
+          title={t("profile:public.notFoundTitle")}
+          description={t("profile:public.notFoundDescription")}
           action={
             <div className="flex flex-wrap justify-center gap-3">
               <Button variant="outline" onClick={() => void refetchProfile()}>
                 <RefreshCw className="size-4" />
-                Retry
+                {t("common:tryAgain")}
               </Button>
               <Link to={routePaths.marketplace}>
-                <Button>Back to Marketplace</Button>
+                <Button>{t("common:backToMarketplace")}</Button>
               </Link>
             </div>
           }
@@ -137,12 +135,12 @@ export function PublicProfilePage() {
           className="inline-flex items-center gap-2 text-sm font-medium text-violet-700 transition hover:text-violet-800 dark:text-violet-300 dark:hover:text-violet-200"
         >
           <ArrowLeft className="size-4" />
-          Back to Marketplace
+          {t("common:backToMarketplace")}
         </Link>
 
         {isOwnProfile ? (
           <Link to={routePaths.myItems}>
-            <Button variant="outline">Manage my items</Button>
+            <Button variant="outline">{t("profile:public.manageMyItems")}</Button>
           </Link>
         ) : null}
       </div>
@@ -163,37 +161,37 @@ export function PublicProfilePage() {
                     {profile.username}
                   </h1>
                   <span className="inline-flex items-center rounded-full border border-violet-200/80 bg-white/80 px-3 py-1 text-xs font-medium uppercase tracking-[0.12em] text-violet-700 shadow-sm dark:border-violet-800/60 dark:bg-slate-900/80 dark:text-violet-300">
-                    Public trader profile
+                    {t("profile:public.badge")}
                   </span>
                 </div>
 
                 <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  This is a public trading profile showing live marketplace activity and currently listed items.
+                  {t("profile:public.subtitle")}
                 </p>
 
                 <div className="mt-4 flex flex-wrap gap-2">
                   {joinedDate ? (
-                    <ProfilePill icon={<CalendarDays className="size-4" />} label={`Joined ${joinedDate}`} />
+                    <ProfilePill icon={<CalendarDays className="size-4" />} label={t("profile:public.joined", { date: joinedDate })} />
                   ) : null}
                   <ProfilePill
                     icon={<Package className="size-4" />}
-                    label={formatCount(profile.activeItemCount, "active listing", "active listings")}
+                    label={t("profile:public.activeListings", { count: profile.activeItemCount })}
                   />
                   <ProfilePill
                     icon={<CheckCircle2 className="size-4" />}
-                    label={formatCount(profile.completedTradeCount, "completed trade", "completed trades")}
+                    label={t("profile:public.completedTrades", { count: profile.completedTradeCount })}
                   />
                   <ProfilePill
                     icon={<XCircle className="size-4" />}
-                    label={formatCount(profile.cancelledTradeCount, "cancelled trade", "cancelled trades")}
+                    label={t("profile:public.cancelledTrades", { count: profile.cancelledTradeCount })}
                   />
                   {profile.reputationSummary.totalReviewCount > 0 ? (
                     <ProfilePill
                       icon={<ThumbsUp className="size-4" />}
                       label={
                         positivePercentage == null
-                          ? formatCount(profile.reputationSummary.totalReviewCount, "review", "reviews")
-                          : `${positivePercentage.toFixed(0)}% positive reviews`
+                          ? t("profile:public.reviews", { count: profile.reputationSummary.totalReviewCount })
+                          : t("profile:public.positiveReviewsPercent", { percent: positivePercentage.toFixed(0) })
                       }
                     />
                   ) : null}
@@ -204,24 +202,24 @@ export function PublicProfilePage() {
             <div className="grid gap-3 sm:grid-cols-2 lg:w-[360px] lg:shrink-0">
               <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/80">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">
-                  Public marketplace view
+                  {t("profile:public.marketplaceViewTitle")}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
-                  Browse active listings, review trade history counts, and get a quick sense of this trader’s marketplace activity.
+                  {t("profile:public.marketplaceViewDescription")}
                 </p>
               </div>
 
               <div className="rounded-2xl border border-violet-200/70 bg-violet-50/80 p-4 shadow-sm dark:border-violet-900/50 dark:bg-violet-950/20">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-700 dark:text-violet-300">
-                  Live inventory
+                  {t("profile:public.liveInventory")}
                 </p>
                 <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
                   {profile.activeItemCount}
                 </p>
                 <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
                   {profile.activeItemCount === 1
-                    ? "Listing currently available to browse."
-                    : "Listings currently available to browse."}
+                    ? t("profile:public.listingAvailable")
+                    : t("profile:public.listingsAvailable")}
                 </p>
               </div>
             </div>
@@ -243,15 +241,15 @@ export function PublicProfilePage() {
         <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-              Active listings
+              {t("profile:public.activeListingsTitle")}
             </h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-              Browse the items this trader currently has available on the marketplace.
+              {t("profile:public.activeListingsDescription")}
             </p>
           </div>
 
           <div className="inline-flex items-center rounded-full border border-violet-200/80 bg-violet-50 px-3 py-1.5 text-sm font-medium text-violet-700 dark:border-violet-900/60 dark:bg-violet-950/20 dark:text-violet-300">
-            {formatCount(listingsTotal, "live listing", "live listings")}
+            {t("profile:public.liveListings", { count: listingsTotal })}
           </div>
         </div>
 
@@ -261,20 +259,20 @@ export function PublicProfilePage() {
           ) : itemsError && items.length === 0 ? (
             <EmptyState
               icon={<Package className="size-10" />}
-              title="Unable to load active listings"
-              description="We couldn't load this trader's listings right now. Please try again."
+              title={t("profile:public.listingsErrorTitle")}
+              description={t("profile:public.listingsErrorDescription")}
               action={
                 <Button variant="outline" onClick={() => void refetchItems()}>
                   <RefreshCw className="size-4" />
-                  Retry
+                  {t("common:tryAgain")}
                 </Button>
               }
             />
           ) : items.length === 0 ? (
             <EmptyState
               icon={<Package className="size-10" />}
-              title="No active listings"
-              description="This trader has no active listings right now."
+              title={t("profile:public.noActiveListings")}
+              description={t("profile:public.noActiveListingsDescription")}
             />
           ) : (
             <>

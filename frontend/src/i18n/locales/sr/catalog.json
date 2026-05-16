@@ -1,0 +1,262 @@
+{
+  "popularCategories": "Popularne kategorije",
+  "featuredItems": "Izdvojeni oglasi",
+  "searchPlaceholder": "Pretražite oglase za razmenu...",
+  "allCategories": "Sve kategorije",
+  "showAllCategories": "Prikaži sve kategorije",
+  "clearFilter": "Ukloni filter",
+  "clear": "Obriši",
+  "tags": "Oznake",
+  "joinCommunity": "Pridružite se zajednici",
+  "joinCommunityBody": "Napravite nalog da objavite svoje oglase, šaljete ponude i razmenjujete sa zajednicom.",
+  "signUpFree": "Registrujte se besplatno",
+  "howItWorks": "Kako funkcioniše",
+  "howItWorksStep1": "Objavite oglase koje želite da razmenite",
+  "howItWorksStep2": "Pregledajte i pretražujte oglase zajednice",
+  "howItWorksStep3": "Povežite se direktno i dogovorite razmenu",
+  "latestListingsLoaded": "Najnoviji oglasi su učitani",
+  "freshListings": "Sveži oglasi se redovno osvežavaju",
+  "failedToLoadItems": "Učitavanje oglasa nije uspelo",
+  "failedToLoadItemsBody": "Došlo je do greške pri učitavanju oglasa. Pokušajte ponovo.",
+  "retry": "Pokušaj ponovo",
+  "noTradeableItems": "Nema dostupnih oglasa za razmenu",
+  "noTradeableItemsBody": "Trenutno nema aktivnih oglasa drugih korisnika. Pokušajte drugu pretragu ili kategoriju.",
+  "loadMoreItems": "Učitaj još oglasa",
+  "addToFavorites": "Dodaj u omiljene",
+  "removeFromFavorites": "Ukloni iz omiljenih",
+  "active": "Aktivno",
+  "recently": "nedavno",
+  "categories": "Kategorije",
+  "viewAllCategories": "Prikaži sve kategorije",
+  "clearFilters": "Očisti filtere",
+  "listingDetails": "Detalji oglasa",
+  "itemNotFound": "Oglas nije pronađen",
+  "status": {
+    "active": "Aktivni",
+    "draft": "Nacrt",
+    "reserved": "Rezervisano",
+    "archived": "Arhivirani",
+    "removed": "Uklonjeni"
+  },
+  "condition": {
+    "new": "Novo",
+    "likeNew": "Kao novo",
+    "good": "Dobro",
+    "used": "Korišćeno",
+    "forParts": "Za delove"
+  },
+  "fields": {
+    "title": "Naslov",
+    "description": "Opis",
+    "category": "Kategorija",
+    "condition": "Stanje",
+    "status": "Status",
+    "created": "Kreirano"
+  },
+  "myItems": {
+    "title": "Moji oglasi",
+    "subtitle": "Upravljaj oglasima, održavaj statuse ažurnim i brzo prelazi između nacrta, aktivnih i arhiviranih oglasa.",
+    "badges": { "sellerDashboard": "Prodajni panel", "inventoryManagement": "Upravljanje oglasima" },
+    "loadingInventory": "Učitavanje oglasa…",
+    "loadingItems": "Učitavanje oglasa…",
+    "totalListings": "{{count}} oglas",
+    "totalListings_plural": "{{count}} oglasa",
+    "newItem": "Novi oglas",
+    "newItemHelper": "Kreiraj detaljan oglas da privučeš bolje ponude za razmenu i profesionalno predstaviš svoje stvari.",
+    "backToMyItems": "Nazad na moje oglase",
+    "itemsCount": "{{count}} oglas",
+    "itemsCount_plural": "{{count}} oglasa",
+    "showingPageRange": "prikaz {{start}}-{{end}} na ovoj stranici",
+    "summary": {
+      "totalListings": "Ukupno oglasa",
+      "totalListingsHelper": "Svi oglasi u tvom prodajnom inventaru",
+      "activeHelper": "Trenutno vidljivi na marketplace-u",
+      "drafts": "Nacrti",
+      "draftsHelper": "Još se pripremaju pre objave",
+      "archivedHelper": "Više nisu prikazani u javnoj pretrazi",
+      "removedHelper": "Sakriveni moderacijom, ali su i dalje vidljivi tebi"
+    },
+    "filters": {
+      "title": "Filtriraj i pregledaj svoje oglase",
+      "subtitle": "Pretraži oglase, suzi izbor po statusu ili stanju i promeni prikaz bez prekidanja rada.",
+      "searchPlaceholder": "Pretraži oglase po naslovu ili kategoriji",
+      "allStatuses": "Svi statusi",
+      "anyCondition": "Bilo koje stanje",
+      "applied": "Filteri su primenjeni"
+    },
+    "view": { "grid": "Mreža", "table": "Tabela", "gridView": "Prikaz mreže", "tableView": "Tabelarni prikaz" },
+    "error": { "title": "Učitavanje tvojih oglasa nije uspelo", "description": "Došlo je do greške pri učitavanju prodajnog inventara. Pokušaj ponovo." },
+    "empty": {
+      "title": "Još nema oglasa",
+      "description": "Započni svoj katalog detaljnim oglasom kako bi drugi korisnici brzo razumeli šta nudiš.",
+      "filteredTitle": "Nijedan oglas ne odgovara filterima",
+      "filteredDescription": "Pokušaj da proširiš filtere ili pojmove za pretragu kako bi pronašao više oglasa.",
+      "createFirst": "Kreiraj prvi oglas"
+    },
+    "table": { "sellerListing": "Prodajni oglas" },
+    "archive": {
+      "title": "Arhiviraj oglas",
+      "description": "Da li sigurno želiš da arhiviraš ovaj oglas? Više se neće prikazivati na javnom marketplace-u.",
+      "reasonLabel": "Razlog (opciono)",
+      "reasonPlaceholder": "Zašto arhiviraš ovaj oglas?",
+      "confirm": "Arhiviraj",
+      "success": "Oglas je uspešno arhiviran",
+      "error": "Arhiviranje oglasa nije uspelo",
+      "ariaLabel": "Arhiviraj {{title}}"
+    }
+  },
+  "marketplace": {
+    "categoriesHelper": "Brze prečice do trenutno najaktivnijih kategorija i brz pristup celom direktorijumu.",
+    "activeListings": "{{count}} aktivan oglas",
+    "activeListings_plural": "{{count}} aktivnih oglasa",
+    "activeCount": "{{count}} aktivno",
+    "popularCategoriesDescription": "Kratke prečice za otkrivanje zasnovane na aktivnostima na marketplace-u, da oglasi ostanu u fokusu.",
+    "noPopularCategories": "Popularne kategorije će se pojaviti ovde kada aktivni oglasi dobiju zamah.",
+    "defaultCategoryDescription": "Odmah pređi na najaktivnije oglase u ovoj kategoriji.",
+    "results": {
+      "searchResults": "Rezultati pretrage za „{{query}}”",
+      "categoryItems": "Oglasi u kategoriji {{category}}",
+      "liveListings": "{{count}} aktivan oglas",
+      "liveListings_plural": "{{count}} aktivnih oglasa",
+      "inCategory": " u kategoriji {{category}}",
+      "fromCommunity": " iz zajednice",
+      "matchingQuery": " koji odgovaraju upitu „{{query}}”"
+    }
+  },
+  "categoriesPage": {
+    "title": "Pregled svih kategorija marketplace-a",
+    "subtitle": "Pretraži ceo direktorijum kategorija i vrati se na marketplace sa već primenjenim odgovarajućim filterom.",
+    "badge": "Skalabilno otkrivanje kategorija",
+    "discoveryTitle": "Pronađi pravu oblast pre pregleda oglasa",
+    "discoveryDescription": "Marketplace ističe popularne kategorije na početnoj strani, dok ovaj direktorijum čuva ceo katalog pretraživim i lakim za pregled kako platforma raste.",
+    "totalCategories": "{{count}} kategorija ukupno",
+    "totalCategories_plural": "{{count}} kategorija ukupno",
+    "matchingCategories": "{{count}} kategorija odgovara pretrazi",
+    "matchingCategories_plural": "{{count}} kategorija odgovara pretrazi",
+    "searchPlaceholder": "Pretraži kategorije po nazivu ili opisu...",
+    "directoryTitle": "Direktorijum kategorija",
+    "directoryDescription": "Izaberi kategoriju da se vratiš na marketplace sa tim filterom.",
+    "viewMarketplace": "Prikaži oglase na marketplace-u",
+    "errorTitle": "Učitavanje kategorija nije uspelo",
+    "errorDescription": "Došlo je do greške pri učitavanju direktorijuma kategorija. Osveži stranicu i pokušaj ponovo.",
+    "emptyTitle": "Nema odgovarajućih kategorija",
+    "emptyDescription": "Pokušaj širi pojam za pretragu ili očisti pretragu da vidiš ceo direktorijum.",
+    "clearSearch": "Očisti pretragu",
+    "popularNow": "Popularno sada",
+    "defaultCardDescription": "Pregledaj aktivne oglase i otkrij prilike za razmenu u ovoj kategoriji.",
+    "exploreCategory": "Istraži kategoriju",
+    "browse": "Pregledaj"
+  },
+  "itemDetail": {
+    "noPhotos": "Nema dostupnih fotografija",
+    "noPhotosDescription": "Prodavac još nije dodao slike za ovaj oglas.",
+    "notFoundDescription": "Oglas je možda uklonjen ili ne postoji.",
+    "listedOn": "Objavljeno",
+    "listingPreview": "Pregled oglasa",
+    "noDescription": "Prodavac još nije dodao opis za ovaj oglas.",
+    "seller": "Prodavac",
+    "memberTrader": "Član za razmenu na Barter Platform",
+    "tradeSafely": "Razmenjuj bezbedno",
+    "tradeSafelyDescription": "Registruj se da kontaktiraš vlasnika i pošalješ ponudu za razmenu.",
+    "createAccountToTrade": "Kreiraj nalog za predlog razmene",
+    "alreadyHaveAccount": "Već imaš nalog? Prijavi se",
+    "proposeTrade": "Predloži razmenu",
+    "proposeTradeDescription": "Pošalji ponudu direktno vlasniku i nastavi razgovor nakon prijave.",
+    "ownerNotice": "Ovo je tvoj oglas. Možeš njime upravljati iz panela Moji oglasi.",
+    "openOwnerDetail": "Otvori detalje vlasnika",
+    "editListing": "Uredi oglas"
+  },
+  "itemForm": {
+    "titlePlaceholder": "Šta oglašavaš?",
+    "descriptionPlaceholder": "Opiši svoj predmet...",
+    "selectCategory": "Izaberi kategoriju",
+    "selectCondition": "Izaberi stanje",
+    "loadingTags": "Učitavanje oznaka...",
+    "noTags": "Nema dostupnih oznaka"
+  },
+  "validation": {
+    "titleRequired": "Naslov je obavezan",
+    "titleTooLong": "Naslov može imati najviše 255 karaktera",
+    "categoryRequired": "Kategorija je obavezna",
+    "conditionRequired": "Stanje je obavezno"
+  },
+  "createItem": {
+    "title": "Kreiraj novi oglas",
+    "subtitle": "Kreiraj detaljan oglas da privučeš bolje ponude za razmenu. Jasan naslov, tačno stanje i prava kategorija pomažu da tvoj oglas bude brže primećen.",
+    "badges": { "newListing": "Novi oglas", "sellerWorkflow": "Tok rada prodavca" },
+    "tips": {
+      "clarity": { "title": "Počni jasno", "description": "Koristi naslov i opis koji brzo objašnjavaju zašto je predmet vredan razmene." },
+      "status": { "title": "Izaberi pravi status", "description": "Sačuvaj kao nacrt ako želiš dodatno da doradiš oglas ili objavi kada je spreman." },
+      "images": { "title": "Slike su sledeći korak", "description": "Nakon čuvanja odmah prelaziš na uređivanje da možeš da dodaš fotografije proizvoda." }
+    },
+    "formDescription": "Dodaj osnovne informacije koje kupci i korisnici za razmenu treba da znaju pre objave oglasa.",
+    "submit": "Kreiraj oglas",
+    "toast": { "success": "Oglas je kreiran! Sada možeš da dodaš slike.", "error": "Kreiranje oglasa nije uspelo" }
+  },
+  "editItem": {
+    "title": "Uredi oglas",
+    "subtitle": "Održavaj oglas tačnim i ažurnim. Osveži detalje, poboljšaj prezentaciju i upravljaj slikama kako bi oglas bio spreman za marketplace.",
+    "notFoundDescription": "Oglas je možda uklonjen ili nemaš pristup za uređivanje.",
+    "badges": { "sellerManagement": "Upravljanje prodajom" },
+    "tips": {
+      "refine": { "title": "Doteraj detalje oglasa", "description": "Ažuriraj tekst, stanje ili status kad god se oglas promeni." },
+      "ready": { "title": "Ostani spreman za marketplace", "description": "Tačni statusi i dobre fotografije čine oglas pouzdanijim." }
+    },
+    "images": {
+      "title": "Slike oglasa",
+      "description": "Dodaj ili ažuriraj slike da oglas bude pouzdaniji i lakši za procenu. Trenutno imaš {{count}} sliku.",
+      "description_plural": "Dodaj ili ažuriraj slike da oglas bude pouzdaniji i lakši za procenu. Trenutno imaš {{count}} slika."
+    },
+    "formDescription": "Pregledaj informacije ispod i sačuvaj izmene kada je oglas spreman.",
+    "submit": "Ažuriraj oglas",
+    "toast": { "success": "Oglas je uspešno ažuriran", "error": "Ažuriranje oglasa nije uspelo" }
+  },
+  "favorites": {
+    "badge": "Lista želja",
+    "title": "Moji omiljeni oglasi",
+    "subtitle": "Prati oglase kojima želiš da se vratiš i za koje želiš kasnije da ponudiš razmenu.",
+    "savedItems": "{{count}} sačuvan oglas",
+    "savedItems_plural": "{{count}} sačuvanih oglasa",
+    "errorTitle": "Učitavanje omiljenih oglasa nije uspelo",
+    "errorDescription": "Došlo je do greške pri učitavanju sačuvanih oglasa. Pokušaj ponovo.",
+    "emptyTitle": "Još nema omiljenih oglasa",
+    "emptyDescription": "Sačuvaj oglase sa marketplace-a da napraviš uži izbor i vratiš se kada budeš spreman za razmenu.",
+    "browseMarketplace": "Pregledaj marketplace",
+    "savedListings": "Sačuvani oglasi",
+    "savedListingsDescription": "Omiljeni oglasi su poređani od najskorije sačuvanih.",
+    "continueBrowsing": "Nastavi pregled"
+  },
+  "itemCard": { "byOwner": "od {{username}}" },
+  "images": {
+    "primaryImage": "Primarna slika",
+    "primary": "Primarna",
+    "setAsPrimary": "Postavi kao primarnu",
+    "deleteImage": "Obriši sliku",
+    "delete": "Obriši",
+    "uploading": "Otpremanje…",
+    "clickToBrowse": "Klikni za izbor ili prevuci i pusti",
+    "uploadHelper": "JPEG, PNG, WebP · maks. 5 MB · {{current}}/{{max}} slika",
+    "maxReached": "Dostignut je maksimum od {{max}} slika",
+    "noImagesYet": "Još nema slika",
+    "uploadUsingUploader": "Otpremi slike pomoću alata iznad",
+    "validation": {
+      "allowedTypes": "Dozvoljene su samo JPEG, PNG i WebP slike.",
+      "maxFileSize": "Fajl mora biti manji od 5 MB.",
+      "maxImages": "Dozvoljeno je najviše {{max}} slika po oglasu."
+    },
+    "deleteDialog": { "title": "Obrisati sliku?", "description": "Ovu akciju nije moguće opozvati." }
+  },
+  "moderation": {
+    "removedTitle": "Ovaj oglas je uklonjen sa marketplace-a.",
+    "removedDescription": "Trenutno ga mogu videti samo ti i administratori.",
+    "moderatorMessage": "Poruka moderatora",
+    "reasonUnavailable": "Razlog nije dostupan",
+    "reasons": {
+      "PROHIBITED_ITEM": "Zabranjen predmet",
+      "MISLEADING_CONTENT": "Obmanjujući sadržaj",
+      "DUPLICATE_LISTING": "Dupliran oglas",
+      "SPAM": "Spam",
+      "OTHER": "Drugo"
+    }
+  }
+}

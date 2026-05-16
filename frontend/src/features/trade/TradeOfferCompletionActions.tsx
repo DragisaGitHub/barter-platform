@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/Badge";
 import { toast } from "sonner";
 import { useConfirmTradeOfferCompletion } from "./useTradeOffers";
 import type { TradeOfferStatus } from "@/api/generated/types.ts";
+import { useTranslation } from "react-i18next";
 
 interface CompletionOfferLike {
   uuid: string;
@@ -32,14 +33,16 @@ export function TradeOfferCompletionActions({
   currentUserUuid,
   compact = false,
 }: TradeOfferCompletionActionsProps) {
+  const { t } = useTranslation("trade");
+  const confirmMutation = useConfirmTradeOfferCompletion();
+
   if (offer.status !== "ACCEPTED" && offer.status !== "COMPLETED") {
     return null;
   }
 
-  const confirmMutation = useConfirmTradeOfferCompletion();
   const isSender = offer.sender.uuid === currentUserUuid;
-  const senderLabel = isSender ? "You" : offer.sender.username;
-  const receiverLabel = isSender ? offer.receiver.username : "You";
+  const senderLabel = isSender ? t("you") : offer.sender.username;
+  const receiverLabel = isSender ? offer.receiver.username : t("you");
   const currentUserCompletionConfirmed = Boolean(offer.currentUserCompletionConfirmed);
   const canConfirmCompletion = Boolean(offer.canConfirmCompletion);
 
@@ -47,13 +50,13 @@ export function TradeOfferCompletionActions({
     confirmMutation.mutate(offer.uuid, {
       onSuccess: (updatedOffer) => {
         if (updatedOffer.status === "COMPLETED") {
-          toast.success("Trade marked as completed.");
+          toast.success(t("completion.completedToast"));
           return;
         }
-        toast.success("Your completion confirmation was recorded.");
+        toast.success(t("completion.confirmedToast"));
       },
       onError: () => {
-        toast.error("Failed to confirm trade completion.");
+        toast.error(t("completion.errorToast"));
       },
     });
   };
@@ -73,22 +76,22 @@ export function TradeOfferCompletionActions({
               <Clock3 className="size-4 text-amber-500" />
             )}
             <p className="font-medium text-slate-900 dark:text-slate-100">
-              {offer.status === "COMPLETED" ? "Trade completed" : "Awaiting completion"}
+              {offer.status === "COMPLETED" ? t("completion.tradeCompleted") : t("status.awaitingCompletion")}
             </p>
           </div>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
             {offer.status === "COMPLETED"
-              ? `Both participants confirmed the exchange${offer.completedAt ? ` on ${formatDateTime(offer.completedAt)}` : ""}.`
+              ? t("completion.bothConfirmed", { date: offer.completedAt ? t("completion.onDate", { date: formatDateTime(offer.completedAt) }) : "" })
               : currentUserCompletionConfirmed
-                ? "You confirmed completion. Waiting for the other participant to confirm."
-                : "The trade is agreed and the items are archived. Confirm once the exchange is complete on your side."}
+                ? t("completion.waitingForOther")
+                : t("completion.confirmInstructions")}
           </p>
         </div>
 
         {offer.status === "COMPLETED" ? (
-          <Badge variant="success">Completed</Badge>
+          <Badge variant="success">{t("status.completed")}</Badge>
         ) : currentUserCompletionConfirmed ? (
-          <Badge variant="secondary">Waiting for the other participant</Badge>
+          <Badge variant="secondary">{t("completion.waitingBadge")}</Badge>
         ) : null}
       </div>
 
@@ -98,7 +101,7 @@ export function TradeOfferCompletionActions({
             {senderLabel}
           </p>
           <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-            {offer.senderCompletedAt ? `Confirmed ${formatDateTime(offer.senderCompletedAt)}` : "Not confirmed yet"}
+            {offer.senderCompletedAt ? t("completion.confirmedAt", { date: formatDateTime(offer.senderCompletedAt) }) : t("completion.notConfirmedYet")}
           </p>
         </div>
         <div className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-900/60">
@@ -106,7 +109,7 @@ export function TradeOfferCompletionActions({
             {receiverLabel}
           </p>
           <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
-            {offer.receiverCompletedAt ? `Confirmed ${formatDateTime(offer.receiverCompletedAt)}` : "Not confirmed yet"}
+            {offer.receiverCompletedAt ? t("completion.confirmedAt", { date: formatDateTime(offer.receiverCompletedAt) }) : t("completion.notConfirmedYet")}
           </p>
         </div>
       </div>
@@ -114,7 +117,7 @@ export function TradeOfferCompletionActions({
       {canConfirmCompletion && offer.status === "ACCEPTED" && (
         <div className="mt-3 flex justify-start">
           <Button onClick={handleConfirm} isLoading={confirmMutation.isPending} size={compact ? "sm" : "md"}>
-            Confirm completion
+            {t("completion.confirmButton")}
           </Button>
         </div>
       )}

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { Eye, EyeOff } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
@@ -18,12 +19,10 @@ import {
   routePaths,
 } from "@/routes/routePaths.ts";
 
-const loginSchema = z.object({
-  identifier: z.string().min(1, "Email or username is required"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginFormData = {
+  identifier: string;
+  password: string;
+};
 
 function PasswordField({
   showPassword,
@@ -32,6 +31,7 @@ function PasswordField({
   showPassword: boolean;
   onToggle: () => void;
 }) {
+  const { t } = useTranslation(["auth", "common"]);
   const {
     register,
     formState: { errors },
@@ -42,13 +42,13 @@ function PasswordField({
   return (
     <div className="w-full">
       <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-        Password
+        {t("common:password")}
       </label>
       <div className="relative">
         <input
           {...register("password")}
           type={showPassword ? "text" : "password"}
-          placeholder="Enter your password"
+          placeholder={t("auth:passwordPlaceholder")}
           autoComplete="current-password"
           className={[
             "w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors duration-150",
@@ -64,7 +64,7 @@ function PasswordField({
           type="button"
           onClick={onToggle}
           className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-          aria-label={showPassword ? "Hide password" : "Show password"}
+          aria-label={showPassword ? t("auth:hidePassword") : t("auth:showPassword")}
         >
           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
         </button>
@@ -78,6 +78,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
+  const { t } = useTranslation(["auth", "common"]);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   // null = no banner; string = show banner (empty string means email unknown)
@@ -92,6 +93,11 @@ export function LoginPage() {
     redirect: redirectPath,
   });
 
+  const loginSchema = z.object({
+    identifier: z.string().min(1, t("auth:identifierRequired")),
+    password: z.string().min(8, t("auth:passwordMinLength")),
+  });
+
   const methods = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -101,7 +107,7 @@ export function LoginPage() {
   });
 
   const formError = methods.formState.errors.root?.message as string | undefined;
-  const invalidLoginMessage = "Invalid email/username or password.";
+  const invalidLoginMessage = t("auth:invalidCredentials");
 
   const showFormError = (message: string) => {
     methods.setError("root", { type: "manual", message });
@@ -113,7 +119,7 @@ export function LoginPage() {
     methods.clearErrors("root");
     try {
       await login(data);
-      toast.success("Login successful");
+      toast.success(t("auth:loginSuccessful"));
       navigate(redirectPath ?? routePaths.dashboard);
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -161,7 +167,7 @@ export function LoginPage() {
     const firstErrorMessage =
       methods.formState.errors.identifier?.message ??
       methods.formState.errors.password?.message ??
-      "Please fix the errors below.";
+      t("auth:fixErrors");
 
     showFormError(firstErrorMessage as string);
   };
@@ -172,19 +178,19 @@ export function LoginPage() {
         <Card className="w-full max-w-md border-slate-200/80 shadow-xl shadow-slate-200/50 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-none">
           <CardHeader>
             <div className="mx-auto mb-3 inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-700 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300">
-              Marketplace sign in
+              {t("auth:marketplaceSignIn")}
             </div>
-            <CardTitle className="text-center">Welcome Back</CardTitle>
+            <CardTitle className="text-center">{t("auth:welcomeBack")}</CardTitle>
             <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-2">
               {redirectPath
-                ? "Sign in to get back to the listing you were viewing and continue your trade flow."
-                : "Sign in to continue trading, managing listings, and following your marketplace activity."}
+                ? t("auth:redirectSignInCta")
+                : t("auth:signInCta")}
             </p>
           </CardHeader>
           <CardContent>
             {redirectPath && (
               <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-sm text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
-                You’ll return to your selected marketplace item right after sign in.
+                {t("auth:returnAfterSignIn")}
               </div>
             )}
 
@@ -192,17 +198,15 @@ export function LoginPage() {
           {unverifiedEmail !== null && (
             <div className="mb-4 rounded-lg border border-amber-300 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 p-4 text-sm">
               <p className="font-medium text-amber-800 dark:text-amber-300 mb-1">
-                Email verification required
+                {t("auth:unverifiedTitle")}
               </p>
               {unverifiedEmail ? (
                 <p className="text-amber-700 dark:text-amber-400">
-                  Your account (<span className="font-medium">{unverifiedEmail}</span>) has not
-                  been verified yet. Check your inbox for the 6-digit code.
+                  {t("auth:unverifiedKnownEmail", { email: unverifiedEmail })}
                 </p>
               ) : (
                 <p className="text-amber-700 dark:text-amber-400">
-                  Your account email is not verified. Please go to the verification
-                  page and enter your email address.
+                  {t("auth:unverifiedUnknownEmail")}
                 </p>
               )}
               <div className="mt-3">
@@ -210,7 +214,7 @@ export function LoginPage() {
                   to={verifyEmailHref}
                   className="inline-block rounded-md bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 text-sm font-medium transition-colors"
                 >
-                  Verify email →
+                  {t("auth:verifyEmail")} →
                 </Link>
               </div>
             </div>
@@ -226,9 +230,9 @@ export function LoginPage() {
 
               <FormInput
                 name="identifier"
-                label="Email or Username"
+                label={t("auth:identifier")}
                 type="text"
-                placeholder="Enter your email or username"
+                placeholder={t("auth:identifierPlaceholder")}
                 autoComplete="username"
               />
 
@@ -242,25 +246,25 @@ export function LoginPage() {
                   to={forgotPasswordHref}
                   className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
                 >
-                  Forgot password?
+                  {t("auth:forgotPassword")}
                 </Link>
               </div>
 
               <Button type="submit" fullWidth isLoading={isLoading}>
-                Sign In
+                {t("auth:signIn")}
               </Button>
             </form>
           </FormProvider>
 
           <div className="mt-6 text-center text-sm">
             <span className="text-slate-600 dark:text-slate-400">
-              Don't have an account?{" "}
+              {t("auth:dontHaveAccount")} {" "}
             </span>
             <Link
               to={registerHref}
               className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"
             >
-              Sign up
+              {t("auth:signUp")}
             </Link>
           </div>
 
@@ -269,7 +273,7 @@ export function LoginPage() {
               to={routePaths.marketplace}
               className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             >
-              Back to marketplace
+              {t("common:backToMarketplace")}
             </Link>
           </div>
           </CardContent>

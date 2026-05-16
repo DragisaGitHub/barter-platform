@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Clock, Heart, Package, User } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import type { FavoriteItemsParams } from "@/api/catalogApi.ts";
 import type { ItemSummaryResponse } from "@/api/generated/types.ts";
 import { routePaths } from "@/routes/routePaths.ts";
@@ -12,8 +11,10 @@ import { Button } from "../../components/ui/Button";
 import { ItemGridSkeleton } from "./ItemCardSkeleton";
 import { useFavoriteItems, useUnfavoriteItem } from "./useCatalog";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export function FavoritesPage() {
+  const { t } = useTranslation(["catalog", "common"]);
   const [params, setParams] = useState<FavoriteItemsParams>({
     page: 0,
     size: 20,
@@ -26,8 +27,8 @@ export function FavoritesPage() {
 
   const totalLabel = useMemo(() => {
     const total = data?.totalElements ?? 0;
-    return total === 1 ? "1 saved item" : `${total} saved items`;
-  }, [data?.totalElements]);
+    return t("catalog:favorites.savedItems", { count: total });
+  }, [data?.totalElements, t]);
 
   const handleUnfavorite = (itemUuid: string) => {
     setPendingItemUuid(itemUuid);
@@ -47,11 +48,11 @@ export function FavoritesPage() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="inline-flex items-center rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-rose-700">
-              Wishlist
+              {t("catalog:favorites.badge")}
             </div>
-            <h1 className="mt-3 text-3xl font-bold text-slate-900">My Favorites</h1>
+            <h1 className="mt-3 text-3xl font-bold text-slate-900">{t("catalog:favorites.title")}</h1>
             <p className="mt-2 text-sm text-slate-600">
-              Keep track of the listings you want to revisit and trade for later.
+              {t("catalog:favorites.subtitle")}
             </p>
           </div>
 
@@ -65,11 +66,11 @@ export function FavoritesPage() {
 
       {isError ? (
         <EmptyState
-          title="Failed to load favorites"
-          description="Something went wrong while loading your saved items. Please try again."
+          title={t("catalog:favorites.errorTitle")}
+          description={t("catalog:favorites.errorDescription")}
           action={
             <Button variant="outline" onClick={() => window.location.reload()}>
-              Retry
+              {t("common:tryAgain")}
             </Button>
           }
         />
@@ -79,11 +80,11 @@ export function FavoritesPage() {
         <section className="marketplace-panel p-4 sm:p-6">
           <EmptyState
             icon={<Heart className="size-16" />}
-            title="No favorites yet"
-            description="Save listings from the marketplace to build your shortlist and come back when you're ready to trade."
+            title={t("catalog:favorites.emptyTitle")}
+            description={t("catalog:favorites.emptyDescription")}
             action={
               <Link to={routePaths.marketplace}>
-                <Button>Browse Marketplace</Button>
+                <Button>{t("catalog:favorites.browseMarketplace")}</Button>
               </Link>
             }
           />
@@ -95,14 +96,14 @@ export function FavoritesPage() {
           <section className="marketplace-panel p-4 sm:p-5">
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-medium text-slate-900">Saved listings</h2>
+                <h2 className="text-lg font-medium text-slate-900">{t("catalog:favorites.savedListings")}</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Your favorites are ordered by the most recently saved items first.
+                  {t("catalog:favorites.savedListingsDescription")}
                 </p>
               </div>
               <Link to={routePaths.marketplace}>
                 <Button variant="outline" className="border-slate-200 bg-white text-slate-700 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700">
-                  Continue browsing
+                  {t("catalog:favorites.continueBrowsing")}
                 </Button>
               </Link>
             </div>
@@ -143,13 +144,14 @@ function FavoriteMarketplaceItemCard({
   isPending: boolean;
   onUnfavorite: (itemUuid: string) => void;
 }) {
-  const timeAgo = useMemo(() => {
+  const { t, i18n } = useTranslation("catalog");
+  const createdLabel = useMemo(() => {
     try {
-      return formatDistanceToNow(new Date(item.createdAt), { addSuffix: true });
+      return new Date(item.createdAt).toLocaleDateString(i18n.language === "sr" ? "sr-Latn-RS" : "en-US");
     } catch {
-      return "recently";
+      return t("recently");
     }
-  }, [item.createdAt]);
+  }, [i18n.language, item.createdAt, t]);
 
   return (
     <div className="group relative">
@@ -158,7 +160,7 @@ function FavoriteMarketplaceItemCard({
         onClick={() => onUnfavorite(item.uuid)}
         disabled={isPending}
         className="absolute right-2.5 top-2.5 z-10 inline-flex size-9 items-center justify-center rounded-full border border-white/80 bg-white/95 text-rose-500 shadow-sm backdrop-blur transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-        aria-label="Remove from favorites"
+        aria-label={t("removeFromFavorites")}
       >
         <Heart className="size-4.5 fill-current" />
       </button>
@@ -182,7 +184,7 @@ function FavoriteMarketplaceItemCard({
           )}
 
           <div className="marketplace-soft-badge absolute left-2.5 top-2.5 inline-flex items-center bg-white/95 px-2 py-0.5 text-[10px] font-medium uppercase tracking-[0.08em] text-emerald-700">
-            {item.status}
+            {t(`status.${item.status.toLowerCase()}`)}
           </div>
         </div>
 
@@ -192,7 +194,7 @@ function FavoriteMarketplaceItemCard({
               <span className="truncate">{item.categoryName}</span>
             </span>
             <span className="marketplace-soft-badge inline-flex items-center bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500">
-              {formatEnumLabel(item.condition)}
+              {t(conditionTranslationKey(item.condition))}
             </span>
           </div>
 
@@ -209,7 +211,7 @@ function FavoriteMarketplaceItemCard({
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
                 <Clock className="size-3.5 text-slate-400" />
-                <span>{timeAgo}</span>
+                <span>{createdLabel}</span>
               </div>
             </div>
           </div>
@@ -219,11 +221,14 @@ function FavoriteMarketplaceItemCard({
   );
 }
 
-function formatEnumLabel(value: string) {
-  return value
-    .toLowerCase()
-    .split("_")
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
+function conditionTranslationKey(value: string) {
+  const keys: Record<string, string> = {
+    NEW: "condition.new",
+    LIKE_NEW: "condition.likeNew",
+    GOOD: "condition.good",
+    USED: "condition.used",
+    FOR_PARTS: "condition.forParts",
+  };
+  return keys[value] ?? value;
 }
 

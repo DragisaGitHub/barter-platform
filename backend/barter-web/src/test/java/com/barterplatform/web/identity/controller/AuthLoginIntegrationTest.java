@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.barterplatform.BarterApplication;
+import com.barterplatform.domain.identity.enums.PreferredLanguage;
 import com.barterplatform.domain.identity.entity.RefreshTokenEntity;
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
@@ -93,6 +94,7 @@ class AuthLoginIntegrationTest {
         var user = userRepository.findByEmail("alex@example.com").orElseThrow();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
         user.setEmailVerified(true);
+        user.setPreferredLanguage(PreferredLanguage.EN);
         userRepository.save(user);
 
         // Login with email
@@ -106,6 +108,7 @@ class AuthLoginIntegrationTest {
                 .andExpect(jsonPath("$.user.uuid").isNotEmpty())
                 .andExpect(jsonPath("$.user.username").value("alex99"))
                 .andExpect(jsonPath("$.user.email").value("alex@example.com"))
+                .andExpect(jsonPath("$.user.preferredLanguage").value("EN"))
                 .andReturn();
 
         assertThat(result.getResponse().getContentAsString()).doesNotContain("passwordHash");

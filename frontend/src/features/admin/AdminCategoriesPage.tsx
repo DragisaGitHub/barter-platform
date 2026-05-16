@@ -20,6 +20,7 @@ import {
   useUpdateAdminCategory,
 } from "./useAdminCategories";
 import { AdminPageShell, AdminSurface, AdminToolbar } from "./components/AdminPageShell";
+import { useTranslation } from "react-i18next";
 
 type SortField = "name" | "slug" | "sortOrder" | "createdAt";
 type SortState = { field: SortField; direction: "asc" | "desc" };
@@ -143,6 +144,7 @@ function validateCategoryForm(
 }
 
 export function AdminCategoriesPage() {
+  const { t } = useTranslation(["admin", "common", "catalog"]);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [searchInput, setSearchInput] = useState("");
@@ -334,22 +336,22 @@ export function AdminCategoriesPage() {
 
   const shellBadges = (
     <>
-      <Badge variant="primary">Taxonomy</Badge>
-      <Badge>{totalCategories} categories</Badge>
-      {includeDeleted && <Badge variant="warning">Archived visible</Badge>}
+      <Badge variant="primary">{t("admin:categoriesPage.taxonomy")}</Badge>
+      <Badge>{t("admin:categoriesPage.categoryCount", { count: totalCategories })}</Badge>
+      {includeDeleted && <Badge variant="warning">{t("admin:archivedVisible")}</Badge>}
     </>
   );
 
   return (
     <>
       <AdminPageShell
-        title="Categories"
-        description="Manage the platform taxonomy with real backend search, sorting, pagination, and archive-aware category administration."
+        title={t("admin:categories")}
+        description={t("admin:categoriesPage.description")}
         badges={shellBadges}
         actions={
           <Button type="button" onClick={openCreateModal}>
             <Plus className="size-4" />
-            Create category
+            {t("admin:categoriesPage.createCategory")}
           </Button>
         }
       >
@@ -360,7 +362,7 @@ export function AdminCategoriesPage() {
               <Input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                placeholder="Search categories by name or slug"
+                placeholder={t("admin:categoriesPage.searchPlaceholder")}
                 className="pl-9"
                 aria-label="Search categories"
               />
@@ -376,11 +378,11 @@ export function AdminCategoriesPage() {
                 }}
               >
                 <Archive className="size-4" />
-                {includeDeleted ? "Hide archived" : "Include archived"}
+                {includeDeleted ? t("admin:hideArchived") : t("admin:includeArchived")}
               </Button>
 
               <label className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
-                <span>Rows</span>
+                <span>{t("admin:rows")}</span>
                 <select
                   value={pageSize}
                   onChange={(event) => {
@@ -403,14 +405,14 @@ export function AdminCategoriesPage() {
           <div className="flex flex-wrap items-center gap-2">
             <Button type="button" variant="outline" onClick={() => categoriesQuery.refetch()}>
               <RefreshCw className="size-4" />
-              Refresh
+              {t("admin:refresh")}
             </Button>
           </div>
         </AdminToolbar>
 
         <AdminSurface
-          title="Category directory"
-          description="All list interactions use the live admin category APIs, including query filtering, backend sorting, pagination, and archived visibility."
+          title={t("admin:categoriesPage.directoryTitle")}
+          description={t("admin:categoriesPage.directoryDescription")}
           contentClassName="space-y-0"
         >
           {isInitialLoading ? (
@@ -422,27 +424,27 @@ export function AdminCategoriesPage() {
           ) : categoriesQuery.isError || !data ? (
             <EmptyState
               icon={<FolderTree className="size-16" />}
-              title="Unable to load categories"
+              title={t("admin:categoriesPage.loadErrorTitle")}
               description={parseApiError(categoriesQuery.error)}
               action={
                 <Button type="button" variant="outline" onClick={() => categoriesQuery.refetch()}>
-                  Retry
+                  {t("common:tryAgain")}
                 </Button>
               }
             />
           ) : categories.length === 0 ? (
             <EmptyState
               icon={<FolderTree className="size-16" />}
-              title={query || includeDeleted ? "No categories match this view" : "No categories created yet"}
+              title={query || includeDeleted ? t("admin:categoriesPage.emptyFilteredTitle") : t("admin:categoriesPage.emptyTitle")}
               description={
                 query || includeDeleted
-                  ? "Try a different search term or change the archived filter to widen the category result set."
-                  : "Create the first category to start managing the platform taxonomy from this control panel."
+                  ? t("admin:categoriesPage.emptyFilteredDescription")
+                  : t("admin:categoriesPage.emptyDescription")
               }
               action={
                 <Button type="button" onClick={openCreateModal}>
                   <Plus className="size-4" />
-                  Create category
+                  {t("admin:categoriesPage.createCategory")}
                 </Button>
               }
             />
@@ -452,20 +454,20 @@ export function AdminCategoriesPage() {
                 columns={[
                   {
                     key: "name",
-                    label: "Category",
+                    label: t("admin:categoriesPage.category"),
                     sortable: true,
                     render: (category: AdminCategoryResponse) => (
                       <div className="min-w-0 whitespace-normal">
                         <p className="font-semibold text-slate-900 dark:text-slate-100">{category.name}</p>
                         <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                          {category.description?.trim() || "No description provided."}
+                          {category.description?.trim() || t("admin:noDescriptionProvided")}
                         </p>
                       </div>
                     ),
                   },
                   {
                     key: "slug",
-                    label: "Slug",
+                    label: t("admin:slug"),
                     sortable: true,
                     render: (category: AdminCategoryResponse) => (
                       <code className="rounded-lg bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700 dark:bg-slate-800 dark:text-slate-300">
@@ -475,21 +477,21 @@ export function AdminCategoriesPage() {
                   },
                   {
                     key: "parent",
-                    label: "Parent category",
+                    label: t("admin:categoriesPage.parentCategory"),
                     sortable: false,
                     render: (category: AdminCategoryResponse) =>
                       category.parentName ? (
                         <div>
                           <p className="font-medium text-slate-900 dark:text-slate-100">{category.parentName}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">Nested category</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{t("admin:categoriesPage.nestedCategory")}</p>
                         </div>
                       ) : (
-                        <Badge variant="default">No parent</Badge>
+                        <Badge variant="default">{t("admin:categoriesPage.noParent")}</Badge>
                       ),
                   },
                   {
                     key: "sortOrder",
-                    label: "Sort order",
+                    label: t("admin:sortOrder"),
                     sortable: true,
                     render: (category: AdminCategoryResponse) => (
                       <span className="font-medium text-slate-900 dark:text-slate-100">{category.sortOrder}</span>
@@ -497,26 +499,26 @@ export function AdminCategoriesPage() {
                   },
                   {
                     key: "createdAt",
-                    label: "Created",
+                    label: t("admin:created"),
                     sortable: true,
                     render: (category: AdminCategoryResponse) => (
                       <div className="whitespace-normal">
                         <p>{formatDateTime(category.createdAt)}</p>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {category.updatedAt ? `Updated ${formatDateTime(category.updatedAt)}` : "No updates recorded"}
+                          {category.updatedAt ? t("admin:updatedAt", { date: formatDateTime(category.updatedAt) }) : t("admin:noUpdatesRecorded")}
                         </p>
                       </div>
                     ),
                   },
                   {
                     key: "status",
-                    label: "Status",
+                    label: t("catalog:fields.status"),
                     sortable: false,
                     render: (category: AdminCategoryResponse) => (
                       <div className="flex flex-col gap-2 whitespace-normal">
                         <div className="flex flex-wrap gap-2">
                           <Badge variant={category.deleted ? "warning" : "success"}>
-                            {category.deleted ? "Archived" : "Active"}
+                            {category.deleted ? t("catalog:status.archived") : t("catalog:status.active")}
                           </Badge>
                           {category.deletedAt && <Badge variant="default">{formatDateTime(category.deletedAt)}</Badge>}
                         </div>
@@ -525,7 +527,7 @@ export function AdminCategoriesPage() {
                   },
                   {
                     key: "actions",
-                    label: "Actions",
+                    label: t("common:actions"),
                     sortable: false,
                     render: (category: AdminCategoryResponse) => (
                       <div className="flex flex-wrap items-center gap-2">
@@ -539,7 +541,7 @@ export function AdminCategoriesPage() {
                           }}
                         >
                           <Pencil className="size-4" />
-                          Edit
+                          {t("common:edit")}
                         </Button>
                         <Button
                           type="button"
@@ -552,7 +554,7 @@ export function AdminCategoriesPage() {
                           }}
                         >
                           <Trash2 className="size-4" />
-                          Archive
+                          {t("admin:archive")}
                         </Button>
                       </div>
                     ),
@@ -570,11 +572,11 @@ export function AdminCategoriesPage() {
                 statusContent={
                   <>
                     <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                      Sort: {sort.field} ({sort.direction})
+                      {t("admin:sortStatus", { field: sort.field, direction: sort.direction })}
                     </span>
                     {categoriesQuery.isFetching && !isInitialLoading && (
                       <span className="rounded-full bg-indigo-50 px-3 py-1 text-sm text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
-                        Refreshing…
+                        {t("admin:refreshing")}
                       </span>
                     )}
                   </>
@@ -589,7 +591,7 @@ export function AdminCategoriesPage() {
         isOpen={isFormModalOpen}
         onClose={closeFormModal}
         size="lg"
-        title={modalMode === "create" ? "Create category" : "Edit category"}
+        title={modalMode === "create" ? t("admin:categoriesPage.createCategory") : t("admin:categoriesPage.editCategory")}
       >
         {isFormLoading ? (
           <div className="space-y-3">
@@ -601,32 +603,32 @@ export function AdminCategoriesPage() {
           <form onSubmit={handleSubmitForm} className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <Input
-                label="Name"
+                label={t("admin:name")}
                 value={formValues.name}
                 onChange={(event) => handleFormFieldChange("name", event.target.value)}
                 error={formErrors.name}
-                placeholder="e.g. Board Games"
+                placeholder={t("admin:categoriesPage.namePlaceholder")}
                 autoFocus
               />
 
               <Input
-                label="Slug"
+                label={t("admin:slug")}
                 value={formValues.slug}
                 onChange={(event) => handleFormFieldChange("slug", event.target.value)}
                 error={formErrors.slug}
-                placeholder="Optional — generated by backend if blank"
+                placeholder={t("admin:optionalGeneratedSlug")}
               />
             </div>
 
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                Description
+                {t("catalog:fields.description")}
               </label>
               <textarea
                 value={formValues.description}
                 onChange={(event) => handleFormFieldChange("description", event.target.value)}
                 rows={4}
-                placeholder="Optional internal context for administrators"
+                placeholder={t("admin:optionalInternalContext")}
                 className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors duration-150 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20"
               />
               {formErrors.description && (
@@ -637,7 +639,7 @@ export function AdminCategoriesPage() {
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px]">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Parent category
+                  {t("admin:categoriesPage.parentCategory")}
                 </label>
                 <select
                   value={formValues.parentUuid}
@@ -645,7 +647,7 @@ export function AdminCategoriesPage() {
                   className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20"
                   aria-label="Select parent category"
                 >
-                  <option value="">No parent</option>
+                  <option value="">{t("admin:categoriesPage.noParent")}</option>
                   {parentOptions.map((category) => (
                     <option key={category.uuid} value={category.uuid}>
                       {category.name}
@@ -657,13 +659,13 @@ export function AdminCategoriesPage() {
                 )}
                 {parentCategoriesQuery.data && parentCategoriesQuery.data.totalElements > parentOptions.length && (
                   <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
-                    Parent picker currently shows the first {parentOptions.length} active categories sorted by name.
+                    {t("admin:categoriesPage.parentPickerHelper", { count: parentOptions.length })}
                   </p>
                 )}
               </div>
 
               <Input
-                label="Sort order"
+                label={t("admin:sortOrder")}
                 type="number"
                 inputMode="numeric"
                 value={formValues.sortOrder}
@@ -681,18 +683,18 @@ export function AdminCategoriesPage() {
 
             <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="outline" onClick={closeFormModal}>
-                Cancel
+                {t("common:cancel")}
               </Button>
               <Button type="submit" isLoading={isSubmittingForm}>
                 {modalMode === "create" ? (
                   <>
                     <Plus className="size-4" />
-                    Create category
+                    {t("admin:categoriesPage.createCategory")}
                   </>
                 ) : (
                   <>
                     <Pencil className="size-4" />
-                    Save changes
+                    {t("admin:saveChanges")}
                   </>
                 )}
               </Button>
@@ -705,29 +707,29 @@ export function AdminCategoriesPage() {
         isOpen={!!deleteCandidate}
         onClose={() => setDeleteCandidate(null)}
         size="sm"
-        title="Archive category"
+        title={t("admin:categoriesPage.archiveCategory")}
       >
         <div className="space-y-4">
           <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
-            This action performs a soft delete. The category will be archived and will remain visible when archived results are included.
+            {t("admin:categoriesPage.archiveSoftDelete")}
           </div>
 
           <div>
             <p className="text-sm text-slate-700 dark:text-slate-300">
-              Archive <span className="font-semibold text-slate-900 dark:text-slate-100">{deleteCandidate?.name}</span>?
+              {t("admin:archivePromptPrefix")} <span className="font-semibold text-slate-900 dark:text-slate-100">{deleteCandidate?.name}</span>?
             </p>
             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-              Use this when a category should be retired from active administration without permanently removing its record.
+              {t("admin:categoriesPage.archiveHelper")}
             </p>
           </div>
 
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={() => setDeleteCandidate(null)}>
-              Cancel
+              {t("common:cancel")}
             </Button>
             <Button type="button" variant="danger" isLoading={deleteMutation.isPending} onClick={confirmDelete}>
               <Archive className="size-4" />
-              Archive category
+              {t("admin:categoriesPage.archiveCategory")}
             </Button>
           </div>
         </div>

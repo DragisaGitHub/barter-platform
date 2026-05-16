@@ -19,6 +19,7 @@ import {
     useSendTradeOfferMessage,
     useTradeOfferMessages,
 } from "./useTradeOfferMessages";
+import { useTranslation } from "react-i18next";
 
 interface TradeOfferMessagesPanelProps {
     tradeOfferUuid: string;
@@ -62,13 +63,14 @@ function getInitials(name?: string) {
 function buildMessageIdentity(
     message: TradeOfferMessageListItem,
     currentUserUuid?: string,
+    youLabel = "You",
 ) {
     const isMine = message.senderUserUuid === currentUserUuid;
 
     return {
         isMine,
-        displayName: isMine ? "You" : message.senderUsername,
-        initials: getInitials(isMine ? "You" : message.senderUsername),
+        displayName: isMine ? youLabel : message.senderUsername,
+        initials: getInitials(isMine ? youLabel : message.senderUsername),
     };
 }
 
@@ -76,6 +78,7 @@ export function TradeOfferMessagesPanel({
     tradeOfferUuid,
     status,
 }: TradeOfferMessagesPanelProps) {
+    const { t } = useTranslation("trade");
     const { user } = useAuth();
     const [content, setContent] = useState("");
     const [showNewMessages, setShowNewMessages] = useState(false);
@@ -219,7 +222,7 @@ export function TradeOfferMessagesPanel({
     };
 
     const messageCount = messages.length;
-    const pollIndicatorLabel = isFetching ? "Syncing updates" : "Polling every 15s";
+    const pollIndicatorLabel = isFetching ? t("messages.syncingUpdates") : t("messages.pollingEvery15s");
     const counterClassName = isInvalidLength
         ? "text-red-500 dark:text-red-400"
         : isNearLimit
@@ -238,15 +241,14 @@ export function TradeOfferMessagesPanel({
                             <div className="min-w-0">
                                 <div className="flex flex-wrap items-center gap-2">
                                     <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 sm:text-lg">
-                                        Trade conversation
+                                        {t("messages.title")}
                                     </h2>
                                     <Badge variant={isWritable ? "success" : "default"}>
-                                        {isWritable ? "Conversation open" : "Conversation read-only"}
+                                        {isWritable ? t("messages.open") : t("messages.readOnly")}
                                     </Badge>
                                 </div>
                                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                    Keep the negotiation here so both traders can confirm condition,
-                                    timing, pickup, delivery, or exchange details in one thread.
+                                    {t("messages.description")}
                                 </p>
                             </div>
                         </div>
@@ -265,7 +267,7 @@ export function TradeOfferMessagesPanel({
                             </div>
 
                             <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
-                                {messageCount} {messageCount === 1 ? "message" : "messages"}
+                                {t("messages.count", { count: messageCount })}
                             </div>
                         </div>
                     </div>
@@ -287,14 +289,14 @@ export function TradeOfferMessagesPanel({
                         </div>
                     ) : isError ? (
                         <EmptyState
-                            title="Messages could not be loaded"
-                            description="Please try again in a moment."
+                            title={t("messages.loadErrorTitle")}
+                            description={t("messages.loadErrorDescription")}
                         />
                     ) : messages.length === 0 ? (
                         <div className="flex min-h-[260px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/80 px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-900/40">
                             <EmptyState
-                                title="Start the trade conversation"
-                                description="Ask about condition, exchange details, availability, pickup, delivery, or shipping before you respond."
+                                title={t("messages.emptyTitle")}
+                                description={t("messages.emptyDescription")}
                             />
                         </div>
                     ) : (
@@ -303,6 +305,7 @@ export function TradeOfferMessagesPanel({
                                 const { isMine, displayName, initials } = buildMessageIdentity(
                                     message,
                                     user?.uuid,
+                                        t("you"),
                                 );
 
                                 return (
@@ -334,7 +337,7 @@ export function TradeOfferMessagesPanel({
                                                 <span>{displayName}</span>
                                                 {message.isOptimistic && (
                                                     <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">
-                                                        Sending…
+                                                        {t("messages.sending")}
                                                     </span>
                                                 )}
                                             </div>
@@ -362,7 +365,7 @@ export function TradeOfferMessagesPanel({
                                                     )}
                                                 >
                                                     {message.isOptimistic
-                                                        ? "Sending…"
+                                                        ? t("messages.sending")
                                                         : formatMessageTime(message.createdAt)}
                                                 </div>
                                             </div>
@@ -388,7 +391,7 @@ export function TradeOfferMessagesPanel({
                             className="pointer-events-auto rounded-full border border-indigo-200 bg-white/95 px-4 shadow-lg shadow-slate-900/5 backdrop-blur hover:bg-white dark:border-indigo-900/60 dark:bg-slate-900/95 dark:hover:bg-slate-900"
                             onClick={() => scrollToBottom("smooth")}
                         >
-                            New {queuedMessageCount > 1 ? "messages" : "message"}
+                            {t("messages.newMessages", { count: queuedMessageCount })}
                         </Button>
                     </div>
                 )}
@@ -417,8 +420,8 @@ export function TradeOfferMessagesPanel({
                             rows={3}
                             placeholder={
                                 isWritable
-                                    ? "Ask about condition, availability, pickup, delivery, or the swap details…"
-                                    : "This conversation is closed. Messages remain visible for reference."
+                                    ? t("messages.placeholderOpen")
+                                    : t("messages.placeholderClosed")
                             }
                             className="block min-h-[96px] w-full resize-none border-0 bg-transparent px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:text-slate-400"
                         />
@@ -427,7 +430,7 @@ export function TradeOfferMessagesPanel({
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                         <div className="space-y-1">
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                                Keep communication inside Barter Platform for safer trading.
+                                {t("messages.safetyHelper")}
                             </p>
                             <p className={cn("text-xs font-medium", counterClassName)}>
                                 {currentLength}/{MAX_MESSAGE_LENGTH}
@@ -441,13 +444,13 @@ export function TradeOfferMessagesPanel({
                             className="min-h-11 rounded-xl px-4 py-2.5"
                         >
                             <Send className="size-4" />
-                            {sendMessage.isPending ? "Sending…" : "Send message"}
+                             {sendMessage.isPending ? t("messages.sending") : t("messages.sendMessage")}
                         </Button>
                     </div>
 
                     {!isWritable && (
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                            This trade offer is closed, so the conversation is read-only.
+                             {t("messages.closedReadOnly")}
                         </p>
                     )}
                 </form>

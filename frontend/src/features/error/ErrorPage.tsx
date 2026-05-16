@@ -10,17 +10,18 @@ import {
 } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
 import { routePaths } from "@/routes/routePaths.ts";
+import { useTranslation } from "react-i18next";
 
 interface ErrorPageProps {
   description?: string;
 }
 
-const DEFAULT_DESCRIPTION =
-  "We hit an unexpected problem while loading this page. Please try again or return to the marketplace.";
+const DEFAULT_DESCRIPTION_KEY = "errors:generic.description";
 
-export function ErrorPage({ description = DEFAULT_DESCRIPTION }: ErrorPageProps) {
+export function ErrorPage({ description }: ErrorPageProps) {
   const navigate = useNavigate();
   const { isAuthenticated, isLoading } = useAuth();
+  const { t } = useTranslation(["errors", "common"]);
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-900 dark:text-slate-100">
@@ -32,9 +33,9 @@ export function ErrorPage({ description = DEFAULT_DESCRIPTION }: ErrorPageProps)
             </div>
             <div>
               <div className="text-sm font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-                Barter Platform
+                {t("common:appName")}
               </div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">Marketplace</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">{t("common:marketplace")}</div>
             </div>
           </Link>
 
@@ -42,7 +43,7 @@ export function ErrorPage({ description = DEFAULT_DESCRIPTION }: ErrorPageProps)
             <Link to={routePaths.marketplace} className="inline-flex">
               <Button variant="ghost" size="sm" type="button">
                 <Store className="size-4" />
-                Marketplace
+                {t("common:marketplace")}
               </Button>
             </Link>
 
@@ -50,7 +51,7 @@ export function ErrorPage({ description = DEFAULT_DESCRIPTION }: ErrorPageProps)
               <Link to={routePaths.dashboard} className="inline-flex">
                 <Button variant="outline" size="sm" type="button">
                   <LayoutDashboard className="size-4" />
-                  Dashboard
+                  {t("common:dashboard")}
                 </Button>
               </Link>
             )}
@@ -60,13 +61,13 @@ export function ErrorPage({ description = DEFAULT_DESCRIPTION }: ErrorPageProps)
                 <Link to={routePaths.login} className="inline-flex">
                   <Button variant="ghost" size="sm" type="button">
                     <LogIn className="size-4" />
-                    Login
+                    {t("common:login")}
                   </Button>
                 </Link>
                 <Link to={routePaths.register} className="inline-flex">
                   <Button size="sm" type="button">
                     <UserPlus className="size-4" />
-                    Sign up
+                    {t("common:signUp")}
                   </Button>
                 </Link>
               </>
@@ -86,17 +87,17 @@ export function ErrorPage({ description = DEFAULT_DESCRIPTION }: ErrorPageProps)
               </div>
 
               <CardTitle className="text-3xl font-bold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-                Something went wrong
+                {t("errors:generic.title")}
               </CardTitle>
 
               <CardDescription className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-300">
-                {description}
+                {description ?? t(DEFAULT_DESCRIPTION_KEY)}
               </CardDescription>
             </CardHeader>
 
             <CardContent className="px-6 pb-8 sm:px-10 sm:pb-10">
               <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 text-sm leading-6 text-slate-600 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300">
-                If you were opening a listing or trader page, the content may be temporarily unavailable. You can return to the marketplace and continue browsing active offers.
+                {t("errors:generic.helper")}
               </div>
 
               <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
@@ -107,7 +108,7 @@ export function ErrorPage({ description = DEFAULT_DESCRIPTION }: ErrorPageProps)
                   onClick={() => navigate(routePaths.marketplace)}
                 >
                   <Store className="size-4" />
-                  Back to Marketplace
+                  {t("common:backToMarketplace")}
                 </Button>
 
                 <Button
@@ -118,7 +119,7 @@ export function ErrorPage({ description = DEFAULT_DESCRIPTION }: ErrorPageProps)
                   onClick={() => window.location.reload()}
                 >
                   <RefreshCw className="size-4" />
-                  Try again
+                  {t("common:tryAgain")}
                 </Button>
               </div>
             </CardContent>
@@ -132,10 +133,11 @@ export function ErrorPage({ description = DEFAULT_DESCRIPTION }: ErrorPageProps)
 export function RouteErrorPage() {
   const error = useRouteError();
 
-  let description = DEFAULT_DESCRIPTION;
+  const { t } = useTranslation("errors");
+  let description = t("generic.description");
 
   if (isRouteErrorResponse(error) && error.status === 404) {
-    description = "The page you requested could not be loaded. It may no longer be available.";
+    description = t("generic.notFoundDescription");
   }
 
   return <ErrorPage description={description} />;

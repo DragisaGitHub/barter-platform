@@ -5,27 +5,28 @@ import { useCategories, useTags } from "./useCatalog";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import type { ItemCondition, ItemStatus } from "@/api/generated/types.ts";
+import { useTranslation } from "react-i18next";
 
-const CONDITIONS: { value: ItemCondition; label: string }[] = [
-  { value: "NEW", label: "New" },
-  { value: "LIKE_NEW", label: "Like New" },
-  { value: "GOOD", label: "Good" },
-  { value: "USED", label: "Used" },
-  { value: "FOR_PARTS", label: "For Parts" },
+const CONDITIONS: { value: ItemCondition; labelKey: string }[] = [
+  { value: "NEW", labelKey: "condition.new" },
+  { value: "LIKE_NEW", labelKey: "condition.likeNew" },
+  { value: "GOOD", labelKey: "condition.good" },
+  { value: "USED", labelKey: "condition.used" },
+  { value: "FOR_PARTS", labelKey: "condition.forParts" },
 ];
 
-const STATUSES: { value: ItemStatus; label: string }[] = [
-  { value: "DRAFT", label: "Draft" },
-  { value: "ACTIVE", label: "Active" },
+const STATUSES: { value: ItemStatus; labelKey: string }[] = [
+  { value: "DRAFT", labelKey: "status.draft" },
+  { value: "ACTIVE", labelKey: "status.active" },
 ];
 
 const itemFormSchema = z.object({
-  title: z.string().min(1, "Title is required").max(255),
+  title: z.string().min(1, "validation.titleRequired").max(255, "validation.titleTooLong"),
   description: z.string().optional(),
-  categoryUuid: z.string().min(1, "Category is required"),
+  categoryUuid: z.string().min(1, "validation.categoryRequired"),
   tagUuids: z.array(z.string()).optional(),
   condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "USED", "FOR_PARTS"] as const, {
-    message: "Condition is required",
+    message: "validation.conditionRequired",
   }),
   status: z.enum(["DRAFT", "ACTIVE", "RESERVED", "ARCHIVED", "REMOVED"] as const).optional(),
 });
@@ -43,8 +44,9 @@ export function ItemForm({
   defaultValues,
   onSubmit,
   isSubmitting = false,
-  submitLabel = "Save",
+  submitLabel,
 }: ItemFormProps) {
+  const { t } = useTranslation(["catalog", "common"]);
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const { data: tags, isLoading: tagsLoading } = useTags();
 
@@ -81,38 +83,40 @@ export function ItemForm({
 
   const selectedTags = methods.watch("tagUuids") ?? [];
 
+  const translateError = (message?: string) => (message ? t(`catalog:${message}`) : undefined);
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <Input
-          label="Title"
+          label={t("catalog:fields.title")}
           {...register("title")}
-          error={errors.title?.message}
-          placeholder="What are you listing?"
+          error={translateError(errors.title?.message)}
+          placeholder={t("catalog:itemForm.titlePlaceholder")}
         />
 
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-            Description
+            {t("catalog:fields.description")}
           </label>
           <textarea
             {...register("description")}
             className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
             rows={4}
-            placeholder="Describe your item..."
+            placeholder={t("catalog:itemForm.descriptionPlaceholder")}
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-            Category
+            {t("catalog:fields.category")}
           </label>
           <select
             {...register("categoryUuid")}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
             disabled={categoriesLoading}
           >
-            <option value="">Select a category</option>
+            <option value="">{t("catalog:itemForm.selectCategory")}</option>
             {categories?.map((cat) => (
               <option key={cat.uuid} value={cat.uuid}>
                 {cat.name}
@@ -121,36 +125,36 @@ export function ItemForm({
           </select>
           {errors.categoryUuid && (
             <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">
-              {errors.categoryUuid.message}
+              {translateError(errors.categoryUuid.message)}
             </p>
           )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-            Condition
+            {t("catalog:fields.condition")}
           </label>
           <select
             {...register("condition")}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
           >
-            <option value="">Select condition</option>
+            <option value="">{t("catalog:itemForm.selectCondition")}</option>
             {CONDITIONS.map((c) => (
               <option key={c.value} value={c.value}>
-                {c.label}
+                {t(`catalog:${c.labelKey}`)}
               </option>
             ))}
           </select>
           {errors.condition && (
             <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">
-              {errors.condition.message}
+              {translateError(errors.condition.message)}
             </p>
           )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-            Status
+            {t("catalog:fields.status")}
           </label>
           <select
             {...register("status")}
@@ -158,7 +162,7 @@ export function ItemForm({
           >
             {STATUSES.map((s) => (
               <option key={s.value} value={s.value}>
-                {s.label}
+                {t(`catalog:${s.labelKey}`)}
               </option>
             ))}
           </select>
@@ -166,10 +170,10 @@ export function ItemForm({
 
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-            Tags
+            {t("catalog:tags")}
           </label>
           {tagsLoading ? (
-            <p className="text-sm text-slate-500">Loading tags...</p>
+            <p className="text-sm text-slate-500">{t("catalog:itemForm.loadingTags")}</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {tags?.map((tag) => (
@@ -187,7 +191,7 @@ export function ItemForm({
                 </button>
               ))}
               {tags?.length === 0 && (
-                <p className="text-sm text-slate-500">No tags available</p>
+                <p className="text-sm text-slate-500">{t("catalog:itemForm.noTags")}</p>
               )}
             </div>
           )}
@@ -195,7 +199,7 @@ export function ItemForm({
 
         <div className="flex justify-end gap-3 pt-4">
           <Button type="submit" isLoading={isSubmitting}>
-            {submitLabel}
+            {submitLabel ?? t("common:save")}
           </Button>
         </div>
       </form>

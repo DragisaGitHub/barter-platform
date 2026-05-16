@@ -45,6 +45,21 @@ public interface UserMapper {
         return oauthProvider == null ? null : com.barterplatform.api.model.OAuthProvider.valueOf(oauthProvider.name());
     }
 
+    default com.barterplatform.api.model.PreferredLanguage map(
+            com.barterplatform.domain.identity.enums.PreferredLanguage preferredLanguage) {
+        com.barterplatform.domain.identity.enums.PreferredLanguage resolved = preferredLanguage == null
+                ? com.barterplatform.domain.identity.enums.PreferredLanguage.SR
+                : preferredLanguage;
+        return com.barterplatform.api.model.PreferredLanguage.valueOf(resolved.name());
+    }
+
+    default com.barterplatform.domain.identity.enums.PreferredLanguage map(
+            com.barterplatform.api.model.PreferredLanguage preferredLanguage) {
+        return preferredLanguage == null
+                ? com.barterplatform.domain.identity.enums.PreferredLanguage.SR
+                : com.barterplatform.domain.identity.enums.PreferredLanguage.valueOf(preferredLanguage.name());
+    }
+
     default com.barterplatform.api.model.UserStatus map(com.barterplatform.domain.identity.enums.UserStatus userStatus) {
         return userStatus == null ? null : com.barterplatform.api.model.UserStatus.valueOf(userStatus.name());
     }

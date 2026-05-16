@@ -1,6 +1,7 @@
 package com.barterplatform.domain.identity.entity;
 
 import com.barterplatform.common.persistence.AuditableEntity;
+import com.barterplatform.domain.identity.enums.PreferredLanguage;
 import com.barterplatform.domain.identity.enums.UserStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -35,6 +36,10 @@ public class UserEntity extends AuditableEntity {
 
     @Column(name = "mfa_enabled", nullable = false)
     private boolean mfaEnabled;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "preferred_language", nullable = false, length = 2)
+    private PreferredLanguage preferredLanguage = PreferredLanguage.SR;
 
     @Column(name = "last_login_at")
     private OffsetDateTime lastLoginAt;

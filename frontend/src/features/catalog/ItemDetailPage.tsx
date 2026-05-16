@@ -9,7 +9,6 @@ import {
   Tag,
   User,
 } from "lucide-react";
-import { format } from "date-fns";
 import { useItemDetail } from "./useCatalog";
 import { ItemStatusBadge, ItemConditionBadge } from "./ItemBadges";
 import { OwnerModerationPanel } from "./OwnerModerationPanel";
@@ -22,8 +21,10 @@ import { useAuth } from "../../auth/AuthContext";
 import { routePaths } from "@/routes/routePaths.ts";
 import type { ItemImageResponse } from "@/api/generated/types.ts";
 import { cn } from "@/utils";
+import { useTranslation } from "react-i18next";
 
 function ImageSection({ images }: { images: ItemImageResponse[] }) {
+  const { t } = useTranslation("catalog");
   const [selectedIdx, setSelectedIdx] = useState(0);
   const sorted = useMemo(
     () =>
@@ -45,8 +46,8 @@ function ImageSection({ images }: { images: ItemImageResponse[] }) {
             <Package className="size-7 text-slate-300" />
           </div>
           <div className="text-center">
-            <p className="text-sm font-medium text-slate-700">No photos available</p>
-            <p className="mt-1 text-xs text-slate-500">The seller has not uploaded images for this listing yet.</p>
+            <p className="text-sm font-medium text-slate-700">{t("itemDetail.noPhotos")}</p>
+            <p className="mt-1 text-xs text-slate-500">{t("itemDetail.noPhotosDescription")}</p>
           </div>
         </div>
       </div>
@@ -90,7 +91,7 @@ function ImageSection({ images }: { images: ItemImageResponse[] }) {
                 loading="lazy"
                 className="w-full h-full object-cover"
               />
-              {img.isPrimary ? <span className="sr-only">Primary image</span> : null}
+              {img.isPrimary ? <span className="sr-only">{t("images.primaryImage")}</span> : null}
             </button>
           ))}
         </div>
@@ -104,6 +105,7 @@ export function ItemDetailPage() {
   const { data: item, isLoading, isError } = useItemDetail(uuid ?? "");
   const { user, isAuthenticated } = useAuth();
   const [showOfferModal, setShowOfferModal] = useState(false);
+  const { t, i18n } = useTranslation(["catalog", "common"]);
 
   if (isLoading) {
     return (
@@ -120,11 +122,11 @@ export function ItemDetailPage() {
       <div className="marketplace-page min-h-screen px-4 py-12 sm:px-6">
         <div className="mx-auto max-w-3xl">
           <EmptyState
-            title="Item not found"
-            description="This item may have been removed or does not exist."
+            title={t("catalog:itemNotFound")}
+            description={t("catalog:itemDetail.notFoundDescription")}
             action={
               <Link to={routePaths.marketplace}>
-                <Button variant="outline">Back to Marketplace</Button>
+                <Button variant="outline">{t("common:backToMarketplace")}</Button>
               </Link>
             }
           />
@@ -144,7 +146,11 @@ export function ItemDetailPage() {
     routePaths.marketplaceItem(item.uuid)
   )}`;
   const descriptionPreview = item.description?.trim();
-  const listedDate = format(new Date(item.createdAt), "MMM d, yyyy");
+  const listedDate = new Date(item.createdAt).toLocaleDateString(i18n.language === "sr" ? "sr-Latn-RS" : "en-US", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 
   return (
     <div className="marketplace-page min-h-screen px-4 py-6 sm:px-6">
@@ -154,7 +160,7 @@ export function ItemDetailPage() {
           className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-violet-600"
         >
           <ArrowLeft className="size-4" />
-          Back to marketplace
+          {t("common:backToMarketplace")}
         </Link>
 
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.9fr)_290px]">
@@ -181,7 +187,7 @@ export function ItemDetailPage() {
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5">
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-slate-500">
                   <CalendarDays className="size-3.5" />
-                  Listed on
+                  {t("catalog:itemDetail.listedOn")}
                 </div>
                 <p className="mt-1 text-sm font-medium text-slate-900">{listedDate}</p>
               </div>
@@ -189,7 +195,7 @@ export function ItemDetailPage() {
               <div className="rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5">
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-slate-500">
                   <Tag className="size-3.5" />
-                  Category
+                  {t("catalog:fields.category")}
                 </div>
                 <p className="mt-1 text-sm font-medium text-slate-900">{item.category.name}</p>
               </div>
@@ -197,7 +203,7 @@ export function ItemDetailPage() {
 
             {item.tags.length > 0 ? (
               <div className="mt-4">
-                <h2 className="text-sm font-medium text-slate-500">Tags</h2>
+                <h2 className="text-sm font-medium text-slate-500">{t("catalog:tags")}</h2>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   {item.tags.map((tag) => (
                     <Badge
@@ -213,9 +219,9 @@ export function ItemDetailPage() {
             ) : null}
 
             <div className="mt-4 border-t border-slate-200 pt-4">
-              <h2 className="text-sm font-medium text-slate-500">Listing preview</h2>
+              <h2 className="text-sm font-medium text-slate-500">{t("catalog:itemDetail.listingPreview")}</h2>
               <p className="mt-1.5 whitespace-pre-line text-sm leading-6 text-slate-700">
-                {descriptionPreview || "The seller has not added a description for this item yet."}
+                {descriptionPreview || t("catalog:itemDetail.noDescription")}
               </p>
             </div>
           </section>
@@ -227,7 +233,7 @@ export function ItemDetailPage() {
                   <User className="size-4.5" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">Seller</p>
+                  <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">{t("catalog:itemDetail.seller")}</p>
                   {item.ownerUuid ? (
                     <Link
                       to={routePaths.publicProfile(item.ownerUuid)}
@@ -238,17 +244,17 @@ export function ItemDetailPage() {
                   ) : (
                     <p className="mt-0.5 truncate text-[15px] font-semibold text-slate-900">{item.ownerUsername}</p>
                   )}
-                  <p className="mt-0.5 text-sm text-slate-500">Member trader on Barter Platform</p>
+                  <p className="mt-0.5 text-sm text-slate-500">{t("catalog:itemDetail.memberTrader")}</p>
                 </div>
               </div>
 
               <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-sm text-slate-600">
                 <div className="flex items-center gap-2 font-medium text-slate-700">
                   <ShieldCheck className="size-4 text-violet-600" />
-                  Trade safely
+                  {t("catalog:itemDetail.tradeSafely")}
                 </div>
                 <p className="mt-1 leading-5 text-slate-500">
-                  Sign up to contact the owner and send a trade offer.
+                  {t("catalog:itemDetail.tradeSafelyDescription")}
                 </p>
               </div>
 
@@ -257,14 +263,14 @@ export function ItemDetailPage() {
                   <Link to={registerRedirectUrl} className="block">
                     <Button className="h-10 w-full rounded-lg bg-violet-500 text-white hover:bg-violet-600">
                       <ArrowRightLeft className="size-4" />
-                      Create account to propose trade
+                      {t("catalog:itemDetail.createAccountToTrade")}
                     </Button>
                   </Link>
                   <Link
                     to={loginRedirectUrl}
                     className="inline-flex items-center justify-center text-sm font-medium text-violet-600 transition hover:text-violet-700"
                   >
-                    Already have an account? Login
+                    {t("catalog:itemDetail.alreadyHaveAccount")}
                   </Link>
                 </div>
               ) : null}
@@ -276,10 +282,10 @@ export function ItemDetailPage() {
                     className="h-10 w-full rounded-lg bg-violet-500 text-white hover:bg-violet-600"
                   >
                     <ArrowRightLeft className="size-4" />
-                    Propose Trade
+                    {t("catalog:itemDetail.proposeTrade")}
                   </Button>
                   <p className="text-sm leading-5 text-slate-500">
-                    Send your offer directly to the owner and continue the conversation after signing in.
+                    {t("catalog:itemDetail.proposeTradeDescription")}
                   </p>
                 </div>
               ) : null}
@@ -287,16 +293,16 @@ export function ItemDetailPage() {
               {isOwner ? (
                 <div className="mt-4 space-y-2.5">
                   <div className="rounded-lg border border-violet-200 bg-violet-50 px-3.5 py-2.5 text-sm leading-5 text-violet-700">
-                    This is your listing. You can manage it from your items dashboard.
+                    {t("catalog:itemDetail.ownerNotice")}
                   </div>
                   <Link to={ownerItemPath} className="block">
                     <Button variant="outline" className="h-10 w-full rounded-lg border-slate-200">
-                      Open owner detail
+                      {t("catalog:itemDetail.openOwnerDetail")}
                     </Button>
                   </Link>
                   <Link to={routePaths.myItemsEdit(item.uuid)} className="block">
                     <Button variant="outline" className="h-10 w-full rounded-lg border-slate-200">
-                      Edit listing
+                      {t("catalog:itemDetail.editListing")}
                     </Button>
                   </Link>
                 </div>
@@ -306,10 +312,10 @@ export function ItemDetailPage() {
         </div>
 
         <section className="marketplace-panel mt-4 p-4">
-          <h2 className="text-lg font-medium text-slate-900">Description</h2>
+          <h2 className="text-lg font-medium text-slate-900">{t("catalog:fields.description")}</h2>
           <div className="mt-2.5 border-t border-slate-200 pt-3">
             <p className="whitespace-pre-line text-sm leading-6 text-slate-700">
-              {descriptionPreview || "The seller has not added a description for this item yet."}
+              {descriptionPreview || t("catalog:itemDetail.noDescription")}
             </p>
           </div>
         </section>
