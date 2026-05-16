@@ -6,7 +6,8 @@ const statusConfig: Record<
   { label: string; variant: "success" | "warning" | "danger" | "default" | "primary" | "secondary" }
 > = {
   PENDING: { label: "Pending", variant: "warning" },
-  ACCEPTED: { label: "Accepted", variant: "success" },
+  ACCEPTED: { label: "Awaiting completion", variant: "primary" },
+  COMPLETED: { label: "Completed", variant: "success" },
   REJECTED: { label: "Rejected", variant: "danger" },
   CANCELLED: { label: "Cancelled", variant: "default" },
   EXPIRED: { label: "Expired", variant: "secondary" },

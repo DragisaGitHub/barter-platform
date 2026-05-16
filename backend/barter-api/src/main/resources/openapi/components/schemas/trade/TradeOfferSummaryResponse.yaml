@@ -42,3 +42,19 @@ properties:
     type: string
     format: date-time
     nullable: true
+  senderCompletedAt:
+    type: string
+    format: date-time
+    nullable: true
+  receiverCompletedAt:
+    type: string
+    format: date-time
+    nullable: true
+  completedAt:
+    type: string
+    format: date-time
+    nullable: true
+  currentUserCompletionConfirmed:
+    type: boolean
+  canConfirmCompletion:
+    type: boolean

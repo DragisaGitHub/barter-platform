@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRightLeft, Gift, MessageSquare } from "lucide-react";
 import type { TradeOfferSummaryResponse, TradeOfferStatus, TradeOfferMode } from "@/api/generated/types.ts";
@@ -5,6 +6,7 @@ import { Card } from "../../components/ui/Card";
 import { TradeOfferStatusBadge } from "./TradeOfferStatusBadge";
 import { TradeOfferModeBadge } from "./TradeOfferModeBadge";
 import { TradeOfferActionButtons } from "./TradeOfferActionButtons";
+import { TradeOfferCompletionActions } from "./TradeOfferCompletionActions";
 
 interface TradeOfferCardProps {
   offer: TradeOfferSummaryResponse;
@@ -13,7 +15,8 @@ interface TradeOfferCardProps {
 
 const STATUS_EXPLANATION: Record<TradeOfferStatus, string> = {
   PENDING: "Waiting for response",
-  ACCEPTED: "Trade accepted. Involved items are now archived.",
+  ACCEPTED: "Trade agreed. Items are archived while both participants coordinate the exchange and confirm completion.",
+  COMPLETED: "Trade completed by both participants.",
   REJECTED: "Trade rejected",
   CANCELLED: "Cancelled by sender",
   EXPIRED: "Expired",
@@ -52,7 +55,7 @@ function buildSummaryLine(
   }
 }
 
-const MODE_ICON: Record<TradeOfferMode, React.ReactNode> = {
+const MODE_ICON: Record<TradeOfferMode, ReactNode> = {
   ITEM_EXCHANGE: <ArrowRightLeft className="size-5 text-slate-400 shrink-0" />,
   GIFT: <Gift className="size-5 text-emerald-500 shrink-0" />,
   NEGOTIABLE: <MessageSquare className="size-5 text-amber-500 shrink-0" />,
@@ -144,6 +147,14 @@ export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) 
       <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
         {STATUS_EXPLANATION[offer.status]}
       </p>
+
+      <div className="mb-3">
+        <TradeOfferCompletionActions
+          offer={offer}
+          currentUserUuid={currentUserUuid}
+          compact
+        />
+      </div>
 
       {offer.respondedAt && (
         <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">

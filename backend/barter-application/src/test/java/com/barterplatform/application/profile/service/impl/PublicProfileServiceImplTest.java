@@ -83,11 +83,11 @@ class PublicProfileServiceImplTest {
         return u;
     }
 
-    private ItemEntity item(Long id, UUID uuid, Long ownerId) {
+    private ItemEntity item(UUID uuid) {
         ItemEntity e = new ItemEntity();
-        e.setId(id);
+        e.setId(1L);
         e.setUuid(uuid);
-        e.setOwnerId(ownerId);
+        e.setOwnerId(10L);
         e.setCategoryId(20L);
         e.setTitle("Test Item");
         e.setStatus(ItemStatus.ACTIVE);
@@ -110,8 +110,8 @@ class PublicProfileServiceImplTest {
 
             when(userRepository.findByUuid(uuid)).thenReturn(Optional.of(activeUser));
             when(itemRepository.countByOwnerIdAndStatus(10L, ItemStatus.ACTIVE)).thenReturn(3L);
-            when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.ACCEPTED)).thenReturn(2L);
-            when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.ACCEPTED)).thenReturn(1L);
+            when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.COMPLETED)).thenReturn(2L);
+            when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.COMPLETED)).thenReturn(1L);
             when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(0L);
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(1L);
 
@@ -224,15 +224,15 @@ class PublicProfileServiceImplTest {
         }
 
         @Test
-        @DisplayName("completedTradeCount counts ACCEPTED offers as sender and receiver")
+        @DisplayName("completedTradeCount counts COMPLETED offers as sender and receiver")
         void completedTradeCountCountsBoth() {
             UUID uuid = UUID.randomUUID();
             UserEntity activeUser = user(uuid, "alice", UserStatus.ACTIVE);
 
             when(userRepository.findByUuid(uuid)).thenReturn(Optional.of(activeUser));
             when(itemRepository.countByOwnerIdAndStatus(10L, ItemStatus.ACTIVE)).thenReturn(0L);
-            when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.ACCEPTED)).thenReturn(5L);
-            when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.ACCEPTED)).thenReturn(3L);
+            when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.COMPLETED)).thenReturn(5L);
+            when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.COMPLETED)).thenReturn(3L);
             when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(0L);
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(0L);
 
@@ -249,8 +249,8 @@ class PublicProfileServiceImplTest {
 
             when(userRepository.findByUuid(uuid)).thenReturn(Optional.of(activeUser));
             when(itemRepository.countByOwnerIdAndStatus(10L, ItemStatus.ACTIVE)).thenReturn(0L);
-            when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.ACCEPTED)).thenReturn(0L);
-            when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.ACCEPTED)).thenReturn(0L);
+            when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.COMPLETED)).thenReturn(0L);
+            when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.COMPLETED)).thenReturn(0L);
             when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(2L);
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(4L);
 
@@ -288,7 +288,7 @@ class PublicProfileServiceImplTest {
             UUID userUuid = UUID.randomUUID();
             UserEntity activeUser = user(userUuid, "alice", UserStatus.ACTIVE);
 
-            ItemEntity activeItem = item(1L, UUID.randomUUID(), 10L);
+            ItemEntity activeItem = item(UUID.randomUUID());
             CategoryEntity cat = new CategoryEntity();
             cat.setId(20L);
             cat.setUuid(UUID.randomUUID());

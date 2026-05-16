@@ -99,13 +99,13 @@ export function TradeOfferMessagesPanel({
         username: user?.username,
     });
 
-    const isPending = status === "PENDING";
+    const isWritable = status === "PENDING" || status === "ACCEPTED";
     const normalizedContent = content.trim();
     const currentLength = content.length;
     const isNearLimit = currentLength >= MAX_MESSAGE_LENGTH * 0.9;
     const isInvalidLength = currentLength >= MAX_MESSAGE_LENGTH;
     const canSend =
-        isPending &&
+        isWritable &&
         normalizedContent.length > 0 &&
         normalizedContent.length <= MAX_MESSAGE_LENGTH &&
         !sendMessage.isPending;
@@ -240,8 +240,8 @@ export function TradeOfferMessagesPanel({
                                     <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100 sm:text-lg">
                                         Trade conversation
                                     </h2>
-                                    <Badge variant={isPending ? "success" : "default"}>
-                                        {isPending ? "Active conversation" : "Conversation closed"}
+                                    <Badge variant={isWritable ? "success" : "default"}>
+                                        {isWritable ? "Conversation open" : "Conversation read-only"}
                                     </Badge>
                                 </div>
                                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -397,14 +397,14 @@ export function TradeOfferMessagesPanel({
             <div
                 className={cn(
                     "sticky bottom-0 bg-white/95 px-4 py-4 backdrop-blur dark:bg-slate-900/95 sm:px-5",
-                    !isPending && "opacity-70",
+                    !isWritable && "opacity-70",
                 )}
             >
                 <form onSubmit={handleSubmit} className="space-y-3">
                     <div
                         className={cn(
                             "overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-950/40",
-                            isPending &&
+                            isWritable &&
                                 "focus-within:border-indigo-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 dark:focus-within:border-indigo-500 dark:focus-within:bg-slate-900",
                         )}
                     >
@@ -412,11 +412,11 @@ export function TradeOfferMessagesPanel({
                             value={content}
                             onChange={(event) => setContent(event.target.value)}
                             onKeyDown={handleComposerKeyDown}
-                            disabled={!isPending || sendMessage.isPending}
+                            disabled={!isWritable || sendMessage.isPending}
                             maxLength={MAX_MESSAGE_LENGTH}
                             rows={3}
                             placeholder={
-                                isPending
+                                isWritable
                                     ? "Ask about condition, availability, pickup, delivery, or the swap details…"
                                     : "This conversation is closed. Messages remain visible for reference."
                             }
@@ -445,7 +445,7 @@ export function TradeOfferMessagesPanel({
                         </Button>
                     </div>
 
-                    {!isPending && (
+                    {!isWritable && (
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                             This trade offer is closed, so the conversation is read-only.
                         </p>

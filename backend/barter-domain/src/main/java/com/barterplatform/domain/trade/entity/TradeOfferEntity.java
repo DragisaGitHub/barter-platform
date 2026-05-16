@@ -52,6 +52,15 @@ public class TradeOfferEntity extends AuditableEntity {
     @Column(name = "expires_at")
     private OffsetDateTime expiresAt;
 
+    @Column(name = "sender_completed_at")
+    private OffsetDateTime senderCompletedAt;
+
+    @Column(name = "receiver_completed_at")
+    private OffsetDateTime receiverCompletedAt;
+
+    @Column(name = "completed_at")
+    private OffsetDateTime completedAt;
+
     @OneToMany(mappedBy = "tradeOffer", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<TradeOfferItemEntity> items = new ArrayList<>();
 
@@ -59,6 +68,14 @@ public class TradeOfferEntity extends AuditableEntity {
 
     public boolean isPending() {
         return status == TradeOfferStatus.PENDING;
+    }
+
+    public boolean isAccepted() {
+        return status == TradeOfferStatus.ACCEPTED;
+    }
+
+    public boolean isCompleted() {
+        return status == TradeOfferStatus.COMPLETED;
     }
 
     public void accept() {
@@ -91,10 +108,46 @@ public class TradeOfferEntity extends AuditableEntity {
         this.respondedAt = OffsetDateTime.now();
     }
 
+    public void confirmCompletionBySender() {
+        assertAcceptedForCompletion();
+        if (senderCompletedAt != null) {
+            throw new IllegalStateException("Sender has already confirmed completion.");
+        }
+
+        this.senderCompletedAt = OffsetDateTime.now();
+        completeIfBothConfirmed();
+    }
+
+    public void confirmCompletionByReceiver() {
+        assertAcceptedForCompletion();
+        if (receiverCompletedAt != null) {
+            throw new IllegalStateException("Receiver has already confirmed completion.");
+        }
+
+        this.receiverCompletedAt = OffsetDateTime.now();
+        completeIfBothConfirmed();
+    }
+
+    public void completeIfBothConfirmed() {
+        if (senderCompletedAt != null && receiverCompletedAt != null) {
+            this.status = TradeOfferStatus.COMPLETED;
+            if (completedAt == null) {
+                this.completedAt = OffsetDateTime.now();
+            }
+        }
+    }
+
     private void assertPending(String action) {
         if (status != TradeOfferStatus.PENDING) {
             throw new IllegalStateException(
                     "Cannot " + action + " trade offer in status " + status + "; must be PENDING");
+        }
+    }
+
+    private void assertAcceptedForCompletion() {
+        if (status != TradeOfferStatus.ACCEPTED) {
+            throw new IllegalStateException(
+                    "Cannot confirm completion for trade offer in status " + status + "; must be ACCEPTED");
         }
     }
 }
