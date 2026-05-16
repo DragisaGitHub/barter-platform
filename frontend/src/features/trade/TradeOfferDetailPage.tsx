@@ -5,6 +5,7 @@ import { TradeOfferStatusBadge } from "./TradeOfferStatusBadge";
 import { TradeOfferModeBadge } from "./TradeOfferModeBadge";
 import { TradeOfferActionButtons } from "./TradeOfferActionButtons";
 import { TradeOfferCompletionActions } from "./TradeOfferCompletionActions";
+import { TradeReviewSection } from "./TradeReviewSection";
 import { ItemStatusBadge, ItemConditionBadge } from "../catalog/ItemBadges";
 import { Card } from "../../components/ui/Card";
 import { Button } from "../../components/ui/Button";
@@ -144,6 +145,8 @@ export function TradeOfferDetailPage() {
           currentUserUuid={user?.uuid ?? ""}
         />
       </div>
+
+      <TradeReviewSection offer={offer} currentUserUuid={user?.uuid ?? ""} />
 
       {/* Message (prominent for GIFT/NEGOTIABLE) */}
       {offer.message && (

@@ -1,0 +1,15 @@
+type: object
+additionalProperties: false
+required:
+  - rating
+properties:
+  rating:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeReviewRating'
+  negativeReason:
+    allOf:
+      - $ref: '../../../openapi.yaml#/components/schemas/TradeReviewNegativeReason'
+    nullable: true
+  comment:
+    type: string
+    nullable: true
+

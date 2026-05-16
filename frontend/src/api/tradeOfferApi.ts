@@ -1,8 +1,10 @@
 import { apiClient } from "./axios";
 import type {
   CreateTradeOfferRequest,
+  CreateTradeReviewRequest,
   TradeOfferResponse,
   TradeOfferPagedResponse,
+  TradeReviewResponse,
   TradeOfferStatus,
 } from "./generated/types";
 
@@ -58,6 +60,14 @@ export async function rejectTradeOffer(uuid: string): Promise<TradeOfferResponse
 
 export async function cancelTradeOffer(uuid: string): Promise<TradeOfferResponse> {
   const response = await apiClient.post<TradeOfferResponse>(`/trade-offers/${uuid}/cancel`);
+  return response.data;
+}
+
+export async function createTradeReview(
+  tradeOfferUuid: string,
+  data: CreateTradeReviewRequest,
+): Promise<TradeReviewResponse> {
+  const response = await apiClient.post<TradeReviewResponse>(`/trade-offers/${tradeOfferUuid}/reviews`, data);
   return response.data;
 }
 

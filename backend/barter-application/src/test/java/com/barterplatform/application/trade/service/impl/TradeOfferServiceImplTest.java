@@ -5,12 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 
 import com.barterplatform.api.model.CreateTradeOfferRequest;
 import com.barterplatform.api.model.TradeOfferMode;
@@ -18,6 +20,7 @@ import com.barterplatform.api.model.TradeOfferResponse;
 import com.barterplatform.application.notification.service.NotificationService;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
 import com.barterplatform.application.common.pagination.PageResponseMapper;
+import com.barterplatform.application.reputation.mapper.TradeReviewMapper;
 import com.barterplatform.application.trade.mapper.TradeOfferMapper;
 import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.common.exception.ApiException;
@@ -32,6 +35,7 @@ import com.barterplatform.domain.trade.enums.TradeOfferStatus;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
+import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import java.time.OffsetDateTime;
@@ -59,6 +63,8 @@ class TradeOfferServiceImplTest {
     @Mock private ItemRepository itemRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private TradeOfferMapper tradeOfferMapper;
+    @Mock private TradeReviewRepository tradeReviewRepository;
+    @Mock private TradeReviewMapper tradeReviewMapper;
     @Mock private PageRequestFactory pageRequestFactory;
     @Mock private PageResponseMapper pageResponseMapper;
     @Mock private NotificationService notificationService;
@@ -71,8 +77,11 @@ class TradeOfferServiceImplTest {
                 tradeOfferRepository, tradeOfferItemRepository,
                 userRepository, itemRepository,
                 categoryRepository, tradeOfferMapper,
+                tradeReviewRepository, tradeReviewMapper,
                 pageRequestFactory, pageResponseMapper,
                 notificationService);
+
+        lenient().when(tradeReviewRepository.findByTradeOfferId(anyLong())).thenReturn(List.of());
     }
 
     // ── Helpers ──────────────────────────────────────────────────

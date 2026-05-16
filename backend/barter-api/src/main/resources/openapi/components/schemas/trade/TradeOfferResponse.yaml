@@ -9,6 +9,9 @@ required:
   - receiverItem
   - offeredItems
   - createdAt
+  - canCurrentUserReview
+  - currentUserHasReviewed
+  - counterpartyHasReviewed
 properties:
   uuid:
     type: string
@@ -58,6 +61,20 @@ properties:
     type: boolean
   canConfirmCompletion:
     type: boolean
+  canCurrentUserReview:
+    type: boolean
+  currentUserHasReviewed:
+    type: boolean
+  counterpartyHasReviewed:
+    type: boolean
+  currentUserReview:
+    allOf:
+      - $ref: '../../../openapi.yaml#/components/schemas/TradeReviewResponse'
+    nullable: true
+  counterpartyReview:
+    allOf:
+      - $ref: '../../../openapi.yaml#/components/schemas/TradeReviewResponse'
+    nullable: true
   expiresAt:
     type: string
     format: date-time

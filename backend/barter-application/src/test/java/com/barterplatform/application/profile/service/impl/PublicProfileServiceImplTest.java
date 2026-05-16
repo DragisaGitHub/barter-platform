@@ -11,10 +11,12 @@ import static org.mockito.Mockito.when;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.PublicProfileResponse;
+import com.barterplatform.api.model.ReputationSummaryResponse;
 import com.barterplatform.application.catalog.mapper.ItemImageMapper;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
 import com.barterplatform.application.common.pagination.PageResponseMapper;
+import com.barterplatform.application.reputation.service.ReputationService;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
@@ -56,6 +58,7 @@ class PublicProfileServiceImplTest {
     @Mock private ItemMapper itemMapper;
     @Mock private ItemImageMapper itemImageMapper;
     @Mock private PageResponseMapper pageResponseMapper;
+    @Mock private ReputationService reputationService;
 
     private final PageRequestFactory pageRequestFactory = new PageRequestFactory();
 
@@ -67,7 +70,8 @@ class PublicProfileServiceImplTest {
                 userRepository, itemRepository, tradeOfferRepository,
                 categoryRepository, itemImageRepository,
                 itemMapper, itemImageMapper,
-                pageRequestFactory, pageResponseMapper);
+                pageRequestFactory, pageResponseMapper,
+                reputationService);
     }
 
     // ── Helpers ──────────────────────────────────────────────────
@@ -114,6 +118,11 @@ class PublicProfileServiceImplTest {
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.COMPLETED)).thenReturn(1L);
             when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(0L);
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(1L);
+            when(reputationService.getReputationSummary(10L)).thenReturn(new ReputationSummaryResponse()
+                    .positiveReviewCount(4)
+                    .negativeReviewCount(1)
+                    .totalReviewCount(5)
+                    .positivePercentage(80.0));
 
             PublicProfileResponse result = service.getPublicProfile(uuid);
 
@@ -125,6 +134,9 @@ class PublicProfileServiceImplTest {
             assertEquals(3, result.getCompletedTradeCount());
             assertEquals(1, result.getCancelledTradeCount());
             assertNull(result.getAverageRating());
+            assertNotNull(result.getReputationSummary());
+            assertEquals(4, result.getReputationSummary().getPositiveReviewCount());
+            assertEquals(80.0, result.getReputationSummary().getPositivePercentage());
         }
 
         @Test
@@ -197,6 +209,11 @@ class PublicProfileServiceImplTest {
             when(itemRepository.countByOwnerIdAndStatus(10L, ItemStatus.ACTIVE)).thenReturn(0L);
             when(tradeOfferRepository.countBySenderUserIdAndStatus(eq(10L), any())).thenReturn(0L);
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(eq(10L), any())).thenReturn(0L);
+            when(reputationService.getReputationSummary(10L)).thenReturn(new ReputationSummaryResponse()
+                    .positiveReviewCount(0)
+                    .negativeReviewCount(0)
+                    .totalReviewCount(0)
+                    .positivePercentage(null));
 
             PublicProfileResponse result = service.getPublicProfile(uuid);
 
@@ -217,6 +234,11 @@ class PublicProfileServiceImplTest {
             when(itemRepository.countByOwnerIdAndStatus(10L, ItemStatus.ACTIVE)).thenReturn(7L);
             when(tradeOfferRepository.countBySenderUserIdAndStatus(eq(10L), any())).thenReturn(0L);
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(eq(10L), any())).thenReturn(0L);
+            when(reputationService.getReputationSummary(10L)).thenReturn(new ReputationSummaryResponse()
+                    .positiveReviewCount(0)
+                    .negativeReviewCount(0)
+                    .totalReviewCount(0)
+                    .positivePercentage(null));
 
             PublicProfileResponse result = service.getPublicProfile(uuid);
 
@@ -235,6 +257,11 @@ class PublicProfileServiceImplTest {
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.COMPLETED)).thenReturn(3L);
             when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(0L);
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(0L);
+            when(reputationService.getReputationSummary(10L)).thenReturn(new ReputationSummaryResponse()
+                    .positiveReviewCount(0)
+                    .negativeReviewCount(0)
+                    .totalReviewCount(0)
+                    .positivePercentage(null));
 
             PublicProfileResponse result = service.getPublicProfile(uuid);
 
@@ -253,6 +280,11 @@ class PublicProfileServiceImplTest {
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.COMPLETED)).thenReturn(0L);
             when(tradeOfferRepository.countBySenderUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(2L);
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(10L, TradeOfferStatus.CANCELLED)).thenReturn(4L);
+            when(reputationService.getReputationSummary(10L)).thenReturn(new ReputationSummaryResponse()
+                    .positiveReviewCount(0)
+                    .negativeReviewCount(0)
+                    .totalReviewCount(0)
+                    .positivePercentage(null));
 
             PublicProfileResponse result = service.getPublicProfile(uuid);
 
@@ -269,6 +301,11 @@ class PublicProfileServiceImplTest {
             when(itemRepository.countByOwnerIdAndStatus(10L, ItemStatus.ACTIVE)).thenReturn(0L);
             when(tradeOfferRepository.countBySenderUserIdAndStatus(eq(10L), any())).thenReturn(0L);
             when(tradeOfferRepository.countByReceiverUserIdAndStatus(eq(10L), any())).thenReturn(0L);
+            when(reputationService.getReputationSummary(10L)).thenReturn(new ReputationSummaryResponse()
+                    .positiveReviewCount(0)
+                    .negativeReviewCount(0)
+                    .totalReviewCount(0)
+                    .positivePercentage(null));
 
             PublicProfileResponse result = service.getPublicProfile(uuid);
 

@@ -12,6 +12,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.barterplatform.api.model.*;
+import com.barterplatform.application.reputation.service.TradeReviewService;
 import com.barterplatform.application.trade.service.TradeOfferMessageService;
 import com.barterplatform.application.trade.service.TradeOfferService;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
@@ -36,13 +37,15 @@ class TradeOffersControllerMvcTest {
     private MockMvc mockMvc;
     private TradeOfferService tradeOfferService;
     private TradeOfferMessageService tradeOfferMessageService;
+    private TradeReviewService tradeReviewService;
 
     @BeforeEach
     void setUp() {
         tradeOfferService = mock(TradeOfferService.class);
         tradeOfferMessageService = mock(TradeOfferMessageService.class);
+        tradeReviewService = mock(TradeReviewService.class);
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new TradeOffersController(tradeOfferService,  tradeOfferMessageService))
+                .standaloneSetup(new TradeOffersController(tradeOfferService, tradeOfferMessageService, tradeReviewService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
         SecurityContextHolder.clearContext();

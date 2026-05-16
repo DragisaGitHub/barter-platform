@@ -1,0 +1,24 @@
+type: object
+additionalProperties: false
+required:
+  - positiveReviewCount
+  - negativeReviewCount
+  - totalReviewCount
+properties:
+  positiveReviewCount:
+    type: integer
+    format: int32
+    minimum: 0
+  negativeReviewCount:
+    type: integer
+    format: int32
+    minimum: 0
+  totalReviewCount:
+    type: integer
+    format: int32
+    minimum: 0
+  positivePercentage:
+    type: number
+    format: double
+    nullable: true
+

@@ -7,6 +7,7 @@ import com.barterplatform.api.model.TradeOfferSummaryResponse;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
 import com.barterplatform.application.common.pagination.PageResponseMapper;
 import com.barterplatform.application.notification.service.NotificationService;
+import com.barterplatform.application.reputation.mapper.TradeReviewMapper;
 import com.barterplatform.application.trade.mapper.TradeOfferMapper;
 import com.barterplatform.application.trade.service.TradeOfferService;
 import com.barterplatform.common.exception.ApiException;
@@ -16,6 +17,7 @@ import com.barterplatform.domain.catalog.entity.ItemEntity;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.notification.enums.NotificationType;
+import com.barterplatform.domain.reputation.entity.TradeReviewEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferItemEntity;
 import com.barterplatform.domain.trade.enums.TradeOfferItemSide;
@@ -24,6 +26,7 @@ import com.barterplatform.domain.trade.enums.TradeOfferStatus;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
+import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import java.time.OffsetDateTime;
@@ -50,6 +53,8 @@ public class TradeOfferServiceImpl implements TradeOfferService {
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
     private final TradeOfferMapper tradeOfferMapper;
+    private final TradeReviewRepository tradeReviewRepository;
+    private final TradeReviewMapper tradeReviewMapper;
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
     private final NotificationService notificationService;
@@ -60,6 +65,8 @@ public class TradeOfferServiceImpl implements TradeOfferService {
                                  ItemRepository itemRepository,
                                  CategoryRepository categoryRepository,
                                  TradeOfferMapper tradeOfferMapper,
+                                 TradeReviewRepository tradeReviewRepository,
+                                 TradeReviewMapper tradeReviewMapper,
                                  PageRequestFactory pageRequestFactory,
                                  PageResponseMapper pageResponseMapper,
                                  NotificationService notificationService) {
@@ -69,6 +76,8 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         this.itemRepository = itemRepository;
         this.categoryRepository = categoryRepository;
         this.tradeOfferMapper = tradeOfferMapper;
+        this.tradeReviewRepository = tradeReviewRepository;
+        this.tradeReviewMapper = tradeReviewMapper;
         this.pageRequestFactory = pageRequestFactory;
         this.pageResponseMapper = pageResponseMapper;
         this.notificationService = notificationService;
@@ -528,6 +537,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         TradeOfferResponse response = tradeOfferMapper.toResponse(offer, sender, receiver,
                 receiverItem, receiverCategory, offeredItems, offeredCategories);
         enrichCompletionState(response, offer, currentUserId);
+        enrichReviewState(response, offer, sender, receiver, currentUserId);
         return response;
     }
 
@@ -551,6 +561,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         TradeOfferSummaryResponse response = tradeOfferMapper.toSummaryResponse(offer, sender, receiver,
                 receiverItem, receiverCategory, offeredItems, offeredCategories);
         enrichCompletionState(response, offer, currentUserId);
+        enrichReviewState(response, offer, currentUserId);
         return response;
     }
 
@@ -568,6 +579,63 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         response.setCanConfirmCompletion(participant && offer.isAccepted() && !confirmed);
     }
 
+    private void enrichReviewState(
+            TradeOfferResponse response,
+            TradeOfferEntity offer,
+            UserEntity sender,
+            UserEntity receiver,
+            Long currentUserId) {
+        ReviewState reviewState = buildReviewState(offer, currentUserId);
+        response.setCanCurrentUserReview(reviewState.canCurrentUserReview());
+        response.setCurrentUserHasReviewed(reviewState.currentUserReview() != null);
+        response.setCounterpartyHasReviewed(reviewState.counterpartyReview() != null);
+        response.setCurrentUserReview(reviewState.currentUserReview() == null
+                ? null
+                : tradeReviewMapper.toEmbeddedResponse(reviewState.currentUserReview(), offer,
+                        reviewState.currentUserReviewer().equals(sender.getId()) ? sender : receiver,
+                        reviewState.currentUserReviewed().equals(sender.getId()) ? sender : receiver));
+        response.setCounterpartyReview(reviewState.counterpartyReview() == null
+                ? null
+                : tradeReviewMapper.toEmbeddedResponse(reviewState.counterpartyReview(), offer,
+                        reviewState.counterpartyReviewer().equals(sender.getId()) ? sender : receiver,
+                        reviewState.counterpartyReviewed().equals(sender.getId()) ? sender : receiver));
+    }
+
+    private void enrichReviewState(TradeOfferSummaryResponse response, TradeOfferEntity offer, Long currentUserId) {
+        ReviewState reviewState = buildReviewState(offer, currentUserId);
+        response.setCanCurrentUserReview(reviewState.canCurrentUserReview());
+        response.setCurrentUserHasReviewed(reviewState.currentUserReview() != null);
+        response.setCounterpartyHasReviewed(reviewState.counterpartyReview() != null);
+    }
+
+    private ReviewState buildReviewState(TradeOfferEntity offer, Long currentUserId) {
+        boolean participant = offer.getSenderUserId().equals(currentUserId) || offer.getReceiverUserId().equals(currentUserId);
+        if (!participant) {
+            return new ReviewState(false, null, null, null, null, null, null);
+        }
+
+        List<TradeReviewEntity> reviews = tradeReviewRepository.findByTradeOfferId(offer.getId());
+        TradeReviewEntity currentUserReview = reviews.stream()
+                .filter(review -> review.getReviewerUserId().equals(currentUserId))
+                .findFirst()
+                .orElse(null);
+        TradeReviewEntity counterpartyReview = reviews.stream()
+                .filter(review -> !review.getReviewerUserId().equals(currentUserId))
+                .findFirst()
+                .orElse(null);
+
+        boolean canCurrentUserReview = offer.getStatus() == TradeOfferStatus.COMPLETED && currentUserReview == null;
+
+        return new ReviewState(
+                canCurrentUserReview,
+                currentUserReview,
+                counterpartyReview,
+                currentUserReview != null ? currentUserReview.getReviewerUserId() : null,
+                currentUserReview != null ? currentUserReview.getReviewedUserId() : null,
+                counterpartyReview != null ? counterpartyReview.getReviewerUserId() : null,
+                counterpartyReview != null ? counterpartyReview.getReviewedUserId() : null);
+    }
+
     private boolean hasCurrentUserConfirmedCompletion(TradeOfferEntity offer, Long currentUserId) {
         if (offer.getSenderUserId().equals(currentUserId)) {
             return offer.getSenderCompletedAt() != null;
@@ -576,6 +644,16 @@ public class TradeOfferServiceImpl implements TradeOfferService {
             return offer.getReceiverCompletedAt() != null;
         }
         return false;
+    }
+
+    private record ReviewState(
+            boolean canCurrentUserReview,
+            TradeReviewEntity currentUserReview,
+            TradeReviewEntity counterpartyReview,
+            Long currentUserReviewer,
+            Long currentUserReviewed,
+            Long counterpartyReviewer,
+            Long counterpartyReviewed) {
     }
 
     private void notifyTradeCompleted(

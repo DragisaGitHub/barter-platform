@@ -7,6 +7,7 @@ required:
   - activeItemCount
   - completedTradeCount
   - cancelledTradeCount
+  - reputationSummary
 properties:
   uuid:
     type: string
@@ -32,4 +33,6 @@ properties:
     type: number
     format: double
     nullable: true
+  reputationSummary:
+    $ref: '../../../openapi.yaml#/components/schemas/ReputationSummaryResponse'
 

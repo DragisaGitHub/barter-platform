@@ -95,6 +95,16 @@ export type TradeOfferResponse = components["schemas"]["TradeOfferResponse"];
 export type TradeOfferPagedResponse = components["schemas"]["TradeOfferPagedResponse"];
 export type TradeOfferMessageResponse = components["schemas"]["TradeOfferMessageResponse"];
 
+// ─── Reputation / Review DTOs ───────────────────────────────────────────────
+
+export type TradeReviewRating = components["schemas"]["TradeReviewRating"];
+export type TradeReviewNegativeReason = components["schemas"]["TradeReviewNegativeReason"];
+export type CreateTradeReviewRequest = components["schemas"]["CreateTradeReviewRequest"];
+export type TradeReviewResponse = components["schemas"]["TradeReviewResponse"];
+export type AdminTradeReviewSummaryResponse = components["schemas"]["AdminTradeReviewSummaryResponse"];
+export type AdminTradeReviewPagedResponse = components["schemas"]["AdminTradeReviewPagedResponse"];
+export type ReputationSummaryResponse = components["schemas"]["ReputationSummaryResponse"];
+
 // ─── Trade Offer Request DTOs ───────────────────────────────────────────────
 
 export type CreateTradeOfferRequest = components["schemas"]["CreateTradeOfferRequest"];
