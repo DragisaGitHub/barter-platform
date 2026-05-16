@@ -32,6 +32,11 @@ barter:
   mail:
     from: noreply@barter-platform.local
 
+storage:
+  type: local
+  local:
+    upload-dir: uploads/
+
 logging:
   level:
     org.hibernate.SQL: off

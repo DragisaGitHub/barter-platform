@@ -82,7 +82,7 @@ public class SecurityConfig {
                                 "/api/v1/catalog/items/*/images",
                                 "/profiles/**",
                                 "/api/v1/profiles/**").permitAll()
-                        .requestMatchers("/files/**").permitAll()
+                        .requestMatchers("/files/**", "/api/v1/files/**").permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",

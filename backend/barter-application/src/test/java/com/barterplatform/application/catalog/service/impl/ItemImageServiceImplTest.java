@@ -236,7 +236,7 @@ class ItemImageServiceImplTest {
             ApiException ex = assertThrows(ApiException.class,
                     () -> service.uploadImage(ownerUuid, itemUuid, fakeFile()));
             assertEquals(400, ex.getStatus().value());
-            verify(storageService, never()).store(anyString(), any(), anyString());
+            verify(storageService, never()).store(anyString(), any(), anyLong(), anyString());
         }
 
         @Test
@@ -273,6 +273,31 @@ class ItemImageServiceImplTest {
 
             // Storage should be asked to delete the saved file
             verify(storageService).delete(anyString());
+        }
+
+        @Test
+        @DisplayName("returns clean API error when storage upload fails")
+        void storageUploadFailureReturnsCleanApiError() throws Exception {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID itemUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid);
+            ItemEntity itemEntity = item(itemUuid, ItemStatus.DRAFT);
+            String secret = "super-secret-account-key";
+
+            when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(itemEntity));
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(itemImageRepository.countByItemId(10L)).thenReturn(0L);
+            doThrow(new IOException("Upload failed AccountKey=" + secret))
+                    .when(storageService)
+                    .store(anyString(), any(), anyLong(), anyString());
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> service.uploadImage(ownerUuid, itemUuid, jpegFile("x.jpg")));
+
+            assertEquals(500, ex.getStatus().value());
+            assertEquals("Image storage is currently unavailable. Please try again later.", ex.getMessage());
+            assertFalse(ex.getMessage().contains(secret));
+            verify(itemImageRepository, never()).save(any());
         }
     }
 
