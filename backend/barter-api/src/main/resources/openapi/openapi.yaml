@@ -25,6 +25,8 @@ tags:
     description: Administrator category management operations
   - name: AdminListings
     description: Administrator listing moderation and governance operations
+  - name: AdminReviews
+    description: Administrator trade review governance operations
   - name: TradeOffers
     description: Trade offer creation, listing, and lifecycle management
   - name: Notifications
@@ -94,6 +96,8 @@ paths:
     $ref: './paths/admin-listings.yaml#/listingRemove'
   /admin/listings/{itemUuid}/restore:
     $ref: './paths/admin-listings.yaml#/listingRestore'
+  /admin/reviews:
+    $ref: './paths/admin-reviews.yaml#/reviews'
   /catalog/tags:
     $ref: './paths/catalog.yaml#/tags'
   /admin/tags:
@@ -134,6 +138,8 @@ paths:
     $ref: './paths/trade-offers.yaml#/reject'
   /trade-offers/{tradeOfferUuid}/cancel:
     $ref: './paths/trade-offers.yaml#/cancel'
+  /trade-offers/{tradeOfferUuid}/reviews:
+    $ref: './paths/trade-offers.yaml#/reviews'
   /trade-offers/{tradeOfferUuid}/messages:
     $ref: './paths/trade-offer-messages.yaml'
   /notifications:
@@ -275,6 +281,20 @@ components:
       $ref: './components/schemas/trade/TradeOfferPagedResponse.yaml'
     TradeOfferMessageResponse:
       $ref: './components/schemas/trade/TradeOfferMessageResponse.yaml'
+    TradeReviewRating:
+      $ref: './components/schemas/reputation/TradeReviewRating.yaml'
+    TradeReviewNegativeReason:
+      $ref: './components/schemas/reputation/TradeReviewNegativeReason.yaml'
+    CreateTradeReviewRequest:
+      $ref: './components/schemas/reputation/CreateTradeReviewRequest.yaml'
+    TradeReviewResponse:
+      $ref: './components/schemas/reputation/TradeReviewResponse.yaml'
+    AdminTradeReviewSummaryResponse:
+      $ref: './components/schemas/reputation/AdminTradeReviewSummaryResponse.yaml'
+    AdminTradeReviewPagedResponse:
+      $ref: './components/schemas/reputation/AdminTradeReviewPagedResponse.yaml'
+    ReputationSummaryResponse:
+      $ref: './components/schemas/reputation/ReputationSummaryResponse.yaml'
     NotificationType:
       $ref: './components/schemas/notification/NotificationType.yaml'
     NotificationResponse:

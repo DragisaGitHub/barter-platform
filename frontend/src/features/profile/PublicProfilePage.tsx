@@ -5,7 +5,7 @@ import {
   CalendarDays,
   Package,
   ShieldCheck,
-  Star,
+  ThumbsUp,
   RefreshCw,
   CheckCircle2,
   XCircle,
@@ -118,9 +118,8 @@ export function PublicProfilePage() {
   const items = itemsPage?.content ?? [];
   const joinedDate = formatJoinDate(profile.joinedAt);
   const isOwnProfile = user?.uuid === profile.uuid;
-  const averageRatingLabel =
-    profile.averageRating != null ? profile.averageRating.toFixed(1) : null;
   const listingsTotal = itemsPage?.totalElements ?? items.length;
+  const positivePercentage = profile.reputationSummary.positivePercentage;
 
   const handleItemsPageChange = (page: number) => {
     setItemsPageIndex(page);
@@ -188,10 +187,14 @@ export function PublicProfilePage() {
                     icon={<XCircle className="size-4" />}
                     label={formatCount(profile.cancelledTradeCount, "cancelled trade", "cancelled trades")}
                   />
-                  {averageRatingLabel ? (
+                  {profile.reputationSummary.totalReviewCount > 0 ? (
                     <ProfilePill
-                      icon={<Star className="size-4" />}
-                      label={`Average rating ${averageRatingLabel}`}
+                      icon={<ThumbsUp className="size-4" />}
+                      label={
+                        positivePercentage == null
+                          ? formatCount(profile.reputationSummary.totalReviewCount, "review", "reviews")
+                          : `${positivePercentage.toFixed(0)}% positive reviews`
+                      }
                     />
                   ) : null}
                 </div>
@@ -232,6 +235,7 @@ export function PublicProfilePage() {
           completedTradeCount={profile.completedTradeCount}
           cancelledTradeCount={profile.cancelledTradeCount}
           averageRating={profile.averageRating}
+          reputationSummary={profile.reputationSummary}
         />
       </div>
 

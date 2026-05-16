@@ -1,0 +1,44 @@
+reviews:
+  get:
+    tags:
+      - AdminReviews
+    operationId: listAdminReviews
+    summary: List trade reviews for admin governance queue
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: rating
+        in: query
+        required: false
+        schema:
+          $ref: '../components/schemas/reputation/TradeReviewRating.yaml'
+      - name: negativeReason
+        in: query
+        required: false
+        schema:
+          $ref: '../components/schemas/reputation/TradeReviewNegativeReason.yaml'
+      - name: reviewedUserQuery
+        in: query
+        required: false
+        schema:
+          type: string
+      - name: reviewerUserQuery
+        in: query
+        required: false
+        schema:
+          type: string
+    responses:
+      '200':
+        description: Admin reviews returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminTradeReviewPagedResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+

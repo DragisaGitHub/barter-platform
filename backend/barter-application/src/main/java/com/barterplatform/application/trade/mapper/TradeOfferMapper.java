@@ -67,6 +67,9 @@ public interface TradeOfferMapper {
     @Mapping(target = "offeredItems", ignore = true)
     @Mapping(target = "currentUserCompletionConfirmed", ignore = true)
     @Mapping(target = "canConfirmCompletion", ignore = true)
+    @Mapping(target = "canCurrentUserReview", ignore = true)
+    @Mapping(target = "currentUserHasReviewed", ignore = true)
+    @Mapping(target = "counterpartyHasReviewed", ignore = true)
     TradeOfferSummaryResponse toSummaryResponse(TradeOfferEntity entity);
 
     default TradeOfferSummaryResponse toSummaryResponse(TradeOfferEntity entity,
@@ -98,6 +101,11 @@ public interface TradeOfferMapper {
     @Mapping(target = "offeredItems", ignore = true)
     @Mapping(target = "currentUserCompletionConfirmed", ignore = true)
     @Mapping(target = "canConfirmCompletion", ignore = true)
+    @Mapping(target = "canCurrentUserReview", ignore = true)
+    @Mapping(target = "currentUserHasReviewed", ignore = true)
+    @Mapping(target = "counterpartyHasReviewed", ignore = true)
+    @Mapping(target = "currentUserReview", ignore = true)
+    @Mapping(target = "counterpartyReview", ignore = true)
     TradeOfferResponse toResponse(TradeOfferEntity entity);
 
     default TradeOfferResponse toResponse(TradeOfferEntity entity,

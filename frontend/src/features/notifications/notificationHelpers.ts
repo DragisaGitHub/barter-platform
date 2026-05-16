@@ -22,6 +22,8 @@ export function getNotificationIconName(type: NotificationType): string {
       return "clock-3";
     case "TRADE_OFFER_COMPLETED":
       return "badge-check";
+    case "TRADE_REVIEW_RECEIVED":
+      return "message-square-heart";
     case "TRADE_OFFER_REJECTED":
       return "x-circle";
     case "TRADE_OFFER_CANCELLED":
@@ -48,6 +50,8 @@ export function getNotificationColor(type: NotificationType): string {
       return "text-amber-500 dark:text-amber-400";
     case "TRADE_OFFER_COMPLETED":
       return "text-emerald-500 dark:text-emerald-400";
+    case "TRADE_REVIEW_RECEIVED":
+      return "text-violet-500 dark:text-violet-400";
     case "TRADE_OFFER_REJECTED":
       return "text-red-500 dark:text-red-400";
     case "TRADE_OFFER_CANCELLED":
@@ -73,7 +77,11 @@ export function getNotificationTargetPath(notification: NotificationResponse): s
     return null;
   }
 
-  if (normalizedReferenceType === "TRADE_OFFER" || notification.type.startsWith("TRADE_OFFER")) {
+  if (
+    normalizedReferenceType === "TRADE_OFFER"
+    || notification.type.startsWith("TRADE_OFFER")
+    || notification.type === "TRADE_REVIEW_RECEIVED"
+  ) {
     return `${routePaths.offers}/${referenceUuid}`;
   }
 

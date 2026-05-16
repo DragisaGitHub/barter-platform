@@ -1,0 +1,41 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - tradeOfferUuid
+  - reviewerUserUuid
+  - reviewerUsername
+  - reviewedUserUuid
+  - reviewedUsername
+  - rating
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  tradeOfferUuid:
+    type: string
+    format: uuid
+  reviewerUserUuid:
+    type: string
+    format: uuid
+  reviewerUsername:
+    type: string
+  reviewedUserUuid:
+    type: string
+    format: uuid
+  reviewedUsername:
+    type: string
+  rating:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeReviewRating'
+  negativeReason:
+    allOf:
+      - $ref: '../../../openapi.yaml#/components/schemas/TradeReviewNegativeReason'
+    nullable: true
+  comment:
+    type: string
+    nullable: true
+  createdAt:
+    type: string
+    format: date-time
+

@@ -2,6 +2,7 @@ package com.barterplatform.web.trade.controller;
 
 import com.barterplatform.api.controller.TradeOffersApi;
 import com.barterplatform.api.model.*;
+import com.barterplatform.application.reputation.service.TradeReviewService;
 import com.barterplatform.application.trade.service.TradeOfferMessageService;
 import com.barterplatform.application.trade.service.TradeOfferService;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
@@ -19,12 +20,15 @@ public class TradeOffersController implements TradeOffersApi {
 
     private final TradeOfferService tradeOfferService;
     private final TradeOfferMessageService tradeOfferMessageService;
+    private final TradeReviewService tradeReviewService;
 
     public TradeOffersController(
             TradeOfferService tradeOfferService,
-            TradeOfferMessageService tradeOfferMessageService) {
+            TradeOfferMessageService tradeOfferMessageService,
+            TradeReviewService tradeReviewService) {
         this.tradeOfferService = tradeOfferService;
         this.tradeOfferMessageService = tradeOfferMessageService;
+        this.tradeReviewService = tradeReviewService;
     }
 
     @Override
@@ -81,6 +85,18 @@ public class TradeOffersController implements TradeOffersApi {
     public ResponseEntity<TradeOfferResponse> cancelTradeOffer(UUID tradeOfferUuid) {
         UUID currentUserUuid = currentUserUuid();
         return ResponseEntity.ok(tradeOfferService.cancelOffer(currentUserUuid, tradeOfferUuid));
+    }
+
+    @Override
+    public ResponseEntity<TradeReviewResponse> createTradeOfferReview(
+            UUID tradeOfferUuid,
+            CreateTradeReviewRequest createTradeReviewRequest) {
+        UUID currentUserUuid = currentUserUuid();
+        TradeReviewResponse response = tradeReviewService.createReview(
+                currentUserUuid,
+                tradeOfferUuid,
+                createTradeReviewRequest);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Override

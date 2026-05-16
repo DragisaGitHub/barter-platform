@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck, Clock3, BadgeCheck } from "lucide-react";
+import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck, Clock3, BadgeCheck, MessageSquareHeart } from "lucide-react";
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from "./useNotifications";
 import { formatNotificationTime, getNotificationColor, getNotificationTargetPath } from "./notificationHelpers";
 import { Spinner } from "@/components/ui/Spinner";
@@ -21,6 +21,8 @@ function NotificationIcon({ type, className }: { type: NotificationType; classNa
       return <Clock3 className={iconClass} />;
     case "TRADE_OFFER_COMPLETED":
       return <BadgeCheck className={iconClass} />;
+    case "TRADE_REVIEW_RECEIVED":
+      return <MessageSquareHeart className={iconClass} />;
     case "TRADE_OFFER_REJECTED":
       return <XCircle className={iconClass} />;
     case "TRADE_OFFER_CANCELLED":

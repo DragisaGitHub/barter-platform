@@ -8,6 +8,7 @@ import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
 import com.barterplatform.application.common.pagination.PageResponseMapper;
 import com.barterplatform.application.profile.service.PublicProfileService;
+import com.barterplatform.application.reputation.service.ReputationService;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
@@ -49,6 +50,7 @@ public class PublicProfileServiceImpl implements PublicProfileService {
     private final ItemImageMapper itemImageMapper;
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
+    private final ReputationService reputationService;
 
     public PublicProfileServiceImpl(UserRepository userRepository,
                                     ItemRepository itemRepository,
@@ -58,7 +60,8 @@ public class PublicProfileServiceImpl implements PublicProfileService {
                                     ItemMapper itemMapper,
                                     ItemImageMapper itemImageMapper,
                                     PageRequestFactory pageRequestFactory,
-                                    PageResponseMapper pageResponseMapper) {
+                                    PageResponseMapper pageResponseMapper,
+                                    ReputationService reputationService) {
         this.userRepository = userRepository;
         this.itemRepository = itemRepository;
         this.tradeOfferRepository = tradeOfferRepository;
@@ -68,6 +71,7 @@ public class PublicProfileServiceImpl implements PublicProfileService {
         this.itemImageMapper = itemImageMapper;
         this.pageRequestFactory = pageRequestFactory;
         this.pageResponseMapper = pageResponseMapper;
+        this.reputationService = reputationService;
     }
 
     @Override
@@ -95,7 +99,8 @@ public class PublicProfileServiceImpl implements PublicProfileService {
                 .activeItemCount(activeItemCount)
                 .completedTradeCount(completedTradeCount)
                 .cancelledTradeCount(cancelledTradeCount)
-                .averageRating(null);
+                .averageRating(null)
+                .reputationSummary(reputationService.getReputationSummary(user.getId()));
     }
 
     @Override

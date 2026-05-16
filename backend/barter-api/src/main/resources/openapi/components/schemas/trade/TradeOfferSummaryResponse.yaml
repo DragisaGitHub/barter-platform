@@ -9,6 +9,9 @@ required:
   - receiverItem
   - offeredItems
   - createdAt
+  - canCurrentUserReview
+  - currentUserHasReviewed
+  - counterpartyHasReviewed
 properties:
   uuid:
     type: string
@@ -57,4 +60,10 @@ properties:
   currentUserCompletionConfirmed:
     type: boolean
   canConfirmCompletion:
+    type: boolean
+  canCurrentUserReview:
+    type: boolean
+  currentUserHasReviewed:
+    type: boolean
+  counterpartyHasReviewed:
     type: boolean

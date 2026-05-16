@@ -7,6 +7,7 @@ import { TradeOfferStatusBadge } from "./TradeOfferStatusBadge";
 import { TradeOfferModeBadge } from "./TradeOfferModeBadge";
 import { TradeOfferActionButtons } from "./TradeOfferActionButtons";
 import { TradeOfferCompletionActions } from "./TradeOfferCompletionActions";
+import { TradeReviewSection } from "./TradeReviewSection";
 
 interface TradeOfferCardProps {
   offer: TradeOfferSummaryResponse;
@@ -154,6 +155,10 @@ export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) 
           currentUserUuid={currentUserUuid}
           compact
         />
+      </div>
+
+      <div className="mb-3">
+        <TradeReviewSection offer={offer} currentUserUuid={currentUserUuid} compact />
       </div>
 
       {offer.respondedAt && (

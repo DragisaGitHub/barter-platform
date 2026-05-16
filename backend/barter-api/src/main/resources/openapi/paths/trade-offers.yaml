@@ -221,3 +221,37 @@ cancel:
       '409':
         $ref: '../components/responses/Conflict.yaml'
 
+reviews:
+  post:
+    tags:
+      - TradeOffers
+    operationId: createTradeOfferReview
+    summary: Create an immutable review for a completed trade offer
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/TradeOfferUuid'
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CreateTradeReviewRequest'
+    responses:
+      '201':
+        description: Trade review created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/TradeReviewResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+

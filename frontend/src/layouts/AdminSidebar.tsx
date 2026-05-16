@@ -7,6 +7,7 @@ import {
   Package,
   Settings,
   Shield,
+  MessageSquareWarning,
   Tags,
   Users,
   X,
@@ -34,6 +35,7 @@ const adminNavItems: AdminNavItem[] = [
   { to: routePaths.admin.system, label: "System", icon: Settings },
   { to: routePaths.admin.categories, label: "Categories", icon: FolderTree, end: true },
   { to: routePaths.admin.listings, label: "Listings", icon: Package, end: true },
+  { to: routePaths.admin.reviews, label: "Reviews", icon: MessageSquareWarning, end: true },
   { to: routePaths.admin.tags, label: "Tags", icon: Tags, end: true },
 ];
 

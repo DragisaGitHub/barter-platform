@@ -8,12 +8,14 @@ import {
   confirmTradeOfferCompletion,
   rejectTradeOffer,
   cancelTradeOffer,
+  createTradeReview,
   type ListTradeOffersParams,
 } from "@/api/tradeOfferApi.ts";
 import type {
   TradeOfferPagedResponse,
   TradeOfferResponse,
   CreateTradeOfferRequest,
+  CreateTradeReviewRequest,
 } from "@/api/generated/types.ts";
 import { catalogKeys } from "@/features/catalog/useCatalog.ts";
 import { profileKeys } from "@/features/profile/useProfile.ts";
@@ -130,3 +132,17 @@ export function useCancelTradeOffer() {
     },
   });
 }
+
+export function useCreateTradeReview() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ tradeOfferUuid, data }: { tradeOfferUuid: string; data: CreateTradeReviewRequest }) =>
+      createTradeReview(tradeOfferUuid, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: tradeOfferKeys.all });
+      queryClient.invalidateQueries({ queryKey: profileKeys.all });
+      queryClient.invalidateQueries({ queryKey: notificationKeys.all });
+    },
+  });
+}
+

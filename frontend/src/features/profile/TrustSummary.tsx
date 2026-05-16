@@ -1,12 +1,14 @@
-import { CheckCircle, XCircle, Package, Star } from "lucide-react";
+import { CheckCircle, Package, Percent, ThumbsDown, ThumbsUp, XCircle } from "lucide-react";
 import { Card } from "../../components/ui/Card";
 import React from "react";
+import type { ReputationSummaryResponse } from "@/api/generated/types.ts";
 
 interface TrustSummaryProps {
   activeItemCount: number;
   completedTradeCount: number;
   cancelledTradeCount: number;
   averageRating?: number | null;
+  reputationSummary: ReputationSummaryResponse;
 }
 
 interface StatItemProps {
@@ -38,8 +40,9 @@ export function TrustSummary({
   activeItemCount,
   completedTradeCount,
   cancelledTradeCount,
-  averageRating,
+  reputationSummary,
 }: TrustSummaryProps) {
+  const positivePercentage = reputationSummary.positivePercentage;
   const stats = [
     {
       icon: <Package className="size-5 text-violet-600 dark:text-violet-300" />,
@@ -72,14 +75,25 @@ export function TrustSummary({
       accentClassName: "bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:text-rose-300",
     },
     {
-      icon: <Star className="size-5 text-amber-500 dark:text-amber-300" />,
-      label: "Average rating",
-      value: averageRating != null ? averageRating.toFixed(1) : "Not rated",
-      description:
-        averageRating != null
-          ? "Average rating currently available on this public profile."
-          : "No rating is available for this profile yet.",
-      accentClassName: "bg-amber-100 text-amber-600 dark:bg-amber-950/30 dark:text-amber-300",
+      icon: <ThumbsUp className="size-5 text-emerald-600 dark:text-emerald-300" />,
+      label: "Positive reviews",
+      value: String(reputationSummary.positiveReviewCount),
+      description: "Completed-trade reviews marked positive by trading partners.",
+      accentClassName: "bg-emerald-100 text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-300",
+    },
+    {
+      icon: <ThumbsDown className="size-5 text-rose-600 dark:text-rose-300" />,
+      label: "Negative reviews",
+      value: String(reputationSummary.negativeReviewCount),
+      description: "Negative completed-trade reviews visible to admins for governance.",
+      accentClassName: "bg-rose-100 text-rose-600 dark:bg-rose-950/30 dark:text-rose-300",
+    },
+    {
+      icon: <Percent className="size-5 text-sky-600 dark:text-sky-300" />,
+      label: "Positive percentage",
+      value: positivePercentage == null ? "—" : `${positivePercentage.toFixed(0)}%`,
+      description: `${reputationSummary.totalReviewCount} total completed-trade review${reputationSummary.totalReviewCount === 1 ? "" : "s"}.`,
+      accentClassName: "bg-sky-100 text-sky-600 dark:bg-sky-950/30 dark:text-sky-300",
     },
   ] as const;
 
@@ -94,7 +108,7 @@ export function TrustSummary({
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {stats.map((stat) => (
           <StatItem key={stat.label} {...stat} />
         ))}
