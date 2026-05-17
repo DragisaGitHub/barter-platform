@@ -1,0 +1,87 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: barter-dev-postgres
+    restart: unless-stopped
+    env_file:
+      - ../env/dev.env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-barter_db}
+      POSTGRES_USER: ${POSTGRES_USER:-barter_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+    volumes:
+      - barter_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    mem_limit: 256m
+    networks:
+      - barter-dev
+
+  backend:
+    image: ${BACKEND_IMAGE:-dragisahub1984/barter-backend:latest}
+    container_name: barter-dev-backend
+    restart: unless-stopped
+    env_file:
+      - ../env/dev.env
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-dev}
+      JAVA_OPTS: ${JAVA_OPTS:--Xms128m -Xmx384m -XX:+UseContainerSupport -XX:MaxMetaspaceSize=160m}
+      DB_URL: ${DB_URL:-jdbc:postgresql://postgres:5432/barter_db}
+      DB_USERNAME: ${DB_USERNAME:-barter_user}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      AZURE_STORAGE_CONNECTION_STRING_DEV: ${AZURE_STORAGE_CONNECTION_STRING_DEV:?AZURE_STORAGE_CONNECTION_STRING_DEV is required}
+      AZURE_STORAGE_CONTAINER_DEV: ${AZURE_STORAGE_CONTAINER_DEV:?AZURE_STORAGE_CONTAINER_DEV is required}
+      SPRING_MAIL_HOST: ${SMTP_HOST:-}
+      SPRING_MAIL_PORT: ${SMTP_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SMTP_USERNAME:-}
+      SPRING_MAIL_PASSWORD: ${SMTP_PASSWORD:-}
+      MAIL_FROM: ${MAIL_FROM:-noreply@barter-platform.dev}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error http://localhost:8080/api/v1/ping >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 75s
+    mem_limit: 512m
+    networks:
+      - barter-dev
+
+  frontend:
+    image: ${FRONTEND_IMAGE:-dragisahub1984/barter-frontend:latest}
+    container_name: barter-dev-frontend
+    restart: unless-stopped
+    env_file:
+      - ../env/dev.env
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "${FRONTEND_HTTP_PORT:-80}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    mem_limit: 128m
+    networks:
+      - barter-dev
+
+volumes:
+  barter_postgres_data:
+
+networks:
+  barter-dev:
+    driver: bridge
+
