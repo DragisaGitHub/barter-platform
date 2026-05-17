@@ -940,6 +940,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List trade reviews received or given by the authenticated user */
+        get: operations["listReviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/trade-offers/{tradeOfferUuid}/messages": {
         parameters: {
             query?: never;
@@ -1719,6 +1736,8 @@ export interface components {
         TradeReviewRating: "POSITIVE" | "NEGATIVE";
         /** @enum {string} */
         TradeReviewNegativeReason: "NO_SHOW" | "ITEM_NOT_AS_DESCRIBED" | "DAMAGED_OR_UNSAFE_ITEM" | "RUDE_OR_ABUSIVE_BEHAVIOR" | "SPAM_OR_SCAM_BEHAVIOR" | "OTHER";
+        /** @enum {string} */
+        ReviewDirection: "RECEIVED" | "GIVEN";
         CreateTradeReviewRequest: {
             rating: components["schemas"]["TradeReviewRating"];
             negativeReason?: components["schemas"]["TradeReviewNegativeReason"] | null;
@@ -1740,6 +1759,43 @@ export interface components {
             comment?: string | null;
             /** Format: date-time */
             createdAt: string;
+        };
+        UserTradeReviewSummaryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            /** Format: uuid */
+            tradeOfferUuid: string;
+            /** Format: uuid */
+            reviewerUserUuid: string;
+            reviewerUsername: string;
+            /** Format: uuid */
+            reviewedUserUuid: string;
+            reviewedUsername: string;
+            rating: components["schemas"]["TradeReviewRating"];
+            negativeReason?: components["schemas"]["TradeReviewNegativeReason"] | null;
+            comment?: string | null;
+            /** Format: uuid */
+            relatedItemUuid?: string | null;
+            relatedItemTitle?: string | null;
+            completedTrade: boolean;
+            /** Format: date-time */
+            tradeCompletedAt?: string | null;
+            /** Format: date-time */
+            createdAt: string;
+        };
+        UserTradeReviewPagedResponse: {
+            content: components["schemas"]["UserTradeReviewSummaryResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort?: string | null;
         };
         AdminTradeReviewSummaryResponse: {
             /** Format: uuid */
@@ -3840,6 +3896,39 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+        };
+    };
+    listReviews: {
+        parameters: {
+            query: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Whether to list reviews received by or given by the authenticated user. */
+                direction: components["schemas"]["ReviewDirection"];
+                /** @description Optional review rating filter. */
+                rating?: components["schemas"]["TradeReviewRating"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Reviews returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserTradeReviewPagedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
         };
     };
     listTradeOfferMessages: {

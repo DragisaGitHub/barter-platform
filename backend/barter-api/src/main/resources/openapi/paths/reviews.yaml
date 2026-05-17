@@ -1,0 +1,36 @@
+list:
+  get:
+    tags:
+      - Reviews
+    operationId: listReviews
+    summary: List trade reviews received or given by the authenticated user
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: direction
+        in: query
+        required: true
+        description: Whether to list reviews received by or given by the authenticated user.
+        schema:
+          $ref: '../components/schemas/reputation/ReviewDirection.yaml'
+      - name: rating
+        in: query
+        required: false
+        description: Optional review rating filter.
+        schema:
+          $ref: '../components/schemas/reputation/TradeReviewRating.yaml'
+    responses:
+      '200':
+        description: Reviews returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/UserTradeReviewPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+

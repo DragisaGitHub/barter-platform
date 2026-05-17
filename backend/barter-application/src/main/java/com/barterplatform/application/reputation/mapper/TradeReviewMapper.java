@@ -5,6 +5,8 @@ import com.barterplatform.api.model.TradeReviewNegativeReason;
 import com.barterplatform.api.model.TradeReviewRating;
 import com.barterplatform.api.model.TradeReviewResponse;
 import com.barterplatform.api.model.TradeReviewResponse1;
+import com.barterplatform.api.model.UserTradeReviewSummaryResponse;
+import com.barterplatform.domain.catalog.entity.ItemEntity;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.reputation.entity.TradeReviewEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferEntity;
@@ -65,6 +67,34 @@ public class TradeReviewMapper {
                 .negativeReason(map(entity.getNegativeReason()))
                 .comment(entity.getComment())
                 .createdAt(entity.getCreatedAt());
+    }
+
+    public UserTradeReviewSummaryResponse toUserSummaryResponse(
+            TradeReviewEntity entity,
+            TradeOfferEntity tradeOffer,
+            UserEntity reviewer,
+            UserEntity reviewed,
+            ItemEntity relatedItem) {
+        UserTradeReviewSummaryResponse response = new UserTradeReviewSummaryResponse()
+                .uuid(entity.getUuid())
+                .tradeOfferUuid(tradeOffer.getUuid())
+                .reviewerUserUuid(reviewer.getUuid())
+                .reviewerUsername(reviewer.getUsername())
+                .reviewedUserUuid(reviewed.getUuid())
+                .reviewedUsername(reviewed.getUsername())
+                .rating(map(entity.getRating()))
+                .negativeReason(map(entity.getNegativeReason()))
+                .comment(entity.getComment())
+                .completedTrade(tradeOffer.isCompleted())
+                .tradeCompletedAt(tradeOffer.getCompletedAt())
+                .createdAt(entity.getCreatedAt());
+
+        if (relatedItem != null) {
+            response.relatedItemUuid(relatedItem.getUuid())
+                    .relatedItemTitle(relatedItem.getTitle());
+        }
+
+        return response;
     }
 
     public TradeReviewRating map(com.barterplatform.domain.reputation.enums.TradeReviewRating rating) {

@@ -49,6 +49,8 @@ export const routePaths = {
   offers: "/offers",
   offersIncoming: "/offers/incoming",
   offersSent: "/offers/sent",
+  offerDetail: (uuid: string) => `/offers/${uuid}`,
+  reviews: "/reviews",
   notifications: "/notifications",
   profile: "/profile",
   publicProfile: (uuid: string) => `/users/${uuid}`,

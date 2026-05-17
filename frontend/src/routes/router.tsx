@@ -33,6 +33,7 @@ import { EditItemPage } from "../features/catalog/EditItemPage";
 import { IncomingOffersPage } from "../features/trade/IncomingOffersPage";
 import { SentOffersPage } from "../features/trade/SentOffersPage";
 import { TradeOfferDetailPage } from "../features/trade/TradeOfferDetailPage";
+import { ReviewsPage } from "../features/reviews/ReviewsPage";
 import { NotificationsPage } from "../features/notifications/NotificationsPage";
 import { ProfilePage } from "../features/profile/ProfilePage";
 import { PublicProfilePage } from "../features/profile/PublicProfilePage";
@@ -182,6 +183,10 @@ export const router = createBrowserRouter([
       {
         path: "/offers/:uuid",
         element: <TradeOfferDetailPage />,
+      },
+      {
+        path: routePaths.reviews,
+        element: <ReviewsPage />,
       },
       {
         path: "/notifications",

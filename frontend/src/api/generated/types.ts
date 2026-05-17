@@ -102,8 +102,11 @@ export type TradeOfferMessageResponse = components["schemas"]["TradeOfferMessage
 
 export type TradeReviewRating = components["schemas"]["TradeReviewRating"];
 export type TradeReviewNegativeReason = components["schemas"]["TradeReviewNegativeReason"];
+export type ReviewDirection = components["schemas"]["ReviewDirection"];
 export type CreateTradeReviewRequest = components["schemas"]["CreateTradeReviewRequest"];
 export type TradeReviewResponse = components["schemas"]["TradeReviewResponse"];
+export type UserTradeReviewSummaryResponse = components["schemas"]["UserTradeReviewSummaryResponse"];
+export type UserTradeReviewPagedResponse = components["schemas"]["UserTradeReviewPagedResponse"];
 export type AdminTradeReviewSummaryResponse = components["schemas"]["AdminTradeReviewSummaryResponse"];
 export type AdminTradeReviewPagedResponse = components["schemas"]["AdminTradeReviewPagedResponse"];
 export type ReputationSummaryResponse = components["schemas"]["ReputationSummaryResponse"];

@@ -16,6 +16,8 @@ import com.barterplatform.api.model.TradeOfferPagedResponse;
 import com.barterplatform.api.model.TradeOfferSummaryResponse;
 import com.barterplatform.api.model.UserPagedResponse;
 import com.barterplatform.api.model.UserSummaryResponse;
+import com.barterplatform.api.model.UserTradeReviewPagedResponse;
+import com.barterplatform.api.model.UserTradeReviewSummaryResponse;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
@@ -73,6 +75,21 @@ public class PageResponseMapper {
             List<AdminTradeReviewSummaryResponse> content,
             String sort) {
         return new AdminTradeReviewPagedResponse()
+                .content(content)
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .sort(sort);
+    }
+
+    public UserTradeReviewPagedResponse toUserTradeReviewPagedResponse(
+            Page<?> page,
+            List<UserTradeReviewSummaryResponse> content,
+            String sort) {
+        return new UserTradeReviewPagedResponse()
                 .content(content)
                 .page(page.getNumber())
                 .size(page.getSize())
