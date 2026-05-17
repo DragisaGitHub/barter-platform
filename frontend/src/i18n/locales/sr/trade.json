@@ -177,6 +177,42 @@
       "other": "Drugo"
     }
   },
+  "reviewsPage": {
+    "eyebrow": "Reputacija",
+    "title": "Ocene",
+    "tabs": {
+      "received": "Dobijene ocene",
+      "given": "Date ocene",
+      "receivedDescription": "Ocene koje su drugi korisnici ostavili za tvoje završene razmene.",
+      "givenDescription": "Ocene koje si ostavio/la posle završenih razmena."
+    },
+    "filters": {
+      "all": "Sve",
+      "positive": "Pozitivne",
+      "negative": "Negativne"
+    },
+    "total": "{{count}} ocena",
+    "total_plural": "{{count}} ocena",
+    "completedTrade": "Završena razmena",
+    "reviewFrom": "Od {{username}}",
+    "reviewFor": "Za {{username}}",
+    "relatedItem": "Povezan oglas: {{title}}",
+    "relatedTrade": "Povezana završena razmena",
+    "openTrade": "Otvori razmenu",
+    "negativeReason": "Razlog: {{reason}}",
+    "noComment": "Komentar nije dodat.",
+    "loadErrorTitle": "Ocene nije moguće učitati",
+    "loadErrorDescription": "Pokušaj ponovo za trenutak.",
+    "emptyTitle": "Još nema ocena",
+    "emptyFilteredTitle": "Nema odgovarajućih ocena",
+    "emptyReceivedDescription": "Dobijene ocene će se pojaviti ovde kada završene razmene budu ocenjene.",
+    "emptyGivenDescription": "Date ocene će se pojaviti ovde kada oceniš završene razmene.",
+    "emptyFilteredDescription": "Pokušaj da promeniš filter ocene.",
+    "clearRatingFilter": "Obriši filter ocene",
+    "noReviewsMatched": "Nema pronađenih ocena",
+    "showingRange": "Prikaz {{start}}–{{end}} od {{total}}",
+    "refreshing": "Osvežavanje"
+  },
   "detail": {
     "title": "Detalji ponude za razmenu",
     "notFoundTitle": "Ponuda za razmenu nije pronađena",

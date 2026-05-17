@@ -1,5 +1,5 @@
 import { type ReactNode } from "react";
-import { cn } from "../../utils";
+import { cn } from "@/utils";
 
 interface CardProps {
   children: ReactNode;
@@ -10,7 +10,7 @@ export function Card({ children, className }: CardProps) {
   return (
     <div
       className={cn(
-        "rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-700 dark:bg-slate-800",
+        "rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-700 dark:bg-slate-800",
         className
       )}
     >
@@ -25,7 +25,7 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ children, className }: CardHeaderProps) {
-  return <div className={cn("mb-4", className)}>{children}</div>;
+  return <div className={cn("mb-3", className)}>{children}</div>;
 }
 
 interface CardTitleProps {
@@ -35,7 +35,7 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className }: CardTitleProps) {
   return (
-    <h3 className={cn("text-lg font-semibold text-slate-900 dark:text-slate-100", className)}>
+    <h3 className={cn("text-base font-semibold text-slate-950 dark:text-slate-100", className)}>
       {children}
     </h3>
   );
@@ -48,7 +48,7 @@ interface CardDescriptionProps {
 
 export function CardDescription({ children, className }: CardDescriptionProps) {
   return (
-    <p className={cn("text-sm text-slate-600 dark:text-slate-400 mt-1", className)}>
+    <p className={cn("mt-1 text-sm leading-5 text-slate-600 dark:text-slate-400", className)}>
       {children}
     </p>
   );

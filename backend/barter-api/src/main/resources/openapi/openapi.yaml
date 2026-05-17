@@ -29,6 +29,8 @@ tags:
     description: Administrator trade review governance operations
   - name: TradeOffers
     description: Trade offer creation, listing, and lifecycle management
+  - name: Reviews
+    description: User-facing trade review history operations
   - name: Notifications
     description: In-app notification listing and read management
   - name: Profiles
@@ -142,6 +144,8 @@ paths:
     $ref: './paths/trade-offers.yaml#/cancel'
   /trade-offers/{tradeOfferUuid}/reviews:
     $ref: './paths/trade-offers.yaml#/reviews'
+  /reviews:
+    $ref: './paths/reviews.yaml#/list'
   /trade-offers/{tradeOfferUuid}/messages:
     $ref: './paths/trade-offer-messages.yaml'
   /notifications:
@@ -291,10 +295,16 @@ components:
       $ref: './components/schemas/reputation/TradeReviewRating.yaml'
     TradeReviewNegativeReason:
       $ref: './components/schemas/reputation/TradeReviewNegativeReason.yaml'
+    ReviewDirection:
+      $ref: './components/schemas/reputation/ReviewDirection.yaml'
     CreateTradeReviewRequest:
       $ref: './components/schemas/reputation/CreateTradeReviewRequest.yaml'
     TradeReviewResponse:
       $ref: './components/schemas/reputation/TradeReviewResponse.yaml'
+    UserTradeReviewSummaryResponse:
+      $ref: './components/schemas/reputation/UserTradeReviewSummaryResponse.yaml'
+    UserTradeReviewPagedResponse:
+      $ref: './components/schemas/reputation/UserTradeReviewPagedResponse.yaml'
     AdminTradeReviewSummaryResponse:
       $ref: './components/schemas/reputation/AdminTradeReviewSummaryResponse.yaml'
     AdminTradeReviewPagedResponse:

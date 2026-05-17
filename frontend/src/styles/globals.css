@@ -7,6 +7,7 @@
 
   body {
 	min-height: 100vh;
+    color: #0f172a;
   }
 }
 
@@ -23,6 +24,8 @@
   --marketplace-accent: #e9ebef;
   --marketplace-input-background: #f3f3f5;
   --marketplace-radius: 0.625rem;
+  --marketplace-card-padding: 1.25rem;
+  --marketplace-page-gap: 1.25rem;
   --marketplace-shadow-soft: 0 1px 2px rgba(15, 23, 42, 0.04);
   --marketplace-shadow-hover: 0 8px 24px -18px rgba(15, 23, 42, 0.22);
 }

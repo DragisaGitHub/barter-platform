@@ -13,21 +13,28 @@ import com.barterplatform.api.model.CreateTradeReviewRequest;
 import com.barterplatform.api.model.TradeReviewNegativeReason;
 import com.barterplatform.api.model.TradeReviewRating;
 import com.barterplatform.api.model.TradeReviewResponse;
+import com.barterplatform.api.model.UserTradeReviewPagedResponse;
+import com.barterplatform.application.common.pagination.PageRequestFactory;
+import com.barterplatform.application.common.pagination.PageResponseMapper;
 import com.barterplatform.application.notification.service.NotificationService;
 import com.barterplatform.application.reputation.mapper.TradeReviewMapper;
+import com.barterplatform.application.reputation.service.TradeReviewService;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.persistence.BaseEntity;
+import com.barterplatform.domain.catalog.entity.ItemEntity;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.domain.reputation.entity.TradeReviewEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferEntity;
 import com.barterplatform.domain.trade.enums.TradeOfferMode;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
+import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -37,6 +44,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 @ExtendWith(MockitoExtension.class)
 class TradeReviewServiceImplTest {
@@ -44,6 +53,7 @@ class TradeReviewServiceImplTest {
     @Mock private UserRepository userRepository;
     @Mock private TradeOfferRepository tradeOfferRepository;
     @Mock private TradeReviewRepository tradeReviewRepository;
+    @Mock private ItemRepository itemRepository;
     @Mock private NotificationService notificationService;
 
     private TradeReviewServiceImpl service;
@@ -54,7 +64,10 @@ class TradeReviewServiceImplTest {
                 userRepository,
                 tradeOfferRepository,
                 tradeReviewRepository,
+                itemRepository,
                 new TradeReviewMapper(),
+                new PageRequestFactory(),
+                new PageResponseMapper(),
                 notificationService);
     }
 
@@ -181,6 +194,66 @@ class TradeReviewServiceImplTest {
         assertEquals(400, ex.getStatus().value());
     }
 
+    @Test
+    @DisplayName("lists received reviews using default newest-first sort and enriched trade item details")
+    void listReceivedReviews() {
+        UUID currentUserUuid = UUID.randomUUID();
+        UserEntity currentUser = user(2L, currentUserUuid, "bob");
+        UserEntity reviewer = user(1L, UUID.randomUUID(), "alice");
+        TradeOfferEntity offer = completedOffer(10L, UUID.randomUUID(), 1L, 2L);
+        TradeReviewEntity review = review(100L, 10L, 1L, 2L,
+                com.barterplatform.domain.reputation.enums.TradeReviewRating.POSITIVE,
+                null,
+                "Great trade");
+        ItemEntity item = item(22L, "Vintage camera");
+
+        when(userRepository.findByUuid(currentUserUuid)).thenReturn(Optional.of(currentUser));
+        when(tradeReviewRepository.findByReviewedUserIdAndRating(
+                eq(2L),
+                eq(com.barterplatform.domain.reputation.enums.TradeReviewRating.POSITIVE),
+                any(Pageable.class))).thenReturn(new PageImpl<>(List.of(review)));
+        when(tradeOfferRepository.findAllById(any(Iterable.class))).thenReturn(List.of(offer));
+        when(userRepository.findAllById(any(Iterable.class))).thenReturn(List.of(reviewer, currentUser));
+        when(itemRepository.findAllById(any(Iterable.class))).thenReturn(List.of(item));
+
+        UserTradeReviewPagedResponse response = service.listReviews(
+                currentUserUuid,
+                TradeReviewService.Direction.RECEIVED,
+                0,
+                20,
+                null,
+                com.barterplatform.domain.reputation.enums.TradeReviewRating.POSITIVE);
+
+        assertEquals("createdAt,desc", response.getSort());
+        assertEquals(1, response.getContent().size());
+        assertEquals("alice", response.getContent().getFirst().getReviewerUsername());
+        assertEquals("bob", response.getContent().getFirst().getReviewedUsername());
+        assertEquals("Vintage camera", response.getContent().getFirst().getRelatedItemTitle());
+        assertEquals(Boolean.TRUE, response.getContent().getFirst().getCompletedTrade());
+    }
+
+    @Test
+    @DisplayName("lists given reviews without a rating filter")
+    void listGivenReviews() {
+        UUID currentUserUuid = UUID.randomUUID();
+        UserEntity currentUser = user(1L, currentUserUuid, "alice");
+
+        when(userRepository.findByUuid(currentUserUuid)).thenReturn(Optional.of(currentUser));
+        when(tradeReviewRepository.findByReviewerUserId(eq(1L), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        UserTradeReviewPagedResponse response = service.listReviews(
+                currentUserUuid,
+                TradeReviewService.Direction.GIVEN,
+                0,
+                20,
+                "rating,asc",
+                null);
+
+        assertEquals(0, response.getContent().size());
+        assertEquals("rating,asc", response.getSort());
+    }
+
     private UserEntity user(Long id, UUID uuid, String username) {
         UserEntity user = new UserEntity();
         user.setId(id);
@@ -204,6 +277,36 @@ class TradeReviewServiceImplTest {
         offer.setCreatedAt(OffsetDateTime.now().minusDays(2));
         offer.setCompletedAt(OffsetDateTime.now().minusDays(1));
         return offer;
+    }
+
+    private TradeReviewEntity review(
+            Long id,
+            Long tradeOfferId,
+            Long reviewerUserId,
+            Long reviewedUserId,
+            com.barterplatform.domain.reputation.enums.TradeReviewRating rating,
+            com.barterplatform.domain.reputation.enums.TradeReviewNegativeReason negativeReason,
+            String comment) {
+        TradeReviewEntity review = TradeReviewEntity.create(
+                tradeOfferId,
+                reviewerUserId,
+                reviewedUserId,
+                rating,
+                negativeReason,
+                comment);
+        review.setId(id);
+        review.setUuid(UUID.randomUUID());
+        review.setCreatedAt(OffsetDateTime.now());
+        review.setUpdatedAt(review.getCreatedAt());
+        return review;
+    }
+
+    private ItemEntity item(Long id, String title) {
+        ItemEntity item = new ItemEntity();
+        item.setId(id);
+        item.setUuid(UUID.randomUUID());
+        item.setTitle(title);
+        return item;
     }
 
     private void emulateJpaPrePersist(TradeReviewEntity entity) throws ReflectiveOperationException {

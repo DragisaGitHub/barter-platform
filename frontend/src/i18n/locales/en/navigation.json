@@ -18,6 +18,7 @@
   "system": "System",
   "listings": "Listings",
   "reviews": "Reviews",
+  "reviewsDescription": "Review moderation and reputation history",
   "tags": "Tags",
   "adminControlPanel": "Admin control panel",
   "adminControlPanelDescription": "Operate platform access, configuration, and core administration from one focused workspace.",

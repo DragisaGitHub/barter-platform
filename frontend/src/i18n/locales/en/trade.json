@@ -177,6 +177,42 @@
       "other": "Other"
     }
   },
+  "reviewsPage": {
+    "eyebrow": "Reputation",
+    "title": "Reviews",
+    "tabs": {
+      "received": "Received",
+      "given": "Given",
+      "receivedDescription": "Reviews other traders left for your completed exchanges.",
+      "givenDescription": "Reviews you left after completed exchanges."
+    },
+    "filters": {
+      "all": "All",
+      "positive": "Positive",
+      "negative": "Negative"
+    },
+    "total": "{{count}} review",
+    "total_plural": "{{count}} reviews",
+    "completedTrade": "Completed trade",
+    "reviewFrom": "From {{username}}",
+    "reviewFor": "For {{username}}",
+    "relatedItem": "Related item: {{title}}",
+    "relatedTrade": "Related completed trade",
+    "openTrade": "Open trade",
+    "negativeReason": "Reason: {{reason}}",
+    "noComment": "No comment added.",
+    "loadErrorTitle": "Reviews could not be loaded",
+    "loadErrorDescription": "Please try again in a moment.",
+    "emptyTitle": "No reviews yet",
+    "emptyFilteredTitle": "No matching reviews",
+    "emptyReceivedDescription": "Received reviews will appear here after completed trades are reviewed.",
+    "emptyGivenDescription": "Reviews you give will appear here after you review completed trades.",
+    "emptyFilteredDescription": "Try changing the rating filter.",
+    "clearRatingFilter": "Clear rating filter",
+    "noReviewsMatched": "No reviews matched",
+    "showingRange": "Showing {{start}}–{{end}} of {{total}}",
+    "refreshing": "Refreshing"
+  },
   "detail": {
     "title": "Trade Offer Details",
     "notFoundTitle": "Trade offer not found",

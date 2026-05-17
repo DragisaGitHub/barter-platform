@@ -8,9 +8,11 @@ import {
   Send,
   List,
   User,
+  Star,
   X,
 } from "lucide-react";
 import { usePendingIncomingCount, usePendingSentCount } from "../features/trade/useTradeOffers";
+import { routePaths } from "@/routes/routePaths";
 import { cn } from "@/utils";
 
 interface SidebarProps {
@@ -48,6 +50,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: "/my-items", icon: List, label: t("navigation:myItems") },
     { to: "/offers/incoming", icon: Inbox, label: t("navigation:incomingOffers"), badge: pendingIncoming },
     { to: "/offers/sent", icon: Send, label: t("navigation:sentOffers"), badge: pendingSent },
+    { to: routePaths.reviews, icon: Star, label: t("navigation:reviews") },
     { to: "/profile", icon: User, label: t("navigation:profile") },
   ];
 
@@ -69,8 +72,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-between p-6 border-b border-slate-800">
-            <h1 className="text-xl font-bold text-white">Barter Platform</h1>
+          <div className="flex items-center justify-between border-b border-slate-800 p-5">
+            <h1 className="text-lg font-bold text-white">Barter Platform</h1>
             {onClose && (
               <button
                 onClick={onClose}
@@ -82,7 +85,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
             )}
           </div>
 
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+          <nav className="flex-1 space-y-1 overflow-y-auto p-3">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
@@ -90,7 +93,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 onClick={onClose}
                 className={({ isActive }) =>
                   cn(
-                    "flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors",
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
                     isActive
                       ? "bg-indigo-600 text-white"
                       : "text-slate-300 hover:bg-slate-800 hover:text-white"

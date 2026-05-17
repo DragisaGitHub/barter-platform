@@ -21,7 +21,7 @@ export function AppLayout() {
       <div className="lg:pl-64">
         <Topbar onMenuClick={() => setIsSidebarOpen(true)} />
 
-        <main className="p-4 lg:p-8">
+        <main className="p-3 sm:p-4 lg:p-6">
           <Outlet />
         </main>
       </div>

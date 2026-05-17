@@ -20,6 +20,7 @@ import type {
 import { catalogKeys } from "@/features/catalog/useCatalog.ts";
 import { profileKeys } from "@/features/profile/useProfile.ts";
 import { notificationKeys } from "@/features/notifications/useNotifications.ts";
+import { reviewKeys } from "@/features/reviews/useReviews.ts";
 
 // ─── Query keys ─────────────────────────────────────────────────────────────
 
@@ -117,6 +118,7 @@ export function useConfirmTradeOfferCompletion() {
     mutationFn: (uuid: string) => confirmTradeOfferCompletion(uuid),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tradeOfferKeys.all });
+      queryClient.invalidateQueries({ queryKey: reviewKeys.all });
       queryClient.invalidateQueries({ queryKey: profileKeys.all });
       queryClient.invalidateQueries({ queryKey: notificationKeys.all });
     },
