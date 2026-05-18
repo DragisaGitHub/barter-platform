@@ -14,7 +14,11 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     Optional<UserEntity> findByEmail(String email);
 
+    Optional<UserEntity> findByEmailIgnoreCase(String email);
+
     Optional<UserEntity> findByUsername(String username);
+
+    Optional<UserEntity> findByUsernameIgnoreCase(String username);
 
     @Query(
             """
@@ -27,6 +31,10 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     boolean existsByEmail(String email);
 
+    boolean existsByEmailIgnoreCase(String email);
+
     boolean existsByUsername(String username);
+
+    boolean existsByUsernameIgnoreCase(String username);
 }
 

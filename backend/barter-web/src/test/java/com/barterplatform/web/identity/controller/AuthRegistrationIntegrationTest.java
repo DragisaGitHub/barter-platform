@@ -92,6 +92,8 @@ class AuthRegistrationIntegrationTest {
                 .andExpect(jsonPath("$.uuid").isNotEmpty())
                 .andExpect(jsonPath("$.username").value("alex99"))
                 .andExpect(jsonPath("$.email").value("alex@example.com"))
+                .andExpect(jsonPath("$.status").value("PENDING_VERIFICATION"))
+                .andExpect(jsonPath("$.emailVerified").value(false))
                 .andExpect(jsonPath("$.preferredLanguage").value("SR"))
                 .andExpect(jsonPath("$.passwordHash").doesNotExist())
                 .andReturn();
@@ -106,6 +108,16 @@ class AuthRegistrationIntegrationTest {
         assertThat(savedUser.getPasswordHash()).isNotBlank();
         assertThat(savedUser.getPasswordHash()).isNotEqualTo(rawPassword);
         assertThat(savedUser.getPreferredLanguage()).isEqualTo(PreferredLanguage.SR);
+        assertThat(savedUser.getStatus()).isEqualTo(com.barterplatform.domain.identity.enums.UserStatus.PENDING_VERIFICATION);
+        assertThat(savedUser.isEmailVerified()).isFalse();
+        assertThat(emailVerificationCodeRepository.findAll())
+                .singleElement()
+                .satisfies(code -> {
+                    assertThat(code.getUserId()).isEqualTo(savedUser.getId());
+                    assertThat(code.getCodeHash()).isNotBlank();
+                    assertThat(code.getExpiresAt()).isNotNull();
+                    assertThat(code.getUsedAt()).isNull();
+                });
 
         RoleEntity userRole = roleRepository.findByCode(RoleCode.USER).orElseThrow();
         List<UserRoleEntity> roleAssignments = userRoleRepository.findAllByIdUserIdOrderByAssignedAtAsc(savedUser.getId());
@@ -132,6 +144,18 @@ class AuthRegistrationIntegrationTest {
     }
 
     @Test
+    void shouldReturnConflictForDuplicateEmailIgnoringCase() throws Exception {
+        mockMvc.perform(registerUserRequest("dragisa", "Dragisa@Example.com", "P@ssword123"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(registerUserRequest("dragisa-second", "dragisa@example.com", "P@ssword456"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.code").value("CONFLICT"))
+                .andExpect(jsonPath("$.message").value("Email 'dragisa@example.com' is already in use."));
+    }
+
+    @Test
     void shouldReturnConflictForDuplicateUsername() throws Exception {
         mockMvc.perform(registerUserRequest("alex99", "alex@example.com", "P@ssword123"))
                 .andExpect(status().isCreated());
@@ -141,6 +165,18 @@ class AuthRegistrationIntegrationTest {
                 .andExpect(jsonPath("$.status").value(409))
                 .andExpect(jsonPath("$.code").value("CONFLICT"))
                 .andExpect(jsonPath("$.message").value("Username 'alex99' is already in use."));
+    }
+
+    @Test
+    void shouldReturnConflictForDuplicateUsernameIgnoringCase() throws Exception {
+        mockMvc.perform(registerUserRequest("Dragisa", "dragisa@example.com", "P@ssword123"))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(registerUserRequest("dragisa", "dragisa2@example.com", "P@ssword456"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.code").value("CONFLICT"))
+                .andExpect(jsonPath("$.message").value("Username 'dragisa' is already in use."));
     }
 
     private MockHttpServletRequestBuilder registerUserRequest(String username, String email, String password) {

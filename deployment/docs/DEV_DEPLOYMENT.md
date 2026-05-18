@@ -107,10 +107,30 @@ Minimum values to review and replace:
 - `JWT_SECRET`
 - `AZURE_STORAGE_CONNECTION_STRING_DEV`
 - `AZURE_STORAGE_CONTAINER_DEV`
+- `BARTER_EMAIL_VERIFICATION_ENABLED=false` for DEV-only registration/login bypass
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` if real email delivery is needed
 - `FRONTEND_ORIGIN` for documentation/future explicit CORS support
 
 The supplied nginx same-origin proxy means the browser calls `/api/v1`, so CORS should not be needed for the default DEV deployment path.
+
+## Email verification in DEV and PROD
+
+The backend has a safety-first feature flag:
+
+```env
+BARTER_EMAIL_VERIFICATION_ENABLED=true
+```
+
+This maps to `barter.email-verification.enabled` and defaults to `true` in `application.yml`.
+
+For DEV deployments, `application-dev.yml` sets this flag to `false`. With the DEV profile active:
+
+- registration does not send a verification email
+- new users are created as `ACTIVE` and `emailVerified=true`
+- users can login immediately after registration
+- SMTP/Resend configuration can remain present for other mail flows or future testing
+
+For PROD/staging/non-DEV environments, keep `BARTER_EMAIL_VERIFICATION_ENABLED=true`. Production email delivery must use a configured SMTP/Resend sender whose domain is verified with the provider, otherwise registration verification messages may fail delivery and users will remain unable to login until their email is verified.
 
 ## Frontend API base URL strategy
 

@@ -45,7 +45,7 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
 
 interface AuthContextValue extends AuthState {
   login: (credentials: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
+  register: (data: RegisterRequest) => Promise<CurrentUserResponse>;
   logout: () => Promise<void>;
   replaceUser: (user: CurrentUserResponse) => Promise<void>;
   hasRole: (role: string) => boolean;
@@ -116,7 +116,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const register = async (data: RegisterRequest) => {
-    await apiClient.post<CurrentUserResponse>("/auth/register", data);
+    const response = await apiClient.post<CurrentUserResponse>("/auth/register", data);
+    return response.data;
   };
 
   const logout = async () => {

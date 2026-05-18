@@ -6,6 +6,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
 import { Mail, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { verifyEmail, resendVerificationCode } from "@/api/authApi.ts";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
@@ -18,25 +19,29 @@ import {
   routePaths,
 } from "@/routes/routePaths.ts";
 
-const verifyEmailSchema = z.object({
-  email: z.string().email("Enter a valid email address"),
-  code: z
-    .string()
-    .length(6, "Verification code must be 6 digits")
-    .regex(/^\d{6}$/, "Code must be 6 digits"),
-});
-
-type VerifyEmailFormData = z.infer<typeof verifyEmailSchema>;
+type VerifyEmailFormData = {
+  email: string;
+  code: string;
+};
 
 export function VerifyEmailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation(["auth", "common"]);
   const emailFromParam = searchParams.get("email") ?? "";
   const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
   const loginHref = buildPathWithQuery(routePaths.login, { redirect: redirectPath });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+
+  const verifyEmailSchema = z.object({
+    email: z.string().email(t("auth:invalidEmail")),
+    code: z
+      .string()
+      .length(6, t("auth:verificationCodeLength"))
+      .regex(/^\d{6}$/, t("auth:verificationCodeDigits")),
+  });
 
   const methods = useForm<VerifyEmailFormData>({
     resolver: zodResolver(verifyEmailSchema),
@@ -52,7 +57,7 @@ export function VerifyEmailPage() {
     setIsSubmitting(true);
     try {
       const result = await verifyEmail(data.email, data.code);
-      toast.success(result.message ?? "Email verified successfully!");
+      toast.success(result.message ?? t("auth:verificationSuccess"));
       navigate(loginHref);
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -67,7 +72,7 @@ export function VerifyEmailPage() {
           toast.error(parseApiError(error));
         }
       } else {
-        toast.error("An unexpected error occurred");
+        toast.error(t("auth:unexpectedError"));
       }
     } finally {
       setIsSubmitting(false);
@@ -77,14 +82,14 @@ export function VerifyEmailPage() {
   const handleResend = async () => {
     const email = currentEmail.trim();
     if (!email) {
-      methods.setError("email", { message: "Enter your email to resend the code" });
+      methods.setError("email", { message: t("auth:enterEmailToResend") });
       return;
     }
 
     setIsResending(true);
     try {
       const result = await resendVerificationCode(email);
-      toast.success(result.message ?? "Verification code resent!");
+      toast.success(result.message ?? t("auth:verificationResent"));
     } catch (error) {
       toast.error(parseApiError(error));
     } finally {
@@ -103,20 +108,14 @@ export function VerifyEmailPage() {
               </div>
             </div>
             <div className="mx-auto mb-1 inline-flex items-center rounded-full border border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-700 dark:border-violet-900/70 dark:bg-violet-950/40 dark:text-violet-300">
-              Verify your account
+              {t("auth:verifyAccount")}
             </div>
-            <CardTitle className="text-center">Check your email</CardTitle>
+            <CardTitle className="text-center">{t("auth:checkYourEmail")}</CardTitle>
             <p className="text-center text-sm text-slate-600 dark:text-slate-400 mt-2">
               {emailFromParam ? (
-                <>
-                  We sent a 6-digit verification code to{" "}
-                  <span className="font-medium text-slate-800 dark:text-slate-200">
-                    {emailFromParam}
-                  </span>
-                  .
-                </>
+                t("auth:verificationSentTo", { email: emailFromParam })
               ) : (
-                "Enter your email and the 6-digit code we sent you."
+                t("auth:verificationPrompt")
               )}
             </p>
           </CardHeader>
@@ -124,7 +123,7 @@ export function VerifyEmailPage() {
         <CardContent>
           {redirectPath && (
             <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-sm text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
-              Verify once, sign in next, and we’ll return you to the marketplace item you started from.
+              {t("auth:verifyRedirectInfo")}
             </div>
           )}
 
@@ -134,25 +133,25 @@ export function VerifyEmailPage() {
               {!emailFromParam && (
                 <FormInput
                   name="email"
-                  label="Email"
+                  label={t("common:email")}
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t("auth:emailPlaceholder")}
                   autoComplete="email"
                 />
               )}
 
               <FormInput
                 name="code"
-                label="Verification Code"
+                label={t("auth:verificationCode")}
                 type="text"
-                placeholder="Enter 6-digit code"
+                placeholder={t("auth:verificationCodePlaceholder")}
                 autoComplete="one-time-code"
                 inputMode="numeric"
                 maxLength={6}
               />
 
               <Button type="submit" fullWidth isLoading={isSubmitting}>
-                Verify Email
+                {t("auth:verifyEmail")}
               </Button>
             </form>
           </FormProvider>
@@ -160,7 +159,7 @@ export function VerifyEmailPage() {
           {/* Resend section */}
           <div className="mt-5 flex flex-col items-center gap-2">
             <p className="text-sm text-slate-500 dark:text-slate-400">
-              Didn't receive a code?
+              {t("auth:didNotReceive")}
             </p>
             <Button
               variant="ghost"
@@ -171,7 +170,7 @@ export function VerifyEmailPage() {
               className="flex items-center gap-2"
             >
               <RefreshCw className="h-4 w-4" />
-              Resend code
+              {t("auth:resendCode")}
             </Button>
           </div>
 
@@ -180,7 +179,7 @@ export function VerifyEmailPage() {
               to={loginHref}
               className="text-sm text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
             >
-              ← Back to sign in
+              ← {t("common:backToSignIn")}
             </Link>
           </div>
           </CardContent>
