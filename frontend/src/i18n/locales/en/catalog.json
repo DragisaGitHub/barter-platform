@@ -235,6 +235,8 @@
     "delete": "Delete",
     "uploading": "Uploading…",
     "clickToBrowse": "Click to browse or drag & drop",
+    "chooseFromGallery": "Choose from gallery",
+    "takePhoto": "Take photo",
     "uploadHelper": "JPEG, PNG, WebP · max 5 MB · {{current}}/{{max}} images",
     "maxReached": "Maximum of {{max}} images reached",
     "noImagesYet": "No images yet",

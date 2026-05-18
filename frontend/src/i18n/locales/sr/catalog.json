@@ -235,6 +235,8 @@
     "delete": "Obriši",
     "uploading": "Otpremanje…",
     "clickToBrowse": "Klikni za izbor ili prevuci i pusti",
+    "chooseFromGallery": "Izaberi iz galerije",
+    "takePhoto": "Slikaj kamerom",
     "uploadHelper": "JPEG, PNG, WebP · maks. 5 MB · {{current}}/{{max}} slika",
     "maxReached": "Dostignut je maksimum od {{max}} slika",
     "noImagesYet": "Još nema slika",

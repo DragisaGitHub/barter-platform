@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { Upload, X } from "lucide-react";
+import { Camera, ImagePlus, Upload, X } from "lucide-react";
 import { cn } from "@/utils";
 import { useUploadItemImage } from "../useItemImages";
 import { useTranslation } from "react-i18next";
@@ -15,7 +15,8 @@ interface ImageUploaderProps {
 
 export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProps) {
   const { t } = useTranslation("catalog");
-  const inputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -96,19 +97,28 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
         onDrop={canUpload && !isUploading ? handleDrop : undefined}
         onDragOver={canUpload && !isUploading ? handleDragOver : undefined}
         onDragLeave={canUpload && !isUploading ? handleDragLeave : undefined}
-        onClick={() => canUpload && !isUploading && inputRef.current?.click()}
+        onClick={() => canUpload && !isUploading && galleryInputRef.current?.click()}
         role={canUpload && !isUploading ? "button" : undefined}
         tabIndex={canUpload && !isUploading ? 0 : undefined}
         onKeyDown={(e) => {
           if ((e.key === "Enter" || e.key === " ") && canUpload && !isUploading) {
-            inputRef.current?.click();
+            galleryInputRef.current?.click();
           }
         }}
       >
         <input
-          ref={inputRef}
+          ref={galleryInputRef}
           type="file"
-          accept={ALLOWED_TYPES.join(",")}
+          accept="image/*"
+          className="hidden"
+          onChange={handleInputChange}
+          disabled={!canUpload || isUploading}
+        />
+        <input
+          ref={cameraInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
           className="hidden"
           onChange={handleInputChange}
           disabled={!canUpload || isUploading}
@@ -146,6 +156,27 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
           </p>
         )}
       </div>
+
+      {canUpload && !isUploading && (
+        <div className="flex flex-col justify-center gap-2 sm:flex-row">
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-offset-slate-900"
+            onClick={() => galleryInputRef.current?.click()}
+          >
+            <ImagePlus className="size-4" />
+            {t("images.chooseFromGallery")}
+          </button>
+          <button
+            type="button"
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:opacity-60 dark:focus:ring-offset-slate-900"
+            onClick={() => cameraInputRef.current?.click()}
+          >
+            <Camera className="size-4" />
+            {t("images.takePhoto")}
+          </button>
+        </div>
+      )}
 
       {validationError && (
         <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
