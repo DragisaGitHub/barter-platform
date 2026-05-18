@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -41,6 +42,9 @@ public class AuthServiceImpl implements AuthService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
     private static final long PASSWORD_RESET_EXPIRATION_MINUTES = 30;
+
+    @Value("${barter.email-verification.enabled:true}")
+    private boolean emailVerificationEnabled = true;
 
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final MailSender mailSender;
@@ -64,8 +68,8 @@ public class AuthServiceImpl implements AuthService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPasswordHash(passwordEncoder.encode(request.getPassword()));
-        user.setStatus(UserStatus.PENDING_VERIFICATION);
-        user.setEmailVerified(false);
+        user.setStatus(emailVerificationEnabled ? UserStatus.PENDING_VERIFICATION : UserStatus.ACTIVE);
+        user.setEmailVerified(!emailVerificationEnabled);
         user.setMfaEnabled(false);
         user.setPreferredLanguage(PreferredLanguage.SR);
 
@@ -73,8 +77,9 @@ public class AuthServiceImpl implements AuthService {
         RoleEntity userRole = resolveUserRole();
         userRoleRepository.save(createUserRole(savedUser.getId(), userRole.getId()));
 
-        // Generate and send email verification code
-        emailVerificationService.createAndSendVerificationCode(savedUser.getId(), savedUser.getEmail());
+        if (emailVerificationEnabled) {
+            emailVerificationService.createAndSendVerificationCode(savedUser.getId(), savedUser.getEmail());
+        }
 
         CurrentUserResponse response = userMapper.toCurrentUserResponse(savedUser);
         response.setRoles(List.of(roleMapper.toResponse(userRole)));
@@ -242,8 +247,8 @@ public class AuthServiceImpl implements AuthService {
 
     private UserEntity findUserByIdentifier(String identifier) {
         Optional<UserEntity> user = identifier.contains("@")
-                ? userRepository.findByEmail(identifier)
-                : userRepository.findByUsername(identifier);
+                ? userRepository.findByEmailIgnoreCase(identifier)
+                : userRepository.findByUsernameIgnoreCase(identifier);
 
         return user.orElseThrow(() -> new ApiException(
                 HttpStatus.UNAUTHORIZED,
@@ -315,7 +320,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void validateEmailIsAvailable(String email) {
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
                     ErrorCode.CONFLICT,
@@ -324,7 +329,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void validateUsernameIsAvailable(String username) {
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
             throw new ApiException(
                     HttpStatus.CONFLICT,
                     ErrorCode.CONFLICT,

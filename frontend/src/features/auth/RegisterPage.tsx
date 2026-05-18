@@ -10,7 +10,7 @@ import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { FormInput } from "../../components/forms/FormInput";
-import type { ErrorResponse } from "@/api/generated/types.ts";
+import type { CurrentUserResponse, ErrorResponse } from "@/api/generated/types.ts";
 import {
   buildPathWithQuery,
   getSafeRedirectPath,
@@ -23,6 +23,10 @@ type RegisterFormData = {
   password: string;
   confirmPassword: string;
 };
+
+function requiresEmailVerification(user: CurrentUserResponse): boolean {
+  return !(user.emailVerified === true || user.status === "ACTIVE");
+}
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -61,16 +65,28 @@ export function RegisterPage() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
-      await registerUser({
+      const registeredUser = await registerUser({
         username: data.username,
         email: data.email,
         password: data.password,
       });
-      toast.success(t("auth:accountCreated"));
+
+      if (requiresEmailVerification(registeredUser)) {
+        toast.success(t("auth:accountCreated"));
+        navigate(
+          buildPathWithQuery(routePaths.verifyEmail, {
+            email: registeredUser.email || data.email,
+            redirect: redirectPath,
+          })
+        );
+        return;
+      }
+
+      toast.success(t("auth:accountReady"));
       navigate(
-        buildPathWithQuery(routePaths.verifyEmail, {
-          email: data.email,
+        buildPathWithQuery(routePaths.login, {
           redirect: redirectPath,
+          registered: "true",
         })
       );
     } catch (error) {

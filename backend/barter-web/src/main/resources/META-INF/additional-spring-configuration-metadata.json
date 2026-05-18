@@ -1,0 +1,11 @@
+{
+  "properties": [
+    {
+      "name": "barter.email-verification.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Controls whether registration creates an email verification code and requires email verification before login. Keep enabled outside DEV.",
+      "defaultValue": true
+    }
+  ]
+}
+

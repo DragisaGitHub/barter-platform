@@ -41,6 +41,7 @@ import java.util.regex.Pattern;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -50,6 +51,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceImplTest {
@@ -90,6 +92,11 @@ class AuthServiceImplTest {
     @InjectMocks
     private AuthServiceImpl authService;
 
+    @BeforeEach
+    void defaultEmailVerificationEnabled() {
+        ReflectionTestUtils.setField(authService, "emailVerificationEnabled", true);
+    }
+
     @Test
     void shouldRegisterUserWithHashedPasswordAndAssignedUserRole() {
         RegisterUserRequest request = new RegisterUserRequest("alex99", "alex@example.com", "P@ssword123");
@@ -101,8 +108,8 @@ class AuthServiceImplTest {
                 .description(userRole.getDescription())
                 .createdAt(userRole.getCreatedAt());
 
-        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-        when(userRepository.existsByUsername(request.getUsername())).thenReturn(false);
+        when(userRepository.existsByEmailIgnoreCase(request.getEmail())).thenReturn(false);
+        when(userRepository.existsByUsernameIgnoreCase(request.getUsername())).thenReturn(false);
         when(passwordEncoder.encode(request.getPassword())).thenReturn("hashed-password");
         when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> {
             UserEntity user = invocation.getArgument(0);
@@ -168,13 +175,64 @@ class AuthServiceImplTest {
     }
 
     @Test
+    void shouldRegisterActiveVerifiedUserAndSkipVerificationEmailWhenEmailVerificationDisabled() {
+        ReflectionTestUtils.setField(authService, "emailVerificationEnabled", false);
+
+        RegisterUserRequest request = new RegisterUserRequest("devuser", "dev@example.com", "P@ssword123");
+        RoleEntity userRole = userRoleEntity();
+        RoleResponse userRoleResponse = new RoleResponse()
+                .uuid(userRole.getUuid())
+                .code(com.barterplatform.api.model.RoleCode.USER)
+                .name(userRole.getName())
+                .description(userRole.getDescription())
+                .createdAt(userRole.getCreatedAt());
+
+        when(userRepository.existsByEmailIgnoreCase(request.getEmail())).thenReturn(false);
+        when(userRepository.existsByUsernameIgnoreCase(request.getUsername())).thenReturn(false);
+        when(passwordEncoder.encode(request.getPassword())).thenReturn("hashed-password");
+        when(userRepository.save(any(UserEntity.class))).thenAnswer(invocation -> {
+            UserEntity user = invocation.getArgument(0);
+            user.setId(202L);
+            user.setUuid(UUID.fromString("33333333-3333-3333-3333-333333333333"));
+            user.setCreatedAt(OffsetDateTime.parse("2026-05-08T10:15:30Z"));
+            return user;
+        });
+        when(roleRepository.findByCode(RoleCode.USER)).thenReturn(Optional.of(userRole));
+        when(userRoleRepository.save(any(UserRoleEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toCurrentUserResponse(any(UserEntity.class))).thenAnswer(invocation -> {
+            UserEntity user = invocation.getArgument(0);
+            return new CurrentUserResponse()
+                    .uuid(user.getUuid())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .status(UserStatus.ACTIVE)
+                    .emailVerified(true)
+                    .mfaEnabled(false)
+                    .preferredLanguage(com.barterplatform.api.model.PreferredLanguage.SR)
+                    .createdAt(user.getCreatedAt());
+        });
+        when(roleMapper.toResponse(userRole)).thenReturn(userRoleResponse);
+
+        CurrentUserResponse response = authService.registerUser(request);
+
+        ArgumentCaptor<UserEntity> userCaptor = ArgumentCaptor.forClass(UserEntity.class);
+        verify(userRepository).save(userCaptor.capture());
+        UserEntity savedUser = userCaptor.getValue();
+        assertEquals(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE, savedUser.getStatus());
+        assertTrue(savedUser.isEmailVerified());
+        assertEquals(UserStatus.ACTIVE, response.getStatus());
+        assertTrue(response.getEmailVerified());
+        verify(emailVerificationService, never()).createAndSendVerificationCode(any(), any());
+    }
+
+    @Test
     void shouldThrowForbiddenForPendingVerificationUser() {
         LoginRequest request = new LoginRequest("alex@example.com", "P@ssword123");
         UserEntity user = activeUser();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.PENDING_VERIFICATION);
         user.setEmailVerified(false);
 
-        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("alex@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("P@ssword123", user.getPasswordHash())).thenReturn(true);
 
         ApiException ex = assertThrows(ApiException.class, () -> authService.login(request));
@@ -190,7 +248,7 @@ class AuthServiceImplTest {
         UserEntity user = activeUser();
         user.setEmailVerified(false);
 
-        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("alex@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("P@ssword123", user.getPasswordHash())).thenReturn(true);
 
         ApiException ex = assertThrows(ApiException.class, () -> authService.login(request));
@@ -203,7 +261,7 @@ class AuthServiceImplTest {
     @Test
     void shouldThrowConflictWhenEmailAlreadyExists() {
         RegisterUserRequest request = new RegisterUserRequest("alex99", "alex@example.com", "P@ssword123");
-        when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
+        when(userRepository.existsByEmailIgnoreCase(request.getEmail())).thenReturn(true);
 
         ApiException exception = assertThrows(ApiException.class, () -> authService.registerUser(request));
 
@@ -211,15 +269,15 @@ class AuthServiceImplTest {
         assertEquals(ErrorCode.CONFLICT, exception.getCode());
         assertEquals("Email 'alex@example.com' is already in use.", exception.getMessage());
 
-        verify(userRepository, never()).existsByUsername(any());
+        verify(userRepository, never()).existsByUsernameIgnoreCase(any());
         verifyNoInteractions(roleRepository, userRoleRepository, userMapper, roleMapper, passwordEncoder);
     }
 
     @Test
     void shouldThrowConflictWhenUsernameAlreadyExists() {
         RegisterUserRequest request = new RegisterUserRequest("alex99", "alex@example.com", "P@ssword123");
-        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
-        when(userRepository.existsByUsername(request.getUsername())).thenReturn(true);
+        when(userRepository.existsByEmailIgnoreCase(request.getEmail())).thenReturn(false);
+        when(userRepository.existsByUsernameIgnoreCase(request.getUsername())).thenReturn(true);
 
         ApiException exception = assertThrows(ApiException.class, () -> authService.registerUser(request));
 
@@ -252,7 +310,7 @@ class AuthServiceImplTest {
         RoleEntity role = userRoleEntity();
         UserRoleEntity userRoleEntity = createTestUserRoleEntity(user.getId(), role.getId());
 
-        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("alex@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("P@ssword123", user.getPasswordHash())).thenReturn(true);
         when(userRoleRepository.findAllByIdUserIdOrderByAssignedAtAsc(user.getId()))
                 .thenReturn(List.of(userRoleEntity));
@@ -281,7 +339,7 @@ class AuthServiceImplTest {
         assertNotNull(response.getUser());
         assertEquals(com.barterplatform.api.model.PreferredLanguage.EN, response.getUser().getPreferredLanguage());
 
-        verify(userRepository).findByEmail("alex@example.com");
+        verify(userRepository).findByEmailIgnoreCase("alex@example.com");
         verify(passwordEncoder).matches("P@ssword123", user.getPasswordHash());
     }
 
@@ -292,7 +350,7 @@ class AuthServiceImplTest {
         RoleEntity role = userRoleEntity();
         UserRoleEntity userRoleEntity = createTestUserRoleEntity(user.getId(), role.getId());
 
-        when(userRepository.findByUsername("alex99")).thenReturn(Optional.of(user));
+        when(userRepository.findByUsernameIgnoreCase("alex99")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("P@ssword123", user.getPasswordHash())).thenReturn(true);
         when(userRoleRepository.findAllByIdUserIdOrderByAssignedAtAsc(user.getId()))
                 .thenReturn(List.of(userRoleEntity));
@@ -311,13 +369,13 @@ class AuthServiceImplTest {
         TokenResponse response = authService.login(request);
 
         assertEquals("jwt-access-token", response.getAccessToken());
-        verify(userRepository).findByUsername("alex99");
+        verify(userRepository).findByUsernameIgnoreCase("alex99");
     }
 
     @Test
     void shouldThrowUnauthorizedForInvalidEmail() {
         LoginRequest request = new LoginRequest("unknown@example.com", "P@ssword123");
-        when(userRepository.findByEmail("unknown@example.com")).thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoreCase("unknown@example.com")).thenReturn(Optional.empty());
 
         ApiException ex = assertThrows(ApiException.class, () -> authService.login(request));
 
@@ -331,7 +389,7 @@ class AuthServiceImplTest {
         LoginRequest request = new LoginRequest("alex@example.com", "wrong-password");
         UserEntity user = activeUser();
 
-        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("alex@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong-password", user.getPasswordHash())).thenReturn(false);
 
         ApiException ex = assertThrows(ApiException.class, () -> authService.login(request));
@@ -347,7 +405,7 @@ class AuthServiceImplTest {
         UserEntity user = activeUser();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.SUSPENDED);
 
-        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("alex@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("P@ssword123", user.getPasswordHash())).thenReturn(true);
 
         ApiException ex = assertThrows(ApiException.class, () -> authService.login(request));
@@ -363,7 +421,7 @@ class AuthServiceImplTest {
         UserEntity user = activeUser();
         user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.BANNED);
 
-        when(userRepository.findByEmail("alex@example.com")).thenReturn(Optional.of(user));
+        when(userRepository.findByEmailIgnoreCase("alex@example.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("P@ssword123", user.getPasswordHash())).thenReturn(true);
 
         ApiException ex = assertThrows(ApiException.class, () -> authService.login(request));

@@ -83,6 +83,7 @@ export function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   // null = no banner; string = show banner (empty string means email unknown)
   const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
+  const registrationComplete = searchParams.get("registered") === "true";
   const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
   const registerHref = buildPathWithQuery(routePaths.register, { redirect: redirectPath });
   const forgotPasswordHref = buildPathWithQuery(routePaths.forgotPassword, {
@@ -188,6 +189,12 @@ export function LoginPage() {
             </p>
           </CardHeader>
           <CardContent>
+            {registrationComplete && (
+              <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+                {t("auth:registrationReadyLogin")}
+              </div>
+            )}
+
             {redirectPath && (
               <div className="mb-4 rounded-lg border border-violet-200 bg-violet-50/80 p-3 text-sm text-violet-800 dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
                 {t("auth:returnAfterSignIn")}

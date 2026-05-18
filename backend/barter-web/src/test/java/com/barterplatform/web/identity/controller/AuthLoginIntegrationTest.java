@@ -142,6 +142,42 @@ class AuthLoginIntegrationTest {
     }
 
     @Test
+    void shouldLoginWithUsernameIgnoringCaseAndPreserveDisplayCasing() throws Exception {
+        mockMvc.perform(registerUserRequest("Dragisa", "dragisa@example.com", "P@ssword123"))
+                .andExpect(status().isCreated());
+
+        var user = userRepository.findByEmail("dragisa@example.com").orElseThrow();
+        user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        for (String identifier : List.of("Dragisa", "dragisa", "DRAGISA")) {
+            mockMvc.perform(loginRequest(identifier, "P@ssword123"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                    .andExpect(jsonPath("$.user.username").value("Dragisa"));
+        }
+    }
+
+    @Test
+    void shouldLoginWithEmailIgnoringCase() throws Exception {
+        mockMvc.perform(registerUserRequest("dragisa", "Dragisa@Example.com", "P@ssword123"))
+                .andExpect(status().isCreated());
+
+        var user = userRepository.findByEmail("Dragisa@Example.com").orElseThrow();
+        user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.ACTIVE);
+        user.setEmailVerified(true);
+        userRepository.save(user);
+
+        for (String identifier : List.of("Dragisa@Example.com", "dragisa@example.com", "DRAGISA@EXAMPLE.COM")) {
+            mockMvc.perform(loginRequest(identifier, "P@ssword123"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                    .andExpect(jsonPath("$.user.email").value("Dragisa@Example.com"));
+        }
+    }
+
+    @Test
     void shouldReturnUnauthorizedForWrongPassword() throws Exception {
         mockMvc.perform(registerUserRequest("alex99", "alex@example.com", "P@ssword123"))
                 .andExpect(status().isCreated());
