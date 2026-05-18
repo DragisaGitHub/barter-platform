@@ -36,7 +36,7 @@ updates:
       - "frontend"
 
   - package-ecosystem: "docker"
-    directory: "/"
+    directory: "/deployment/docker/backend"
     schedule:
       interval: "weekly"
       day: "monday"
@@ -44,12 +44,30 @@ updates:
       timezone: "Europe/Belgrade"
     open-pull-requests-limit: 3
     groups:
-      docker-updates:
+      backend-docker-updates:
         patterns:
           - "*"
     labels:
       - "dependencies"
       - "docker"
+      - "backend"
+
+  - package-ecosystem: "docker"
+    directory: "/deployment/docker/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:10"
+      timezone: "Europe/Belgrade"
+    open-pull-requests-limit: 3
+    groups:
+      frontend-docker-updates:
+        patterns:
+          - "*"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "frontend"
 
   - package-ecosystem: "github-actions"
     directory: "/"
