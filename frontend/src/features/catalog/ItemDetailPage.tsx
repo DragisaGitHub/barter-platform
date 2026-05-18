@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRightLeft,
   CalendarDays,
+  ZoomIn,
   Package,
   ShieldCheck,
   Tag,
@@ -16,6 +17,7 @@ import { Badge } from "../../components/ui/Badge";
 import { Button } from "../../components/ui/Button";
 import { Spinner } from "../../components/ui/Spinner";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { ImageLightbox, type LightboxImage } from "../../components/ui/ImageLightbox";
 import { SendOfferModal } from "../trade/SendOfferModal";
 import { useAuth } from "../../auth/AuthContext";
 import { routePaths } from "@/routes/routePaths.ts";
@@ -26,6 +28,7 @@ import { useTranslation } from "react-i18next";
 function ImageSection({ images }: { images: ItemImageResponse[] }) {
   const { t } = useTranslation("catalog");
   const [selectedIdx, setSelectedIdx] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const sorted = useMemo(
     () =>
       [...images].sort((a, b) => {
@@ -37,11 +40,20 @@ function ImageSection({ images }: { images: ItemImageResponse[] }) {
   );
   const primary = sorted[0];
   const displayed = sorted[selectedIdx] ?? primary;
+  const lightboxImages: LightboxImage[] = useMemo(
+    () =>
+      sorted.map((image, index) => ({
+        id: image.uuid,
+        src: image.url,
+        alt: image.originalFilename || t("images.itemPhotoAlt", { number: index + 1 }),
+      })),
+    [sorted, t]
+  );
 
   if (images.length === 0) {
     return (
       <div className="marketplace-panel overflow-hidden p-0">
-        <div className="aspect-[5/4] bg-slate-100 flex flex-col items-center justify-center gap-2.5">
+        <div className="aspect-5/4 bg-slate-100 flex flex-col items-center justify-center gap-2.5">
           <div className="flex size-14 items-center justify-center rounded-full bg-white border border-slate-200">
             <Package className="size-7 text-slate-300" />
           </div>
@@ -56,20 +68,31 @@ function ImageSection({ images }: { images: ItemImageResponse[] }) {
 
   return (
     <div className="marketplace-panel p-3">
-      <div className="aspect-[5/4] overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+      <button
+        type="button"
+        onClick={() => setIsLightboxOpen(true)}
+        className="group relative block aspect-5/4 w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-100 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 dark:border-slate-700 dark:bg-slate-900"
+        aria-label={t("images.openViewer")}
+      >
         {displayed ? (
-          <img
-            src={displayed.url}
-            alt={displayed.originalFilename}
-            loading="lazy"
-            className="w-full h-full object-cover"
-          />
+          <>
+            <img
+              src={displayed.url}
+              alt={displayed.originalFilename || t("images.itemPhotoAlt", { number: selectedIdx + 1 })}
+              loading="lazy"
+              className="h-full w-full object-contain"
+            />
+            <span className="pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-slate-950/70 px-3 py-1.5 text-xs font-medium text-white opacity-0 shadow-lg transition group-hover:opacity-100 group-focus-visible:opacity-100">
+              <ZoomIn className="size-3.5" aria-hidden="true" />
+              {t("images.openViewer")}
+            </span>
+          </>
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Package className="size-16 text-slate-300" />
           </div>
         )}
-      </div>
+      </button>
 
       {sorted.length > 1 && (
         <div className="mt-2.5 grid grid-cols-5 gap-1.5 sm:grid-cols-6">
@@ -78,24 +101,43 @@ function ImageSection({ images }: { images: ItemImageResponse[] }) {
               key={img.uuid}
               type="button"
               onClick={() => setSelectedIdx(idx)}
+              aria-label={t("images.selectImage", { number: idx + 1 })}
+              aria-pressed={idx === selectedIdx}
               className={cn(
-                "relative aspect-square overflow-hidden rounded-lg border bg-slate-100 transition-colors",
+                "relative aspect-square overflow-hidden rounded-lg border bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 dark:bg-slate-900",
                 idx === selectedIdx
-                  ? "border-violet-400 ring-1 ring-violet-200"
-                  : "border-slate-200 hover:border-slate-300"
+                  ? "border-violet-400 ring-1 ring-violet-200 dark:border-violet-400 dark:ring-violet-500/40"
+                  : "border-slate-200 hover:border-slate-300 dark:border-slate-700 dark:hover:border-slate-500"
               )}
             >
               <img
                 src={img.url}
-                alt={img.originalFilename}
+                alt={img.originalFilename || t("images.itemPhotoAlt", { number: idx + 1 })}
                 loading="lazy"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
               {img.isPrimary ? <span className="sr-only">{t("images.primaryImage")}</span> : null}
             </button>
           ))}
         </div>
       )}
+
+      <ImageLightbox
+        images={lightboxImages}
+        isOpen={isLightboxOpen}
+        selectedIndex={selectedIdx}
+        onOpenChange={setIsLightboxOpen}
+        onSelectedIndexChange={setSelectedIdx}
+        labels={{
+          title: t("images.viewerTitle"),
+          description: t("images.viewerDescription"),
+          close: t("images.closeViewer"),
+          previous: t("images.previousImage"),
+          next: t("images.nextImage"),
+          counter: (current, total) => t("images.imageCounter", { current, total }),
+          thumbnail: (index) => t("images.selectImage", { number: index }),
+        }}
+      />
     </div>
   );
 }
@@ -110,7 +152,7 @@ export function ItemDetailPage() {
   if (isLoading) {
     return (
       <div className="marketplace-page min-h-screen px-4 py-12 sm:px-6">
-        <div className="mx-auto flex max-w-[1600px] items-center justify-center py-24">
+        <div className="mx-auto flex max-w-400 items-center justify-center py-24">
           <Spinner size="lg" />
         </div>
       </div>
@@ -154,7 +196,7 @@ export function ItemDetailPage() {
 
   return (
     <div className="marketplace-page min-h-screen px-4 py-6 sm:px-6">
-      <div className="mx-auto max-w-[1480px]">
+      <div className="mx-auto max-w-370">
         <Link
           to={routePaths.marketplace}
           className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition hover:text-violet-600"
