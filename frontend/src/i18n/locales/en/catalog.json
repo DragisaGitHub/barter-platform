@@ -246,14 +246,16 @@
     "clickToBrowse": "Click to browse or drag & drop",
     "chooseFromGallery": "Choose from gallery",
     "takePhoto": "Take photo",
-    "uploadHelper": "JPEG, PNG, WebP · max 5 MB · {{current}}/{{max}} images",
+    "uploadHelper": "JPEG, PNG, WebP · max 10 MB · {{current}}/{{max}} images",
     "maxReached": "Maximum of {{max}} images reached",
     "noImagesYet": "No images yet",
     "uploadUsingUploader": "Upload images using the uploader above",
     "validation": {
       "allowedTypes": "Only JPEG, PNG, and WebP images are allowed.",
-      "maxFileSize": "File must be smaller than 5 MB.",
-      "maxImages": "Maximum {{max}} images allowed per item."
+      "maxFileSize": "File must be smaller than {{max}} MB.",
+      "maxImages": "Maximum {{max}} images allowed per item.",
+      "uploadTooLarge": "This image is too large to upload. Please choose an image under {{max}} MB.",
+      "uploadFailed": "Failed to upload image. Please try again."
     },
     "deleteDialog": { "title": "Delete image?", "description": "This action cannot be undone." }
   },
