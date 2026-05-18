@@ -246,14 +246,16 @@
     "clickToBrowse": "Klikni za izbor ili prevuci i pusti",
     "chooseFromGallery": "Izaberi iz galerije",
     "takePhoto": "Slikaj kamerom",
-    "uploadHelper": "JPEG, PNG, WebP · maks. 5 MB · {{current}}/{{max}} slika",
+    "uploadHelper": "JPEG, PNG, WebP · maks. 10 MB · {{current}}/{{max}} slika",
     "maxReached": "Dostignut je maksimum od {{max}} slika",
     "noImagesYet": "Još nema slika",
     "uploadUsingUploader": "Otpremi slike pomoću alata iznad",
     "validation": {
       "allowedTypes": "Dozvoljene su samo JPEG, PNG i WebP slike.",
-      "maxFileSize": "Fajl mora biti manji od 5 MB.",
-      "maxImages": "Dozvoljeno je najviše {{max}} slika po oglasu."
+      "maxFileSize": "Fajl mora biti manji od {{max}} MB.",
+      "maxImages": "Dozvoljeno je najviše {{max}} slika po oglasu.",
+      "uploadTooLarge": "Ova slika je prevelika za otpremanje. Izaberi sliku manju od {{max}} MB.",
+      "uploadFailed": "Otpremanje slike nije uspelo. Pokušaj ponovo."
     },
     "deleteDialog": { "title": "Obrisati sliku?", "description": "Ovu akciju nije moguće opozvati." }
   },

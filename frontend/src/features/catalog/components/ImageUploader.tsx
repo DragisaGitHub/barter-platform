@@ -1,11 +1,13 @@
 import { useRef, useState } from "react";
+import axios from "axios";
 import { Camera, ImagePlus, Upload, X } from "lucide-react";
 import { cn } from "@/utils";
 import { useUploadItemImage } from "../useItemImages";
 import { useTranslation } from "react-i18next";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 const MAX_IMAGES = 6;
 
 interface ImageUploaderProps {
@@ -30,12 +32,27 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
       return t("images.validation.allowedTypes");
     }
     if (file.size > MAX_FILE_SIZE) {
-      return t("images.validation.maxFileSize");
+      return t("images.validation.maxFileSize", { max: MAX_FILE_SIZE_MB });
     }
     if (currentImageCount >= MAX_IMAGES) {
       return t("images.validation.maxImages", { max: MAX_IMAGES });
     }
     return null;
+  }
+
+  function getUploadErrorMessage(error: unknown): string {
+    if (axios.isAxiosError(error)) {
+      if (error.response?.status === 413) {
+        return t("images.validation.uploadTooLarge", { max: MAX_FILE_SIZE_MB });
+      }
+
+      const message = error.response?.data?.message;
+      if (typeof message === "string" && message.toLowerCase().includes("file size")) {
+        return t("images.validation.maxFileSize", { max: MAX_FILE_SIZE_MB });
+      }
+    }
+
+    return t("images.validation.uploadFailed");
   }
 
   function handleFile(file: File) {
@@ -53,6 +70,7 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
       },
       {
         onSettled: () => setProgress(null),
+        onError: (error) => setValidationError(getUploadErrorMessage(error)),
       }
     );
   }
@@ -84,6 +102,26 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
 
   return (
     <div className="space-y-2">
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onClick={(e) => e.stopPropagation()}
+        onChange={handleInputChange}
+        disabled={!canUpload || isUploading}
+      />
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onClick={(e) => e.stopPropagation()}
+        onChange={handleInputChange}
+        disabled={!canUpload || isUploading}
+      />
+
       <div
         className={cn(
           "border-2 border-dashed rounded-lg p-6 text-center transition-colors",
@@ -102,28 +140,11 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
         tabIndex={canUpload && !isUploading ? 0 : undefined}
         onKeyDown={(e) => {
           if ((e.key === "Enter" || e.key === " ") && canUpload && !isUploading) {
+            e.preventDefault();
             galleryInputRef.current?.click();
           }
         }}
       >
-        <input
-          ref={galleryInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleInputChange}
-          disabled={!canUpload || isUploading}
-        />
-        <input
-          ref={cameraInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleInputChange}
-          disabled={!canUpload || isUploading}
-        />
-
         <Upload className="size-8 mx-auto mb-2 text-slate-400 dark:text-slate-500" />
 
         {isUploading ? (
@@ -179,7 +200,7 @@ export function ImageUploader({ itemUuid, currentImageCount }: ImageUploaderProp
       )}
 
       {validationError && (
-        <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400">
+        <div className="flex items-start gap-2 text-sm text-red-600 dark:text-red-400" role="alert">
           <X className="size-4 mt-0.5 shrink-0" />
           <span>{validationError}</span>
         </div>
