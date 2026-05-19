@@ -1,0 +1,36 @@
+# Barter Platform DEV reverse proxy
+#
+# Caddy is used in DEV to provide production-style HTTPS without a manual
+# certbot workflow. For public DNS names, Caddy automatically obtains and
+# renews Let's Encrypt certificates using ACME. The certificates and ACME
+# account data are stored in the Docker volume mounted at /data, so they
+# survive container restarts/recreates.
+#
+# Public traffic flow:
+#   internet -> Caddy :80/:443 -> Docker network -> frontend/backend
+# Only Caddy publishes ports on the VM. The frontend and backend remain
+# reachable only over the internal Compose network.
+
+# Caddy automatically manages ACME HTTP-01 challenges on port 80 and redirects
+# normal HTTP requests to HTTPS for this hostname.
+https://{$CADDY_DOMAIN:barter-platform-dev.duckdns.org} {
+	# Phone camera photos and item images are multipart uploads. Do not set a
+	# restrictive Caddy request body limit here; backend/frontend validation and
+	# storage limits continue to enforce accepted upload sizes.
+
+	# API and file routes stay same-origin for browsers. Caddy forwards the
+	# original path unchanged, so /api/v1/files/... and all existing /api/*
+	# endpoints keep their current backend routing behavior.
+	handle /api/* {
+		# Caddy reverse_proxy preserves Host/X-Forwarded-* context and supports
+		# WebSocket/HTTP upgrade automatically for future realtime endpoints.
+		reverse_proxy backend:8080
+	}
+
+	# Everything else is the React/Vite SPA served by the unchanged frontend
+	# nginx image over the internal Docker network.
+	handle {
+		# WebSocket/HTTP upgrade is handled automatically by Caddy.
+		reverse_proxy frontend:80
+	}
+}

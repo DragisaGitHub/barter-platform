@@ -32,6 +32,7 @@ docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
 
 echo
 echo "Useful log commands:"
+echo "  docker compose --env-file ${ENV_FILE} -f ${COMPOSE_FILE} logs -f caddy"
 echo "  docker compose --env-file ${ENV_FILE} -f ${COMPOSE_FILE} logs -f backend"
 echo "  docker compose --env-file ${ENV_FILE} -f ${COMPOSE_FILE} logs -f frontend"
 echo "  docker compose --env-file ${ENV_FILE} -f ${COMPOSE_FILE} logs -f postgres"
