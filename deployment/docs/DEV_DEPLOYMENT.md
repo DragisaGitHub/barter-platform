@@ -6,12 +6,32 @@ It intentionally does **not** add Kubernetes or server-side deployment automatio
 
 ## Runtime shape
 
+- `caddy`: public reverse proxy on ports `80` and `443` with automatic Let's Encrypt HTTPS.
 - `postgres`: PostgreSQL 16 with a persistent Docker volume.
 - `backend`: Spring Boot `barter-web` app running with `SPRING_PROFILES_ACTIVE=dev` and constrained JVM memory.
 - `frontend`: production Vite static build served by nginx.
-- Browser traffic goes to nginx on port `80`.
-- nginx serves the SPA and proxies `/api/v1/*` to the internal backend container.
-- The backend is not published directly to the internet by the provided Compose file.
+- Browser traffic goes to Caddy on `https://barter-platform-dev.duckdns.org`.
+- Caddy redirects HTTP to HTTPS, terminates TLS, and proxies `/api/*` to the internal backend container.
+- Caddy proxies all non-API traffic to the internal frontend nginx container, which serves the SPA.
+- The frontend, backend, and PostgreSQL containers are not published directly to the internet by the provided Compose file.
+
+### Why Caddy is used for DEV HTTPS
+
+Mobile apps and browsers, including WhatsApp in-app browsers, increasingly require or strongly prefer HTTPS for opened links. DEV now uses a Dockerized Caddy reverse proxy to provide production-style HTTPS without a manual Certbot workflow.
+
+Caddy automatically:
+
+- requests Let's Encrypt certificates for `barter-platform-dev.duckdns.org` when DNS points to the VM and ports `80`/`443` are reachable;
+- answers ACME HTTP-01 challenges on port `80`;
+- redirects normal HTTP requests to HTTPS;
+- renews certificates before expiry.
+
+Certificate and ACME account state is persisted in Docker volumes:
+
+- `caddy_data` mounted at `/data` stores certificates and ACME account material;
+- `caddy_config` mounted at `/config` stores Caddy runtime configuration/state.
+
+Do not delete these volumes unless you intentionally want Caddy to request fresh certificates and risk Let's Encrypt rate limits.
 
 ## Docker Hub images
 
@@ -23,6 +43,7 @@ Default Compose tags use `:latest`, but you can override them in `deployment/env
 ```env
 BACKEND_IMAGE=dragisahub1984/barter-backend:latest
 FRONTEND_IMAGE=dragisahub1984/barter-frontend:latest
+CADDY_DOMAIN=barter-platform-dev.duckdns.org
 ```
 
 ## Docker image publishing CI/CD
@@ -107,11 +128,12 @@ Minimum values to review and replace:
 - `JWT_SECRET`
 - `AZURE_STORAGE_CONNECTION_STRING_DEV`
 - `AZURE_STORAGE_CONTAINER_DEV`
+- `CADDY_DOMAIN=barter-platform-dev.duckdns.org`
 - `BARTER_EMAIL_VERIFICATION_ENABLED=false` for DEV-only registration/login bypass
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` if real email delivery is needed
 - `FRONTEND_ORIGIN` for documentation/future explicit CORS support
 
-The supplied nginx same-origin proxy means the browser calls `/api/v1`, so CORS should not be needed for the default DEV deployment path.
+The supplied Caddy/nginx same-origin proxy means the browser calls `/api/v1`, so CORS should not be needed for the default DEV deployment path.
 
 ## Email verification in DEV and PROD
 
@@ -142,7 +164,7 @@ The frontend Dockerfile defaults to:
 VITE_API_BASE_URL=/api/v1
 ```
 
-That is recommended for DEV because nginx proxies `/api/v1/*` to the internal `backend:8080` service. If you need a different public API URL, rebuild the frontend image with a different build arg and push the new image.
+That is recommended for DEV because browser traffic stays same-origin through Caddy, and `/api/*` is proxied to the internal `backend:8080` service. If you need a different public API URL, rebuild the frontend image with a different build arg and push the new image.
 
 ## Build images locally
 
@@ -231,33 +253,38 @@ FRONTEND_IMAGE=dragisahub1984/barter-frontend:v1.0.0
 Open in a browser:
 
 ```text
-http://<oci-vm-public-ip>/
+https://barter-platform-dev.duckdns.org/
 ```
+
+If this is the first run after enabling Caddy, watch the Caddy logs while it obtains the certificate:
+
+```bash
+docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml logs -f caddy
+```
+
+The DNS `A` record for `barter-platform-dev.duckdns.org` must point to the VM public IP before Let's Encrypt can issue a certificate.
 
 ## Open ports
 
 At minimum:
 
 - SSH: `22/tcp` from your admin IP range
-- HTTP: `80/tcp` from the internet or your test IP range
-
-Optional later:
-
-- HTTPS: `443/tcp` after adding a TLS reverse proxy or certificate automation
+- HTTP: `80/tcp` from the internet for Caddy redirects and Let's Encrypt HTTP-01 challenges
+- HTTPS: `443/tcp` from the internet for the app
 
 Do **not** expose PostgreSQL publicly. The provided Compose file does not publish PostgreSQL or backend ports to the host.
 
 Remember that OCI has both in-VM firewall rules and VCN security lists/network security groups.
 
-## DNS and HTTPS note
+## DNS and HTTPS
 
-For a real DEV hostname:
+For the DEV hostname:
 
-1. Point an `A` record to the OCI VM public IP.
-2. Add HTTPS using a host-level reverse proxy such as Caddy, Traefik, or nginx with Certbot.
-3. Keep this app Compose file internal behind that reverse proxy, or update `FRONTEND_HTTP_PORT` if the reverse proxy binds host port `80`.
+1. Point `barter-platform-dev.duckdns.org` to the OCI VM public IP.
+2. Ensure OCI ingress and any in-VM firewall allow `80/tcp` and `443/tcp`.
+3. Start the DEV Compose stack. Caddy will request and renew certificates automatically.
 
-TLS is intentionally not included yet to keep this foundation simple.
+No manual Certbot command or standalone certificate renewal job is required anymore. Caddy owns the public ports and stores certificate material in the `caddy_data` volume.
 
 ## Backups
 
@@ -302,6 +329,7 @@ docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-co
 Follow logs:
 
 ```bash
+docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml logs -f caddy
 docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml logs -f backend
 docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml logs -f frontend
 docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml logs -f postgres
@@ -310,12 +338,13 @@ docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-co
 Check backend health from inside the frontend container path:
 
 ```bash
-curl -i http://localhost/api/v1/ping
+curl -i https://barter-platform-dev.duckdns.org/api/v1/ping
 ```
 
 Common issues:
 
 - **Frontend still calls localhost:8080**: rebuild the frontend image with `--build-arg VITE_API_BASE_URL=/api/v1`, then push and redeploy.
+- **Caddy cannot obtain a certificate**: verify DuckDNS points to the VM public IP, OCI ingress allows `80/tcp` and `443/tcp`, no other host process is bound to those ports, and `docker compose ... logs caddy` does not show ACME rate-limit or DNS errors.
 - **Backend cannot connect to DB**: ensure `DB_URL=jdbc:postgresql://postgres:5432/<POSTGRES_DB>` and `DB_PASSWORD` matches `POSTGRES_PASSWORD` for the initialized volume. If you change Postgres init credentials after the first run, recreate the volume intentionally.
 - **Azure image upload fails**: verify `AZURE_STORAGE_CONNECTION_STRING_DEV` and `AZURE_STORAGE_CONTAINER_DEV` in `deployment/env/dev.env` and that the container exists or the app can create/use it.
 - **SMTP does not send**: set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`. If `SMTP_HOST` is empty, the backend may use its logging/fallback mail sender according to current app configuration.
