@@ -19,6 +19,8 @@ register:
         $ref: '../components/responses/Conflict.yaml'
       '403':
         $ref: '../components/responses/Forbidden.yaml'
+      '429':
+        $ref: '../components/responses/TooManyRequests.yaml'
 login:
   post:
     tags:
@@ -40,6 +42,8 @@ login:
         $ref: '../components/responses/Unauthorized.yaml'
       '403':
         $ref: '../components/responses/Forbidden.yaml'
+      '429':
+        $ref: '../components/responses/TooManyRequests.yaml'
 forgotPassword:
   post:
     tags:
@@ -57,6 +61,8 @@ forgotPassword:
               $ref: '../components/schemas/MessageResponse.yaml'
       '400':
         $ref: '../components/responses/BadRequest.yaml'
+      '429':
+        $ref: '../components/responses/TooManyRequests.yaml'
 
 resetPassword:
   post:
@@ -77,6 +83,8 @@ resetPassword:
         $ref: '../components/responses/BadRequest.yaml'
       '404':
         $ref: '../components/responses/NotFound.yaml'
+      '429':
+        $ref: '../components/responses/TooManyRequests.yaml'
 refresh:
   post:
     tags:
@@ -98,6 +106,8 @@ refresh:
         $ref: '../components/responses/Unauthorized.yaml'
       '403':
         $ref: '../components/responses/Forbidden.yaml'
+      '429':
+        $ref: '../components/responses/TooManyRequests.yaml'
 logout:
   post:
     tags:
@@ -155,6 +165,8 @@ resendVerificationCode:
         $ref: '../components/responses/BadRequest.yaml'
       '404':
         $ref: '../components/responses/NotFound.yaml'
+      '429':
+        $ref: '../components/responses/TooManyRequests.yaml'
 me:
   get:
     tags:

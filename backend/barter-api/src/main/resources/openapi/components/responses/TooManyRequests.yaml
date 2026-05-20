@@ -1,0 +1,12 @@
+description: Too Many Requests
+headers:
+  Retry-After:
+    description: Seconds to wait before retrying the request.
+    schema:
+      type: integer
+      minimum: 1
+content:
+  application/json:
+    schema:
+      $ref: '../../openapi.yaml#/components/schemas/ErrorResponse'
+

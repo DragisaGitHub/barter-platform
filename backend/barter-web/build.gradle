@@ -53,3 +53,7 @@ dependencies {
     testImplementation "org.testcontainers:postgresql:${testcontainersVersion}"
 }
 
+tasks.withType(Test).configureEach {
+    systemProperty 'barter.rate-limits.enabled', 'false'
+}
+

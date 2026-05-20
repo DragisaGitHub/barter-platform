@@ -95,3 +95,35 @@ BARTER_BOOTSTRAP_ADMIN_PASSWORD=change-me-in-production
 - When enabled, the admin user is created only if no user with the same email or username exists.
 - The password is never logged.
 - The ADMIN role must already exist in the database (loaded via seed/migration data).
+
+## Application Rate Limits
+
+The backend applies simple in-memory, fixed-window rate limits for high-risk public and user write actions during the DEV/public-beta stage.
+This is intentionally single-node and does not require Redis, Kafka, or other distributed infrastructure.
+
+Configured endpoint groups:
+
+- Auth: login, register, refresh token, forgot password, reset password, resend verification code.
+- User-generated actions: image upload, trade offer creation, trade message sending.
+- Optional launch-safe action: favorite add/remove.
+
+Defaults are defined in `backend/barter-web/src/main/resources/application.yml` under `barter.rate-limits`.
+When a limit is exceeded the API returns HTTP `429` with the standard error body and a `Retry-After` header.
+
+### Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BARTER_RATE_LIMITS_ENABLED` | `true` | Enables/disables application-level rate limiting. |
+| `BARTER_RATE_LIMITS_CLIENT_IP_HEADER` | empty | Optional trusted proxy header for client IP resolution. Leave empty locally unless a trusted reverse proxy overwrites this header. |
+| `BARTER_RATE_LIMITS_LOGIN_LIMIT` / `BARTER_RATE_LIMITS_LOGIN_WINDOW` | `20` / `1m` | Login attempts per client IP. |
+| `BARTER_RATE_LIMITS_REGISTER_LIMIT` / `BARTER_RATE_LIMITS_REGISTER_WINDOW` | `10` / `1m` | Registration attempts per client IP. |
+| `BARTER_RATE_LIMITS_REFRESH_TOKEN_LIMIT` / `BARTER_RATE_LIMITS_REFRESH_TOKEN_WINDOW` | `60` / `1m` | Refresh-token requests per client IP. |
+| `BARTER_RATE_LIMITS_FORGOT_PASSWORD_LIMIT` / `BARTER_RATE_LIMITS_FORGOT_PASSWORD_WINDOW` | `5` / `15m` | Forgot-password requests per client IP. |
+| `BARTER_RATE_LIMITS_RESET_PASSWORD_LIMIT` / `BARTER_RATE_LIMITS_RESET_PASSWORD_WINDOW` | `10` / `15m` | Reset-password requests per client IP. |
+| `BARTER_RATE_LIMITS_RESEND_VERIFICATION_CODE_LIMIT` / `BARTER_RATE_LIMITS_RESEND_VERIFICATION_CODE_WINDOW` | `5` / `15m` | Verification-code resend requests per client IP. |
+| `BARTER_RATE_LIMITS_IMAGE_UPLOAD_LIMIT` / `BARTER_RATE_LIMITS_IMAGE_UPLOAD_WINDOW` | `30` / `10m` | Image uploads per authenticated user and IP. |
+| `BARTER_RATE_LIMITS_TRADE_OFFER_CREATE_LIMIT` / `BARTER_RATE_LIMITS_TRADE_OFFER_CREATE_WINDOW` | `20` / `10m` | Trade offers created per authenticated user and IP. |
+| `BARTER_RATE_LIMITS_TRADE_MESSAGE_SEND_LIMIT` / `BARTER_RATE_LIMITS_TRADE_MESSAGE_SEND_WINDOW` | `60` / `10m` | Trade messages sent per authenticated user and IP. |
+| `BARTER_RATE_LIMITS_FAVORITE_MUTATION_LIMIT` / `BARTER_RATE_LIMITS_FAVORITE_MUTATION_WINDOW` | `120` / `10m` | Favorite add/remove requests per authenticated user and IP. |
+
