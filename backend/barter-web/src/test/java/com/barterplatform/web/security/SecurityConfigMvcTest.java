@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
+import com.barterplatform.web.ratelimit.RateLimitService;
 import com.barterplatform.web.security.jwt.JwtAuthenticationFilter;
 import com.barterplatform.web.security.jwt.JwtAuthenticationService;
 import org.junit.jupiter.api.Test;
@@ -113,7 +114,7 @@ class SecurityConfigMvcTest {
             HibernateJpaAutoConfiguration.class,
             DataJpaRepositoriesAutoConfiguration.class
     })
-    @Import({SecurityConfig.class, TestSecurityController.class, JwtAuthenticationFilter.class})
+    @Import({SecurityConfig.class, TestSecurityController.class, JwtAuthenticationFilter.class, RateLimitService.class})
     static class TestApplication {
 
         @Bean

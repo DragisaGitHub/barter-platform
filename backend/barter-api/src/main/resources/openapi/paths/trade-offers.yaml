@@ -27,6 +27,8 @@ create:
         $ref: '../components/responses/Forbidden.yaml'
       '409':
         $ref: '../components/responses/Conflict.yaml'
+      '429':
+        $ref: '../components/responses/TooManyRequests.yaml'
 
 incoming:
   get:

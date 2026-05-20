@@ -7,6 +7,7 @@ public enum ErrorCode {
     FORBIDDEN,
     NOT_FOUND,
     CONFLICT,
+    RATE_LIMITED,
     INTERNAL_ERROR
 }
 
