@@ -1,0 +1,50 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - targetType
+  - targetUuid
+  - reasonCode
+  - status
+  - reporter
+  - targetSummary
+  - createdAt
+  - updatedAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  targetType:
+    $ref: '../../../openapi.yaml#/components/schemas/ReportTargetType'
+  targetUuid:
+    type: string
+    format: uuid
+  reasonCode:
+    $ref: '../../../openapi.yaml#/components/schemas/ReportReasonCode'
+  details:
+    type: string
+    nullable: true
+  status:
+    $ref: '../../../openapi.yaml#/components/schemas/ReportStatus'
+  reporter:
+    $ref: '../../../openapi.yaml#/components/schemas/ReportUserSummaryResponse'
+  assignedModerator:
+    allOf:
+      - $ref: '../../../openapi.yaml#/components/schemas/ReportUserSummaryResponse'
+    nullable: true
+  resolutionNote:
+    type: string
+    nullable: true
+  targetSummary:
+    $ref: '../../../openapi.yaml#/components/schemas/ReportTargetSummaryResponse'
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+  resolvedAt:
+    type: string
+    format: date-time
+    nullable: true
+

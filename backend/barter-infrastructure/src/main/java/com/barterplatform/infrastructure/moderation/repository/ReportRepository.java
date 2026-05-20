@@ -1,0 +1,22 @@
+package com.barterplatform.infrastructure.moderation.repository;
+
+import com.barterplatform.domain.moderation.report.ReportEntity;
+import com.barterplatform.domain.moderation.report.ReportStatus;
+import com.barterplatform.domain.moderation.report.ReportTargetType;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.UUID;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+public interface ReportRepository extends JpaRepository<ReportEntity, Long>, JpaSpecificationExecutor<ReportEntity> {
+
+    Optional<ReportEntity> findByUuid(UUID uuid);
+
+    boolean existsByReporterUserIdAndTargetTypeAndTargetUuidAndStatusIn(
+            Long reporterUserId,
+            ReportTargetType targetType,
+            UUID targetUuid,
+            Collection<ReportStatus> statuses);
+}
+

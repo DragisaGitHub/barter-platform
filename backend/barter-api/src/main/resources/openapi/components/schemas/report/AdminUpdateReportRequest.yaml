@@ -1,0 +1,12 @@
+type: object
+additionalProperties: false
+required:
+  - status
+properties:
+  status:
+    $ref: '../../../openapi.yaml#/components/schemas/ReportStatus'
+  resolutionNote:
+    type: string
+    nullable: true
+    maxLength: 2000
+
