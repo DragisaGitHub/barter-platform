@@ -1,0 +1,14 @@
+type: object
+additionalProperties: false
+required:
+  - title
+  - subtitle
+properties:
+  title:
+    type: string
+  subtitle:
+    type: string
+  preview:
+    type: string
+    nullable: true
+

@@ -1,0 +1,34 @@
+create:
+  post:
+    tags:
+      - Reports
+    operationId: createReport
+    summary: Submit a moderation report
+    security:
+      - bearerJwt: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CreateReportRequest'
+    responses:
+      '201':
+        description: Report submitted successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/MessageResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+      '429':
+        $ref: '../components/responses/TooManyRequests.yaml'
+

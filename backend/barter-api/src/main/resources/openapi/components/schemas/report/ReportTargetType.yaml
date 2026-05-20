@@ -1,0 +1,8 @@
+type: string
+enum:
+  - ITEM
+  - USER
+  - MESSAGE
+  - TRADE_OFFER
+  - REVIEW
+

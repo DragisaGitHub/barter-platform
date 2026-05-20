@@ -27,6 +27,10 @@ tags:
     description: Administrator listing moderation and governance operations
   - name: AdminReviews
     description: Administrator trade review governance operations
+  - name: Reports
+    description: User-facing moderation report submission operations
+  - name: AdminReports
+    description: Staff moderation report triage and review operations
   - name: TradeOffers
     description: Trade offer creation, listing, and lifecycle management
   - name: Reviews
@@ -102,6 +106,14 @@ paths:
     $ref: './paths/admin-listings.yaml#/listingRestore'
   /admin/reviews:
     $ref: './paths/admin-reviews.yaml#/reviews'
+  /reports:
+    $ref: './paths/reports.yaml#/create'
+  /admin/reports:
+    $ref: './paths/admin-reports.yaml#/reports'
+  /admin/reports/{reportUuid}:
+    $ref: './paths/admin-reports.yaml#/reportByUuid'
+  /admin/reports/{reportUuid}/status:
+    $ref: './paths/admin-reports.yaml#/reportUpdate'
   /catalog/tags:
     $ref: './paths/catalog.yaml#/tags'
   /admin/tags:
@@ -309,6 +321,26 @@ components:
       $ref: './components/schemas/reputation/AdminTradeReviewSummaryResponse.yaml'
     AdminTradeReviewPagedResponse:
       $ref: './components/schemas/reputation/AdminTradeReviewPagedResponse.yaml'
+    ReportReasonCode:
+      $ref: './components/schemas/report/ReportReasonCode.yaml'
+    ReportStatus:
+      $ref: './components/schemas/report/ReportStatus.yaml'
+    ReportTargetType:
+      $ref: './components/schemas/report/ReportTargetType.yaml'
+    ReportUserSummaryResponse:
+      $ref: './components/schemas/report/ReportUserSummaryResponse.yaml'
+    ReportTargetSummaryResponse:
+      $ref: './components/schemas/report/ReportTargetSummaryResponse.yaml'
+    ReportSummaryResponse:
+      $ref: './components/schemas/report/ReportSummaryResponse.yaml'
+    ReportDetailResponse:
+      $ref: './components/schemas/report/ReportDetailResponse.yaml'
+    ReportPagedResponse:
+      $ref: './components/schemas/report/ReportPagedResponse.yaml'
+    CreateReportRequest:
+      $ref: './components/schemas/report/CreateReportRequest.yaml'
+    AdminUpdateReportRequest:
+      $ref: './components/schemas/report/AdminUpdateReportRequest.yaml'
     ReputationSummaryResponse:
       $ref: './components/schemas/reputation/ReputationSummaryResponse.yaml'
     NotificationType:

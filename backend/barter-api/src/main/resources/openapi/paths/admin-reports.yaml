@@ -1,0 +1,108 @@
+reports:
+  get:
+    tags:
+      - AdminReports
+    operationId: listAdminReports
+    summary: List moderation reports for staff review
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: status
+        in: query
+        required: false
+        description: Filter reports by moderation status.
+        schema:
+          $ref: '../components/schemas/report/ReportStatus.yaml'
+      - name: targetType
+        in: query
+        required: false
+        description: Filter reports by target type.
+        schema:
+          $ref: '../components/schemas/report/ReportTargetType.yaml'
+    responses:
+      '200':
+        description: Reports returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ReportPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
+reportByUuid:
+  get:
+    tags:
+      - AdminReports
+    operationId: getAdminReportByUuid
+    summary: Get report detail by UUID
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: reportUuid
+        in: path
+        required: true
+        description: Public report UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Report detail returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ReportDetailResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+reportUpdate:
+  patch:
+    tags:
+      - AdminReports
+    operationId: updateAdminReport
+    summary: Update report status during moderation review
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: reportUuid
+        in: path
+        required: true
+        description: Public report UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/AdminUpdateReportRequest'
+    responses:
+      '200':
+        description: Report updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ReportDetailResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+

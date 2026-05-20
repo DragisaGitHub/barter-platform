@@ -1,0 +1,19 @@
+type: object
+additionalProperties: false
+required:
+  - targetType
+  - targetUuid
+  - reasonCode
+properties:
+  targetType:
+    $ref: '../../../openapi.yaml#/components/schemas/ReportTargetType'
+  targetUuid:
+    type: string
+    format: uuid
+  reasonCode:
+    $ref: '../../../openapi.yaml#/components/schemas/ReportReasonCode'
+  details:
+    type: string
+    nullable: true
+    maxLength: 2000
+
