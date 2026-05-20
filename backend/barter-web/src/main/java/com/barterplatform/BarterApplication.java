@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.barterplatform.domain.identity.entity",
         "com.barterplatform.domain.catalog.entity",
         "com.barterplatform.domain.catalog.moderation",
+        "com.barterplatform.domain.moderation.report",
         "com.barterplatform.domain.trade.entity",
         "com.barterplatform.domain.reputation.entity",
         "com.barterplatform.domain.notification.entity"
@@ -19,6 +20,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories(basePackages = {
         "com.barterplatform.infrastructure.identity.repository",
         "com.barterplatform.infrastructure.catalog.repository",
+        "com.barterplatform.infrastructure.moderation.repository",
         "com.barterplatform.infrastructure.trade.repository",
         "com.barterplatform.infrastructure.reputation.repository",
         "com.barterplatform.infrastructure.notification.repository"
