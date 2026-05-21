@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/utils";
+import { ReportTrigger } from "@/features/reports/ReportTrigger";
 import {
     type TradeOfferMessageListItem,
     useSendTradeOfferMessage,
@@ -335,6 +336,17 @@ export function TradeOfferMessagesPanel({
                                                 )}
                                             >
                                                 <span>{displayName}</span>
+                                                 {!isMine ? (
+                                                     <ReportTrigger
+                                                         targetType="MESSAGE"
+                                                         targetUuid={message.uuid}
+                                                         contextLabel={message.content}
+                                                         variant="ghost"
+                                                         size="sm"
+                                                         className="h-auto px-1.5 py-0.5 text-[11px] text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                                                         ariaLabel={t("reporting:actions.report")}
+                                                     />
+                                                 ) : null}
                                                 {message.isOptimistic && (
                                                     <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">
                                                         {t("messages.sending")}

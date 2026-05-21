@@ -8,11 +8,13 @@ import type {
   TradeReviewRating,
   UserTradeReviewSummaryResponse,
 } from "@/api/generated/types.ts";
+import { useAuth } from "@/auth/AuthContext";
 import { Pagination } from "@/components/data/Pagination";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Spinner } from "@/components/ui/Spinner";
+import { ReportTrigger } from "@/features/reports/ReportTrigger";
 import { negativeReasonTranslationKey } from "@/features/trade/TradeReviewDialog";
 import { routePaths } from "@/routes/routePaths";
 import { cn } from "@/utils";
@@ -67,9 +69,18 @@ function reasonLabel(reason: TradeReviewNegativeReason, t: (key: string) => stri
   return t(negativeReasonTranslationKey(reason));
 }
 
-function ReviewCard({ review, direction }: { review: UserTradeReviewSummaryResponse; direction: ReviewDirection }) {
+function ReviewCard({
+  review,
+  direction,
+  currentUserUuid,
+}: {
+  review: UserTradeReviewSummaryResponse;
+  direction: ReviewDirection;
+  currentUserUuid?: string;
+}) {
   const { t } = useTranslation("trade");
   const counterparty = direction === "RECEIVED" ? review.reviewerUsername : review.reviewedUsername;
+  const canReport = review.reviewerUserUuid !== currentUserUuid;
 
   return (
     <article className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm transition-colors hover:border-slate-300">
@@ -96,11 +107,21 @@ function ReviewCard({ review, direction }: { review: UserTradeReviewSummaryRespo
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 text-xs text-slate-500">
           <span>{formatDate(review.createdAt)}</span>
           <Link to={routePaths.offerDetail(review.tradeOfferUuid)} className="font-medium text-indigo-700 hover:text-indigo-800">
             {t("reviewsPage.openTrade")}
           </Link>
+          {canReport ? (
+            <ReportTrigger
+              targetType="REVIEW"
+              targetUuid={review.uuid}
+              contextLabel={counterparty}
+              variant="ghost"
+              size="sm"
+              className="h-auto px-1.5 py-0.5 text-xs"
+            />
+          ) : null}
         </div>
       </div>
 
@@ -121,6 +142,7 @@ function ReviewCard({ review, direction }: { review: UserTradeReviewSummaryRespo
 
 export function ReviewsPage() {
   const { t } = useTranslation(["trade", "common"]);
+  const { user } = useAuth();
   const [direction, setDirection] = useState<ReviewDirection>("RECEIVED");
   const [rating, setRating] = useState<TradeReviewRating | undefined>();
   const [page, setPage] = useState(0);
@@ -249,7 +271,12 @@ export function ReviewsPage() {
           <>
             <div className="space-y-3 p-4">
               {reviews.map((review) => (
-                <ReviewCard key={review.uuid} review={review} direction={direction} />
+                  <ReviewCard
+                    key={review.uuid}
+                    review={review}
+                    direction={direction}
+                    currentUserUuid={user?.uuid}
+                  />
               ))}
             </div>
 

@@ -39,6 +39,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     { to: routePaths.admin.system, label: t("navigation:system"), icon: Settings },
     { to: routePaths.admin.categories, label: t("navigation:categories"), icon: FolderTree, end: true },
     { to: routePaths.admin.listings, label: t("navigation:listings"), icon: Package, end: true },
+    { to: routePaths.admin.reports, label: t("navigation:reports"), icon: Shield, end: true },
     { to: routePaths.admin.reviews, label: t("navigation:reviews"), icon: MessageSquareWarning, end: true },
     { to: routePaths.admin.tags, label: t("navigation:tags"), icon: Tags, end: true },
   ];

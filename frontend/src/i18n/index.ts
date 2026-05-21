@@ -22,6 +22,8 @@ import srNotifications from "./locales/sr/notifications.json";
 import enNotifications from "./locales/en/notifications.json";
 import srAdmin from "./locales/sr/admin.json";
 import enAdmin from "./locales/en/admin.json";
+import srReporting from "./locales/sr/reporting.json";
+import enReporting from "./locales/en/reporting.json";
 import srErrors from "./locales/sr/errors.json";
 import enErrors from "./locales/en/errors.json";
 import srDashboard from "./locales/sr/dashboard.json";
@@ -37,6 +39,7 @@ export const translationResources = {
     profile: srProfile,
     notifications: srNotifications,
     admin: srAdmin,
+    reporting: srReporting,
     errors: srErrors,
     dashboard: srDashboard,
   },
@@ -49,6 +52,7 @@ export const translationResources = {
     profile: enProfile,
     notifications: enNotifications,
     admin: enAdmin,
+    reporting: enReporting,
     errors: enErrors,
     dashboard: enDashboard,
   },
@@ -69,6 +73,7 @@ void i18n.use(initReactI18next).init({
     "profile",
     "notifications",
     "admin",
+    "reporting",
     "errors",
     "dashboard",
   ],

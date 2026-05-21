@@ -14,6 +14,7 @@ import { EmptyState } from "../../components/ui/EmptyState";
 import { useAuth } from "../../auth/AuthContext";
 import type { TradeOfferStatus, TradeOfferItemSummary } from "@/api/generated/types.ts";
 import {TradeOfferMessagesPanel} from "@/features/trade/TradeOfferMessagesPanel.tsx";
+import { ReportTrigger } from "@/features/reports/ReportTrigger";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
@@ -125,6 +126,11 @@ export function TradeOfferDetailPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{t("trade:detail.title")}</h1>
         <div className="flex items-center gap-2">
+          <ReportTrigger
+            targetType="TRADE_OFFER"
+            targetUuid={offer.uuid}
+            contextLabel={`${offer.sender.username} → ${offer.receiver.username}`}
+          />
           <TradeOfferModeBadge mode={offer.mode} />
           <TradeOfferStatusBadge status={offer.status} />
         </div>

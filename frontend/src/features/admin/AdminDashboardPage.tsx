@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
+  Flag,
   FolderTree,
   KeyRound,
   Lock,
@@ -53,6 +54,13 @@ const adminModules: AdminModule[] = [
     to: routePaths.admin.system,
     icon: Settings,
     tone: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300",
+  },
+  {
+    titleKey: "reports",
+    descriptionKey: "dashboard.modules.reports",
+    to: routePaths.admin.reports,
+    icon: Flag,
+    tone: "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-300",
   },
   {
     titleKey: "categories",

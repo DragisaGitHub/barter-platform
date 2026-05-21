@@ -19,6 +19,7 @@ import { Spinner } from "../../components/ui/Spinner";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { ImageLightbox, type LightboxImage } from "../../components/ui/ImageLightbox";
 import { SendOfferModal } from "../trade/SendOfferModal";
+import { ReportTrigger } from "@/features/reports/ReportTrigger";
 import { useAuth } from "../../auth/AuthContext";
 import { routePaths } from "@/routes/routePaths.ts";
 import type { ItemImageResponse } from "@/api/generated/types.ts";
@@ -299,6 +300,15 @@ export function ItemDetailPage() {
                   {t("catalog:itemDetail.tradeSafelyDescription")}
                 </p>
               </div>
+
+              {!isOwner ? (
+                <ReportTrigger
+                  targetType="ITEM"
+                  targetUuid={item.uuid}
+                  contextLabel={item.title}
+                  className="mt-3 w-full rounded-lg border-slate-200"
+                />
+              ) : null}
 
               {showGuestTradeCta ? (
                 <div className="mt-4 space-y-2.5">
