@@ -65,6 +65,7 @@ export const routePaths = {
     tags: "/admin/tags",
     listings: "/admin/listings",
     listingDetail: (uuid: string) => `/admin/listings/${uuid}`,
+    reports: "/admin/reports",
     reviews: "/admin/reviews",
   },
 } as const;

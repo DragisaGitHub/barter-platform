@@ -1,0 +1,48 @@
+{
+  "actions": {
+    "report": "Report"
+  },
+  "dialog": {
+    "title": "Submit report",
+    "subtitle": "Reports help the moderation team review unsafe, abusive, or misleading activity.",
+    "targetType": "Target type",
+    "reason": "Reason",
+    "selectReason": "Select a reason",
+    "details": "Additional details",
+    "detailsPlaceholder": "Add any context that helps moderators review this report.",
+    "detailsHelper": "Avoid sharing personal contact details unless they are needed for moderation context.",
+    "submit": "Submit report",
+    "close": "Close",
+    "successTitle": "Report submitted",
+    "successDescription": "Thanks. The moderation team can now review this report.",
+    "validationReason": "Choose a reason before submitting.",
+    "validationDetailsTooLong": "Details must be 2000 characters or fewer."
+  },
+  "reasons": {
+    "prohibitedItem": "Prohibited item",
+    "spamScam": "Spam or scam",
+    "harassment": "Harassment or abusive behavior",
+    "misleadingListing": "Misleading listing or content",
+    "unsafeExchange": "Unsafe exchange",
+    "noShow": "No-show",
+    "other": "Other"
+  },
+  "targetTypes": {
+    "item": "Item",
+    "user": "User profile",
+    "message": "Trade message",
+    "tradeOffer": "Trade offer",
+    "review": "Review"
+  },
+  "statuses": {
+    "open": "Open",
+    "inReview": "In review",
+    "resolved": "Resolved",
+    "dismissed": "Dismissed"
+  },
+  "details": "Report details",
+  "preview": "Target preview",
+  "assignedModerator": "Assigned moderator",
+  "resolutionNote": "Resolution note"
+}
+

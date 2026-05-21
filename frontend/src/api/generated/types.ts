@@ -85,6 +85,25 @@ export type ListingModerationActionType = components["schemas"]["ListingModerati
 export type ListingModerationReasonCode = components["schemas"]["ListingModerationReasonCode"];
 export type ListingModerationSourceType = components["schemas"]["ListingModerationSourceType"];
 
+// ─── Reporting Enums ─────────────────────────────────────────────────────────
+
+export type ReportReasonCode = components["schemas"]["ReportReasonCode"];
+export type ReportStatus = components["schemas"]["ReportStatus"];
+export type ReportTargetType = components["schemas"]["ReportTargetType"];
+
+// ─── Reporting Response DTOs ────────────────────────────────────────────────
+
+export type ReportUserSummaryResponse = components["schemas"]["ReportUserSummaryResponse"];
+export type ReportTargetSummaryResponse = components["schemas"]["ReportTargetSummaryResponse"];
+export type ReportSummaryResponse = components["schemas"]["ReportSummaryResponse"];
+export type ReportDetailResponse = components["schemas"]["ReportDetailResponse"];
+export type ReportPagedResponse = components["schemas"]["ReportPagedResponse"];
+
+// ─── Reporting Request DTOs ─────────────────────────────────────────────────
+
+export type CreateReportRequest = components["schemas"]["CreateReportRequest"];
+export type AdminUpdateReportRequest = components["schemas"]["AdminUpdateReportRequest"];
+
 // ─── Trade Offer Enums ──────────────────────────────────────────────────────
 
 export type TradeOfferStatus = components["schemas"]["TradeOfferStatus"];

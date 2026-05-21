@@ -1,0 +1,48 @@
+{
+  "actions": {
+    "report": "Prijavi"
+  },
+  "dialog": {
+    "title": "Pošalji prijavu",
+    "subtitle": "Prijave pomažu moderatorskom timu da pregleda nebezbedne, uvredljive ili obmanjujuće aktivnosti.",
+    "targetType": "Tip prijave",
+    "reason": "Razlog",
+    "selectReason": "Izaberi razlog",
+    "details": "Dodatni detalji",
+    "detailsPlaceholder": "Dodaj kontekst koji moderatorima pomaže da pregledaju ovu prijavu.",
+    "detailsHelper": "Izbegavaj deljenje ličnih kontakt podataka osim ako su potrebni za moderaciju.",
+    "submit": "Pošalji prijavu",
+    "close": "Zatvori",
+    "successTitle": "Prijava je poslata",
+    "successDescription": "Hvala. Moderatorski tim sada može da pregleda ovu prijavu.",
+    "validationReason": "Izaberi razlog pre slanja prijave.",
+    "validationDetailsTooLong": "Detalji mogu imati najviše 2000 karaktera."
+  },
+  "reasons": {
+    "prohibitedItem": "Zabranjen predmet",
+    "spamScam": "Spam ili prevara",
+    "harassment": "Uznemiravanje ili uvredljivo ponašanje",
+    "misleadingListing": "Obmanjujući oglas ili sadržaj",
+    "unsafeExchange": "Nebezbedna razmena",
+    "noShow": "Nedolazak",
+    "other": "Drugo"
+  },
+  "targetTypes": {
+    "item": "Oglas",
+    "user": "Korisnički profil",
+    "message": "Poruka o razmeni",
+    "tradeOffer": "Ponuda za razmenu",
+    "review": "Ocena"
+  },
+  "statuses": {
+    "open": "Otvoreno",
+    "inReview": "U pregledu",
+    "resolved": "Rešeno",
+    "dismissed": "Odbačeno"
+  },
+  "details": "Detalji prijave",
+  "preview": "Pregled cilja",
+  "assignedModerator": "Dodeljeni moderator",
+  "resolutionNote": "Napomena o rešenju"
+}
+

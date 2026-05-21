@@ -16,6 +16,7 @@ import { AdminDashboardPage } from "../features/admin/AdminDashboardPage";
 import { AdminCategoriesPage } from "../features/admin/AdminCategoriesPage";
 import { AdminListingsPage } from "../features/admin/AdminListingsPage";
 import { AdminListingDetailPage } from "../features/admin/AdminListingDetailPage";
+import { AdminReportsPage } from "../features/admin/AdminReportsPage";
 import { AdminReviewsPage } from "../features/admin/AdminReviewsPage";
 import { AdminTagsPage } from "../features/admin/AdminTagsPage";
 import { UsersListPage } from "../features/admin/UsersListPage";
@@ -241,6 +242,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/listings/:uuid",
         element: <AdminListingDetailPage />,
+      },
+      {
+        path: routePaths.admin.reports,
+        element: <AdminReportsPage />,
       },
       {
         path: "/admin/reviews",

@@ -21,6 +21,7 @@ import { Pagination } from "../../components/data/Pagination";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { PublicProfileListingCard } from "./PublicProfileListingCard";
 import { PublicProfilePageSkeleton } from "./PublicProfilePageSkeleton";
+import { ReportTrigger } from "@/features/reports/ReportTrigger";
 import { useTranslation } from "react-i18next";
 
 function formatJoinDate(iso?: string | null): string | null {
@@ -142,6 +143,13 @@ export function PublicProfilePage() {
           <Link to={routePaths.myItems}>
             <Button variant="outline">{t("profile:public.manageMyItems")}</Button>
           </Link>
+        ) : profile ? (
+          <ReportTrigger
+            targetType="USER"
+            targetUuid={profile.uuid}
+            contextLabel={profile.username}
+            variant="outline"
+          />
         ) : null}
       </div>
 
