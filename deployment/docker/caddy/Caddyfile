@@ -18,12 +18,19 @@ https://{$CADDY_DOMAIN:barter-platform-dev.duckdns.org} {
 	# restrictive Caddy request body limit here; backend/frontend validation and
 	# storage limits continue to enforce accepted upload sizes.
 
-	# API and file routes stay same-origin for browsers. Caddy forwards the
-	# original path unchanged, so /api/v1/files/... and all existing /api/*
-	# endpoints keep their current backend routing behavior.
+	# API, file, and infrastructure health routes stay same-origin for browsers
+	# and external uptime checks. Caddy forwards the original path unchanged, so
+	# /api/v1/files/..., versioned REST endpoints, and /actuator/* keep their
+	# current backend routing behavior.
 	handle /api/* {
 		# Caddy reverse_proxy preserves Host/X-Forwarded-* context and supports
 		# WebSocket/HTTP upgrade automatically for future realtime endpoints.
+		reverse_proxy backend:8080
+	}
+
+	handle /actuator/* {
+		# Keep Spring Boot Actuator outside public API versioning while still
+		# allowing infrastructure health checks through the public hostname.
 		reverse_proxy backend:8080
 	}
 

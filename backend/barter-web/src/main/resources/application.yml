@@ -36,6 +36,36 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health
+  endpoint:
+    health:
+      validate-group-membership: false
+      probes:
+        enabled: true
+      show-details: never
+      show-components: never
+      group:
+        liveness:
+          include: livenessState,ping
+        readiness:
+          include: readinessState,ping,db,diskSpace
+  health:
+    ping:
+      enabled: true
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level app=${spring.application.name:-barter-platform} correlationId=%X{correlationId:-na} thread=%thread logger=%logger{36} - %msg%n%wEx"
+
 barter:
   email-verification:
     enabled: ${BARTER_EMAIL_VERIFICATION_ENABLED:true}

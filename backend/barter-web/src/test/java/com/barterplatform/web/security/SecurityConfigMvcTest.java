@@ -3,6 +3,7 @@ package com.barterplatform.web.security;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 
@@ -33,7 +34,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import static org.mockito.Mockito.mock;
 
-@SpringBootTest(classes = SecurityConfigMvcTest.TestApplication.class)
+@SpringBootTest(
+        classes = SecurityConfigMvcTest.TestApplication.class,
+        properties = "server.servlet.context-path="
+)
 @AutoConfigureMockMvc
 class SecurityConfigMvcTest {
 
@@ -61,6 +65,17 @@ class SecurityConfigMvcTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
+            "/actuator/health",
+            "/actuator/health/readiness"
+    })
+    void shouldAllowActuatorHealthEndpointsWithoutAuthentication(String path) throws Exception {
+        mockMvc.perform(get(path))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("UP"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
             "/api/v1/profiles/11111111-1111-1111-1111-111111111111",
             "/api/v1/profiles/11111111-1111-1111-1111-111111111111/items"
     })
@@ -73,6 +88,12 @@ class SecurityConfigMvcTest {
     @Test
     void shouldRequireAuthenticationForProtectedEndpoint() throws Exception {
         mockMvc.perform(get("/api/v1/protected"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void shouldRequireAuthenticationForNonHealthActuatorEndpoints() throws Exception {
+        mockMvc.perform(get("/actuator/env"))
                 .andExpect(status().isUnauthorized());
     }
 
@@ -96,6 +117,7 @@ class SecurityConfigMvcTest {
         ResponseEntity<String> ping() {
             return ResponseEntity.ok("pong");
         }
+
 
         @GetMapping({"/api/v1/profiles/{userUuid}", "/api/v1/profiles/{userUuid}/items"})
         ResponseEntity<String> profiles(@PathVariable String userUuid) {
