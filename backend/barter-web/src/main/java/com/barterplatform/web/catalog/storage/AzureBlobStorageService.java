@@ -21,7 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Service
-@Profile("dev")
+@Profile({"dev", "prod"})
 public class AzureBlobStorageService implements FileStorageService {
 
     private static final Logger log = LoggerFactory.getLogger(AzureBlobStorageService.class);
@@ -50,9 +50,6 @@ public class AzureBlobStorageService implements FileStorageService {
             logSuccess("store", storageKey, (long) content.length, contentType, startedAt);
         } catch (BlobStorageException e) {
             logFailure("store", storageKey, contentLength, contentType, startedAt, e, e.getStatusCode(), valueOrDefault(e.getErrorCode()));
-            throw storageUnavailable(e);
-        } catch (AzureException e) {
-            logFailure("store", storageKey, contentLength, contentType, startedAt, e, null, null);
             throw storageUnavailable(e);
         } catch (RuntimeException e) {
             logFailure("store", storageKey, contentLength, contentType, startedAt, e, null, null);

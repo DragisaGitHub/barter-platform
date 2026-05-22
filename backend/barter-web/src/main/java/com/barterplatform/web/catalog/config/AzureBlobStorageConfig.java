@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 @Configuration
-@Profile("dev")
+@Profile({"dev", "prod"})
 public class AzureBlobStorageConfig {
 
     private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(5);

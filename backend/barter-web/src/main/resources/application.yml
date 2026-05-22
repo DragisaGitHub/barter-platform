@@ -33,8 +33,10 @@ server:
 springdoc:
   api-docs:
     path: /api-docs
+    enabled: ${BARTER_SWAGGER_ENABLED:true}
   swagger-ui:
     path: /swagger-ui.html
+    enabled: ${BARTER_SWAGGER_ENABLED:true}
 
 management:
   endpoints:
@@ -77,6 +79,9 @@ barter:
     code-expiration-minutes: ${BARTER_VERIFICATION_CODE_EXPIRATION_MINUTES:15}
   mail:
     from: ${MAIL_FROM:noreply@barter-platform.com}
+  security:
+    allowed-origins: ${BARTER_SECURITY_ALLOWED_ORIGINS:${FRONTEND_ORIGIN:}}
+    swagger-enabled: ${BARTER_SWAGGER_ENABLED:true}
   rate-limits:
     enabled: ${BARTER_RATE_LIMITS_ENABLED:true}
     # Leave blank to use the servlet remote address. Set only behind a trusted proxy

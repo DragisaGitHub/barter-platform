@@ -70,7 +70,8 @@ services:
       SPRING_MAIL_USERNAME: ${SMTP_USERNAME:-}
       SPRING_MAIL_PASSWORD: ${SMTP_PASSWORD:-}
       MAIL_FROM: ${MAIL_FROM:-noreply@barter-platform.dev}
-      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-}
+      BARTER_SECURITY_ALLOWED_ORIGINS: ${BARTER_SECURITY_ALLOWED_ORIGINS:-}
     depends_on:
       postgres:
         condition: service_healthy
