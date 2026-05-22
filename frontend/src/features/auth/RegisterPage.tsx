@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { useForm, FormProvider } from "react-hook-form";
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { AxiosError } from "axios";
+import { Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../components/ui/Button";
@@ -24,8 +25,83 @@ type RegisterFormData = {
   confirmPassword: string;
 };
 
+const USERNAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{1,78}[A-Za-z0-9])?$/;
+const USERNAME_PATTERN_SOURCE = USERNAME_PATTERN.source;
+
 function requiresEmailVerification(user: CurrentUserResponse): boolean {
-  return !(user.emailVerified === true || user.status === "ACTIVE");
+  return !(user.emailVerified || user.status === "ACTIVE");
+}
+
+function shouldUseFriendlyUsernameMessage(field: keyof RegisterFormData, message?: string): boolean {
+  if (field !== "username" || !message) {
+    return false;
+  }
+
+  const normalizedMessage = message.toLowerCase();
+
+  return (
+    message.includes(USERNAME_PATTERN_SOURCE) ||
+    normalizedMessage.includes("must match") ||
+    normalizedMessage.includes("must not contain blank spaces")
+  );
+}
+
+function PasswordField({
+  name,
+  label,
+  placeholder,
+  autoComplete,
+  showPassword,
+  onToggle,
+}: {
+  name: "password" | "confirmPassword";
+  label: string;
+  placeholder: string;
+  autoComplete: string;
+  showPassword: boolean;
+  onToggle: () => void;
+}) {
+  const { t } = useTranslation(["auth", "common"]);
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext<RegisterFormData>();
+
+  const error = errors[name]?.message as string | undefined;
+
+  return (
+    <div className="w-full">
+      <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+        {label}
+      </label>
+      <div className="relative">
+        <input
+          {...register(name)}
+          type={showPassword ? "text" : "password"}
+          placeholder={placeholder}
+          autoComplete={autoComplete}
+          className={[
+            "w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 transition-colors duration-150",
+            "focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20",
+            "disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500",
+            "dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500",
+            "dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20",
+            error && "border-red-500 focus:border-red-500 focus:ring-red-500/20",
+            "pr-12",
+          ].join(" ")}
+        />
+        <button
+          type="button"
+          onClick={onToggle}
+          className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+          aria-label={showPassword ? t("auth:hidePassword") : t("auth:showPassword")}
+        >
+          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        </button>
+      </div>
+      {error && <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{error}</p>}
+    </div>
+  );
 }
 
 export function RegisterPage() {
@@ -34,6 +110,8 @@ export function RegisterPage() {
   const { register: registerUser } = useAuth();
   const { t } = useTranslation(["auth", "common"]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
   const loginHref = buildPathWithQuery(routePaths.login, { redirect: redirectPath });
 
@@ -42,7 +120,8 @@ export function RegisterPage() {
       username: z
         .string()
         .min(3, t("auth:usernameMinLength"))
-        .max(50, t("auth:usernameMaxLength")),
+        .max(50, t("auth:usernameMaxLength"))
+        .regex(USERNAME_PATTERN, t("auth:usernameInvalidPattern")),
       email: z.string().email(t("auth:invalidEmail")),
       password: z.string().min(8, t("auth:passwordMinLength")),
       confirmPassword: z.string(),
@@ -95,9 +174,15 @@ export function RegisterPage() {
 
         if (errorData?.fieldErrors) {
           errorData.fieldErrors.forEach((fieldError) => {
+            const fieldName = fieldError.field as keyof RegisterFormData;
+
             methods.setError(
-              fieldError.field as keyof RegisterFormData,
-              { message: fieldError.message }
+              fieldName,
+              {
+                message: shouldUseFriendlyUsernameMessage(fieldName, fieldError.message)
+                  ? t("auth:usernameInvalidPattern")
+                  : fieldError.message,
+              }
             );
           });
         } else if (errorData?.message) {
@@ -153,20 +238,22 @@ export function RegisterPage() {
                 autoComplete="email"
               />
 
-              <FormInput
+              <PasswordField
                 name="password"
                 label={t("common:password")}
-                type="password"
                 placeholder={t("auth:createPassword")}
                 autoComplete="new-password"
+                showPassword={showPassword}
+                onToggle={() => setShowPassword((current) => !current)}
               />
 
-              <FormInput
+              <PasswordField
                 name="confirmPassword"
                 label={t("common:confirmPassword")}
-                type="password"
                 placeholder={t("common:confirmPassword")}
                 autoComplete="new-password"
+                showPassword={showConfirmPassword}
+                onToggle={() => setShowConfirmPassword((current) => !current)}
               />
 
               <Button type="submit" fullWidth isLoading={isLoading}>
