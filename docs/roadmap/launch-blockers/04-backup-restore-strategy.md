@@ -6,104 +6,197 @@
 
 # Goal
 
-- Establish verified backup, restore, retention, and recovery expectations for real user data before public launch.
-- Agent-mode scope: implement only this document, update tests/docs, and stop for review before starting another roadmap item.
+- Protect the current DEV/public-beta deployment against PostgreSQL data loss using a simple, operator-friendly backup and restore process.
+- Keep the implementation realistic for a small VM: compressed dumps, off-server Azure Blob upload, minimal local retention, and no permanent backup accumulation on the VM.
+- Make backup cadence configurable now so future production can switch to daily backups without changing script logic.
 
-# Why It Matters
+# Scope Decision
 
-- Listings, images, messages, offers, reviews, and accounts are user-created data with real trust value.
-- The roadmap treats unverified backup/restore as an existential launch risk.
+This implementation intentionally covers **PostgreSQL only**.
 
-# Current State
+- PostgreSQL contains application records and metadata: users, listings, offers, messages, reviews, and image references/keys.
+- Item image binaries already live in Azure Blob Storage and must **not** be duplicated into local VM backups.
+- This launch-blocker is therefore satisfied by a reliable PostgreSQL backup/upload/restore process plus clear operator documentation.
 
-- A database backup script exists under deployment scripts.
-- No documented automated schedule, off-host encrypted retention, image backup coverage, or restore verification routine.
+# Current Deployment Reality
 
-# Risks
+- Runtime deployment: `deployment/compose/docker-compose.dev.yml`
+- PostgreSQL service: `postgres`
+- Primary env file: `deployment/env/dev.env`
+- Azure Blob container for DB backups: `postgres-backups`
+- DEV blob prefix: `dev/postgres/`
+- Existing image storage remains separate via `AZURE_STORAGE_CONTAINER_DEV`
 
-- Host loss, disk corruption, operator error, failed migrations, or accidental deletion could destroy user data.
-- Backups that are never restored may be unusable when needed.
-- Images and database backups can drift if recovery procedures are not coordinated.
+# Implemented Artifacts
 
-# Proposed Solution
+- `deployment/scripts/backup-db.sh`
+  - runs `pg_dump`
+  - compresses the dump to `*.dump.gz`
+  - uploads to Azure Blob Storage
+  - trims local backup files to the configured retention count after successful upload
+- `deployment/scripts/restore-db.sh`
+  - restores a compressed PostgreSQL dump into a chosen database
+  - supports recreating a dedicated restore-test database
+  - refuses to recreate the primary DB unless explicitly allowed
+- `deployment/scripts/setup-backup-cron.sh`
+  - installs or refreshes the cron schedule using `BACKUP_FREQUENCY` or `BACKUP_SCHEDULE`
+- `deployment/docs/DEV_DEPLOYMENT.md`
+  - documents manual backup, monthly DEV schedule, restore testing, failure checklist, and pre-deploy backup guidance
 
-- Define realistic RPO/RTO for beta and production.
-- Automate PostgreSQL backups on a schedule with encrypted off-host storage.
-- Document image storage backup/lifecycle coverage for local and Azure Blob modes.
-- Run restore tests into a fresh database on a fixed cadence.
-- Add backup success/failure observability and a restore runbook.
+# Configurable Parameters
 
-# Simpler Alternatives
+These parameters are now the contract for backup behavior:
 
-- For invite-only beta, daily encrypted off-host DB backups plus monthly restore test may be enough.
-- Use managed PostgreSQL backups if the deployment moves to managed DB, but still test application-level restore.
+```env
+BACKUP_ENABLED=true
+BACKUP_FREQUENCY=monthly
+BACKUP_SCHEDULE=
+BACKUP_LOCAL_RETENTION_COUNT=2
+BACKUP_AZURE_CONTAINER=postgres-backups
+BACKUP_AZURE_PREFIX=dev/postgres
+BACKUP_WORK_DIR=
+BACKUP_AZURE_CONNECTION_STRING=
+POSTGRES_SERVICE=postgres
+POSTGRES_DB=barter_db
+POSTGRES_USER=barter_user
+```
 
-# Architecture Impact
+Notes:
 
-- Keep the existing modular Spring Boot monolith. Do not introduce microservices, event streaming, or Kubernetes for this workstream.
-- No product architecture change is required.
-- Prefer managed services or simple scripts over custom backup services.
+- `BACKUP_SCHEDULE` overrides `BACKUP_FREQUENCY` when set.
+- DEV defaults to `BACKUP_FREQUENCY=monthly`.
+- Future production can later move to `BACKUP_FREQUENCY=daily` or an explicit cron expression with no backup script rewrite.
+- `BACKUP_AZURE_CONNECTION_STRING` may reuse the same Azure Storage account as DEV image storage or point to a separate backup account.
+- If `BACKUP_AZURE_CONNECTION_STRING` is empty, the backup script falls back to `AZURE_STORAGE_CONNECTION_STRING_DEV`.
 
-# Operational Impact
+# Backup Flow
 
-- Adds recurring operational responsibility.
-- Requires backup storage access control, retention policy, restore owner, and test schedule.
-- Improves confidence before migrations/deployments.
+1. Read configuration from `deployment/env/dev.env` plus optional exported env overrides.
+2. Execute `pg_dump` against the running `postgres` container.
+3. Produce a compressed file named like:
 
-# Security Impact
+   ```text
+   barter-barter_db-20260522T040000Z.dump.gz
+   ```
 
-- Backups contain personal and potentially sensitive content.
-- Encrypt backups at rest and in transit.
-- Restrict backup credentials and avoid writing secrets into logs.
+4. Upload the file to:
 
-# Developer Velocity Impact
+   ```text
+   postgres-backups/dev/postgres/<backup-file>.dump.gz
+   ```
 
-- Slight ops overhead, but restores reduce fear around migrations and production changes.
-- Runbooks help future contributors act safely.
+5. After successful upload, prune local files down to `BACKUP_LOCAL_RETENTION_COUNT`.
+6. Keep backup logs in `deployment/logs/backup-db.log` when run from cron.
 
-# Backend Changes
+# Retention Policy
 
-- None required for first milestone.
-- Consider adding a maintenance endpoint only if protected and operationally justified; otherwise avoid.
+## DEV now
 
-# Frontend Changes
+- **Backup cadence:** monthly by default.
+- **Local retention:** keep only the newest `1-2` compressed PostgreSQL backup files; default is `2`.
+- **Azure retention:** keep monthly DEV backups off-server in `postgres-backups/dev/postgres/` until a stricter lifecycle rule is introduced.
 
-- None.
+This is intentionally conservative for a small public-beta deployment:
 
-# Database Changes
+- the VM does not accumulate large backup history;
+- the authoritative off-server copy lives in Azure Blob Storage;
+- monthly DEV cadence keeps blob growth modest.
 
-- No schema changes.
-- Create migration rollback/restore guidance for failed Flyway migration scenarios.
+## Future PROD direction
 
-# Deployment Changes
+- No production scheduling is implemented yet.
+- Production is expected to move to at least daily PostgreSQL backups by changing configuration only:
 
-- Update backup script/configuration for schedule, encryption, retention, and off-host destination.
-- Add restore script or documented command sequence.
-- Add alert on backup failure and disk usage.
+  ```env
+  BACKUP_FREQUENCY=daily
+  ```
 
-# Testing Strategy
+  or:
 
-- Execute a restore into an empty database and verify Flyway/application startup.
-- Validate restored core flows: login fixture, listing read, image references, offer/message/review records.
-- Test backup failure alert path.
+  ```env
+  BACKUP_SCHEDULE=0 2 * * *
+  ```
 
-# Rollout Plan
+# Restore Strategy
 
-- Inventory data stores: Postgres, image storage, deployment env/secrets references.
-- Automate DB backup and off-host copy.
-- Perform first restore test before public launch.
-- Schedule recurring restore verification and record results.
+## Non-destructive restore verification
 
-# Future Improvements
+Before public launch, and after major migration risk, perform a manual restore test into a separate database such as `barter_restore_test`.
 
-- Managed PostgreSQL point-in-time recovery.
-- Object storage lifecycle/versioning.
-- Disaster recovery rehearsal after traffic grows.
-- Automated anonymized staging refresh if privacy controls are in place.
+Recommended flow:
+
+1. List available blobs under `dev/postgres/`.
+2. Download one backup file locally.
+3. Restore into `barter_restore_test` using `restore-db.sh --recreate-target-db --yes`.
+4. Validate a few representative tables and image metadata references.
+5. Record the date and result.
+
+## Destructive live restore
+
+Only use for an intentional incident recovery:
+
+1. Stop the backend container.
+2. Restore the selected backup into the primary database.
+3. Start the backend container again.
+4. Verify health and key flows.
+
+The restore script deliberately requires explicit confirmation before recreating the primary DB.
+
+# RPO / RTO Expectations
+
+## DEV / public-beta
+
+- **Default RPO:** up to one month with the current monthly schedule.
+- **Target RTO:** manual operator recovery within roughly 1-2 hours, including backup selection, restore, and smoke verification.
+
+This is acceptable for current DEV/public-beta preparation but is **not** the intended long-term production posture.
+
+## Future PROD target
+
+- Move to daily backups at minimum.
+- Keep the same script path and blob layout pattern, with a production prefix such as `prod/postgres/`.
+
+# Operational Rules
+
+- Run a manual PostgreSQL backup before deployments that may affect data, infrastructure, container images, or migrations.
+- Do not store backup files permanently on the VM.
+- Do not back up item images locally.
+- Do not change application business code or schema for this launch-blocker.
+- Keep secrets out of logs; use env/secret configuration for Azure storage access.
+
+# Failure Checklist
+
+If backup or restore fails, verify:
+
+1. `postgres` is healthy in the current Compose stack.
+2. `az` is installed and can access the configured storage account/container.
+3. `BACKUP_AZURE_CONTAINER=postgres-backups` is correct.
+4. `BACKUP_AZURE_PREFIX=dev/postgres` is correct.
+5. The VM has enough free space for one compressed dump plus one in-progress file.
+6. `BACKUP_WORK_DIR` is writable.
+7. The latest cron/manual output in `deployment/logs/backup-db.log` or terminal output explains the failure cause.
+
+# Security Considerations
+
+- Backups contain user and operational data; treat them as sensitive.
+- Azure Blob upload uses encrypted transport and Azure storage encryption at rest.
+- Backup credentials must remain in server env/secrets, not in Git.
+- Prefer a dedicated backup credential in the future if operational separation becomes necessary.
+
+# Testing / Verification Requirement Before Public Launch
+
+The launch blocker is only considered operationally closed when all of the following are true:
+
+- A successful manual backup has been created and uploaded to `postgres-backups/dev/postgres/`.
+- The monthly DEV cron schedule has been installed and verified.
+- A restore test into a fresh non-primary database has completed successfully.
+- Operators know the pre-deploy manual backup step and failure checklist.
 
 # Explicitly Deferred
 
-- Multi-region active-active recovery.
-- Complex backup orchestration platform.
-- Zero-data-loss RPO guarantees for early beta.
-- Kubernetes backup tooling.
+- Production backup cadence rollout
+- Azure Blob lifecycle automation for old backup blobs
+- Managed PostgreSQL PITR
+- Enterprise backup tools
+- Kubernetes backup tooling
+- Multi-region disaster recovery

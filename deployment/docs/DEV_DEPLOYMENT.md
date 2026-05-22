@@ -95,6 +95,9 @@ On the OCI VM install:
 
 - Docker Engine
 - Docker Compose plugin (`docker compose`)
+- `gzip`
+- `cron`/`crontab`
+- Azure CLI (`az`) for PostgreSQL backup upload/download to Azure Blob Storage
 - Git or another way to copy the `deployment/` folder to the server
 - Optional: `ufw` or OCI security-list/network-security-group rules for firewall management
 
@@ -128,6 +131,12 @@ Minimum values to review and replace:
 - `JWT_SECRET`
 - `AZURE_STORAGE_CONNECTION_STRING_DEV`
 - `AZURE_STORAGE_CONTAINER_DEV`
+- `BACKUP_ENABLED=true`
+- `BACKUP_FREQUENCY=monthly`
+- `BACKUP_LOCAL_RETENTION_COUNT=2`
+- `BACKUP_AZURE_CONTAINER=postgres-backups`
+- `BACKUP_AZURE_PREFIX=dev/postgres`
+- `BACKUP_AZURE_CONNECTION_STRING` or reuse `AZURE_STORAGE_CONNECTION_STRING_DEV`
 - `CADDY_DOMAIN=barter-platform-dev.duckdns.org`
 - `BARTER_EMAIL_VERIFICATION_ENABLED=false` for DEV-only registration/login bypass
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` if real email delivery is needed
@@ -307,34 +316,184 @@ No manual Certbot command or standalone certificate renewal job is required anym
 
 ## Backups
 
-Create a timestamped PostgreSQL custom-format backup:
+Backups now focus on **PostgreSQL only**.
+
+- Application data such as users, listings, offers, messages, reviews, and image metadata is stored in PostgreSQL and is covered by the database backup.
+- Item image binaries already live in Azure Blob Storage and are **not** copied into local VM backups.
+- PostgreSQL backups are created with `pg_dump`, compressed with gzip, uploaded off-server to Azure Blob Storage, and then trimmed locally to a very small retention count.
+- DEV defaults use the Azure Blob container `postgres-backups` with blob prefix `dev/postgres/`.
+
+### Manual backup command
+
+Create and upload a compressed PostgreSQL backup immediately:
 
 ```bash
-./deployment/scripts/backup-db.sh
+./deployment/scripts/backup-db.sh --force
 ```
 
-Backups are written to:
+What it does:
+
+- creates a custom-format `pg_dump`
+- compresses it to `*.dump.gz`
+- uploads it to Azure Blob Storage
+- keeps only the newest `BACKUP_LOCAL_RETENTION_COUNT` local backup files
+
+Default local working directory:
 
 ```text
-deployment/backups/
+deployment/backups/postgres/
 ```
 
-This directory is ignored by Git.
+This directory is ignored by Git and should not be treated as permanent storage.
 
-Restore example, replacing the dump path:
+### Monthly DEV backup schedule
+
+Set these values in `deployment/env/dev.env` for the current DEV/public-beta phase:
+
+```env
+BACKUP_ENABLED=true
+BACKUP_FREQUENCY=monthly
+BACKUP_SCHEDULE=
+BACKUP_LOCAL_RETENTION_COUNT=2
+BACKUP_AZURE_CONTAINER=postgres-backups
+BACKUP_AZURE_PREFIX=dev/postgres
+BACKUP_WORK_DIR=
+BACKUP_AZURE_CONNECTION_STRING=
+POSTGRES_SERVICE=postgres
+```
+
+Notes:
+
+- Leave `BACKUP_SCHEDULE` empty to use the built-in monthly default (`0 4 1 * *`).
+- Leave `BACKUP_WORK_DIR` empty to use the script default under `deployment/backups/postgres/`, or set an absolute path on the VM.
+- Leave `BACKUP_AZURE_CONNECTION_STRING` empty only if you intentionally want to reuse `AZURE_STORAGE_CONNECTION_STRING_DEV`.
+- Future production can switch to `BACKUP_FREQUENCY=daily` or set an explicit cron expression in `BACKUP_SCHEDULE` without changing backup script logic.
+
+Install or refresh the monthly cron entry:
+
+```bash
+chmod +x deployment/scripts/backup-db.sh deployment/scripts/setup-backup-cron.sh deployment/scripts/restore-db.sh
+./deployment/scripts/setup-backup-cron.sh
+crontab -l | grep barter-platform-postgres-backup
+```
+
+Cron output is appended to:
+
+```text
+deployment/logs/backup-db.log
+```
+
+### Pre-deploy manual backup recommendation
+
+Before any deployment that changes backend images, infrastructure, env values, or database migrations, run a manual backup first:
+
+```bash
+./deployment/scripts/backup-db.sh --force
+```
+
+Do this before restarting containers.
+
+### Manual restore test procedure
+
+Do **not** restore automatically into the live application database during normal verification. Test restores should go to a temporary database first.
+
+1. Pick the blob to test:
+
+   ```bash
+   BACKUP_CONNECTION_STRING='<use BACKUP_AZURE_CONNECTION_STRING or AZURE_STORAGE_CONNECTION_STRING_DEV>'
+   az storage blob list \
+     --connection-string "$BACKUP_CONNECTION_STRING" \
+     --container-name postgres-backups \
+     --prefix dev/postgres/ \
+     --output table
+   ```
+
+2. Download the selected backup locally:
+
+   ```bash
+   mkdir -p deployment/backups/postgres
+   az storage blob download \
+     --connection-string "$BACKUP_CONNECTION_STRING" \
+     --container-name postgres-backups \
+     --name dev/postgres/<backup-file>.dump.gz \
+     --file deployment/backups/postgres/<backup-file>.dump.gz \
+     --no-progress
+   ```
+
+3. Restore into a fresh test database, not the live one:
+
+   ```bash
+   ./deployment/scripts/restore-db.sh \
+     --file deployment/backups/postgres/<backup-file>.dump.gz \
+     --target-db barter_restore_test \
+     --recreate-target-db \
+     --yes
+   ```
+
+4. Verify the restored database manually inside PostgreSQL:
+
+   ```bash
+   docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml exec -T postgres \
+     sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h localhost -U "$POSTGRES_USER" -d barter_restore_test -c "SELECT COUNT(*) FROM users;"'
+   ```
+
+5. Sanity-check that image references exist in the restored database, remembering the actual image files stay in Azure Blob Storage:
+
+   ```bash
+   docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml exec -T postgres \
+     sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h localhost -U "$POSTGRES_USER" -d barter_restore_test -c "SELECT id, storage_key FROM item_images ORDER BY id DESC LIMIT 10;"'
+   ```
+
+6. Record the restore test date and result before public launch.
+
+### Live restore example
+
+Only for an intentional recovery event, stop the backend first, then restore:
+
+```bash
+docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml stop backend
+./deployment/scripts/restore-db.sh \
+  --file deployment/backups/postgres/<backup-file>.dump.gz \
+  --target-db barter_db \
+  --recreate-target-db \
+  --allow-primary-db \
+  --yes
+docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml start backend
+```
+
+### Retention policy
+
+- **Local VM retention:** keep only the newest `BACKUP_LOCAL_RETENTION_COUNT` compressed PostgreSQL backup files. DEV default is `2`.
+- **Azure Blob retention:** keep monthly DEV PostgreSQL backups off-server in `postgres-backups/dev/postgres/`. Because this is monthly DEV backup cadence, keeping a longer Azure history is acceptable until a production lifecycle policy is defined.
+- **Images:** no local image backup retention is required because item images already live in Azure Blob Storage and should not be duplicated onto the VM.
+
+### Backup failure checklist
+
+If a backup or restore fails, check the following in order:
+
+1. `docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml ps` shows `postgres` healthy.
+2. `az --version` works on the server.
+3. `BACKUP_AZURE_CONNECTION_STRING` or `AZURE_STORAGE_CONNECTION_STRING_DEV` is valid.
+4. The `postgres-backups` container exists and the prefix is correct: `dev/postgres/`.
+5. `BACKUP_WORK_DIR` is writable and the VM has enough free disk for one compressed dump plus one in-progress file.
+6. `deployment/logs/backup-db.log` or the interactive script output does not show authentication, permission, or network errors.
+7. Manual blob listing works:
+
+   ```bash
+   BACKUP_CONNECTION_STRING='<use BACKUP_AZURE_CONNECTION_STRING or AZURE_STORAGE_CONNECTION_STRING_DEV>'
+   az storage blob list \
+     --connection-string "$BACKUP_CONNECTION_STRING" \
+     --container-name postgres-backups \
+     --prefix dev/postgres/ \
+     --output table
+   ```
+
+For older manual restore syntax, replacing the dump path:
 
 ```bash
 docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml exec -T postgres \
   sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_restore -h localhost -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner --no-privileges' \
-  < deployment/backups/barter-barter_db-YYYYMMDD-HHMMSS.dump
-```
-
-For destructive restores, consider stopping the backend first:
-
-```bash
-docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml stop backend
-# run restore
-docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml start backend
+  < <(gzip -dc deployment/backups/postgres/barter-barter_db-YYYYMMDDTHHMMSSZ.dump.gz)
 ```
 
 ## Troubleshooting
