@@ -16,6 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../..
 import { routePaths } from "@/routes/routePaths.ts";
 import { AdminPageShell, AdminSurface } from "./components/AdminPageShell";
 import { useTranslation } from "react-i18next";
+import { useAdminReportQueueSummary } from "./useAdminReports";
 
 interface AdminModule {
   titleKey: string;
@@ -80,6 +81,9 @@ const adminModules: AdminModule[] = [
 
 export function AdminDashboardPage() {
   const { t } = useTranslation("admin");
+  const summaryQuery = useAdminReportQueueSummary();
+  const unresolvedReports = (summaryQuery.data?.openCount ?? 0) + (summaryQuery.data?.inReviewCount ?? 0);
+
   return (
     <AdminPageShell
       title={t("adminControlPanel")}
@@ -102,6 +106,7 @@ export function AdminDashboardPage() {
         contentClassName="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
       >
         {adminModules.map((module) => {
+          const isReportsModule = module.to === routePaths.admin.reports;
           const content = (
             <Card className="flex h-full flex-col justify-between border-slate-200 bg-gradient-to-br from-white to-slate-50/70 transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
               <CardHeader>
@@ -109,10 +114,27 @@ export function AdminDashboardPage() {
                   <div className={`flex size-12 items-center justify-center rounded-xl ${module.tone}`}>
                     <module.icon className="size-5" />
                   </div>
-                  <Badge variant="success">{t("dashboard.ready")}</Badge>
+                  {isReportsModule ? (
+                    <Badge variant={unresolvedReports > 0 ? "warning" : "success"}>
+                      {summaryQuery.isLoading
+                        ? "…"
+                        : t("dashboard.pendingReportsCount", { count: unresolvedReports })}
+                    </Badge>
+                  ) : (
+                    <Badge variant="success">{t("dashboard.ready")}</Badge>
+                  )}
                 </div>
                 <CardTitle>{t(module.titleKey)}</CardTitle>
                 <CardDescription>{t(module.descriptionKey)}</CardDescription>
+                {isReportsModule && summaryQuery.data ? (
+                  <p className="text-sm text-slate-600 dark:text-slate-400">
+                    {t("dashboard.reportCounters", {
+                      open: summaryQuery.data.openCount,
+                      inReview: summaryQuery.data.inReviewCount,
+                      stale: summaryQuery.data.staleOpenCount,
+                    })}
+                  </p>
+                ) : null}
               </CardHeader>
               <CardContent className="mt-auto flex items-center justify-between pt-2 text-sm font-medium text-indigo-600 dark:text-indigo-300">
                 <span>{t("dashboard.openModule")}</span>

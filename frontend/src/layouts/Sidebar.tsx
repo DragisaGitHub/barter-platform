@@ -7,6 +7,7 @@ import {
   Inbox,
   Send,
   List,
+  Shield,
   User,
   Star,
   X,
@@ -14,6 +15,7 @@ import {
 import { usePendingIncomingCount, usePendingSentCount } from "../features/trade/useTradeOffers";
 import { routePaths } from "@/routes/routePaths";
 import { cn } from "@/utils";
+import { useAuth } from "@/auth/AuthContext";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -38,10 +40,12 @@ function NavBadge({ count }: { count: number }) {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { t } = useTranslation(["common", "navigation"]);
+  const { hasRole } = useAuth();
   const { data: incomingData } = usePendingIncomingCount();
   const { data: sentData } = usePendingSentCount();
   const pendingIncoming = incomingData?.totalElements ?? 0;
   const pendingSent = sentData?.totalElements ?? 0;
+  const isStaff = hasRole("ADMIN") || hasRole("MODERATOR");
 
   const navItems: NavItem[] = [
     { to: "/dashboard", icon: LayoutDashboard, label: t("navigation:dashboard") },
@@ -51,6 +55,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     { to: "/offers/incoming", icon: Inbox, label: t("navigation:incomingOffers"), badge: pendingIncoming },
     { to: "/offers/sent", icon: Send, label: t("navigation:sentOffers"), badge: pendingSent },
     { to: routePaths.reviews, icon: Star, label: t("navigation:reviews") },
+    ...(isStaff
+      ? [{ to: routePaths.admin.reports, icon: Shield, label: t("navigation:moderationQueue") }]
+      : []),
     { to: "/profile", icon: User, label: t("navigation:profile") },
   ];
 

@@ -98,6 +98,7 @@ export type ReportTargetSummaryResponse = components["schemas"]["ReportTargetSum
 export type ReportSummaryResponse = components["schemas"]["ReportSummaryResponse"];
 export type ReportDetailResponse = components["schemas"]["ReportDetailResponse"];
 export type ReportPagedResponse = components["schemas"]["ReportPagedResponse"];
+export type AdminReportQueueSummaryResponse = components["schemas"]["AdminReportQueueSummaryResponse"];
 
 // ─── Reporting Request DTOs ─────────────────────────────────────────────────
 

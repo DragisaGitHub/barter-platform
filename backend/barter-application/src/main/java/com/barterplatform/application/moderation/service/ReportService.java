@@ -1,7 +1,9 @@
 package com.barterplatform.application.moderation.service;
 
 import com.barterplatform.api.model.AdminUpdateReportRequest;
+import com.barterplatform.api.model.AdminReportQueueSummaryResponse;
 import com.barterplatform.api.model.MessageResponse;
+import com.barterplatform.api.model.ReportReasonCode;
 import com.barterplatform.api.model.ReportDetailResponse;
 import com.barterplatform.api.model.ReportPagedResponse;
 import com.barterplatform.api.model.ReportStatus;
@@ -18,7 +20,10 @@ public interface ReportService {
             Integer size,
             String sort,
             ReportStatus status,
-            ReportTargetType targetType);
+            ReportTargetType targetType,
+            ReportReasonCode reasonCode);
+
+    AdminReportQueueSummaryResponse getQueueSummary();
 
     ReportDetailResponse getReport(UUID reportUuid);
 

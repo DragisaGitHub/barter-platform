@@ -1,0 +1,25 @@
+type: object
+additionalProperties: false
+required:
+  - openCount
+  - inReviewCount
+  - staleOpenCount
+  - staleThresholdHours
+properties:
+  openCount:
+    type: integer
+    format: int64
+    minimum: 0
+  inReviewCount:
+    type: integer
+    format: int64
+    minimum: 0
+  staleOpenCount:
+    type: integer
+    format: int64
+    minimum: 0
+  staleThresholdHours:
+    type: integer
+    format: int32
+    minimum: 1
+

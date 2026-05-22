@@ -10,6 +10,7 @@ import com.barterplatform.api.model.ListingModerationActionResponse;
 import com.barterplatform.application.catalog.service.AdminListingQueryService;
 import com.barterplatform.application.catalog.service.ListingModerationService;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
+import java.util.Objects;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
@@ -18,7 +19,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAnyRole('ADMIN', 'MODERATOR')")
 public class AdminListingsController implements AdminListingsApi {
 
     private final AdminListingQueryService adminListingQueryService;
@@ -77,8 +78,10 @@ public class AdminListingsController implements AdminListingsApi {
     }
 
     private UUID currentUserUuid() {
-        AuthenticatedUser principal = (AuthenticatedUser) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+        AuthenticatedUser principal = (AuthenticatedUser) Objects.requireNonNull(Objects.requireNonNull(SecurityContextHolder
+                        .getContext()
+                        .getAuthentication())
+                .getPrincipal());
         return principal.getUserUuid();
     }
 }

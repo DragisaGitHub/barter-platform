@@ -108,6 +108,8 @@ paths:
     $ref: './paths/admin-reviews.yaml#/reviews'
   /reports:
     $ref: './paths/reports.yaml#/create'
+  /admin/reports/summary:
+    $ref: './paths/admin-reports.yaml#/reportsSummary'
   /admin/reports:
     $ref: './paths/admin-reports.yaml#/reports'
   /admin/reports/{reportUuid}:
@@ -337,6 +339,8 @@ components:
       $ref: './components/schemas/report/ReportDetailResponse.yaml'
     ReportPagedResponse:
       $ref: './components/schemas/report/ReportPagedResponse.yaml'
+    AdminReportQueueSummaryResponse:
+      $ref: './components/schemas/report/AdminReportQueueSummaryResponse.yaml'
     CreateReportRequest:
       $ref: './components/schemas/report/CreateReportRequest.yaml'
     AdminUpdateReportRequest:

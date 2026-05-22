@@ -6,6 +6,7 @@ import { AppLayout } from "../layouts/AppLayout";
 import { AdminLayout } from "../layouts/AdminLayout";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AdminRoute } from "./AdminRoute";
+import { StaffRoute } from "./StaffRoute";
 import { LoginPage } from "../features/auth/LoginPage";
 import { ForgotPasswordPage } from "../features/auth/ForgotPasswordPage";
 import { ResetPasswordPage } from "../features/auth/ResetPasswordPage";
@@ -53,6 +54,10 @@ function AdminAwareHomeRedirect() {
     return <Navigate to={routePaths.admin.dashboard} replace />;
   }
 
+   if (isAuthenticated && hasRole("MODERATOR")) {
+    return <Navigate to={routePaths.admin.reports} replace />;
+  }
+
   return <Navigate to={routePaths.marketplace} replace />;
 }
 
@@ -91,7 +96,21 @@ function AdminAwareDashboardPage() {
     return <Navigate to={routePaths.admin.dashboard} replace />;
   }
 
+  if (hasRole("MODERATOR")) {
+    return <Navigate to={routePaths.admin.reports} replace />;
+  }
+
   return <DashboardPage />;
+}
+
+function StaffAwareAdminHome() {
+  const { hasRole } = useAuth();
+
+  if (hasRole("ADMIN")) {
+    return <AdminDashboardPage />;
+  }
+
+  return <Navigate to={routePaths.admin.reports} replace />;
 }
 
 export const router = createBrowserRouter([
@@ -201,16 +220,38 @@ export const router = createBrowserRouter([
   },
   {
     element: (
+      <StaffRoute>
+        <AdminLayout />
+      </StaffRoute>
+    ),
+    errorElement: <RouteErrorPage />,
+    children: [
+      {
+        path: "/admin",
+        element: <StaffAwareAdminHome />,
+      },
+      {
+        path: "/admin/listings",
+        element: <AdminListingsPage />,
+      },
+      {
+        path: "/admin/listings/:uuid",
+        element: <AdminListingDetailPage />,
+      },
+      {
+        path: routePaths.admin.reports,
+        element: <AdminReportsPage />,
+      },
+    ],
+  },
+  {
+    element: (
       <AdminRoute>
         <AdminLayout />
       </AdminRoute>
     ),
     errorElement: <RouteErrorPage />,
     children: [
-      {
-        path: "/admin",
-        element: <AdminDashboardPage />,
-      },
       {
         path: "/admin/users",
         element: <UsersListPage />,
@@ -234,18 +275,6 @@ export const router = createBrowserRouter([
       {
         path: "/admin/categories",
         element: <AdminCategoriesPage />,
-      },
-      {
-        path: "/admin/listings",
-        element: <AdminListingsPage />,
-      },
-      {
-        path: "/admin/listings/:uuid",
-        element: <AdminListingDetailPage />,
-      },
-      {
-        path: routePaths.admin.reports,
-        element: <AdminReportsPage />,
       },
       {
         path: "/admin/reviews",

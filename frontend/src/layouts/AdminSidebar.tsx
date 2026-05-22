@@ -15,6 +15,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/utils";
 import { routePaths } from "../routes/routePaths";
+import { useAuth } from "@/auth/AuthContext";
+import { useAdminReportQueueSummary } from "@/features/admin/useAdminReports";
 
 interface AdminSidebarProps {
   isOpen: boolean;
@@ -26,23 +28,31 @@ interface AdminNavItem {
   label: string;
   icon: typeof LayoutDashboard;
   end?: boolean;
+  roles?: Array<"ADMIN" | "MODERATOR">;
+  badge?: number;
 }
 
 export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const { t } = useTranslation(["navigation"]);
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole("ADMIN");
+  const summaryQuery = useAdminReportQueueSummary(isAdmin || hasRole("MODERATOR"));
+  const unresolvedCount = (summaryQuery.data?.openCount ?? 0) + (summaryQuery.data?.inReviewCount ?? 0);
 
   const adminNavItems: AdminNavItem[] = [
-    { to: routePaths.admin.dashboard, label: t("navigation:adminControlPanel"), icon: LayoutDashboard, end: true },
-    { to: routePaths.admin.users, label: t("navigation:users"), icon: Users },
-    { to: routePaths.admin.roles, label: t("navigation:roles"), icon: KeyRound },
-    { to: routePaths.admin.permissions, label: t("navigation:permissions"), icon: Lock },
-    { to: routePaths.admin.system, label: t("navigation:system"), icon: Settings },
-    { to: routePaths.admin.categories, label: t("navigation:categories"), icon: FolderTree, end: true },
-    { to: routePaths.admin.listings, label: t("navigation:listings"), icon: Package, end: true },
-    { to: routePaths.admin.reports, label: t("navigation:reports"), icon: Shield, end: true },
-    { to: routePaths.admin.reviews, label: t("navigation:reviews"), icon: MessageSquareWarning, end: true },
-    { to: routePaths.admin.tags, label: t("navigation:tags"), icon: Tags, end: true },
+    { to: routePaths.admin.dashboard, label: t("navigation:adminControlPanel"), icon: LayoutDashboard, end: true, roles: ["ADMIN"] },
+    { to: routePaths.admin.users, label: t("navigation:users"), icon: Users, roles: ["ADMIN"] },
+    { to: routePaths.admin.roles, label: t("navigation:roles"), icon: KeyRound, roles: ["ADMIN"] },
+    { to: routePaths.admin.permissions, label: t("navigation:permissions"), icon: Lock, roles: ["ADMIN"] },
+    { to: routePaths.admin.system, label: t("navigation:system"), icon: Settings, roles: ["ADMIN"] },
+    { to: routePaths.admin.categories, label: t("navigation:categories"), icon: FolderTree, end: true, roles: ["ADMIN"] },
+    { to: routePaths.admin.listings, label: t("navigation:listings"), icon: Package, end: true, roles: ["ADMIN", "MODERATOR"] },
+    { to: routePaths.admin.reports, label: t("navigation:reports"), icon: Shield, end: true, roles: ["ADMIN", "MODERATOR"], badge: unresolvedCount },
+    { to: routePaths.admin.reviews, label: t("navigation:reviews"), icon: MessageSquareWarning, end: true, roles: ["ADMIN"] },
+    { to: routePaths.admin.tags, label: t("navigation:tags"), icon: Tags, end: true, roles: ["ADMIN"] },
   ];
+
+  const visibleAdminNavItems = adminNavItems.filter((item) => !item.roles || item.roles.some((role) => hasRole(role)));
 
   return (
     <>
@@ -96,7 +106,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
           <nav className="flex-1 overflow-y-auto px-3 py-4">
             <ul className="space-y-1.5">
-              {adminNavItems.map((item) => (
+              {visibleAdminNavItems.map((item) => (
                 <li key={item.to}>
                   <NavLink
                     to={item.to}
@@ -113,6 +123,11 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                   >
                     <item.icon className="size-4 shrink-0" />
                     <span className="truncate">{item.label}</span>
+                    {item.badge != null && item.badge > 0 ? (
+                      <span className="ml-auto inline-flex min-w-6 items-center justify-center rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-semibold text-white">
+                        {item.badge > 99 ? "99+" : item.badge}
+                      </span>
+                    ) : null}
                   </NavLink>
                 </li>
               ))}
