@@ -1,8 +1,10 @@
 import { apiClient } from "./axios";
 import type {
+  AdminReportQueueSummaryResponse,
   AdminUpdateReportRequest,
   ReportDetailResponse,
   ReportPagedResponse,
+  ReportReasonCode,
   ReportStatus,
   ReportTargetType,
 } from "./generated/types";
@@ -13,6 +15,12 @@ export interface ListAdminReportsParams {
   sort?: string;
   status?: ReportStatus;
   targetType?: ReportTargetType;
+  reasonCode?: ReportReasonCode;
+}
+
+export async function getAdminReportQueueSummary(): Promise<AdminReportQueueSummaryResponse> {
+  const response = await apiClient.get<AdminReportQueueSummaryResponse>("/admin/reports/summary");
+  return response.data;
 }
 
 export async function listAdminReports(

@@ -1,11 +1,13 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  getAdminReportQueueSummary,
   getAdminReportByUuid,
   listAdminReports,
   updateAdminReport,
   type ListAdminReportsParams,
 } from "@/api/adminReportsApi";
 import type {
+  AdminReportQueueSummaryResponse,
   AdminUpdateReportRequest,
   ReportDetailResponse,
   ReportPagedResponse,
@@ -13,10 +15,19 @@ import type {
 
 export const adminReportKeys = {
   all: ["admin", "reports"] as const,
+  summary: () => ["admin", "reports", "summary"] as const,
   lists: () => ["admin", "reports", "list"] as const,
   list: (params: ListAdminReportsParams) => ["admin", "reports", "list", params] as const,
   detail: (reportUuid: string) => ["admin", "reports", "detail", reportUuid] as const,
 };
+
+export function useAdminReportQueueSummary(enabled = true) {
+  return useQuery<AdminReportQueueSummaryResponse>({
+    queryKey: adminReportKeys.summary(),
+    queryFn: getAdminReportQueueSummary,
+    enabled,
+  });
+}
 
 export function useAdminReports(params: ListAdminReportsParams = {}, enabled = true) {
   return useQuery<ReportPagedResponse>({

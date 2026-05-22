@@ -66,6 +66,13 @@ function getAdminSectionMeta(pathname: string, t: TFunction<["navigation"]>) {
     };
   }
 
+  if (pathname.startsWith(routePaths.admin.reports)) {
+    return {
+      title: t("navigation:reports"),
+      description: t("navigation:reportsDescription"),
+    };
+  }
+
   if (pathname.startsWith(routePaths.admin.reviews)) {
     return {
       title: t("navigation:reviews"),
@@ -80,13 +87,14 @@ function getAdminSectionMeta(pathname: string, t: TFunction<["navigation"]>) {
 }
 
 export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, hasRole } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation(["common", "navigation"]);
   const section = getAdminSectionMeta(location.pathname, t);
   const identityLabel = user?.username ?? user?.email ?? "Admin";
-  const identitySubtitle = user?.email && user.email !== identityLabel ? user.email : t("navigation:administrator");
+  const fallbackRoleLabel = hasRole("ADMIN") ? t("navigation:administrator") : t("navigation:moderator");
+  const identitySubtitle = user?.email && user.email !== identityLabel ? user.email : fallbackRoleLabel;
 
   const handleLogout = async () => {
     await logout();
@@ -131,7 +139,7 @@ export function AdminTopbar({ onMenuClick }: AdminTopbarProps) {
 
 
           <div className="rounded-xl border border-slate-200 bg-white p-2 dark:border-slate-800 dark:bg-slate-900 md:hidden">
-            <p className="max-w-[8rem] truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+            <p className="max-w-32 truncate text-sm font-medium text-slate-900 dark:text-slate-100">
               {identityLabel}
             </p>
           </div>

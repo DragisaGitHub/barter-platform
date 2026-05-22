@@ -1,9 +1,11 @@
 package com.barterplatform.web.admin.controller;
 
 import com.barterplatform.api.controller.AdminReportsApi;
+import com.barterplatform.api.model.AdminReportQueueSummaryResponse;
 import com.barterplatform.api.model.AdminUpdateReportRequest;
 import com.barterplatform.api.model.ReportDetailResponse;
 import com.barterplatform.api.model.ReportPagedResponse;
+import com.barterplatform.api.model.ReportReasonCode;
 import com.barterplatform.api.model.ReportStatus;
 import com.barterplatform.api.model.ReportTargetType;
 import com.barterplatform.application.moderation.service.ReportService;
@@ -26,13 +28,19 @@ public class AdminReportsController implements AdminReportsApi {
     }
 
     @Override
+    public ResponseEntity<AdminReportQueueSummaryResponse> getAdminReportQueueSummary() {
+        return ResponseEntity.ok(reportService.getQueueSummary());
+    }
+
+    @Override
     public ResponseEntity<ReportPagedResponse> listAdminReports(
             Integer page,
             Integer size,
             String sort,
             ReportStatus status,
-            ReportTargetType targetType) {
-        return ResponseEntity.ok(reportService.listReports(page, size, sort, status, targetType));
+            ReportTargetType targetType,
+            ReportReasonCode reasonCode) {
+        return ResponseEntity.ok(reportService.listReports(page, size, sort, status, targetType, reasonCode));
     }
 
     @Override
@@ -48,8 +56,10 @@ public class AdminReportsController implements AdminReportsApi {
     }
 
     private UUID currentUserUuid() {
-        AuthenticatedUser principal = (AuthenticatedUser) Objects.requireNonNull(SecurityContextHolder.getContext()
-                .getAuthentication()).getPrincipal();
+        AuthenticatedUser principal = (AuthenticatedUser) Objects.requireNonNull(Objects.requireNonNull(SecurityContextHolder
+                        .getContext()
+                        .getAuthentication())
+                .getPrincipal());
         return principal.getUserUuid();
     }
 }

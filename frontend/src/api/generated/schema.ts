@@ -586,6 +586,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/reports/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get report queue summary counters for moderation operations */
+        get: operations["getAdminReportQueueSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/reports": {
         parameters: {
             query?: never;
@@ -1964,6 +1981,16 @@ export interface components {
             last: boolean;
             sort: string;
         };
+        AdminReportQueueSummaryResponse: {
+            /** Format: int64 */
+            openCount: number;
+            /** Format: int64 */
+            inReviewCount: number;
+            /** Format: int64 */
+            staleOpenCount: number;
+            /** Format: int32 */
+            staleThresholdHours: number;
+        };
         CreateReportRequest: {
             targetType: components["schemas"]["ReportTargetType"];
             /** Format: uuid */
@@ -3281,6 +3308,28 @@ export interface operations {
             429: components["responses"]["TooManyRequests"];
         };
     };
+    getAdminReportQueueSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Queue summary returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminReportQueueSummaryResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
     listAdminReports: {
         parameters: {
             query?: {
@@ -3294,6 +3343,8 @@ export interface operations {
                 status?: components["schemas"]["ReportStatus"];
                 /** @description Filter reports by target type. */
                 targetType?: components["schemas"]["ReportTargetType"];
+                /** @description Filter reports by report reason. */
+                reasonCode?: components["schemas"]["ReportReasonCode"];
             };
             header?: never;
             path?: never;

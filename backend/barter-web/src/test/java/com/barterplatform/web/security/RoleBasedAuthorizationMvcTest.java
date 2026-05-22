@@ -9,18 +9,21 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 
 import com.barterplatform.api.model.AdminCategoryPagedResponse;
 import com.barterplatform.api.model.AdminListingPagedResponse;
+import com.barterplatform.api.model.ReportPagedResponse;
 import com.barterplatform.api.model.PermissionCode;
 import com.barterplatform.api.model.PermissionResponse;
 import com.barterplatform.application.catalog.service.AdminListingQueryService;
 import com.barterplatform.api.model.UserPagedResponse;
 import com.barterplatform.application.catalog.service.AdminCategoryService;
 import com.barterplatform.web.admin.controller.AdminListingsController;
+import com.barterplatform.web.admin.controller.AdminReportsController;
 import com.barterplatform.application.catalog.service.ListingModerationService;
 import com.barterplatform.web.admin.controller.AdminCategoriesController;
 import com.barterplatform.application.identity.service.PermissionService;
 import com.barterplatform.application.identity.service.UserManagementService;
 import com.barterplatform.application.identity.service.UserPreferenceService;
 import com.barterplatform.application.identity.service.UserQueryService;
+import com.barterplatform.application.moderation.service.ReportService;
 import com.barterplatform.web.identity.controller.PermissionsController;
 import com.barterplatform.web.identity.controller.UsersController;
 import com.barterplatform.web.security.jwt.JwtAuthenticationFilter;
@@ -155,6 +158,42 @@ class RoleBasedAuthorizationMvcTest {
                 .andExpect(status().isOk());
     }
 
+    @Test
+    @WithMockUser(roles = "MODERATOR")
+    void moderatorRoleCanListAdminListings() throws Exception {
+        mockMvc.perform(get("/admin/listings"))
+                .andExpect(status().isOk());
+    }
+
+    // --- Admin reports endpoint ---
+
+    @Test
+    void unauthenticatedCannotListAdminReports() throws Exception {
+        mockMvc.perform(get("/admin/reports"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void userRoleCannotListAdminReports() throws Exception {
+        mockMvc.perform(get("/admin/reports"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void adminRoleCanListAdminReports() throws Exception {
+        mockMvc.perform(get("/admin/reports"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "MODERATOR")
+    void moderatorRoleCanListAdminReports() throws Exception {
+        mockMvc.perform(get("/admin/reports"))
+                .andExpect(status().isOk());
+    }
+
     @SpringBootConfiguration(proxyBeanMethods = false)
     @EnableAutoConfiguration(exclude = {
             DataSourceAutoConfiguration.class,
@@ -162,7 +201,8 @@ class RoleBasedAuthorizationMvcTest {
             DataJpaRepositoriesAutoConfiguration.class
     })
     @Import({SecurityConfig.class, JwtAuthenticationFilter.class,
-            UsersController.class, PermissionsController.class, AdminCategoriesController.class, AdminListingsController.class})
+            UsersController.class, PermissionsController.class, AdminCategoriesController.class,
+            AdminListingsController.class, AdminReportsController.class})
     static class TestApplication {
 
         @Bean
@@ -229,6 +269,17 @@ class RoleBasedAuthorizationMvcTest {
         @Bean
         ListingModerationService listingModerationService() {
             return mock(ListingModerationService.class);
+        }
+
+        @Bean
+        ReportService reportService() {
+            ReportService service = mock(ReportService.class);
+            when(service.listReports(any(), any(), any(), any(), any(), any())).thenReturn(
+                    new ReportPagedResponse()
+                            .content(List.of())
+                            .page(0).size(20).totalElements(0L).totalPages(0)
+                            .first(true).last(true).sort("createdAt,desc"));
+            return service;
         }
 
         /**

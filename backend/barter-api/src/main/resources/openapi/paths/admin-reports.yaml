@@ -1,3 +1,23 @@
+reportsSummary:
+  get:
+    tags:
+      - AdminReports
+    operationId: getAdminReportQueueSummary
+    summary: Get report queue summary counters for moderation operations
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Queue summary returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminReportQueueSummaryResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
 reports:
   get:
     tags:
@@ -22,6 +42,12 @@ reports:
         description: Filter reports by target type.
         schema:
           $ref: '../components/schemas/report/ReportTargetType.yaml'
+      - name: reasonCode
+        in: query
+        required: false
+        description: Filter reports by report reason.
+        schema:
+          $ref: '../components/schemas/report/ReportReasonCode.yaml'
     responses:
       '200':
         description: Reports returned successfully

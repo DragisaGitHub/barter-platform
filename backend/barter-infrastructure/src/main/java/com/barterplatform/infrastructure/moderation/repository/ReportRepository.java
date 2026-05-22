@@ -3,6 +3,7 @@ package com.barterplatform.infrastructure.moderation.repository;
 import com.barterplatform.domain.moderation.report.ReportEntity;
 import com.barterplatform.domain.moderation.report.ReportStatus;
 import com.barterplatform.domain.moderation.report.ReportTargetType;
+import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Optional;
 import java.util.UUID;
@@ -18,5 +19,9 @@ public interface ReportRepository extends JpaRepository<ReportEntity, Long>, Jpa
             ReportTargetType targetType,
             UUID targetUuid,
             Collection<ReportStatus> statuses);
+
+    long countByStatus(ReportStatus status);
+
+    long countByStatusAndCreatedAtBefore(ReportStatus status, OffsetDateTime createdAtBefore);
 }
 

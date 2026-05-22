@@ -30,6 +30,7 @@ public class ReportServiceImpl implements ReportService {
 
     private static final String DEFAULT_SORT_FIELD = "createdAt";
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of("createdAt", "status", "targetType");
+    private static final int STALE_OPEN_THRESHOLD_HOURS = 48;
     private static final EnumSet<ReportStatus> DUPLICATE_BLOCKING_STATUSES = EnumSet.of(
             ReportStatus.OPEN,
             ReportStatus.IN_REVIEW);
@@ -89,7 +90,8 @@ public class ReportServiceImpl implements ReportService {
             Integer size,
             String sort,
             com.barterplatform.api.model.ReportStatus status,
-            com.barterplatform.api.model.ReportTargetType targetType) {
+            com.barterplatform.api.model.ReportTargetType targetType,
+            com.barterplatform.api.model.ReportReasonCode reasonCode) {
         PageRequestFactory.ResolvedPageRequest pageRequest = pageRequestFactory.create(
                 page,
                 size,
@@ -99,7 +101,8 @@ public class ReportServiceImpl implements ReportService {
 
         Specification<ReportEntity> specification = buildSpecification(
                 reportMapper.map(status),
-                reportMapper.map(targetType));
+                reportMapper.map(targetType),
+                reportMapper.map(reasonCode));
 
         Page<ReportEntity> reportPage = reportRepository.findAll(specification, pageRequest.pageable());
         Map<Long, UserEntity> usersById = loadUsersById(reportPage.getContent());
@@ -113,6 +116,17 @@ public class ReportServiceImpl implements ReportService {
                 .toList();
 
         return pageResponseMapper.toReportPagedResponse(reportPage, content, pageRequest.sort());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AdminReportQueueSummaryResponse getQueueSummary() {
+        OffsetDateTime staleBefore = OffsetDateTime.now().minusHours(STALE_OPEN_THRESHOLD_HOURS);
+        return new AdminReportQueueSummaryResponse()
+                .openCount(reportRepository.countByStatus(ReportStatus.OPEN))
+                .inReviewCount(reportRepository.countByStatus(ReportStatus.IN_REVIEW))
+                .staleOpenCount(reportRepository.countByStatusAndCreatedAtBefore(ReportStatus.OPEN, staleBefore))
+                .staleThresholdHours(STALE_OPEN_THRESHOLD_HOURS);
     }
 
     @Override
@@ -131,21 +145,30 @@ public class ReportServiceImpl implements ReportService {
     public ReportDetailResponse updateReport(UUID actorUserUuid, UUID reportUuid, AdminUpdateReportRequest request) {
         UserEntity actor = resolveUser(actorUserUuid);
         ReportEntity report = resolveReport(reportUuid);
+        if (request == null || request.getStatus() == null) {
+            throw badRequest("Report status is required.");
+        }
+
         ReportStatus nextStatus = reportMapper.map(request.getStatus());
+        ReportStatus currentStatus = report.getStatus();
+        String resolutionNote = normalize(request.getResolutionNote());
 
-        validateTransition(report.getStatus(), nextStatus);
+        validateTransition(currentStatus, nextStatus);
 
+        if (isTerminalStatus(nextStatus) && resolutionNote == null) {
+            throw badRequest("Resolution note is required when resolving or dismissing a report.");
+        }
+
+        report.setAssignedModeratorUserId(actor.getId());
         report.setStatus(nextStatus);
-        if (nextStatus == ReportStatus.IN_REVIEW) {
-            report.setAssignedModeratorUserId(actor.getId());
+        if (nextStatus == ReportStatus.OPEN || nextStatus == ReportStatus.IN_REVIEW) {
             report.setResolutionNote(null);
             report.setResolvedAt(null);
         } else {
-            if (report.getAssignedModeratorUserId() == null) {
-                report.setAssignedModeratorUserId(actor.getId());
+            report.setResolutionNote(resolutionNote);
+            if (currentStatus != nextStatus || report.getResolvedAt() == null) {
+                report.setResolvedAt(OffsetDateTime.now());
             }
-            report.setResolutionNote(normalize(request.getResolutionNote()));
-            report.setResolvedAt(OffsetDateTime.now());
         }
 
         ReportEntity saved = reportRepository.save(report);
@@ -159,13 +182,17 @@ public class ReportServiceImpl implements ReportService {
 
     private Specification<ReportEntity> buildSpecification(
             ReportStatus status,
-            com.barterplatform.domain.moderation.report.ReportTargetType targetType) {
+            com.barterplatform.domain.moderation.report.ReportTargetType targetType,
+            com.barterplatform.domain.moderation.report.ReportReasonCode reasonCode) {
         List<Specification<ReportEntity>> specifications = new ArrayList<>();
         if (status != null) {
             specifications.add(ReportSpecifications.statusEquals(status));
         }
         if (targetType != null) {
             specifications.add(ReportSpecifications.targetTypeEquals(targetType));
+        }
+        if (reasonCode != null) {
+            specifications.add(ReportSpecifications.reasonCodeEquals(reasonCode));
         }
         return specifications.isEmpty() ? Specification.unrestricted() : Specification.allOf(specifications);
     }
@@ -201,6 +228,10 @@ public class ReportServiceImpl implements ReportService {
         }
     }
 
+    private boolean isTerminalStatus(ReportStatus status) {
+        return status == ReportStatus.RESOLVED || status == ReportStatus.DISMISSED;
+    }
+
     private String normalize(String value) {
         if (value == null) {
             return null;
@@ -233,6 +264,10 @@ public class ReportServiceImpl implements ReportService {
 
     private ApiException notFound(String message) {
         return new ApiException(HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND, message);
+    }
+
+    private ApiException badRequest(String message) {
+        return new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, message);
     }
 
     private ApiException conflict(String message) {
