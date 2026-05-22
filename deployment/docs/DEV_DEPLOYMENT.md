@@ -11,7 +11,7 @@ It intentionally does **not** add Kubernetes or server-side deployment automatio
 - `backend`: Spring Boot `barter-web` app running with `SPRING_PROFILES_ACTIVE=dev` and constrained JVM memory.
 - `frontend`: production Vite static build served by nginx.
 - Browser traffic goes to Caddy on `https://barter-platform-dev.duckdns.org`.
-- Caddy redirects HTTP to HTTPS, terminates TLS, and proxies `/api/*` to the internal backend container.
+- Caddy redirects HTTP to HTTPS, terminates TLS, and proxies `/api/*` plus `/actuator/*` to the internal backend container.
 - Caddy proxies all non-API traffic to the internal frontend nginx container, which serves the SPA.
 - The frontend, backend, and PostgreSQL containers are not published directly to the internet by the provided Compose file.
 
@@ -135,6 +135,25 @@ Minimum values to review and replace:
 
 The supplied Caddy/nginx same-origin proxy means the browser calls `/api/v1`, so CORS should not be needed for the default DEV deployment path.
 
+## DEV observability and monitoring
+
+Backend monitoring stays intentionally lightweight for launch.
+
+- public-safe health endpoint: `GET /actuator/health`
+- readiness endpoint: `GET /actuator/health/readiness`
+- legacy smoke endpoint: `GET /api/v1/ping`
+- every response includes `X-Correlation-Id`
+
+Only health actuator endpoints are exposed publicly. They remain separate from `/api/v1` REST versioning. Non-health actuator endpoints remain protected.
+
+Recommended safe DEV/public-beta checks:
+
+- uptime check against `https://<your-domain>/actuator/health`
+- container/runtime healthcheck against `http://backend:8080/actuator/health/readiness`
+- backend log review for repeated `5xx`, startup failures, and suspicious auth/rate-limit spikes
+
+For the full runbook, see `deployment/docs/OBSERVABILITY.md`.
+
 ## Email verification in DEV and PROD
 
 The backend has a safety-first feature flag:
@@ -164,7 +183,7 @@ The frontend Dockerfile defaults to:
 VITE_API_BASE_URL=/api/v1
 ```
 
-That is recommended for DEV because browser traffic stays same-origin through Caddy, and `/api/*` is proxied to the internal `backend:8080` service. If you need a different public API URL, rebuild the frontend image with a different build arg and push the new image.
+That is recommended for DEV because browser traffic stays same-origin through Caddy, `/api/*` is proxied to the internal `backend:8080` service, and infrastructure health checks are separately proxied on `/actuator/*`. If you need a different public API URL, rebuild the frontend image with a different build arg and push the new image.
 
 ## Build images locally
 
@@ -335,20 +354,22 @@ docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-co
 docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml logs -f postgres
 ```
 
-Check backend health from inside the frontend container path:
+Check backend health from the public route:
 
 ```bash
-curl -i https://barter-platform-dev.duckdns.org/api/v1/ping
+curl -i https://barter-platform-dev.duckdns.org/actuator/health
+curl -i https://barter-platform-dev.duckdns.org/actuator/health/readiness
 ```
 
 Common issues:
 
 - **Frontend still calls localhost:8080**: rebuild the frontend image with `--build-arg VITE_API_BASE_URL=/api/v1`, then push and redeploy.
 - **Caddy cannot obtain a certificate**: verify DuckDNS points to the VM public IP, OCI ingress allows `80/tcp` and `443/tcp`, no other host process is bound to those ports, and `docker compose ... logs caddy` does not show ACME rate-limit or DNS errors.
-- **Backend cannot connect to DB**: ensure `DB_URL=jdbc:postgresql://postgres:5432/<POSTGRES_DB>` and `DB_PASSWORD` matches `POSTGRES_PASSWORD` for the initialized volume. If you change Postgres init credentials after the first run, recreate the volume intentionally.
+- **Backend cannot connect to DB**: ensure `DB_URL=jdbc:postgresql://postgres:5432/<POSTGRES_DB>` and `DB_PASSWORD` matches `POSTGRES_PASSWORD` for the initialized volume. If readiness returns `503`, inspect backend startup logs and confirm the `postgres` service is healthy. If you change Postgres init credentials after the first run, recreate the volume intentionally.
 - **Azure image upload fails**: verify `AZURE_STORAGE_CONNECTION_STRING_DEV` and `AZURE_STORAGE_CONTAINER_DEV` in `deployment/env/dev.env` and that the container exists or the app can create/use it.
 - **SMTP does not send**: set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`. If `SMTP_HOST` is empty, the backend may use its logging/fallback mail sender according to current app configuration.
 - **Out of memory on 1GB VM**: lower `JAVA_OPTS` `-Xmx`, avoid running extra services, add swap if acceptable, and monitor `docker stats`.
+- **Need to trace a failing request**: capture the `X-Correlation-Id` response header from the failing API call, then search `docker compose ... logs backend` for that exact value.
 
 ## Memory notes for 1GB OCI VM
 

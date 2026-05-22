@@ -127,3 +127,46 @@ When a limit is exceeded the API returns HTTP `429` with the standard error body
 | `BARTER_RATE_LIMITS_TRADE_MESSAGE_SEND_LIMIT` / `BARTER_RATE_LIMITS_TRADE_MESSAGE_SEND_WINDOW` | `60` / `10m` | Trade messages sent per authenticated user and IP. |
 | `BARTER_RATE_LIMITS_FAVORITE_MUTATION_LIMIT` / `BARTER_RATE_LIMITS_FAVORITE_MUTATION_WINDOW` | `120` / `10m` | Favorite add/remove requests per authenticated user and IP. |
 
+## Observability verification
+
+The backend now exposes launch-safe actuator health endpoints outside the versioned `/api/v1` REST API.
+
+### Endpoints
+
+- `GET /actuator/health`
+- `GET /actuator/health/liveness`
+- `GET /actuator/health/readiness`
+- legacy smoke endpoint: `GET /api/v1/ping`
+
+### Local smoke test
+
+Start PostgreSQL and the backend, then run:
+
+```powershell
+Invoke-WebRequest http://localhost:8080/actuator/health | Select-Object -ExpandProperty Content
+Invoke-WebRequest http://localhost:8080/actuator/health/readiness | Select-Object -ExpandProperty Content
+```
+
+Expected result: both endpoints return HTTP `200` with a simple `{"status":"UP"}` response when the app and database are healthy.
+
+### Correlation ID verification
+
+Every response includes `X-Correlation-Id`.
+
+```powershell
+$response = Invoke-WebRequest http://localhost:8080/api/v1/ping
+$response.Headers["X-Correlation-Id"]
+```
+
+Use the returned value to search the backend logs. Request completion log lines now include the same correlation ID, HTTP method, path, status, and duration.
+
+### If readiness is down locally
+
+Check these first:
+
+- PostgreSQL container is running and healthy
+- datasource settings in `backend/barter-web/src/main/resources/application-local.yml`
+- application startup logs for Flyway/JPA/DataSource failures
+
+Operational runbook details live in `deployment/docs/OBSERVABILITY.md`.
+

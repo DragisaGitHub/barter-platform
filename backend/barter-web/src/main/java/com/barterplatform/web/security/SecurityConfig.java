@@ -1,5 +1,7 @@
 package com.barterplatform.web.security;
 
+import com.barterplatform.web.observability.CorrelationIdFilter;
+import com.barterplatform.web.observability.RequestLoggingFilter;
 import com.barterplatform.web.ratelimit.RateLimitProperties;
 import com.barterplatform.web.ratelimit.RateLimitService;
 import com.barterplatform.web.ratelimit.RateLimitingFilter;
@@ -37,6 +39,8 @@ public class SecurityConfig {
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     public SecurityFilterChain securityFilterChain(HttpSecurity http,
                                                    CorsConfigurationSource corsConfigurationSource,
+                                                   CorrelationIdFilter correlationIdFilter,
+                                                   RequestLoggingFilter requestLoggingFilter,
                                                    JwtAuthenticationFilter jwtAuthenticationFilter,
                                                    RateLimitingFilter rateLimitingFilter) {
         http
@@ -52,7 +56,9 @@ public class SecurityConfig {
                                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
                         .accessDeniedHandler((request, response, ex) ->
                                 response.sendError(HttpServletResponse.SC_FORBIDDEN)))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(requestLoggingFilter, CorrelationIdFilter.class)
+                .addFilterAfter(jwtAuthenticationFilter, RequestLoggingFilter.class)
                 .addFilterAfter(rateLimitingFilter, JwtAuthenticationFilter.class)
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR, DispatcherType.FORWARD).permitAll()
@@ -77,6 +83,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/ping",
                                 "/api/v1/ping",
+                                "/actuator/health",
+                                "/actuator/health/**",
                                 "/catalog/categories",
                                 "/catalog/categories/popular",
                                 "/catalog/tags",
@@ -114,6 +122,18 @@ public class SecurityConfig {
 
     @Bean
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+    public CorrelationIdFilter correlationIdFilter() {
+        return new CorrelationIdFilter();
+    }
+
+    @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+    public RequestLoggingFilter requestLoggingFilter() {
+        return new RequestLoggingFilter();
+    }
+
+    @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration().applyPermitDefaultValues();
         configuration.setAllowedHeaders(List.of("*"));
@@ -137,6 +157,22 @@ public class SecurityConfig {
         RateLimitService rateLimitService = rateLimitServiceProvider.getIfAvailable(RateLimitService::new);
         ObjectMapper objectMapper = objectMapperProvider.getIfAvailable(() -> new ObjectMapper().findAndRegisterModules());
         return new RateLimitingFilter(rateLimitProperties, rateLimitService, objectMapper);
+    }
+
+    @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+    public FilterRegistrationBean<CorrelationIdFilter> correlationIdFilterRegistration(CorrelationIdFilter correlationIdFilter) {
+        FilterRegistrationBean<CorrelationIdFilter> registration = new FilterRegistrationBean<>(correlationIdFilter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
+    public FilterRegistrationBean<RequestLoggingFilter> requestLoggingFilterRegistration(RequestLoggingFilter requestLoggingFilter) {
+        FilterRegistrationBean<RequestLoggingFilter> registration = new FilterRegistrationBean<>(requestLoggingFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
