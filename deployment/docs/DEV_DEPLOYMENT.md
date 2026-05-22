@@ -11,9 +11,17 @@ It intentionally does **not** add Kubernetes or server-side deployment automatio
 - `backend`: Spring Boot `barter-web` app running with `SPRING_PROFILES_ACTIVE=dev` and constrained JVM memory.
 - `frontend`: production Vite static build served by nginx.
 - Browser traffic goes to Caddy on `https://barter-platform-dev.duckdns.org`.
-- Caddy redirects HTTP to HTTPS, terminates TLS, and proxies `/api/*` plus `/actuator/*` to the internal backend container.
+- Caddy redirects HTTP to HTTPS, terminates TLS, and proxies `/api/*` plus `/actuator/health*` to the internal backend container.
 - Caddy proxies all non-API traffic to the internal frontend nginx container, which serves the SPA.
 - The frontend, backend, and PostgreSQL containers are not published directly to the internet by the provided Compose file.
+
+## Security hardening guardrails
+
+- The backend Docker image no longer defaults to `SPRING_PROFILES_ACTIVE=dev`.
+- Public deployments must set `SPRING_PROFILES_ACTIVE=prod` explicitly.
+- `deployment/env/prod.env.example` now documents the minimum production-safe variables.
+- Swagger/OpenAPI must stay disabled in prod.
+- The preferred browser deployment shape remains same-origin `/api/v1` proxying, with CORS allowlists only when a separate frontend origin is truly required.
 
 ### Why Caddy is used for DEV HTTPS
 
@@ -140,9 +148,10 @@ Minimum values to review and replace:
 - `CADDY_DOMAIN=barter-platform-dev.duckdns.org`
 - `BARTER_EMAIL_VERIFICATION_ENABLED=false` for DEV-only registration/login bypass
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` if real email delivery is needed
-- `FRONTEND_ORIGIN` for documentation/future explicit CORS support
+- `BARTER_SECURITY_ALLOWED_ORIGINS` if DEV browser traffic should come from a separate origin instead of same-origin proxying
+- `FRONTEND_ORIGIN` only if you still need the legacy single-origin alias
 
-The supplied Caddy/nginx same-origin proxy means the browser calls `/api/v1`, so CORS should not be needed for the default DEV deployment path.
+The supplied Caddy/nginx same-origin proxy means the browser calls `/api/v1`, so CORS should not be needed for the default DEV deployment path. Leave `BARTER_SECURITY_ALLOWED_ORIGINS` empty unless you intentionally expose the backend to a different browser origin.
 
 ## DEV observability and monitoring
 
@@ -180,7 +189,7 @@ For DEV deployments, `application-dev.yml` sets this flag to `false`. With the D
 - users can login immediately after registration
 - SMTP/Resend configuration can remain present for other mail flows or future testing
 
-For PROD/staging/non-DEV environments, keep `BARTER_EMAIL_VERIFICATION_ENABLED=true`. Production email delivery must use a configured SMTP/Resend sender whose domain is verified with the provider, otherwise registration verification messages may fail delivery and users will remain unable to login until their email is verified.
+For PROD/staging/non-DEV environments, keep `BARTER_EMAIL_VERIFICATION_ENABLED=true`. Production email delivery must use a configured SMTP/Resend sender whose domain is verified with the provider, otherwise registration verification messages may fail delivery and users will remain unable to login until their email is verified. The prod profile now fails fast if email verification is disabled or if SMTP host is missing.
 
 ## Frontend API base URL strategy
 
@@ -209,7 +218,7 @@ The backend Dockerfile:
 - uses Java 21, matching the Gradle toolchain
 - builds `:barter-web:bootJar` with Gradle
 - runs `/app/barter-web.jar`
-- supports `JAVA_OPTS`, `SPRING_PROFILES_ACTIVE`, datasource vars, JWT, Azure Storage, and Spring mail vars through environment variables
+- supports `JAVA_OPTS`, `SPRING_PROFILES_ACTIVE`, datasource vars, JWT, Azure Storage, Spring mail vars, and explicit security/CORS vars through environment variables
 - defaults JVM memory to `-Xms128m -Xmx384m -XX:+UseContainerSupport -XX:MaxMetaspaceSize=160m`
 
 ### Frontend image
@@ -557,5 +566,5 @@ Current CI/CD scope is image publishing only:
 
 The workflow does **not** SSH to the server, run `docker compose up`, or deploy to production. Keep runtime environment secrets on the server, not in GitHub Actions image builds and not in the repository.
 
-Recommended next step, when ready, is a separate deployment workflow or release process that updates server env image tags and runs the existing manual pull/up commands. Production should pin explicit version tags such as `v1.0.0`, never `latest`.
+Recommended next step, when ready, is a separate deployment workflow or release process that updates server env image tags and runs the existing manual pull/up commands. Production should pin explicit version tags such as `v1.0.0`, never `latest`, and should use `deployment/env/prod.env.example` as the starting point for its runtime configuration.
 

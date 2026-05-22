@@ -39,7 +39,8 @@ public class StoredFileController {
             return ResponseEntity.ok()
                     .contentType(mediaType)
                     .contentLength(file.contentLength())
-                    .cacheControl(CacheControl.noCache())
+                    .cacheControl(CacheControl.noStore())
+                    .header("Content-Disposition", "inline")
                     .header("X-Content-Type-Options", "nosniff")
                     .body(file.content());
         } catch (NoSuchFileException ex) {

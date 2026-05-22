@@ -19,6 +19,7 @@ Safety rules:
 - only the `health` actuator endpoint family is exposed;
 - health details/components stay hidden from public callers;
 - non-health actuator endpoints remain protected;
+- the public reverse proxy should expose only `/actuator/health*`, not the rest of `/actuator/*`;
 - the existing `GET /api/v1/ping` endpoint remains available as a simple legacy smoke check.
 
 ### Readiness meaning

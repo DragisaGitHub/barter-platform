@@ -13,24 +13,34 @@
 
 # Caddy automatically manages ACME HTTP-01 challenges on port 80 and redirects
 # normal HTTP requests to HTTPS for this hostname.
-https://{$CADDY_DOMAIN:barter-platform-dev.duckdns.org} {
+https://{$CADDY_DOMAIN:barter-platform-dev.duckdns.org } {
 	# Phone camera photos and item images are multipart uploads. Do not set a
 	# restrictive Caddy request body limit here; backend/frontend validation and
 	# storage limits continue to enforce accepted upload sizes.
 
+	header {
+		# Keep public responses framed and sniffed safely even before they reach
+		# the application layer.
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+	}
+
 	# API, file, and infrastructure health routes stay same-origin for browsers
 	# and external uptime checks. Caddy forwards the original path unchanged, so
-	# /api/v1/files/..., versioned REST endpoints, and /actuator/* keep their
-	# current backend routing behavior.
+	# /api/v1/files/..., versioned REST endpoints, and /actuator/health* keep
+	# their current backend routing behavior.
 	handle /api/* {
 		# Caddy reverse_proxy preserves Host/X-Forwarded-* context and supports
 		# WebSocket/HTTP upgrade automatically for future realtime endpoints.
 		reverse_proxy backend:8080
 	}
 
-	handle /actuator/* {
-		# Keep Spring Boot Actuator outside public API versioning while still
-		# allowing infrastructure health checks through the public hostname.
+	handle /actuator/health* {
+		# Keep only public-safe health checks reachable through the public
+		# hostname. Other actuator routes remain unreachable at the proxy edge.
 		reverse_proxy backend:8080
 	}
 

@@ -31,8 +31,7 @@ RUN chown -R spring:spring /app
 USER spring
 EXPOSE 8080
 
-ENV SPRING_PROFILES_ACTIVE=dev \
-    JAVA_OPTS="-Xms128m -Xmx384m -XX:+UseContainerSupport -XX:MaxMetaspaceSize=160m" \
+ENV JAVA_OPTS="-Xms128m -Xmx384m -XX:+UseContainerSupport -XX:MaxMetaspaceSize=160m" \
     SERVER_PORT=8080
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=5 \
