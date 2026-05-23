@@ -21,10 +21,12 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 @SpringBootTest(
         classes = SwaggerDisabledMvcTest.TestApplication.class,
         properties = {
+                "server.servlet.context-path=/api/v1",
                 "barter.security.swagger-enabled=false",
                 "springdoc.api-docs.enabled=false",
                 "springdoc.swagger-ui.enabled=false"
@@ -38,14 +40,20 @@ class SwaggerDisabledMvcTest {
 
     @Test
     void shouldNotExposeOpenApiDocsWhenSwaggerDisabled() throws Exception {
-        mockMvc.perform(get("/api-docs"))
+        mockMvc.perform(apiGet("/v3/api-docs"))
                 .andExpect(status().is(anyOf(is(401), is(403), is(404))));
     }
 
     @Test
     void shouldNotExposeSwaggerUiWhenSwaggerDisabled() throws Exception {
-        mockMvc.perform(get("/swagger-ui/index.html"))
+        mockMvc.perform(apiGet("/swagger-ui/index.html"))
                 .andExpect(status().is(anyOf(is(401), is(403), is(404))));
+    }
+
+    private MockHttpServletRequestBuilder apiGet(String path) {
+        return get("/api/v1" + path)
+                .contextPath("/api/v1")
+                .servletPath(path);
     }
 
     @SpringBootConfiguration(proxyBeanMethods = false)
