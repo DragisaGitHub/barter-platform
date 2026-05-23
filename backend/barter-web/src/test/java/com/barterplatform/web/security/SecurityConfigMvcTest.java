@@ -102,10 +102,19 @@ class SecurityConfigMvcTest {
     void shouldWriteSecurityHeadersOnPublicResponses() throws Exception {
         mockMvc.perform(get("/api/v1/ping"))
                 .andExpect(status().isOk())
+                .andExpect(header().string("Content-Security-Policy", SecurityConfig.STRICT_CONTENT_SECURITY_POLICY))
                 .andExpect(header().string("X-Content-Type-Options", "nosniff"))
                 .andExpect(header().string("X-Frame-Options", "DENY"))
                 .andExpect(header().string("Referrer-Policy", "strict-origin-when-cross-origin"))
                 .andExpect(header().string("Permissions-Policy", "camera=(), geolocation=(), microphone=()"));
+    }
+
+    @Test
+    void shouldKeepStrictCspOnHealthResponses() throws Exception {
+        mockMvc.perform(get("/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Security-Policy", SecurityConfig.STRICT_CONTENT_SECURITY_POLICY))
+                .andExpect(jsonPath("$.status").value("UP"));
     }
 
     @Test
