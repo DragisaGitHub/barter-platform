@@ -30,7 +30,10 @@ import static org.mockito.Mockito.mock;
 
 @SpringBootTest(
         classes = SwaggerEndpointTest.TestApplication.class,
-        properties = "server.servlet.context-path=/api/v1"
+        properties = {
+                "server.servlet.context-path=/api/v1",
+                "server.forward-headers-strategy=framework"
+        }
 )
 @AutoConfigureMockMvc
 class SwaggerEndpointTest {
@@ -44,6 +47,25 @@ class SwaggerEndpointTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.openapi").exists());
+    }
+
+    @Test
+    void shouldExposeBearerJwtSecuritySchemeInOpenApiDocs() throws Exception {
+        mockMvc.perform(apiGet("/v3/api-docs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.components.securitySchemes.bearerJwt.type").value("http"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerJwt.scheme").value("bearer"))
+                .andExpect(jsonPath("$.components.securitySchemes.bearerJwt.bearerFormat").value("JWT"));
+    }
+
+    @Test
+    void shouldResolveHttpsServerUrlFromForwardedHeaders() throws Exception {
+        mockMvc.perform(apiGet("/v3/api-docs")
+                        .header("X-Forwarded-Proto", "https")
+                        .header("X-Forwarded-Host", "barter-platform-dev.duckdns.org")
+                        .header("X-Forwarded-Port", "443"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.servers[0].url").value("https://barter-platform-dev.duckdns.org/api/v1"));
     }
 
     @Test
@@ -74,7 +96,7 @@ class SwaggerEndpointTest {
             HibernateJpaAutoConfiguration.class,
             DataJpaRepositoriesAutoConfiguration.class
     })
-    @Import({SecurityConfig.class, JwtAuthenticationFilter.class})
+    @Import({SecurityConfig.class, JwtAuthenticationFilter.class, OpenApiConfig.class})
     static class TestApplication {
 
         @Bean
