@@ -89,8 +89,8 @@ The application starts on port `8080` with the context path `/api/v1`.
 
 | Resource       | URL                                              |
 |----------------|--------------------------------------------------|
-| Swagger UI     | http://localhost:8080/api/v1/swagger-ui.html      |
-| OpenAPI JSON   | http://localhost:8080/api/v1/api-docs              |
+| Swagger UI     | http://localhost:8080/api/v1/swagger-ui/index.html |
+| OpenAPI JSON   | http://localhost:8080/api/v1/v3/api-docs           |
 
 ---
 
