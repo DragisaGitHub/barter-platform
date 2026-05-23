@@ -72,21 +72,24 @@ Notes:
 # Backup Flow
 
 1. Read configuration from `deployment/env/dev.env` plus optional exported env overrides.
-2. Execute `pg_dump` against the running `postgres` container.
-3. Produce a compressed file named like:
+2. Resolve the Azure CLI runner: use host `az` when present, otherwise use Docker with `mcr.microsoft.com/azure-cli`.
+3. Execute `pg_dump` against the running `postgres` container.
+4. Produce a compressed file named like:
 
    ```text
    barter-barter_db-20260522T040000Z.dump.gz
    ```
 
-4. Upload the file to:
+5. Upload the file to:
 
    ```text
    postgres-backups/dev/postgres/<backup-file>.dump.gz
    ```
 
-5. After successful upload, prune local files down to `BACKUP_LOCAL_RETENTION_COUNT`.
-6. Keep backup logs in `deployment/logs/backup-db.log` when run from cron.
+   The storage connection string is still taken from `BACKUP_AZURE_CONNECTION_STRING` with fallback to `AZURE_STORAGE_CONNECTION_STRING_DEV`, and the Docker fallback passes it through an environment variable rather than requiring Azure CLI on the VM.
+
+6. After successful upload, prune local files down to `BACKUP_LOCAL_RETENTION_COUNT`.
+7. Keep backup logs in `deployment/logs/backup-db.log` when run from cron.
 
 # Retention Policy
 
@@ -169,7 +172,7 @@ This is acceptable for current DEV/public-beta preparation but is **not** the in
 If backup or restore fails, verify:
 
 1. `postgres` is healthy in the current Compose stack.
-2. `az` is installed and can access the configured storage account/container.
+2. Either host `az` is available, or Docker is available to run `mcr.microsoft.com/azure-cli` for blob access.
 3. `BACKUP_AZURE_CONTAINER=postgres-backups` is correct.
 4. `BACKUP_AZURE_PREFIX=dev/postgres` is correct.
 5. The VM has enough free space for one compressed dump plus one in-progress file.

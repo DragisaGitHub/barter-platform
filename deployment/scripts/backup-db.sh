@@ -25,6 +25,10 @@ fail() {
   exit 1
 }
 
+command_exists() {
+  command -v "$1" >/dev/null 2>&1
+}
+
 read_env_value() {
   local key="$1"
   local value
@@ -72,6 +76,65 @@ cleanup_local_backups() {
   done
 }
 
+upload_backup_with_host_az() {
+  echo "Uploading backup to Azure Blob Storage using host Azure CLI..."
+
+  az storage blob upload \
+    --connection-string "${BACKUP_AZURE_CONNECTION_STRING}" \
+    --container-name "${BACKUP_AZURE_CONTAINER}" \
+    --name "${BACKUP_BLOB_NAME}" \
+    --file "${BACKUP_FILE}" \
+    --overwrite true \
+    --content-type application/gzip \
+    --no-progress \
+    --only-show-errors >/dev/null
+}
+
+upload_backup_with_docker_az() {
+  local backup_dir
+  local backup_name
+
+  backup_dir="$(dirname "${BACKUP_FILE}")"
+  backup_name="$(basename "${BACKUP_FILE}")"
+
+  echo "Uploading backup to Azure Blob Storage using Azure CLI Docker image (${AZURE_CLI_DOCKER_IMAGE})..."
+
+  AZURE_STORAGE_CONNECTION_STRING="${BACKUP_AZURE_CONNECTION_STRING}" \
+  BACKUP_AZURE_CONTAINER="${BACKUP_AZURE_CONTAINER}" \
+  BACKUP_BLOB_NAME="${BACKUP_BLOB_NAME}" \
+  BACKUP_FILE_NAME="${backup_name}" \
+    docker run --rm \
+      -e AZURE_STORAGE_CONNECTION_STRING \
+      -e BACKUP_AZURE_CONTAINER \
+      -e BACKUP_BLOB_NAME \
+      -e BACKUP_FILE_NAME \
+      -v "${backup_dir}:/backup:ro" \
+      "${AZURE_CLI_DOCKER_IMAGE}" \
+      sh -c 'az storage blob upload \
+        --connection-string "$AZURE_STORAGE_CONNECTION_STRING" \
+        --container-name "$BACKUP_AZURE_CONTAINER" \
+        --name "$BACKUP_BLOB_NAME" \
+        --file "/backup/$BACKUP_FILE_NAME" \
+        --overwrite true \
+        --content-type application/gzip \
+        --no-progress \
+        --only-show-errors >/dev/null'
+}
+
+upload_backup_to_azure() {
+  case "${AZURE_UPLOAD_MODE}" in
+    host-az)
+      upload_backup_with_host_az
+      ;;
+    docker-az)
+      upload_backup_with_docker_az
+      ;;
+    *)
+      fail "Internal error: unsupported Azure upload mode '${AZURE_UPLOAD_MODE}'."
+      ;;
+  esac
+}
+
 FORCE_RUN="false"
 
 while [[ $# -gt 0 ]]; do
@@ -115,6 +178,7 @@ BACKUP_AZURE_CONTAINER="${BACKUP_AZURE_CONTAINER:-postgres-backups}"
 BACKUP_AZURE_PREFIX="${BACKUP_AZURE_PREFIX:-dev/postgres}"
 BACKUP_WORK_DIR="${BACKUP_WORK_DIR:-${DEPLOYMENT_DIR}/backups/postgres}"
 POSTGRES_SERVICE="${POSTGRES_SERVICE:-postgres}"
+AZURE_CLI_DOCKER_IMAGE="mcr.microsoft.com/azure-cli"
 
 BACKUP_AZURE_CONNECTION_STRING="${BACKUP_AZURE_CONNECTION_STRING:-${AZURE_STORAGE_CONNECTION_STRING_DEV:-}}"
 BACKUP_AZURE_PREFIX="${BACKUP_AZURE_PREFIX#/}"
@@ -129,16 +193,20 @@ if ! is_truthy "${BACKUP_ENABLED}" && ! is_truthy "${FORCE_RUN}"; then
   exit 0
 fi
 
-if ! command -v docker >/dev/null 2>&1; then
+if command_exists az; then
+  AZURE_UPLOAD_MODE="host-az"
+elif command_exists docker; then
+  AZURE_UPLOAD_MODE="docker-az"
+else
+  fail "Azure Blob upload requires either local Azure CLI ('az') or Docker to run ${AZURE_CLI_DOCKER_IMAGE}."
+fi
+
+if ! command_exists docker; then
   fail "Docker is not installed or not on PATH."
 fi
 
-if ! command -v gzip >/dev/null 2>&1; then
+if ! command_exists gzip; then
   fail "gzip is required for compressed PostgreSQL backups."
-fi
-
-if ! command -v az >/dev/null 2>&1; then
-  fail "Azure CLI ('az') is required for backup upload."
 fi
 
 if [[ -z "${POSTGRES_DB}" || -z "${POSTGRES_USER}" ]]; then
@@ -179,6 +247,7 @@ echo "Backup frequency:   ${BACKUP_FREQUENCY}${BACKUP_SCHEDULE:+ (schedule: ${BA
 echo "Work directory:     ${BACKUP_WORK_DIR}"
 echo "Azure container:    ${BACKUP_AZURE_CONTAINER}"
 echo "Azure blob path:    ${BACKUP_BLOB_NAME}"
+echo "Azure CLI mode:     ${AZURE_UPLOAD_MODE}"
 echo "Creating compressed PostgreSQL backup: ${BACKUP_FILE}"
 
 docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T \
@@ -190,16 +259,7 @@ docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T \
 
 mv "${TEMP_BACKUP_FILE}" "${BACKUP_FILE}"
 
-echo "Uploading backup to Azure Blob Storage..."
-az storage blob upload \
-  --connection-string "${BACKUP_AZURE_CONNECTION_STRING}" \
-  --container-name "${BACKUP_AZURE_CONTAINER}" \
-  --name "${BACKUP_BLOB_NAME}" \
-  --file "${BACKUP_FILE}" \
-  --overwrite true \
-  --content-type application/gzip \
-  --no-progress \
-  --only-show-errors >/dev/null
+upload_backup_to_azure
 
 echo "Upload complete. Applying local retention policy..."
 cleanup_local_backups "${BACKUP_LOCAL_RETENTION_COUNT}" "barter-${POSTGRES_DB}-*.dump.gz"

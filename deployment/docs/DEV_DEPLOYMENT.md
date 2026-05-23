@@ -105,7 +105,7 @@ On the OCI VM install:
 - Docker Compose plugin (`docker compose`)
 - `gzip`
 - `cron`/`crontab`
-- Azure CLI (`az`) for PostgreSQL backup upload/download to Azure Blob Storage
+- Optional: Azure CLI (`az`) on the host for direct blob operations. If it is not installed on the VM, `deployment/scripts/backup-db.sh` can fall back to the Docker image `mcr.microsoft.com/azure-cli` for backup upload.
 - Git or another way to copy the `deployment/` folder to the server
 - Optional: `ufw` or OCI security-list/network-security-group rules for firewall management
 
@@ -340,6 +340,13 @@ Create and upload a compressed PostgreSQL backup immediately:
 ./deployment/scripts/backup-db.sh --force
 ```
 
+Azure upload behavior stays config-compatible and now resolves the Azure CLI runner automatically:
+
+1. Use host `az` when it exists on the VM.
+2. Otherwise use Docker to run `mcr.microsoft.com/azure-cli`.
+
+The script still reads `BACKUP_AZURE_CONNECTION_STRING`, falls back to `AZURE_STORAGE_CONNECTION_STRING_DEV` when needed, mounts the generated backup file into the Azure CLI container, and passes the storage connection string through an environment variable instead of requiring Azure CLI on the host.
+
 What it does:
 
 - creates a custom-format `pg_dump`
@@ -376,6 +383,7 @@ Notes:
 - Leave `BACKUP_SCHEDULE` empty to use the built-in monthly default (`0 4 1 * *`).
 - Leave `BACKUP_WORK_DIR` empty to use the script default under `deployment/backups/postgres/`, or set an absolute path on the VM.
 - Leave `BACKUP_AZURE_CONNECTION_STRING` empty only if you intentionally want to reuse `AZURE_STORAGE_CONNECTION_STRING_DEV`.
+- No VM-level Azure CLI install is required for scheduled backups as long as Docker is available.
 - Future production can switch to `BACKUP_FREQUENCY=daily` or set an explicit cron expression in `BACKUP_SCHEDULE` without changing backup script logic.
 
 Install or refresh the monthly cron entry:
@@ -405,6 +413,8 @@ Do this before restarting containers.
 ### Manual restore test procedure
 
 Do **not** restore automatically into the live application database during normal verification. Test restores should go to a temporary database first.
+
+The blob listing/download examples below use `az` directly for readability. You can run them either on a machine with host Azure CLI installed or by using the Docker image `mcr.microsoft.com/azure-cli` with the same storage connection string.
 
 1. Pick the blob to test:
 
@@ -481,7 +491,7 @@ docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-co
 If a backup or restore fails, check the following in order:
 
 1. `docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml ps` shows `postgres` healthy.
-2. `az --version` works on the server.
+2. Either host `az` is available on the server, or Docker is available so the script can run `mcr.microsoft.com/azure-cli`.
 3. `BACKUP_AZURE_CONNECTION_STRING` or `AZURE_STORAGE_CONNECTION_STRING_DEV` is valid.
 4. The `postgres-backups` container exists and the prefix is correct: `dev/postgres/`.
 5. `BACKUP_WORK_DIR` is writable and the VM has enough free disk for one compressed dump plus one in-progress file.
