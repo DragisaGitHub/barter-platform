@@ -8,6 +8,7 @@ import com.barterplatform.web.ratelimit.RateLimitingFilter;
 import com.barterplatform.web.security.jwt.JwtAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
 import java.util.List;
@@ -38,6 +39,12 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @EnableMethodSecurity
 @EnableConfigurationProperties({RateLimitProperties.class, SecurityProperties.class})
 public class SecurityConfig {
+
+    public static final String STRICT_CONTENT_SECURITY_POLICY =
+            "default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; object-src 'none'";
+
+    public static final String SWAGGER_CONTENT_SECURITY_POLICY = STRICT_CONTENT_SECURITY_POLICY
+            + "; connect-src 'self'; font-src 'self'; img-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'";
 
     private static final String[] SWAGGER_PATHS = {
             "/swagger-ui/**",
@@ -77,8 +84,9 @@ public class SecurityConfig {
                     headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::deny);
                     headers.referrerPolicy(referrer -> referrer
                             .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN));
-                    headers.contentSecurityPolicy(csp -> csp
-                            .policyDirectives("default-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'; object-src 'none'"));
+                    headers.addHeaderWriter((request, response) -> response.setHeader(
+                            "Content-Security-Policy",
+                            resolveContentSecurityPolicy(request)));
                     headers.addHeaderWriter(new StaticHeadersWriter("Permissions-Policy", "camera=(), geolocation=(), microphone=()"));
                 })
                 .exceptionHandling(exceptionHandling -> exceptionHandling
@@ -213,5 +221,33 @@ public class SecurityConfig {
         FilterRegistrationBean<RateLimitingFilter> registration = new FilterRegistrationBean<>(rateLimitingFilter);
         registration.setEnabled(false);
         return registration;
+    }
+
+    private String resolveContentSecurityPolicy(HttpServletRequest request) {
+        if (securityProperties.isSwaggerEnabled() && isSwaggerRequest(request)) {
+            return SWAGGER_CONTENT_SECURITY_POLICY;
+        }
+        return STRICT_CONTENT_SECURITY_POLICY;
+    }
+
+    private boolean isSwaggerRequest(HttpServletRequest request) {
+        return isSwaggerPath(request.getServletPath()) || isSwaggerPath(request.getRequestURI());
+    }
+
+    private boolean isSwaggerPath(String path) {
+        if (path == null || path.isBlank()) {
+            return false;
+        }
+
+        return path.equals("/swagger-ui")
+                || path.startsWith("/swagger-ui/")
+                || path.equals("/swagger-ui.html")
+                || path.equals("/v3/api-docs")
+                || path.startsWith("/v3/api-docs/")
+                || path.equals("/api/v1/swagger-ui")
+                || path.startsWith("/api/v1/swagger-ui/")
+                || path.equals("/api/v1/swagger-ui.html")
+                || path.equals("/api/v1/v3/api-docs")
+                || path.startsWith("/api/v1/v3/api-docs/");
     }
 }

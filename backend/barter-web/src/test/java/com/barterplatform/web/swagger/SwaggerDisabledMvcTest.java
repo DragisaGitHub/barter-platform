@@ -1,5 +1,6 @@
 package com.barterplatform.web.swagger;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.mock;
@@ -21,6 +22,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 @SpringBootTest(
@@ -46,8 +48,14 @@ class SwaggerDisabledMvcTest {
 
     @Test
     void shouldNotExposeSwaggerUiWhenSwaggerDisabled() throws Exception {
-        mockMvc.perform(apiGet("/swagger-ui/index.html"))
-                .andExpect(status().is(anyOf(is(401), is(403), is(404))));
+        MvcResult result = mockMvc.perform(apiGet("/swagger-ui/index.html"))
+                .andExpect(status().is(anyOf(is(401), is(403), is(404))))
+                .andReturn();
+
+        String contentSecurityPolicy = result.getResponse().getHeader("Content-Security-Policy");
+        if (contentSecurityPolicy != null) {
+            assertThat(contentSecurityPolicy).isEqualTo(SecurityConfig.STRICT_CONTENT_SECURITY_POLICY);
+        }
     }
 
     private MockHttpServletRequestBuilder apiGet(String path) {

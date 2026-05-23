@@ -1,6 +1,7 @@
 package com.barterplatform.web.swagger;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -49,7 +50,16 @@ class SwaggerEndpointTest {
     void shouldExposeSwaggerUiWithoutAuthentication() throws Exception {
         // Swagger UI may respond with 200 or 302 redirect - both indicate it is accessible (not 401/403)
         mockMvc.perform(apiGet("/swagger-ui/index.html"))
-                .andExpect(status().is(anyOf(is(200), is(302))));
+                .andExpect(status().is(anyOf(is(200), is(302))))
+                .andExpect(header().string("Content-Security-Policy", SecurityConfig.SWAGGER_CONTENT_SECURITY_POLICY));
+    }
+
+    @Test
+    void shouldServeSwaggerUiAssetsWithSwaggerCsp() throws Exception {
+        mockMvc.perform(apiGet("/swagger-ui/swagger-ui.css"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentTypeCompatibleWith("text/css"))
+                .andExpect(header().string("Content-Security-Policy", SecurityConfig.SWAGGER_CONTENT_SECURITY_POLICY));
     }
 
     private MockHttpServletRequestBuilder apiGet(String path) {
