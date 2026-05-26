@@ -11,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -24,6 +23,7 @@ import org.testcontainers.utility.DockerImageName;
                 "spring.jpa.hibernate.ddl-auto=validate",
                 "spring.flyway.enabled=true",
                 "spring.flyway.locations=classpath:db/migration",
+                "barter.jwt.secret=integration-test-secret-key-at-least-32-bytes!!",
                 "logging.level.org.flywaydb=DEBUG",
                 "logging.level.org.springframework.boot.flyway=DEBUG",
                 "logging.level.org.hibernate.tool.schema=DEBUG"

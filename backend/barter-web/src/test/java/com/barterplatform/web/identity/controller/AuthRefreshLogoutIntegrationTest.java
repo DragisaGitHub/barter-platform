@@ -170,11 +170,23 @@ class AuthRefreshLogoutIntegrationTest {
         // Refresh should fail
         mockMvc.perform(refreshRequest(refreshToken))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Account is suspended."));
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("Account is suspended."))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
 
         List<RefreshTokenEntity> tokens = refreshTokenRepository.findAll();
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().getRevokedAt()).isNotNull();
+
+        mockMvc.perform(refreshRequest(refreshToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Refresh token has been revoked."))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
     }
 
     @Test
@@ -194,11 +206,23 @@ class AuthRefreshLogoutIntegrationTest {
 
         mockMvc.perform(refreshRequest(refreshToken))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Account is banned."));
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("Account is banned."))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
 
         List<RefreshTokenEntity> tokens = refreshTokenRepository.findAll();
         assertThat(tokens).hasSize(1);
         assertThat(tokens.getFirst().getRevokedAt()).isNotNull();
+
+        mockMvc.perform(refreshRequest(refreshToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Refresh token has been revoked."))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
     }
 
     @Test
@@ -209,7 +233,11 @@ class AuthRefreshLogoutIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Refresh token is required."));
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.message").value("Refresh token is required."))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
     }
 
     @Test

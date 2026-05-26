@@ -38,7 +38,8 @@ import org.testcontainers.utility.DockerImageName;
         properties = {
                 "spring.jpa.hibernate.ddl-auto=validate",
                 "spring.flyway.enabled=true",
-                "spring.flyway.locations=classpath:db/migration"
+                "spring.flyway.locations=classpath:db/migration",
+                "barter.jwt.secret=integration-test-secret-key-at-least-32-bytes!!"
         }
 )
 @AutoConfigureMockMvc
