@@ -1,10 +1,9 @@
 package com.barterplatform.web.security;
 
+import com.barterplatform.application.identity.auth.JwtSecretValidator;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.context.ApplicationContextException;
 import org.springframework.core.env.Environment;
@@ -13,15 +12,6 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class ProductionSecurityEnvironmentValidator implements SmartInitializingSingleton {
-
-    private static final int MIN_JWT_SECRET_LENGTH = 32;
-    private static final Set<String> INSECURE_JWT_SECRETS = Set.of(
-            "default-dev-secret-key-that-is-at-least-32-bytes-long!!",
-            "replace-with-long-random-dev-secret-at-least-32-bytes",
-            "changeme",
-            "change-me",
-            "secret",
-            "jwt-secret");
 
     private final Environment environment;
     private final SecurityProperties securityProperties;
@@ -40,6 +30,7 @@ public class ProductionSecurityEnvironmentValidator implements SmartInitializing
         List<String> errors = new ArrayList<>();
         validateProfiles(errors);
         validateJwtSecret(errors);
+        validateJwtExpirations(errors);
         validateAllowedOrigins(errors);
         validateSwagger(errors);
         validateEmailVerification(errors);
@@ -57,20 +48,25 @@ public class ProductionSecurityEnvironmentValidator implements SmartInitializing
     }
 
     private void validateJwtSecret(List<String> errors) {
-        String jwtSecret = environment.getProperty("barter.jwt.secret", "").trim();
-        String normalized = jwtSecret.toLowerCase(Locale.ROOT);
+        String jwtSecret = environment.getProperty("barter.jwt.secret", "");
 
-        if (jwtSecret.isBlank()) {
-            errors.add("barter.jwt.secret (JWT_SECRET) is required in prod.");
-            return;
+        try {
+            JwtSecretValidator.validateOrThrow(jwtSecret, "barter.jwt.secret (JWT_SECRET)");
+        } catch (IllegalStateException ex) {
+            errors.add(ex.getMessage());
         }
-        if (jwtSecret.length() < MIN_JWT_SECRET_LENGTH) {
-            errors.add("barter.jwt.secret (JWT_SECRET) must be at least 32 characters long in prod.");
+    }
+
+    private void validateJwtExpirations(List<String> errors) {
+        Long accessTokenMinutes = environment.getProperty("barter.jwt.access-token-expiration-minutes", Long.class);
+        Long refreshTokenDays = environment.getProperty("barter.jwt.refresh-token-expiration-days", Long.class);
+
+        if (accessTokenMinutes == null || accessTokenMinutes <= 0) {
+            errors.add("barter.jwt.access-token-expiration-minutes (JWT_ACCESS_EXPIRATION_MINUTES) must be greater than 0 in prod.");
         }
-        if (INSECURE_JWT_SECRETS.contains(normalized)
-                || normalized.contains("default-dev-secret")
-                || normalized.contains("replace-with-long-random-dev-secret")) {
-            errors.add("barter.jwt.secret (JWT_SECRET) must not use a placeholder or known DEV default in prod.");
+
+        if (refreshTokenDays == null || refreshTokenDays <= 0) {
+            errors.add("barter.jwt.refresh-token-expiration-days (JWT_REFRESH_EXPIRATION_DAYS) must be greater than 0 in prod.");
         }
     }
 

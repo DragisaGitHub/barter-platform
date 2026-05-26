@@ -515,6 +515,7 @@ class AuthServiceImplTest {
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         assertEquals("Account is suspended.", ex.getMessage());
+        verify(refreshTokenService).revoke(existingToken);
     }
 
     @Test
@@ -533,6 +534,18 @@ class AuthServiceImplTest {
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         assertEquals("Account is banned.", ex.getMessage());
+        verify(refreshTokenService).revoke(existingToken);
+    }
+
+    @Test
+    void shouldRejectBlankRefreshTokenOnRefresh() {
+        RefreshTokenRequest request = new RefreshTokenRequest().refreshToken("   ");
+
+        ApiException ex = assertThrows(ApiException.class, () -> authService.refreshToken(request));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(ErrorCode.BAD_REQUEST, ex.getCode());
+        assertEquals("Refresh token is required.", ex.getMessage());
     }
 
     // --- Logout tests ---
@@ -547,6 +560,15 @@ class AuthServiceImplTest {
         authService.logout(request);
 
         verify(refreshTokenService).revoke(existingToken);
+    }
+
+    @Test
+    void shouldRejectMissingRefreshTokenOnLogout() {
+        ApiException ex = assertThrows(ApiException.class, () -> authService.logout(new RefreshTokenRequest()));
+
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(ErrorCode.BAD_REQUEST, ex.getCode());
+        assertEquals("Refresh token is required.", ex.getMessage());
     }
 
     @Test

@@ -72,8 +72,10 @@ barter:
   email-verification:
     enabled: ${BARTER_EMAIL_VERIFICATION_ENABLED:true}
   jwt:
-    secret: ${JWT_SECRET:default-dev-secret-key-that-is-at-least-32-bytes-long!!}
-    access-token-expiration-minutes: ${JWT_ACCESS_EXPIRATION_MINUTES:30}
+    # JWT_SECRET is required for all non-local runtime profiles.
+    # Keep access tokens short-lived by default; dev can override in application-dev.yml.
+    secret: ${JWT_SECRET:}
+    access-token-expiration-minutes: ${JWT_ACCESS_EXPIRATION_MINUTES:15}
     refresh-token-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}
   verification:
     code-expiration-minutes: ${BARTER_VERIFICATION_CODE_EXPIRATION_MINUTES:15}

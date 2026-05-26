@@ -187,7 +187,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public TokenResponse refreshToken(RefreshTokenRequest request) {
-        RefreshTokenEntity tokenEntity = refreshTokenService.validateAndGet(request.getRefreshToken());
+        String rawRefreshToken = requireRefreshToken(request);
+        RefreshTokenEntity tokenEntity = refreshTokenService.validateAndGet(rawRefreshToken);
 
         UserEntity user = userRepository.findById(tokenEntity.getUserId())
                 .orElseThrow(() -> new ApiException(
@@ -195,7 +196,7 @@ public class AuthServiceImpl implements AuthService {
                         ErrorCode.UNAUTHORIZED,
                         "User not found."));
 
-        validateUserStatus(user);
+        validateUserStatusForRefresh(user, tokenEntity);
         ensurePreferredLanguage(user);
 
         List<String> roles = resolveRoleNames(user.getId());
@@ -218,7 +219,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(RefreshTokenRequest request) {
-        RefreshTokenEntity tokenEntity = refreshTokenService.validateAndGet(request.getRefreshToken());
+        String rawRefreshToken = requireRefreshToken(request);
+        RefreshTokenEntity tokenEntity = refreshTokenService.validateAndGet(rawRefreshToken);
         refreshTokenService.revoke(tokenEntity);
     }
 
@@ -284,6 +286,27 @@ public class AuthServiceImpl implements AuthService {
                     ErrorCode.FORBIDDEN,
                     "Email verification required.");
         }
+    }
+
+    private void validateUserStatusForRefresh(UserEntity user, RefreshTokenEntity tokenEntity) {
+        try {
+            validateUserStatus(user);
+        } catch (ApiException ex) {
+            if (ex.getStatus() == HttpStatus.FORBIDDEN && tokenEntity.getRevokedAt() == null) {
+                refreshTokenService.revoke(tokenEntity);
+            }
+            throw ex;
+        }
+    }
+
+    private String requireRefreshToken(RefreshTokenRequest request) {
+        if (request == null || request.getRefreshToken() == null || request.getRefreshToken().isBlank()) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    ErrorCode.BAD_REQUEST,
+                    "Refresh token is required.");
+        }
+        return request.getRefreshToken().trim();
     }
 
     private List<String> resolveRoleNames(Long userId) {

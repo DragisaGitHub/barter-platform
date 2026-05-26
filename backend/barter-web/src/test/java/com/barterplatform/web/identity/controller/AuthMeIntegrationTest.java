@@ -153,7 +153,9 @@ class AuthMeIntegrationTest {
         mockMvc.perform(get("/api/v1/auth/me")
                         .contextPath("/api/v1")
                         .servletPath("/auth/me"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Authentication is required to access this resource."));
     }
 
     @Test
@@ -162,7 +164,9 @@ class AuthMeIntegrationTest {
                         .contextPath("/api/v1")
                         .servletPath("/auth/me")
                         .header("Authorization", "Bearer invalid-token"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Authentication is required to access this resource."));
     }
 
     @Test

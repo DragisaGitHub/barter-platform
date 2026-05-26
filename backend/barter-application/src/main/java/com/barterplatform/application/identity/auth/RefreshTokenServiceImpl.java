@@ -4,6 +4,7 @@ import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.identity.entity.RefreshTokenEntity;
 import com.barterplatform.infrastructure.identity.repository.RefreshTokenRepository;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -25,6 +26,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public RefreshTokenServiceImpl(
             RefreshTokenRepository refreshTokenRepository,
             @Value("${barter.jwt.refresh-token-expiration-days}") long refreshTokenExpirationDays) {
+        if (refreshTokenExpirationDays <= 0) {
+            throw new IllegalStateException("barter.jwt.refresh-token-expiration-days (JWT_REFRESH_EXPIRATION_DAYS) must be greater than 0.");
+        }
         this.refreshTokenRepository = refreshTokenRepository;
         this.refreshTokenExpirationDays = refreshTokenExpirationDays;
     }
@@ -91,7 +95,7 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     static String hashToken(String rawToken) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(rawToken.getBytes());
+            byte[] hash = digest.digest(rawToken.getBytes(StandardCharsets.UTF_8));
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 algorithm not available", e);

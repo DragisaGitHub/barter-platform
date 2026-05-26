@@ -29,7 +29,7 @@ class ProductionSecurityEnvironmentValidatorTest {
                     assertThat(context).hasFailed();
                     assertThat(context.getStartupFailure())
                             .hasMessageContaining("Unsafe production configuration")
-                            .hasMessageContaining("must not use a placeholder or known DEV default")
+                            .hasMessageContaining("must not use a placeholder or known unsafe default value")
                             .hasMessageContaining("Swagger/OpenAPI must be disabled in prod")
                             .hasMessageContaining("Email verification must stay enabled in prod")
                             .hasMessageContaining("barter.storage.type must be set to 'azure' in prod");
@@ -42,6 +42,8 @@ class ProductionSecurityEnvironmentValidatorTest {
                 .withPropertyValues(
                         "spring.profiles.active=prod",
                         "barter.jwt.secret=prod-secret-value-with-at-least-32-characters!!",
+                        "barter.jwt.access-token-expiration-minutes=15",
+                        "barter.jwt.refresh-token-expiration-days=7",
                         "barter.security.swagger-enabled=false",
                         "barter.security.allowed-origins=https://barter-platform.example.com",
                         "barter.email-verification.enabled=true",
@@ -58,6 +60,8 @@ class ProductionSecurityEnvironmentValidatorTest {
                 .withPropertyValues(
                         "spring.profiles.active=prod",
                         "barter.jwt.secret=prod-secret-value-with-at-least-32-characters!!",
+                        "barter.jwt.access-token-expiration-minutes=15",
+                        "barter.jwt.refresh-token-expiration-days=7",
                         "barter.security.swagger-enabled=false",
                         "barter.security.allowed-origins=http://localhost:5173",
                         "barter.email-verification.enabled=true",
@@ -70,6 +74,29 @@ class ProductionSecurityEnvironmentValidatorTest {
                     assertThat(context.getStartupFailure())
                             .hasMessageContaining("must use HTTPS in prod")
                             .hasMessageContaining("must not point to localhost in prod");
+                });
+    }
+
+    @Test
+    void shouldFailFastWhenProdJwtExpirationsAreInvalid() {
+        contextRunner
+                .withPropertyValues(
+                        "spring.profiles.active=prod",
+                        "barter.jwt.secret=prod-secret-value-with-at-least-32-characters!!",
+                        "barter.jwt.access-token-expiration-minutes=0",
+                        "barter.jwt.refresh-token-expiration-days=0",
+                        "barter.security.swagger-enabled=false",
+                        "barter.security.allowed-origins=https://barter-platform.example.com",
+                        "barter.email-verification.enabled=true",
+                        "spring.mail.host=smtp.example.com",
+                        "barter.storage.type=azure",
+                        "barter.storage.azure.connection-string=DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test;EndpointSuffix=core.windows.net",
+                        "barter.storage.azure.container-name=item-images-prod")
+                .run(context -> {
+                    assertThat(context).hasFailed();
+                    assertThat(context.getStartupFailure())
+                            .hasMessageContaining("barter.jwt.access-token-expiration-minutes")
+                            .hasMessageContaining("barter.jwt.refresh-token-expiration-days");
                 });
     }
 

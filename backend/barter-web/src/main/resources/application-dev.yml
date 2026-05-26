@@ -18,6 +18,9 @@ server:
 barter:
   email-verification:
     enabled: false
+  jwt:
+    access-token-expiration-minutes: ${JWT_ACCESS_EXPIRATION_MINUTES:30}
+    refresh-token-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:14}
   security:
     allowed-origins: ${BARTER_SECURITY_ALLOWED_ORIGINS:${FRONTEND_ORIGIN:}}
   storage:

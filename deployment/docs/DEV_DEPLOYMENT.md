@@ -137,6 +137,7 @@ Minimum values to review and replace:
 - `POSTGRES_PASSWORD`
 - `DB_PASSWORD`
 - `JWT_SECRET`
+- `JWT_ACCESS_EXPIRATION_MINUTES` and `JWT_REFRESH_EXPIRATION_DAYS` if you need to override the documented defaults
 - `AZURE_STORAGE_CONNECTION_STRING_DEV`
 - `AZURE_STORAGE_CONTAINER_DEV`
 - `AZURE_STORAGE_CONNECTION_STRING_PROD` / `AZURE_STORAGE_CONTAINER_PROD` in the future production env file, or the neutral aliases `AZURE_STORAGE_CONNECTION_STRING` / `AZURE_STORAGE_CONTAINER`
@@ -153,6 +154,23 @@ Minimum values to review and replace:
 - `FRONTEND_ORIGIN` only if you still need the legacy single-origin alias
 
 The supplied Caddy/nginx same-origin proxy means the browser calls `/api/v1`, so CORS should not be needed for the default DEV deployment path. Leave `BARTER_SECURITY_ALLOWED_ORIGINS` empty unless you intentionally expose the backend to a different browser origin.
+
+### JWT runtime defaults by profile
+
+- **DEV** default: `JWT_ACCESS_EXPIRATION_MINUTES=30`, `JWT_REFRESH_EXPIRATION_DAYS=14`
+- **PROD** default: `JWT_ACCESS_EXPIRATION_MINUTES=15`, `JWT_REFRESH_EXPIRATION_DAYS=7`
+
+`JWT_SECRET` must now be explicitly strong for deployed DEV/PROD environments. The backend fails fast for blank, too-short, or placeholder JWT secrets.
+
+Example secret generators:
+
+```bash
+openssl rand -base64 48
+```
+
+```powershell
+[Convert]::ToBase64String((1..48 | ForEach-Object { [byte](Get-Random -Minimum 0 -Maximum 256) }))
+```
 
 ## Image storage strategy by profile
 
