@@ -24,12 +24,9 @@ barter:
   security:
     allowed-origins: ${BARTER_SECURITY_ALLOWED_ORIGINS:${FRONTEND_ORIGIN:}}
     swagger-enabled: false
-
-storage:
-  type: azure
-
-azure:
   storage:
-    connection-string: ${AZURE_STORAGE_CONNECTION_STRING}
-    container-name: ${AZURE_STORAGE_CONTAINER}
+    type: azure
+    azure:
+      connection-string: ${AZURE_STORAGE_CONNECTION_STRING_PROD:${AZURE_STORAGE_CONNECTION_STRING:}}
+      container-name: ${AZURE_STORAGE_CONTAINER_PROD:${AZURE_STORAGE_CONTAINER:}}
 

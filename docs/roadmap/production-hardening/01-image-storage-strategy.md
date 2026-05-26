@@ -4,21 +4,64 @@
 > Priority: P1 operational cost/security/performance  
 > Execution mode: one controlled Agent-mode implementation unit unless explicitly split below.
 
+# Status
+
+- Implemented for the current DEV-ready / pre-PROD phase.
+- Scope intentionally stayed within storage hardening and documentation. No CDN, image-resize pipeline, or new infrastructure service was added.
+
 # Goal
 
-- Define a production-safe image storage, serving, validation, and lifecycle strategy for user-uploaded item images.
-- Agent-mode scope: implement only this document, update tests/docs, and stop for review before starting another roadmap item.
+- Make local/dev/prod image storage behavior explicit and safe without rebuilding the existing upload feature.
+- Keep DEV working on Azure Blob Storage.
+- Keep local development simple on local filesystem storage.
+- Prepare a clean production path with a separate Azure Blob container and explicit env variables.
 
 # Why It Matters
 
 - Images are one of the most likely cost, performance, security, and backup pressure points for a barter marketplace.
 - The roadmap notes existing storage abstraction is good, but production object storage policy, resizing, CDN, lifecycle, and scanning are incomplete.
 
-# Current State
+# Implemented Strategy
 
-- Item image upload/list/delete/set-primary APIs exist.
-- Local storage and Azure Blob storage implementations exist behind `FileStorageService`.
-- Magic-byte validation, max size/count controls, filename sanitization, compensation delete, and `nosniff` serving are already present.
+## Storage behavior by profile
+
+- `local` profile → local filesystem storage via `LocalFileStorageService`
+- `dev` profile → Azure Blob Storage via `AzureBlobStorageService`
+- `prod` profile → Azure Blob Storage via `AzureBlobStorageService`
+
+The service selection is still profile-based, so `dev`/`prod` cannot silently fall back to permanent local-disk storage.
+
+## Configuration model
+
+- Canonical property namespace: `barter.storage.*`
+- Local storage path: `barter.storage.local.base-path`
+- Azure connection string: `barter.storage.azure.connection-string`
+- Azure container name: `barter.storage.azure.container-name`
+
+Backward compatibility is preserved for the older Azure property aliases used by the current implementation:
+
+- `azure.storage.connection-string`
+- `azure.storage.container-name`
+
+Environment variable support is now documented as:
+
+- DEV preferred: `AZURE_STORAGE_CONNECTION_STRING_DEV`, `AZURE_STORAGE_CONTAINER_DEV`
+- DEV optional neutral aliases: `AZURE_STORAGE_CONNECTION_STRING`, `AZURE_STORAGE_CONTAINER`
+- PROD preferred: `AZURE_STORAGE_CONNECTION_STRING_PROD`, `AZURE_STORAGE_CONTAINER_PROD`
+- PROD optional neutral aliases: `AZURE_STORAGE_CONNECTION_STRING`, `AZURE_STORAGE_CONTAINER`
+
+## Current storage topology
+
+- DEV container: `item-images-dev`
+- PROD recommended container: `item-images-prod`
+- Containers should remain **private**.
+- The browser-facing URL remains the backend endpoint: `/api/v1/files/**`
+
+## Data ownership boundary
+
+- PostgreSQL keeps image metadata (`item_images` rows, storage keys, ordering, primary flag, content type, file size).
+- Azure Blob Storage keeps the binary image payload for DEV and future PROD.
+- Local filesystem storage is only for local development.
 
 # Risks
 
@@ -27,13 +70,14 @@
 - Local disk storage can become a production bottleneck and complicate restore.
 - CDN/scanning can be overengineered too early if added before launch needs are proven.
 
-# Proposed Solution
+# Hardened runtime guarantees
 
-- For production, prefer object storage over local disk and document the supported storage mode.
-- Add server-side dimension validation and resizing/compression before CDN-level optimization.
-- Define lifecycle rules for orphaned/deleted images and backup expectations.
-- Keep serving through the existing abstraction; use signed or proxied URLs later if public blob exposure becomes a concern.
-- Document current threat model: JPEG/PNG/WebP only, size/count limits, no arbitrary file serving.
+- `dev`/`prod` Azure storage config now fails clearly on startup when the connection string or container name is missing/blank.
+- Azure container names are validated before startup continues.
+- Local profile continues using the filesystem path under `./uploads` unless overridden.
+- Upload serving still goes through the backend controller, so private blob containers remain compatible.
+- Existing JPEG/PNG/WebP magic-byte validation, upload size limits, max image count limits, filename sanitization, compensation delete, and `X-Content-Type-Options: nosniff` remain intact.
+- Storage connection strings remain excluded from API responses and Azure failure logs continue to redact sensitive values.
 
 # Simpler Alternatives
 
@@ -48,9 +92,11 @@
 
 # Operational Impact
 
-- Requires storage retention/lifecycle decisions.
-- Operators need cleanup guidance for orphaned files and failed uploads.
-- Backup/restore strategy must include image metadata and blobs together.
+- Operators now have documented DEV verification steps for image uploads.
+- Backup/restore remains split intentionally:
+  - PostgreSQL backups cover image metadata.
+  - Azure Blob Storage retains binary image data separately.
+- The small OCI DEV server no longer needs to be treated as permanent image storage.
 
 # Security Impact
 
@@ -64,40 +110,48 @@
 - Adds clear image rules for future upload features.
 - Resizing libraries may add test and platform dependencies.
 
-# Backend Changes
+# Backend Changes Delivered
 
-- Add dimension validation and optional resizing/compression pipeline if selected for this milestone.
-- Clarify storage configuration validation for production.
-- Add orphan cleanup command/service only if safe and testable.
+- Clarified storage configuration under `barter.storage.*`.
+- Added fail-fast Azure config validation for `dev`/`prod` startup.
+- Preserved backend-proxied image URLs instead of exposing public blob URLs.
+- Added profile/configuration tests for local/dev/prod selection and Azure config validation.
 
 # Frontend Changes
 
-- Update upload guidance for allowed formats, max size, image quality, and recommended dimensions.
-- Handle image-processing errors with clear messages.
+- No frontend feature rewrite was required.
+- Existing upload flow continues to work against the same backend endpoints.
 
 # Database Changes
 
 - No schema change required unless adding image variants.
 - If variants are added, extend image metadata minimally rather than creating a separate asset service.
 
-# Deployment Changes
+# Deployment Changes Delivered
 
-- Document production storage provider variables and lifecycle policy.
-- Ensure image storage is included in backup/restore docs.
-- Add object storage credentials handling to production config validation.
+- Updated `deployment/env/dev.env.example` and `deployment/env/prod.env.example` with explicit Azure image-storage variables.
+- Updated `deployment/docs/DEV_DEPLOYMENT.md` with local vs dev vs prod storage behavior, required containers, verification steps, and troubleshooting.
+- DEV compose now relies on env-file-driven Azure settings so the backend can accept either scoped or neutral Azure variable names.
 
 # Testing Strategy
 
-- Test upload validation for format, size, dimension, count, and malicious extension cases.
-- Integration test storage compensation behavior.
-- Manual/browser test thumbnail/detail rendering after resize if implemented.
+- Keep existing image upload/service tests passing.
+- Added targeted configuration tests for:
+  - local profile selecting local filesystem storage
+  - dev/prod profiles selecting Azure Blob storage
+  - fail-fast Azure config validation
+  - backward compatibility with legacy Azure property aliases
+- Run targeted storage/image tests plus a full backend build.
 
-# Rollout Plan
+# DEV Operator Checklist
 
-- Document production storage mode first.
-- Enable object storage in staging.
-- Add resizing if needed and backfill only if valuable.
-- Monitor storage growth and image load performance.
+1. Deploy with `SPRING_PROFILES_ACTIVE=dev`.
+2. Confirm `item-images-dev` exists as a private Azure Blob container.
+3. Confirm either the DEV-scoped Azure vars or the neutral Azure vars are present in `deployment/env/dev.env`.
+4. Upload a JPEG/PNG/WebP image through the normal UI flow.
+5. Confirm the backend logs an Azure `operation=store` success.
+6. Confirm a new `item_images` row exists in PostgreSQL.
+7. Confirm `GET /api/v1/files/<storage_key>` serves the stored image successfully.
 
 # Future Improvements
 

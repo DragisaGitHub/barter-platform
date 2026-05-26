@@ -24,7 +24,7 @@ class ProductionSecurityEnvironmentValidatorTest {
                         "barter.jwt.secret=default-dev-secret-key-that-is-at-least-32-bytes-long!!",
                         "barter.security.swagger-enabled=true",
                         "barter.email-verification.enabled=false",
-                        "storage.type=local")
+                        "barter.storage.type=local")
                 .run(context -> {
                     assertThat(context).hasFailed();
                     assertThat(context.getStartupFailure())
@@ -32,7 +32,7 @@ class ProductionSecurityEnvironmentValidatorTest {
                             .hasMessageContaining("must not use a placeholder or known DEV default")
                             .hasMessageContaining("Swagger/OpenAPI must be disabled in prod")
                             .hasMessageContaining("Email verification must stay enabled in prod")
-                            .hasMessageContaining("storage.type must be set to 'azure' in prod");
+                            .hasMessageContaining("barter.storage.type must be set to 'azure' in prod");
                 });
     }
 
@@ -46,9 +46,9 @@ class ProductionSecurityEnvironmentValidatorTest {
                         "barter.security.allowed-origins=https://barter-platform.example.com",
                         "barter.email-verification.enabled=true",
                         "spring.mail.host=smtp.example.com",
-                        "storage.type=azure",
-                        "azure.storage.connection-string=DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test;EndpointSuffix=core.windows.net",
-                        "azure.storage.container-name=barter-prod-items")
+                        "barter.storage.type=azure",
+                        "barter.storage.azure.connection-string=DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test;EndpointSuffix=core.windows.net",
+                        "barter.storage.azure.container-name=item-images-prod")
                 .run(context -> assertThat(context).hasNotFailed());
     }
 
@@ -62,9 +62,9 @@ class ProductionSecurityEnvironmentValidatorTest {
                         "barter.security.allowed-origins=http://localhost:5173",
                         "barter.email-verification.enabled=true",
                         "spring.mail.host=smtp.example.com",
-                        "storage.type=azure",
-                        "azure.storage.connection-string=DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test;EndpointSuffix=core.windows.net",
-                        "azure.storage.container-name=barter-prod-items")
+                        "barter.storage.type=azure",
+                        "barter.storage.azure.connection-string=DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test;EndpointSuffix=core.windows.net",
+                        "barter.storage.azure.container-name=item-images-prod")
                 .run(context -> {
                     assertThat(context).hasFailed();
                     assertThat(context.getStartupFailure())

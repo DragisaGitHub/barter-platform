@@ -24,7 +24,7 @@ public class LocalFileStorageService implements FileStorageService {
     private final Path basePath;
 
     public LocalFileStorageService(
-            @Value("${storage.local.upload-dir:${barter.storage.local.base-path:./uploads}}") String basePath) {
+            @Value("${barter.storage.local.base-path:${storage.local.upload-dir:./uploads}}") String basePath) {
         this.basePath = Paths.get(basePath).toAbsolutePath().normalize();
     }
 

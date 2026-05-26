@@ -20,12 +20,9 @@ barter:
     enabled: false
   security:
     allowed-origins: ${BARTER_SECURITY_ALLOWED_ORIGINS:${FRONTEND_ORIGIN:}}
-
-storage:
-  type: azure
-
-azure:
   storage:
-    connection-string: ${AZURE_STORAGE_CONNECTION_STRING_DEV}
-    container-name: ${AZURE_STORAGE_CONTAINER_DEV}
+    type: azure
+    azure:
+      connection-string: ${AZURE_STORAGE_CONNECTION_STRING_DEV:${AZURE_STORAGE_CONNECTION_STRING:}}
+      container-name: ${AZURE_STORAGE_CONTAINER_DEV:${AZURE_STORAGE_CONTAINER:}}
 
