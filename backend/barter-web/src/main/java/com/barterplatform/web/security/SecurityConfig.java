@@ -91,6 +91,9 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .requestCache(AbstractHttpConfigurer::disable)
                 .headers(headers -> {
+                    headers.httpStrictTransportSecurity(hsts -> hsts
+                            .includeSubDomains(true)
+                            .maxAgeInSeconds(Duration.ofDays(365).toSeconds()));
                     headers.contentTypeOptions(Customizer.withDefaults());
                     headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::deny);
                     headers.referrerPolicy(referrer -> referrer
@@ -176,19 +179,12 @@ public class SecurityConfig {
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(securityProperties.isAllowCredentials());
         configuration.setAllowedOrigins(securityProperties.getAllowedOrigins());
-        configuration.setAllowedHeaders(List.of(
-                "Accept",
-                "Authorization",
-                "Content-Type",
-                "Origin",
-                "X-Correlation-Id",
-                "X-Request-Id",
-                "X-Requested-With"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setExposedHeaders(List.of("X-Correlation-Id"));
-        configuration.setMaxAge(Duration.ofHours(1));
+        configuration.setAllowedHeaders(securityProperties.getAllowedHeaders());
+        configuration.setAllowedMethods(securityProperties.getAllowedMethods());
+        configuration.setExposedHeaders(securityProperties.getExposedHeaders());
+        configuration.setMaxAge(securityProperties.getCorsMaxAge());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);

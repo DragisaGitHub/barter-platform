@@ -110,6 +110,13 @@ class SecurityConfigMvcTest {
     }
 
     @Test
+    void shouldWriteHstsForSecureRequests() throws Exception {
+        mockMvc.perform(get("/api/v1/ping").secure(true))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Strict-Transport-Security", "max-age=31536000 ; includeSubDomains"));
+    }
+
+    @Test
     void shouldKeepStrictCspOnHealthResponses() throws Exception {
         mockMvc.perform(get("/actuator/health"))
                 .andExpect(status().isOk())

@@ -16,7 +16,7 @@
 
 # Current State
 
-- Backend CORS is described as using broad defaults.
+- Backend CORS now has an origin allowlist, but this task further tightens it with typed method/header settings and stricter defaults.
 - Frontend is served through nginx/Caddy in container deployment.
 - Stored-file serving already sets `X-Content-Type-Options: nosniff` for one path.
 
@@ -26,13 +26,14 @@
 - A strict CSP can break Vite-built assets or third-party styles if not tested.
 - Header config split between backend, nginx, and Caddy can drift.
 
-# Proposed Solution
+# Implemented In This Task
 
-- Define one production frontend origin allowlist and prefer same-origin `/api/v1` proxying.
-- Set CORS per environment: permissive only in local DEV, strict in prod.
-- Add CSP baseline without unsafe remote script execution; use report-only first if needed.
-- Add HSTS, Referrer-Policy, Permissions-Policy, frame-ancestors or X-Frame-Options, and nosniff consistently.
-- Document where each header is applied: backend API, frontend nginx, Caddy reverse proxy.
+- Backend CORS now uses typed properties for origins, methods, request headers, exposed headers, credentials, and max-age.
+- CORS credentials default to `false`, which is safer for the current bearer-token flow.
+- Production startup now rejects wildcard CORS methods/headers in addition to unsafe origins.
+- Backend API responses emit HSTS on secure requests and continue to send CSP, `nosniff`, frame, referrer, and permissions headers.
+- Frontend nginx CSP is tightened around same-origin API usage and explicitly allows only the current Google Fonts dependency.
+- Deployment docs now state header ownership across backend API, frontend nginx, and Caddy.
 
 # Simpler Alternatives
 
@@ -65,12 +66,16 @@
 # Backend Changes
 
 - Replace broad CORS defaults with typed allowlist properties.
-- Add tests for allowed and rejected origins/methods/headers.
-- Ensure API error responses include expected security headers where backend-owned.
+- Keep `allowCredentials=false` by default for token-based auth.
+- Add HSTS for secure API responses.
+- Add tests for allowed and rejected origins, methods, and headers.
+- Ensure API responses continue to include expected backend-owned security headers.
 
 # Frontend Changes
 
-- Remove inline scripts/unsafe patterns if CSP blocks them.
+- Keep scripts same-origin only.
+- Keep current Google Fonts dependency working via an explicit CSP allowlist.
+- Keep API calls same-origin via `/api/v1` in container deployment.
 - Verify generated assets, fonts, images, and API calls under CSP.
 
 # Database Changes
@@ -80,12 +85,14 @@
 # Deployment Changes
 
 - Update nginx/Caddy config for production headers.
-- Document HSTS only after HTTPS/domain is stable.
-- Add environment variables for allowed origins and public frontend URL.
+- Document header ownership across backend/nginx/Caddy.
+- Add environment variables for allowed origins, methods, headers, exposed headers, credentials, and CORS max-age.
+- Keep same-origin `/api/v1` proxying as the preferred deployment shape.
 
 # Testing Strategy
 
-- Automated CORS integration tests.
+- Automated CORS integration tests for allowed/rejected origins, methods, and headers.
+- Backend MVC tests for HSTS and existing security headers.
 - Browser smoke test login, catalog, item images, trade messages, admin pages under headers.
 - Use browser devtools or security scanner to confirm headers.
 
@@ -93,18 +100,20 @@
 
 - Apply strict CORS in staging.
 - Enable core headers.
-- Run CSP report-only if needed, fix violations, then enforce.
+- If frontend assets later introduce new external dependencies, review CSP deliberately instead of broadening it by default.
 - Make header verification part of production smoke test.
 
 # Future Improvements
 
 - CSP violation reporting endpoint/service.
 - Automated security-header scan in CI.
+- Self-host fonts to remove the remaining external font-domain CSP allowances.
 - Subresource integrity if external assets are introduced.
 
 # Explicitly Deferred
 
 - Managed WAF as first-line solution.
 - Complex nonce build pipeline unless required.
+- Full CSP report-only/reporting service rollout.
 - Third-party tracking scripts that weaken CSP.
 - Browser security policy exceptions for speculative features.

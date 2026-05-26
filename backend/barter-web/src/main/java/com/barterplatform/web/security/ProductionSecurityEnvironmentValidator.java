@@ -32,6 +32,7 @@ public class ProductionSecurityEnvironmentValidator implements SmartInitializing
         validateJwtSecret(errors);
         validateJwtExpirations(errors);
         validateAllowedOrigins(errors);
+        validateCorsPolicies(errors);
         validateSwagger(errors);
         validateEmailVerification(errors);
         validateStorage(errors);
@@ -92,6 +93,16 @@ public class ProductionSecurityEnvironmentValidator implements SmartInitializing
             } catch (IllegalArgumentException ex) {
                 errors.add("barter.security.allowed-origins contains an invalid origin: " + origin);
             }
+        }
+    }
+
+    private void validateCorsPolicies(List<String> errors) {
+        if (securityProperties.getAllowedMethods().stream().anyMatch("*"::equals)) {
+            errors.add("barter.security.allowed-methods must not contain '*'. Use an explicit allowlist in prod.");
+        }
+
+        if (securityProperties.getAllowedHeaders().stream().anyMatch("*"::equals)) {
+            errors.add("barter.security.allowed-headers must not contain '*'. Use an explicit allowlist in prod.");
         }
     }
 

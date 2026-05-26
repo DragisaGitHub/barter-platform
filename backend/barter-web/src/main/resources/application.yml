@@ -83,6 +83,11 @@ barter:
     from: ${MAIL_FROM:noreply@barter-platform.com}
   security:
     allowed-origins: ${BARTER_SECURITY_ALLOWED_ORIGINS:${FRONTEND_ORIGIN:}}
+    allowed-methods: ${BARTER_SECURITY_ALLOWED_METHODS:GET,POST,PUT,PATCH,DELETE,OPTIONS}
+    allowed-headers: ${BARTER_SECURITY_ALLOWED_HEADERS:Accept,Authorization,Content-Type,Origin,X-Correlation-Id,X-Request-Id,X-Requested-With}
+    exposed-headers: ${BARTER_SECURITY_EXPOSED_HEADERS:X-Correlation-Id}
+    allow-credentials: ${BARTER_SECURITY_ALLOW_CREDENTIALS:false}
+    cors-max-age: ${BARTER_SECURITY_CORS_MAX_AGE:1h}
     swagger-enabled: ${BARTER_SWAGGER_ENABLED:true}
   rate-limits:
     enabled: ${BARTER_RATE_LIMITS_ENABLED:true}

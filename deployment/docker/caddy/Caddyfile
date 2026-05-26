@@ -19,8 +19,9 @@ https://{$CADDY_DOMAIN:barter-platform-dev.duckdns.org } {
 	# storage limits continue to enforce accepted upload sizes.
 
 	header {
-		# Keep public responses framed and sniffed safely even before they reach
-		# the application layer.
+		# Caddy is the public HTTPS edge, so it owns HSTS.
+		# Keep the remaining headers aligned with backend/nginx values as a safety
+		# net for any response that bypasses one application layer.
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		X-Content-Type-Options "nosniff"
