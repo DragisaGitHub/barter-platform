@@ -34,7 +34,7 @@ public class AzureBlobStorageService implements FileStorageService {
 
     public AzureBlobStorageService(
             BlobContainerClient blobContainerClient,
-            @Value("${azure.storage.container-name}") String containerName) {
+            @Value("${barter.storage.azure.container-name:${azure.storage.container-name:}}") String containerName) {
         this.blobContainerClient = blobContainerClient;
         this.containerName = containerName;
     }

@@ -15,21 +15,51 @@ import static org.mockito.Mockito.mock;
 class DevProfileStorageConfigurationTest {
 
     private final ApplicationContextRunner contextRunner = new ApplicationContextRunner()
-            .withPropertyValues(
-                    "spring.profiles.active=dev",
-                    "azure.storage.connection-string=UseDevelopmentStorage=true",
-                    "azure.storage.container-name=item-images-dev",
-                    "storage.type=azure")
             .withUserConfiguration(StorageTestConfiguration.class);
 
     @Test
     void devProfileUsesAzureStorageServiceOnly() {
-        contextRunner.run(applicationContext -> {
+        contextRunner.withPropertyValues(
+                "spring.profiles.active=dev",
+                "barter.storage.type=azure",
+                "barter.storage.azure.connection-string=UseDevelopmentStorage=true",
+                "barter.storage.azure.container-name=item-images-dev").run(applicationContext -> {
             FileStorageService storageService = applicationContext.getBean(FileStorageService.class);
 
             assertInstanceOf(AzureBlobStorageService.class, storageService);
             assertEquals(0, applicationContext.getBeansOfType(LocalFileStorageService.class).size());
             assertEquals(1, applicationContext.getBeansOfType(AzureBlobStorageService.class).size());
+            assertEquals(1, applicationContext.getBeansOfType(FileStorageService.class).size());
+        });
+    }
+
+    @Test
+    void prodProfileUsesAzureStorageServiceOnly() {
+        contextRunner.withPropertyValues(
+                "spring.profiles.active=prod",
+                "barter.storage.type=azure",
+                "barter.storage.azure.connection-string=DefaultEndpointsProtocol=https;AccountName=test;AccountKey=test;EndpointSuffix=core.windows.net",
+                "barter.storage.azure.container-name=item-images-prod").run(applicationContext -> {
+            FileStorageService storageService = applicationContext.getBean(FileStorageService.class);
+
+            assertInstanceOf(AzureBlobStorageService.class, storageService);
+            assertEquals(0, applicationContext.getBeansOfType(LocalFileStorageService.class).size());
+            assertEquals(1, applicationContext.getBeansOfType(AzureBlobStorageService.class).size());
+            assertEquals(1, applicationContext.getBeansOfType(FileStorageService.class).size());
+        });
+    }
+
+    @Test
+    void localProfileUsesLocalStorageServiceOnly() {
+        contextRunner.withPropertyValues(
+                "spring.profiles.active=local",
+                "barter.storage.type=local",
+                "barter.storage.local.base-path=build/test-uploads").run(applicationContext -> {
+            FileStorageService storageService = applicationContext.getBean(FileStorageService.class);
+
+            assertInstanceOf(LocalFileStorageService.class, storageService);
+            assertEquals(1, applicationContext.getBeansOfType(LocalFileStorageService.class).size());
+            assertEquals(0, applicationContext.getBeansOfType(AzureBlobStorageService.class).size());
             assertEquals(1, applicationContext.getBeansOfType(FileStorageService.class).size());
         });
     }

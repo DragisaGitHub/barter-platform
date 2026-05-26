@@ -139,6 +139,7 @@ Minimum values to review and replace:
 - `JWT_SECRET`
 - `AZURE_STORAGE_CONNECTION_STRING_DEV`
 - `AZURE_STORAGE_CONTAINER_DEV`
+- `AZURE_STORAGE_CONNECTION_STRING_PROD` / `AZURE_STORAGE_CONTAINER_PROD` in the future production env file, or the neutral aliases `AZURE_STORAGE_CONNECTION_STRING` / `AZURE_STORAGE_CONTAINER`
 - `BACKUP_ENABLED=true`
 - `BACKUP_FREQUENCY=monthly`
 - `BACKUP_LOCAL_RETENTION_COUNT=2`
@@ -152,6 +153,90 @@ Minimum values to review and replace:
 - `FRONTEND_ORIGIN` only if you still need the legacy single-origin alias
 
 The supplied Caddy/nginx same-origin proxy means the browser calls `/api/v1`, so CORS should not be needed for the default DEV deployment path. Leave `BARTER_SECURITY_ALLOWED_ORIGINS` empty unless you intentionally expose the backend to a different browser origin.
+
+## Image storage strategy by profile
+
+Uploaded item-image binaries and image metadata are intentionally split:
+
+- **Binary image content** lives in the configured storage provider.
+- **Image metadata** (`item_images` rows such as `uuid`, `storage_key`, `content_type`, `file_size`, ordering, and primary-image flags) stays in PostgreSQL.
+- **Public serving** stays on the existing backend file endpoint: `GET /api/v1/files/**`.
+
+This means Azure Blob containers can remain private. The app never needs to expose direct blob URLs for normal browser rendering.
+
+### Local profile
+
+- Profile: `local`
+- Storage mode: `barter.storage.type=local`
+- Binary storage location: local filesystem under `barter.storage.local.base-path` (defaults to `./uploads`)
+- Use case: simple local development only
+
+### DEV profile
+
+- Profile: `dev`
+- Storage mode: `barter.storage.type=azure`
+- Binary storage location: Azure Blob Storage
+- Current expected DEV container: `item-images-dev`
+- Supported env variables:
+  - preferred legacy DEV-specific names: `AZURE_STORAGE_CONNECTION_STRING_DEV`, `AZURE_STORAGE_CONTAINER_DEV`
+  - optional neutral aliases: `AZURE_STORAGE_CONNECTION_STRING`, `AZURE_STORAGE_CONTAINER`
+
+### PROD profile
+
+- Profile: `prod`
+- Storage mode: `barter.storage.type=azure`
+- Binary storage location: Azure Blob Storage
+- Recommended production container: `item-images-prod`
+- Supported env variables:
+  - preferred prod-scoped names: `AZURE_STORAGE_CONNECTION_STRING_PROD`, `AZURE_STORAGE_CONTAINER_PROD`
+  - optional neutral aliases: `AZURE_STORAGE_CONNECTION_STRING`, `AZURE_STORAGE_CONTAINER`
+
+### Required Azure container rules
+
+- Create the container before first production-like use.
+- Keep the container **private**; the backend is the supported serving path.
+- Use separate containers for DEV and PROD.
+- Recommended names:
+  - DEV: `item-images-dev`
+  - PROD: `item-images-prod`
+
+The backend now fails startup clearly in `dev`/`prod` if the Azure connection string or container name is missing, blank, or malformed.
+
+## DEV image upload verification checklist
+
+Use this checklist after a fresh DEV deployment or when changing Azure storage settings.
+
+1. Confirm the backend is healthy:
+
+   ```bash
+   docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml ps
+   curl -i https://barter-platform-dev.duckdns.org/actuator/health/readiness
+   ```
+
+2. Sign in to the DEV UI and upload a small JPEG/PNG/WebP image to a draft or active item.
+
+3. Confirm the UI shows the image and the upload request returns `201 Created`.
+
+4. Check backend logs for a successful Azure store operation:
+
+   ```bash
+   docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml logs --tail=200 backend | grep "Azure blob operation"
+   ```
+
+5. Confirm metadata landed in PostgreSQL:
+
+   ```bash
+   docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml exec -T postgres \
+     sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql -h localhost -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT uuid, storage_key, content_type, file_size FROM item_images ORDER BY id DESC LIMIT 5;"'
+   ```
+
+6. Copy one `storage_key` value from the query above and verify backend serving still works:
+
+   ```bash
+   curl -I "https://barter-platform-dev.duckdns.org/api/v1/files/<storage_key-from-db>"
+   ```
+
+7. Optional portal-side verification: in Azure Portal, open the DEV storage account and confirm the blob exists in the private `item-images-dev` container under the expected `items/<itemUuid>/<imageUuid>.<ext>` path.
 
 ## DEV observability and monitoring
 
@@ -219,6 +304,7 @@ The backend Dockerfile:
 - builds `:barter-web:bootJar` with Gradle
 - runs `/app/barter-web.jar`
 - supports `JAVA_OPTS`, `SPRING_PROFILES_ACTIVE`, datasource vars, JWT, Azure Storage, Spring mail vars, and explicit security/CORS vars through environment variables
+- resolves Azure image storage from either the DEV/prod-scoped variables or the neutral aliases documented above
 - defaults JVM memory to `-Xms128m -Xmx384m -XX:+UseContainerSupport -XX:MaxMetaspaceSize=160m`
 
 ### Frontend image
@@ -544,7 +630,10 @@ Common issues:
 - **Frontend still calls localhost:8080**: rebuild the frontend image with `--build-arg VITE_API_BASE_URL=/api/v1`, then push and redeploy.
 - **Caddy cannot obtain a certificate**: verify DuckDNS points to the VM public IP, OCI ingress allows `80/tcp` and `443/tcp`, no other host process is bound to those ports, and `docker compose ... logs caddy` does not show ACME rate-limit or DNS errors.
 - **Backend cannot connect to DB**: ensure `DB_URL=jdbc:postgresql://postgres:5432/<POSTGRES_DB>` and `DB_PASSWORD` matches `POSTGRES_PASSWORD` for the initialized volume. If readiness returns `503`, inspect backend startup logs and confirm the `postgres` service is healthy. If you change Postgres init credentials after the first run, recreate the volume intentionally.
-- **Azure image upload fails**: verify `AZURE_STORAGE_CONNECTION_STRING_DEV` and `AZURE_STORAGE_CONTAINER_DEV` in `deployment/env/dev.env` and that the container exists or the app can create/use it.
+- **Azure image upload fails**: verify the active profile is `dev`, the backend started with `barter.storage.type=azure`, the relevant Azure variables are present (`AZURE_STORAGE_CONNECTION_STRING_DEV` / `AZURE_STORAGE_CONTAINER_DEV` or the neutral aliases), and the private `item-images-dev` container exists.
+- **Backend fails immediately after startup with image-storage configuration errors**: check the backend logs for `barter.storage.azure.*` validation messages. Missing/blank/malformed Azure connection strings or container names now fail fast instead of silently falling back to local disk.
+- **Image metadata exists but the file does not render**: fetch the `storage_key` from PostgreSQL and test `curl -I https://<your-domain>/api/v1/files/<storage_key>`; if that fails, inspect backend logs for `Azure blob operation failed` and confirm the blob exists in Azure.
+- **Need to verify uploads are not staying on the VM**: remember DEV/prod do not mount a persistent image upload volume; image binaries are expected in Azure Blob Storage while only metadata stays in PostgreSQL.
 - **SMTP does not send**: set `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, and `SMTP_PASSWORD`. If `SMTP_HOST` is empty, the backend may use its logging/fallback mail sender according to current app configuration.
 - **Out of memory on 1GB VM**: lower `JAVA_OPTS` `-Xmx`, avoid running extra services, add swap if acceptable, and monitor `docker stats`.
 - **Need to trace a failing request**: capture the `X-Correlation-Id` response header from the failing API call, then search `docker compose ... logs backend` for that exact value.

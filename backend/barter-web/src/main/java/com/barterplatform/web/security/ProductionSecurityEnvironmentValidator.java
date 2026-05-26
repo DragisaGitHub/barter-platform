@@ -121,19 +121,29 @@ public class ProductionSecurityEnvironmentValidator implements SmartInitializing
     }
 
     private void validateStorage(List<String> errors) {
-        String storageType = environment.getProperty("storage.type", "").trim();
-        String connectionString = environment.getProperty("azure.storage.connection-string", "").trim();
-        String containerName = environment.getProperty("azure.storage.container-name", "").trim();
+        String storageType = property("barter.storage.type", "storage.type");
+        String connectionString = property("barter.storage.azure.connection-string", "azure.storage.connection-string");
+        String containerName = property("barter.storage.azure.container-name", "azure.storage.container-name");
 
         if (!"azure".equalsIgnoreCase(storageType)) {
-            errors.add("storage.type must be set to 'azure' in prod.");
+            errors.add("barter.storage.type must be set to 'azure' in prod.");
         }
         if (connectionString.isBlank()) {
-            errors.add("azure.storage.connection-string (AZURE_STORAGE_CONNECTION_STRING) is required in prod.");
+            errors.add("barter.storage.azure.connection-string (AZURE_STORAGE_CONNECTION_STRING_PROD or AZURE_STORAGE_CONNECTION_STRING) is required in prod.");
         }
         if (containerName.isBlank()) {
-            errors.add("azure.storage.container-name (AZURE_STORAGE_CONTAINER) is required in prod.");
+            errors.add("barter.storage.azure.container-name (AZURE_STORAGE_CONTAINER_PROD or AZURE_STORAGE_CONTAINER) is required in prod.");
         }
+    }
+
+    private String property(String... keys) {
+        for (String key : keys) {
+            String value = environment.getProperty(key);
+            if (value != null && !value.trim().isBlank()) {
+                return value.trim();
+            }
+        }
+        return "";
     }
 }
 

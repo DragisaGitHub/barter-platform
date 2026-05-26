@@ -37,11 +37,10 @@ barter:
       - http://127.0.0.1:5173
       - http://localhost:4173
       - http://127.0.0.1:4173
-
-storage:
-  type: local
-  local:
-    upload-dir: uploads/
+  storage:
+    type: local
+    local:
+      base-path: uploads/
 
 logging:
   level:

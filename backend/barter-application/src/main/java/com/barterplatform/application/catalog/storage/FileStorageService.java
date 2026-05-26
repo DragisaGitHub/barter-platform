@@ -29,10 +29,14 @@ public interface FileStorageService {
     void delete(String storageKey);
 
     /**
-     * Resolve the public URL for a given storage key.
+     * Resolve the application URL for a given storage key.
+     *
+     * <p>Implementations should return the backend-served file endpoint rather than exposing
+     * provider-native blob URLs directly. This keeps object-storage containers private while the
+     * application remains the stable public access path.</p>
      *
      * @param storageKey relative path/key for the file
-     * @return publicly accessible URL
+     * @return application URL that can be used to fetch the stored file through the backend
      */
     String resolveUrl(String storageKey);
 
