@@ -15,7 +15,9 @@ dist/
 .env.*
 !.env.example
 deployment/env/dev.env
+deployment/env/prod.env
 deployment/backups/
+deployment/state/
 
 .DS_Store
 Thumbs.db

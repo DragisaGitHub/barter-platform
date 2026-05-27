@@ -90,7 +90,7 @@ dragisahub1984/barter-frontend:latest
 dragisahub1984/barter-frontend:main-<full-git-sha>
 ```
 
-`latest` is intended mainly for DEV deployment convenience. The DEV server Compose env defaults to these `latest` images, so `deployment/scripts/deploy-dev.sh` pulls the newest DEV images before restarting containers.
+`latest` is intended mainly for DEV deployment convenience. The DEV server Compose env defaults to these `latest` images, so `deployment/scripts/deploy-dev.sh` pulls the newest DEV images before restarting containers. Before it does that, it now captures the currently running backend/frontend image references into `deployment/state/dev/` so operators have an immediate image-based rollback point.
 
 ### Versioned release tags
 
@@ -376,7 +376,13 @@ Then set these tags in `deployment/env/dev.env`.
 Copy or pull the repo/deployment folder onto the VM, create `deployment/env/dev.env`, then run:
 
 ```bash
-chmod +x deployment/scripts/deploy-dev.sh deployment/scripts/backup-db.sh
+chmod +x deployment/scripts/deploy-dev.sh \
+  deployment/scripts/capture-deployment-state.sh \
+  deployment/scripts/rollback-dev.sh \
+  deployment/scripts/backup-db.sh \
+  deployment/scripts/restore-db.sh \
+  deployment/scripts/setup-backup-cron.sh
+
 ./deployment/scripts/deploy-dev.sh
 ```
 
@@ -402,6 +408,8 @@ BACKEND_IMAGE=dragisahub1984/barter-backend:v1.0.0
 FRONTEND_IMAGE=dragisahub1984/barter-frontend:v1.0.0
 ```
 
+Production should go one step further and prefer immutable repo digests when practical.
+
 Open in a browser:
 
 ```text
@@ -415,6 +423,165 @@ docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-co
 ```
 
 The DNS `A` record for `barter-platform-dev.duckdns.org` must point to the VM public IP before Let's Encrypt can issue a certificate.
+
+## Deployment rollback strategy
+
+Current rollback for the DEV Compose stack is intentionally **image-based only**.
+
+- `deployment/scripts/deploy-dev.sh` captures the currently running backend/frontend image state before it pulls anything new.
+- `deployment/scripts/capture-deployment-state.sh` can also be run manually before higher-risk changes.
+- `deployment/scripts/rollback-dev.sh` recreates only `backend` and `frontend` using previously captured image refs or explicit image refs passed by the operator.
+- PostgreSQL, Caddy, Docker volumes, and Azure Blob data are intentionally left alone.
+- Database restore is documented as a separate **manual, high-risk** recovery action.
+
+Deployment state files are written under:
+
+```text
+deployment/state/dev/
+```
+
+The newest capture is refreshed as:
+
+```text
+deployment/state/dev/latest.env
+```
+
+### Pre-deploy checklist
+
+Before a risky deploy, confirm all of the following:
+
+1. The images you intend to deploy exist in Docker Hub and are the expected build.
+2. The current stack is healthy:
+
+   ```bash
+   docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml ps
+   curl -i https://barter-platform-dev.duckdns.org/actuator/health/readiness
+   curl -i https://barter-platform-dev.duckdns.org/
+   ```
+
+3. A fresh PostgreSQL backup has been created before any deploy that may include schema changes, risky config changes, or uncertain image contents:
+
+   ```bash
+   ./deployment/scripts/backup-db.sh --force
+   ```
+
+4. The current backend/frontend image state has been captured. `deploy-dev.sh` does this automatically, but for extra operator confidence you can capture it manually first:
+
+   ```bash
+   ./deployment/scripts/capture-deployment-state.sh
+   ```
+
+5. If this deploy is production-like, use immutable tags or digests instead of `:latest`.
+
+### Normal deploy flow
+
+For the current DEV setup, a normal deploy remains deliberately simple:
+
+```bash
+./deployment/scripts/deploy-dev.sh
+```
+
+What this script now does:
+
+1. Validates the Compose file, env file, and Docker availability.
+2. Captures the currently running backend/frontend image refs to `deployment/state/dev/`.
+3. Pulls the configured images from `deployment/env/dev.env`.
+4. Runs `docker compose up -d --remove-orphans`.
+5. Waits for backend and frontend container health checks before reporting success.
+
+Useful operator modes:
+
+```bash
+./deployment/scripts/deploy-dev.sh --dry-run
+./deployment/scripts/deploy-dev.sh --skip-pull
+./deployment/scripts/deploy-dev.sh --skip-state-capture
+```
+
+### Rollback flow
+
+The default rollback uses the latest captured deployment state:
+
+```bash
+./deployment/scripts/rollback-dev.sh
+```
+
+The rollback script:
+
+- resolves the previously captured backend/frontend rollback image refs;
+- pulls them only when needed and only for the services being rolled back;
+- recreates `backend` first and waits for health;
+- recreates `frontend` next and waits for health;
+- leaves `postgres`, `caddy`, Docker volumes, and Azure Blob data untouched.
+
+Dry-run and operator-inspection commands:
+
+```bash
+./deployment/scripts/capture-deployment-state.sh --dry-run
+./deployment/scripts/rollback-dev.sh --dry-run
+./deployment/scripts/rollback-dev.sh --state-file deployment/state/dev/latest.env
+```
+
+You can also pin explicit rollback refs temporarily without editing `deployment/env/dev.env`:
+
+```bash
+./deployment/scripts/rollback-dev.sh \
+  --backend-image dragisahub1984/barter-backend@sha256:<digest> \
+  --frontend-image dragisahub1984/barter-frontend@sha256:<digest>
+```
+
+This is useful when:
+
+- the latest state file is missing or partial;
+- you want to roll back only one service;
+- you want to test a known-good immutable tag or digest before making it the default env value.
+
+### When image rollback is safe
+
+Image rollback is generally safe when:
+
+- the issue is isolated to backend/frontend application code or static assets;
+- no incompatible database migration was applied;
+- the data model used by the reverted images is still compatible with the current PostgreSQL schema and data;
+- Azure Blob item images remain compatible because file serving still goes through the backend API.
+
+### When rollback is not enough
+
+Image rollback alone is **not** enough when:
+
+- a deployment ran destructive or non-backward-compatible database migrations;
+- bad writes already changed business data in a way the old code cannot safely read;
+- secrets/config changes, DNS issues, SSL issues, storage-account issues, or infrastructure/network problems caused the incident;
+- the rollback target image is known to contain a security defect that should not be reintroduced.
+
+In those cases, stop and use a broader recovery runbook rather than only reusing old images.
+
+### Database rollback warning
+
+Database restore is intentionally **manual and high risk**.
+
+- No deployment or rollback script restores PostgreSQL automatically.
+- No deployment or rollback script deletes Docker volumes.
+- No deployment or rollback script runs `docker system prune`.
+
+If a database recovery event is truly required:
+
+1. treat it as a separate operator decision;
+2. validate the backup to use;
+3. prefer restoring into a test database first;
+4. document the incident and exact restore point used.
+
+Use `deployment/scripts/restore-db.sh` only when that manual recovery path is explicitly required.
+
+### Azure Blob behavior during rollback
+
+Rollback does **not** touch Azure Blob item images.
+
+- item-image binaries remain in Azure Blob Storage;
+- image metadata remains in PostgreSQL;
+- rollback only changes which backend/frontend container images are running;
+- no blob deletion, blob rewrite, or blob restore is attempted.
+
+This means a normal image rollback is low-risk for stored media, but it still depends on the old backend remaining compatible with the current database metadata and blob-key format.
 
 ## Open ports
 
