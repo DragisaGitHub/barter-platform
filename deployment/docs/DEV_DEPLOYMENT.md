@@ -281,8 +281,10 @@ Only health actuator endpoints are exposed publicly. They remain separate from `
 Recommended safe DEV/public-beta checks:
 
 - uptime check against `https://<your-domain>/actuator/health`
-- container/runtime healthcheck against `http://backend:8080/actuator/health/readiness`
+- container/runtime healthcheck against `http://backend:8080/api/v1/actuator/health/readiness`
 - backend log review for repeated `5xx`, startup failures, and suspicious auth/rate-limit spikes
+
+The DEV Compose backend healthcheck is intentionally generous for the small OCI VM: cold Spring Boot startup can take about 100-130 seconds under constrained CPU/memory, so `deployment/compose/docker-compose.dev.yml` gives the backend a 180-second `start_period`, 30-second interval, 15-second timeout, and 10 retries before dependent services such as the frontend are allowed to start.
 
 For the full runbook, see `deployment/docs/OBSERVABILITY.md`.
 
