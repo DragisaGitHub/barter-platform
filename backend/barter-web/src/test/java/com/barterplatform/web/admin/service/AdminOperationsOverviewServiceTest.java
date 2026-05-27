@@ -15,10 +15,13 @@ import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.moderation.repository.ReportRepository;
 import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.env.Environment;
@@ -36,6 +39,9 @@ class AdminOperationsOverviewServiceTest {
     private Environment environment;
     private ObjectProvider<BuildProperties> buildPropertiesProvider;
     private AdminOperationsOverviewService service;
+
+    @TempDir
+    private Path tempDir;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -59,7 +65,11 @@ class AdminOperationsOverviewServiceTest {
         when(environment.getProperty("barter.deployment.deployed-at")).thenReturn("2026-05-27T10:15:30Z");
         when(buildPropertiesProvider.getIfAvailable()).thenReturn(null);
 
-        service = new AdminOperationsOverviewService(
+        service = createService("");
+    }
+
+    private AdminOperationsOverviewService createService(String deploymentStateFilePath) {
+        return new AdminOperationsOverviewService(
                 userRepository,
                 itemRepository,
                 tradeOfferRepository,
@@ -69,7 +79,8 @@ class AdminOperationsOverviewServiceTest {
                 dataSource,
                 environment,
                 buildPropertiesProvider,
-                "azure");
+                "azure",
+                deploymentStateFilePath);
     }
 
     @Test
@@ -120,6 +131,26 @@ class AdminOperationsOverviewServiceTest {
 
         assertThat(overview.getHealth().getDatabaseStatus()).isEqualTo("DOWN");
         assertThat(overview.getHealth().getOverallStatus()).isEqualTo("DEGRADED");
+    }
+
+    @Test
+    void getOverviewReadsSafeDeploymentTimestampFromStateFile() throws Exception {
+        when(environment.getProperty("barter.deployment.deployed-at")).thenReturn(null);
+        when(environment.getProperty("BARTER_DEPLOYED_AT")).thenReturn(null);
+        when(environment.getProperty("barter.deployment.state-file")).thenReturn(null);
+        Path stateFile = tempDir.resolve("latest.env");
+        Files.writeString(stateFile, """
+                #!/usr/bin/env bash
+                STATE_VERSION=1
+                CAPTURED_AT_UTC=20260527T101530Z
+                BACKEND_ROLLBACK_IMAGE=registry.example/backend@sha256:not-exposed
+                """);
+        service = createService(stateFile.toString());
+
+        var overview = service.getOverview();
+
+        assertThat(overview.getDeployment().getDeploymentStateAvailability()).isEqualTo("configured");
+        assertThat(overview.getDeployment().getLastDeploymentTimestamp()).hasToString("2026-05-27T10:15:30Z");
     }
 }
 

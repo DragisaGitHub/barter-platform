@@ -19,10 +19,16 @@ import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.moderation.repository.ReportRepository;
 import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
+import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
@@ -44,6 +50,8 @@ public class AdminOperationsOverviewService {
     private static final String STORAGE_CONFIGURED_NOT_CHECKED = "CONFIGURED_NOT_CHECKED";
     private static final String DEPLOYMENT_UNAVAILABLE = "unavailable";
     private static final String DEPLOYMENT_CONFIGURED = "configured";
+    private static final long MAX_DEPLOYMENT_STATE_FILE_BYTES = 64 * 1024;
+    private static final DateTimeFormatter DEPLOYMENT_STATE_TIMESTAMP_FORMATTER = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
 
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
@@ -55,6 +63,7 @@ public class AdminOperationsOverviewService {
     private final Environment environment;
     private final ObjectProvider<BuildProperties> buildPropertiesProvider;
     private final String storageProviderType;
+    private final String deploymentStateFilePath;
 
     public AdminOperationsOverviewService(
             UserRepository userRepository,
@@ -66,7 +75,8 @@ public class AdminOperationsOverviewService {
             DataSource dataSource,
             Environment environment,
             ObjectProvider<BuildProperties> buildPropertiesProvider,
-            @Value("${barter.storage.type:local}") String storageProviderType) {
+            @Value("${barter.storage.type:local}") String storageProviderType,
+            @Value("${barter.deployment.state-file:}") String deploymentStateFilePath) {
         this.userRepository = userRepository;
         this.itemRepository = itemRepository;
         this.tradeOfferRepository = tradeOfferRepository;
@@ -77,6 +87,7 @@ public class AdminOperationsOverviewService {
         this.environment = environment;
         this.buildPropertiesProvider = buildPropertiesProvider;
         this.storageProviderType = normalizeStorageProvider(storageProviderType);
+        this.deploymentStateFilePath = deploymentStateFilePath;
     }
 
     @Transactional(readOnly = true)
@@ -181,15 +192,82 @@ public class AdminOperationsOverviewService {
         String value = firstNonBlank(
                 environment.getProperty("barter.deployment.deployed-at"),
                 environment.getProperty("BARTER_DEPLOYED_AT"));
-        if (value == null) {
+        OffsetDateTime configuredTimestamp = parseDeploymentTimestamp(value);
+        if (configuredTimestamp != null) {
+            return configuredTimestamp;
+        }
+
+        return lastDeploymentTimestampFromStateFile();
+    }
+
+    private OffsetDateTime lastDeploymentTimestampFromStateFile() {
+        String stateFilePath = firstNonBlank(
+                environment.getProperty("barter.deployment.state-file"),
+                deploymentStateFilePath);
+        if (stateFilePath == null) {
             return null;
         }
 
         try {
-            return OffsetDateTime.parse(value);
-        } catch (DateTimeParseException ex) {
+            Path stateFile = Path.of(stateFilePath);
+            if (!Files.isRegularFile(stateFile) || !Files.isReadable(stateFile) || Files.size(stateFile) > MAX_DEPLOYMENT_STATE_FILE_BYTES) {
+                return null;
+            }
+
+            List<String> lines = Files.readAllLines(stateFile, StandardCharsets.UTF_8);
+            OffsetDateTime deployedAt = parseDeploymentTimestamp(findStateValue(lines, "DEPLOYED_AT_UTC"));
+            if (deployedAt != null) {
+                return deployedAt;
+            }
+            return parseDeploymentTimestamp(findStateValue(lines, "CAPTURED_AT_UTC"));
+        } catch (IOException | IllegalArgumentException | SecurityException ex) {
             return null;
         }
+    }
+
+    private OffsetDateTime parseDeploymentTimestamp(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = stripStateValue(value);
+        if (normalized.isBlank()) {
+            return null;
+        }
+
+        try {
+            return OffsetDateTime.parse(normalized);
+        } catch (DateTimeParseException ex) {
+            try {
+                return LocalDateTime.parse(normalized, DEPLOYMENT_STATE_TIMESTAMP_FORMATTER).atOffset(ZoneOffset.UTC);
+            } catch (DateTimeParseException ignored) {
+                return null;
+            }
+        }
+    }
+
+    private String findStateValue(List<String> lines, String key) {
+        String prefix = key + "=";
+        String value = null;
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith(prefix)) {
+                value = trimmed.substring(prefix.length());
+            }
+        }
+        return value;
+    }
+
+    private String stripStateValue(String value) {
+        String trimmed = value.trim();
+        if (trimmed.length() >= 2) {
+            char first = trimmed.charAt(0);
+            char last = trimmed.charAt(trimmed.length() - 1);
+            if ((first == '\'' && last == '\'') || (first == '"' && last == '"')) {
+                return trimmed.substring(1, trimmed.length() - 1).trim();
+            }
+        }
+        return trimmed;
     }
 
     private String firstNonBlank(String first, String second) {

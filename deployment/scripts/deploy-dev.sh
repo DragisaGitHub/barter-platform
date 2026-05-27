@@ -95,6 +95,33 @@ wait_for_service_health() {
   fail "Timed out after ${timeout_seconds}s waiting for '${service}' health. Inspect logs with: docker compose --env-file ${ENV_FILE} -f ${COMPOSE_FILE} logs --tail=200 ${service}"
 }
 
+record_successful_deployment_metadata() {
+  local state_file="${DEPLOYMENT_DIR}/state/dev/public/latest.env"
+  local temp_state_file="${state_file}.tmp"
+  local deployed_at
+
+  if [[ "${DRY_RUN}" == "true" ]]; then
+    echo "[dry-run] Would record safe public deployment metadata in ${state_file}."
+    return 0
+  fi
+
+  deployed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  mkdir -p "$(dirname "${state_file}")"
+
+  if [[ -f "${state_file}" ]]; then
+    grep -v '^DEPLOYED_AT_UTC=' "${state_file}" > "${temp_state_file}" || true
+  else
+    {
+      echo "#!/usr/bin/env bash"
+      printf '%s=%s\n' "STATE_VERSION" "1"
+    } > "${temp_state_file}"
+  fi
+
+  printf '%s=%s\n' "DEPLOYED_AT_UTC" "${deployed_at}" >> "${temp_state_file}"
+  mv "${temp_state_file}" "${state_file}"
+  echo "Safe public deployment metadata updated: ${state_file}"
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --dry-run)
@@ -167,6 +194,7 @@ run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --rem
 echo
 wait_for_service_health backend "${HEALTH_TIMEOUT_SECONDS}"
 wait_for_service_health frontend "${HEALTH_TIMEOUT_SECONDS}"
+record_successful_deployment_metadata
 
 echo
 echo "Current service status:"

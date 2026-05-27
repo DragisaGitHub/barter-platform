@@ -84,6 +84,104 @@
       "description": "Postojeće admin stranice i rute ostaju netaknute dok kontrolni panel ostaje fokusiran na moderaciju, kontrolu pristupa i operacije platforme."
     }
   },
+  "operationsPage": {
+    "title": "Operativna kontrolna tabla",
+    "description": "Operativni pregled za administratore tokom lansiranja i beta rada. Prikazuje bezbedne brojače i statusne signale bez otkrivanja tajni, sirove konfiguracije ili lista sa osetljivim ličnim podacima.",
+    "badges": {
+      "adminOnly": "Samo admin"
+    },
+    "loading": "Učitavanje operativnog pregleda…",
+    "errorTitle": "Operativni pregled nije dostupan",
+    "errorDescription": "Admin endpoint za operacije trenutno nije dostupan.",
+    "tryAgain": "Pokušaj ponovo",
+    "runtimeOverviewTitle": "Pregled rada sistema",
+    "runtimeOverviewDescription": "Brojači se učitavaju iz jednostavnih agregatnih upita. Provera skladišta izbegava skupe udaljene pozive ka blob skladištu.",
+    "cards": {
+      "systemHealth": {
+        "title": "Zdravlje sistema",
+        "description": "Osnovni podaci i status rada backend-a."
+      },
+      "usersSecurity": {
+        "title": "Korisnici i bezbednost",
+        "description": "Brojači stanja naloga za operacije identiteta."
+      },
+      "marketplaceActivity": {
+        "title": "Aktivnost marketplace-a",
+        "description": "Brojači oglasa i ponuda za operativni uvid."
+      },
+      "moderationQueue": {
+        "title": "Moderatorski red",
+        "description": "Stanje reda prijava i signal negativnih recenzija."
+      },
+      "storage": {
+        "title": "Skladište",
+        "description": "Brojači metapodataka slika i podešeni tip provajdera."
+      },
+      "deployment": {
+        "title": "Raspoređivanje",
+        "description": "Bezbedni metapodaci okruženja dostupni aplikaciji."
+      }
+    },
+    "metrics": {
+      "application": "Aplikacija",
+      "version": "Verzija",
+      "profiles": "Profili",
+      "serverTime": "Vreme servera",
+      "uptime": "Vreme rada",
+      "overallStatus": "Ukupni status",
+      "database": "Baza podataka",
+      "totalUsers": "Ukupno korisnika",
+      "active": "Aktivni",
+      "pendingVerification": "Čekaju verifikaciju",
+      "suspended": "Suspendovani",
+      "banned": "Banovani",
+      "totalItems": "Ukupno predmeta",
+      "activeListings": "Aktivni oglasi",
+      "removedListings": "Uklonjeni oglasi",
+      "openTradeOffers": "Otvorene ponude",
+      "completedTrades": "Završene razmene",
+      "openReports": "Otvorene prijave",
+      "inReview": "U obradi",
+      "resolved": "Rešeno",
+      "dismissed": "Odbačeno",
+      "negativeReviews": "Negativne recenzije",
+      "provider": "Provajder",
+      "providerHealth": "Status provajdera",
+      "imageRecords": "Zapisi slika",
+      "primaryImages": "Primarne slike",
+      "environment": "Okruženje",
+      "deploymentState": "Stanje raspoređivanja",
+      "lastDeployment": "Poslednje raspoređivanje"
+    },
+    "statusLabels": {
+      "UP": "UP",
+      "DOWN": "DOWN",
+      "DEGRADED": "DEGRADED",
+      "CONFIGURED_NOT_CHECKED": "Konfigurisano, nije provereno",
+      "UNKNOWN": "UNKNOWN",
+      "unknown": "Nepoznato",
+      "unavailable": "Nedostupno",
+      "notLoaded": "Nije učitano"
+    },
+    "deploymentAvailability": {
+      "configured": "Podešeno",
+      "unavailable": "Nedostupno"
+    },
+    "storageProviders": {
+      "local": "Lokalno skladište",
+      "azure": "Azure Blob Storage",
+      "unknown": "Nepoznato"
+    },
+    "helpers": {
+      "storageConfiguredNotChecked": "Podešeni provajder je prikazan bez udaljene provere object storage-a."
+    },
+    "duration": {
+      "seconds": "{{value}} s",
+      "minutes": "{{value}} min",
+      "hoursMinutes": "{{hours}} h {{minutes}} min",
+      "daysHours": "{{days}} d {{hours}} h"
+    }
+  },
   "reviewsPage": {
     "title": "Red za ocene razmena",
     "description": "Pregledaj povratne informacije završenih razmena radi upravljanja. Negativne ocene se podrazumevano prikazuju u ovom redu, dok backend filteri ostaju eksplicitni.",
