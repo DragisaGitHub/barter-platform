@@ -29,6 +29,10 @@ spring:
             required: false
 
 barter:
+  jwt:
+    # Local-only fallback so the profile remains usable without exporting JWT_SECRET.
+    # DEV/PROD should still provide JWT_SECRET explicitly via env/config.
+    secret: ${JWT_SECRET:local-dev-only-jwt-secret-32-plus-chars-for-barter-platform}
   mail:
     from: noreply@barter-platform.local
   security:

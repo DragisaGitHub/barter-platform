@@ -93,6 +93,14 @@ The frontend integrates with the backend via REST API using OpenAPI-generated Ty
 3. **Auto-refresh**: On 401 responses, automatically try token refresh once
 4. **Logout**: POST /auth/logout → clear tokens → redirect /login
 
+### Current token-storage posture
+
+- **Current implementation**: access token + refresh token are persisted in `localStorage`.
+- **Why it remains for now**: this preserves the current SPA login/bootstrap UX and avoids a broader auth redesign during the production-hardening pass.
+- **Current mitigation**: short-lived access tokens, server-side refresh-token hashing + revocation, logout revocation, and stricter backend security headers.
+- **Known limitation**: `localStorage` tokens are still readable by injected JavaScript if XSS occurs.
+- **Deferred roadmap option**: move the refresh token to a secure `httpOnly` cookie and keep the access token short-lived, ideally in memory.
+
 ## Features
 
 ### Public Pages
@@ -139,7 +147,8 @@ The frontend integrates with the backend via REST API using OpenAPI-generated Ty
 - XSS protection via React's escaping
 - CSRF protection via token-based auth
 - Input validation with Zod schemas
-- Secure token storage in localStorage
+- Token persistence currently uses `localStorage` for pragmatic SPA UX; this is a documented tradeoff, not the ideal end-state
+- Refresh tokens are rotated and revoked server-side; revoked or expired refresh attempts return `401`
 
 ## Contributing
 

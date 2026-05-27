@@ -1,5 +1,6 @@
 package com.barterplatform.web.security;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.mockito.Mockito.mock;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
@@ -27,7 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
         classes = SecurityCorsMvcTest.TestApplication.class,
         properties = {
                 "server.servlet.context-path=",
-                "barter.security.allowed-origins=http://localhost:5173"
+                "barter.security.allowed-origins=http://localhost:5173",
+                "barter.security.allowed-methods=GET,POST",
+                "barter.security.allowed-headers=Authorization,Content-Type,X-Correlation-Id"
         }
 )
 @AutoConfigureMockMvc
@@ -40,10 +43,13 @@ class SecurityCorsMvcTest {
     void shouldAllowConfiguredCorsOrigin() throws Exception {
         mockMvc.perform(options("/api/v1/ping")
                         .header(HttpHeaders.ORIGIN, "http://localhost:5173")
-                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "Authorization"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "http://localhost:5173"))
-                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, "true"));
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, containsString("GET")))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsString("Authorization")))
+                .andExpect(header().doesNotExist(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS));
     }
 
     @Test
@@ -51,6 +57,23 @@ class SecurityCorsMvcTest {
         mockMvc.perform(options("/api/v1/ping")
                         .header(HttpHeaders.ORIGIN, "https://evil.example.com")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectDisallowedCorsMethod() throws Exception {
+        mockMvc.perform(options("/api/v1/ping")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "DELETE"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void shouldRejectDisallowedCorsHeader() throws Exception {
+        mockMvc.perform(options("/api/v1/ping")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "X-Admin-Secret"))
                 .andExpect(status().isForbidden());
     }
 

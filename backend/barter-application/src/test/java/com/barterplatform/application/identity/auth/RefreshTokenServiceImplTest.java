@@ -141,5 +141,16 @@ class RefreshTokenServiceImplTest {
     void shouldReturnCorrectExpirationSeconds() {
         assertEquals(7 * 24 * 60 * 60, refreshTokenService.getRefreshTokenExpirationSeconds());
     }
+
+    @Test
+    void shouldFailFastWhenRefreshTokenExpirationIsNotPositive() {
+        IllegalStateException ex = assertThrows(
+                IllegalStateException.class,
+                () -> new RefreshTokenServiceImpl(refreshTokenRepository, 0));
+
+        assertEquals(
+                "barter.jwt.refresh-token-expiration-days (JWT_REFRESH_EXPIRATION_DAYS) must be greater than 0.",
+                ex.getMessage());
+    }
 }
 

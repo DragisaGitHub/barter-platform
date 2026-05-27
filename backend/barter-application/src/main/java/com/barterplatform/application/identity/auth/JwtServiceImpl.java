@@ -22,6 +22,10 @@ public class JwtServiceImpl implements JwtService {
     public JwtServiceImpl(
             @Value("${barter.jwt.secret}") String secret,
             @Value("${barter.jwt.access-token-expiration-minutes}") long accessTokenExpirationMinutes) {
+        JwtSecretValidator.validateOrThrow(secret, "barter.jwt.secret (JWT_SECRET)");
+        if (accessTokenExpirationMinutes <= 0) {
+            throw new IllegalStateException("barter.jwt.access-token-expiration-minutes (JWT_ACCESS_EXPIRATION_MINUTES) must be greater than 0.");
+        }
         this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.accessTokenExpirationMinutes = accessTokenExpirationMinutes;
     }

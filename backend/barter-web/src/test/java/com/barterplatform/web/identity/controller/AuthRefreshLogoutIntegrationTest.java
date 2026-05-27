@@ -170,7 +170,76 @@ class AuthRefreshLogoutIntegrationTest {
         // Refresh should fail
         mockMvc.perform(refreshRequest(refreshToken))
                 .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.message").value("Account is suspended."));
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("Account is suspended."))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
+
+        List<RefreshTokenEntity> tokens = refreshTokenRepository.findAll();
+        assertThat(tokens).hasSize(1);
+        assertThat(tokens.getFirst().getRevokedAt()).isNotNull();
+
+        mockMvc.perform(refreshRequest(refreshToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Refresh token has been revoked."))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
+    }
+
+    @Test
+    void shouldRejectRefreshForBannedUserAndRevokeToken() throws Exception {
+        registerAndActivateUser("alex99", "alex@example.com", "P@ssword123");
+
+        MvcResult loginResult = mockMvc.perform(loginRequest("alex@example.com", "P@ssword123"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode loginJson = objectMapper.readTree(loginResult.getResponse().getContentAsString());
+        String refreshToken = loginJson.get("refreshToken").asText();
+
+        var user = userRepository.findByEmail("alex@example.com").orElseThrow();
+        user.setStatus(com.barterplatform.domain.identity.enums.UserStatus.BANNED);
+        userRepository.save(user);
+
+        mockMvc.perform(refreshRequest(refreshToken))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.status").value(403))
+                .andExpect(jsonPath("$.error").value("Forbidden"))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("Account is banned."))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
+
+        List<RefreshTokenEntity> tokens = refreshTokenRepository.findAll();
+        assertThat(tokens).hasSize(1);
+        assertThat(tokens.getFirst().getRevokedAt()).isNotNull();
+
+        mockMvc.perform(refreshRequest(refreshToken))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.status").value(401))
+                .andExpect(jsonPath("$.error").value("Unauthorized"))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message").value("Refresh token has been revoked."))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
+    }
+
+    @Test
+    void shouldRejectRefreshWhenTokenIsMissingFromRequestBody() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contextPath("/api/v1")
+                        .servletPath("/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("must not be null"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("refreshToken"))
+                .andExpect(jsonPath("$.fieldErrors[0].message").value("must not be null"))
+                .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
     }
 
     @Test

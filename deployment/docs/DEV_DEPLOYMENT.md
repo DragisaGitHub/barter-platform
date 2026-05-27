@@ -23,6 +23,14 @@ It intentionally does **not** add Kubernetes or server-side deployment automatio
 - Swagger/OpenAPI must stay disabled in prod.
 - The preferred browser deployment shape remains same-origin `/api/v1` proxying, with CORS allowlists only when a separate frontend origin is truly required.
 
+### Security-header ownership
+
+- **Backend API (`barter-web`)**: API responses set CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS for secure requests.
+- **Frontend nginx**: SPA/static responses set the frontend CSP plus `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, and `Permissions-Policy`.
+- **Caddy**: public HTTPS edge owns HSTS and mirrors the other core headers as a safety net.
+
+Keep these values aligned when changing browser-security policy.
+
 ### Why Caddy is used for DEV HTTPS
 
 Mobile apps and browsers, including WhatsApp in-app browsers, increasingly require or strongly prefer HTTPS for opened links. DEV now uses a Dockerized Caddy reverse proxy to provide production-style HTTPS without a manual Certbot workflow.
@@ -137,6 +145,7 @@ Minimum values to review and replace:
 - `POSTGRES_PASSWORD`
 - `DB_PASSWORD`
 - `JWT_SECRET`
+- `JWT_ACCESS_EXPIRATION_MINUTES` and `JWT_REFRESH_EXPIRATION_DAYS` if you need to override the documented defaults
 - `AZURE_STORAGE_CONNECTION_STRING_DEV`
 - `AZURE_STORAGE_CONTAINER_DEV`
 - `AZURE_STORAGE_CONNECTION_STRING_PROD` / `AZURE_STORAGE_CONTAINER_PROD` in the future production env file, or the neutral aliases `AZURE_STORAGE_CONNECTION_STRING` / `AZURE_STORAGE_CONTAINER`
@@ -150,9 +159,29 @@ Minimum values to review and replace:
 - `BARTER_EMAIL_VERIFICATION_ENABLED=false` for DEV-only registration/login bypass
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` if real email delivery is needed
 - `BARTER_SECURITY_ALLOWED_ORIGINS` if DEV browser traffic should come from a separate origin instead of same-origin proxying
+- `BARTER_SECURITY_ALLOWED_METHODS`, `BARTER_SECURITY_ALLOWED_HEADERS`, `BARTER_SECURITY_EXPOSED_HEADERS`, and `BARTER_SECURITY_ALLOW_CREDENTIALS` if you intentionally run cross-origin browser traffic
 - `FRONTEND_ORIGIN` only if you still need the legacy single-origin alias
 
 The supplied Caddy/nginx same-origin proxy means the browser calls `/api/v1`, so CORS should not be needed for the default DEV deployment path. Leave `BARTER_SECURITY_ALLOWED_ORIGINS` empty unless you intentionally expose the backend to a different browser origin.
+
+For the current JWT bearer-token flow, `BARTER_SECURITY_ALLOW_CREDENTIALS=false` is the safer default because browser cookies are not required for auth.
+
+### JWT runtime defaults by profile
+
+- **DEV** default: `JWT_ACCESS_EXPIRATION_MINUTES=30`, `JWT_REFRESH_EXPIRATION_DAYS=14`
+- **PROD** default: `JWT_ACCESS_EXPIRATION_MINUTES=15`, `JWT_REFRESH_EXPIRATION_DAYS=7`
+
+`JWT_SECRET` must now be explicitly strong for deployed DEV/PROD environments. The backend fails fast for blank, too-short, or placeholder JWT secrets.
+
+Example secret generators:
+
+```bash
+openssl rand -base64 48
+```
+
+```powershell
+[Convert]::ToBase64String((1..48 | ForEach-Object { [byte](Get-Random -Minimum 0 -Maximum 256) }))
+```
 
 ## Image storage strategy by profile
 

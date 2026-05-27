@@ -1,5 +1,7 @@
 package com.barterplatform.web.security;
 
+import com.barterplatform.api.model.ErrorResponse;
+import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.web.observability.CorrelationIdFilter;
 import com.barterplatform.web.observability.RequestLoggingFilter;
 import com.barterplatform.web.ratelimit.RateLimitProperties;
@@ -8,8 +10,13 @@ import com.barterplatform.web.ratelimit.RateLimitingFilter;
 import com.barterplatform.web.security.jwt.JwtAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.time.Duration;
 import java.util.List;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
@@ -27,6 +34,7 @@ import org.springframework.security.config.annotation.web.configurers.HeadersCon
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.header.writers.StaticHeadersWriter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -70,7 +78,10 @@ public class SecurityConfig {
                                                    CorrelationIdFilter correlationIdFilter,
                                                    RequestLoggingFilter requestLoggingFilter,
                                                    JwtAuthenticationFilter jwtAuthenticationFilter,
-                                                   RateLimitingFilter rateLimitingFilter) {
+                                                   RateLimitingFilter rateLimitingFilter,
+                                                   ObjectProvider<ObjectMapper> objectMapperProvider) {
+        ObjectMapper objectMapper = objectMapperProvider.getIfAvailable(() -> new ObjectMapper().findAndRegisterModules());
+
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
@@ -80,6 +91,9 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .requestCache(AbstractHttpConfigurer::disable)
                 .headers(headers -> {
+                    headers.httpStrictTransportSecurity(hsts -> hsts
+                            .includeSubDomains(true)
+                            .maxAgeInSeconds(Duration.ofDays(365).toSeconds()));
                     headers.contentTypeOptions(Customizer.withDefaults());
                     headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::deny);
                     headers.referrerPolicy(referrer -> referrer
@@ -90,10 +104,10 @@ public class SecurityConfig {
                     headers.addHeaderWriter(new StaticHeadersWriter("Permissions-Policy", "camera=(), geolocation=(), microphone=()"));
                 })
                 .exceptionHandling(exceptionHandling -> exceptionHandling
-                        .authenticationEntryPoint((request, response, ex) ->
-                                response.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                        .authenticationEntryPoint(jsonAuthenticationEntryPoint(objectMapper))
                         .accessDeniedHandler((request, response, ex) ->
-                                response.sendError(HttpServletResponse.SC_FORBIDDEN)))
+                                writeJsonError(response, objectMapper, request, HttpServletResponse.SC_FORBIDDEN,
+                                        "Forbidden", ErrorCode.FORBIDDEN, "Access is denied.")))
                 .addFilterBefore(correlationIdFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(requestLoggingFilter, CorrelationIdFilter.class)
                 .addFilterAfter(jwtAuthenticationFilter, RequestLoggingFilter.class)
@@ -165,19 +179,12 @@ public class SecurityConfig {
     @ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowCredentials(true);
+        configuration.setAllowCredentials(securityProperties.isAllowCredentials());
         configuration.setAllowedOrigins(securityProperties.getAllowedOrigins());
-        configuration.setAllowedHeaders(List.of(
-                "Accept",
-                "Authorization",
-                "Content-Type",
-                "Origin",
-                "X-Correlation-Id",
-                "X-Request-Id",
-                "X-Requested-With"));
-        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setExposedHeaders(List.of("X-Correlation-Id"));
-        configuration.setMaxAge(Duration.ofHours(1));
+        configuration.setAllowedHeaders(securityProperties.getAllowedHeaders());
+        configuration.setAllowedMethods(securityProperties.getAllowedMethods());
+        configuration.setExposedHeaders(securityProperties.getExposedHeaders());
+        configuration.setMaxAge(securityProperties.getCorsMaxAge());
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
@@ -249,5 +256,42 @@ public class SecurityConfig {
                 || path.equals("/api/v1/swagger-ui.html")
                 || path.equals("/api/v1/v3/api-docs")
                 || path.startsWith("/api/v1/v3/api-docs/");
+    }
+
+    private AuthenticationEntryPoint jsonAuthenticationEntryPoint(ObjectMapper objectMapper) {
+        return (request, response, ex) -> writeJsonError(
+                response,
+                objectMapper,
+                request,
+                HttpServletResponse.SC_UNAUTHORIZED,
+                "Unauthorized",
+                ErrorCode.UNAUTHORIZED,
+                "Authentication is required to access this resource.");
+    }
+
+    private void writeJsonError(HttpServletResponse response,
+                                ObjectMapper objectMapper,
+                                HttpServletRequest request,
+                                int status,
+                                String error,
+                                ErrorCode code,
+                                String message) throws IOException, ServletException {
+        if (response.isCommitted()) {
+            return;
+        }
+
+        response.setStatus(status);
+        response.setContentType("application/json");
+
+        ErrorResponse errorResponse = new ErrorResponse()
+                .timestamp(OffsetDateTime.now(ZoneOffset.UTC))
+                .status(status)
+                .error(error)
+                .code(code.name())
+                .message(message)
+                .path(request.getRequestURI())
+                .fieldErrors(new ArrayList<>());
+
+        objectMapper.writeValue(response.getOutputStream(), errorResponse);
     }
 }
