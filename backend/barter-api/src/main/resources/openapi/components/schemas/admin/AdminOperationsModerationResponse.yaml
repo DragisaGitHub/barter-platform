@@ -1,0 +1,30 @@
+type: object
+additionalProperties: false
+required:
+  - openReports
+  - inReviewReports
+  - resolvedReports
+  - dismissedReports
+  - negativeReviews
+properties:
+  openReports:
+    type: integer
+    format: int64
+    minimum: 0
+  inReviewReports:
+    type: integer
+    format: int64
+    minimum: 0
+  resolvedReports:
+    type: integer
+    format: int64
+    minimum: 0
+  dismissedReports:
+    type: integer
+    format: int64
+    minimum: 0
+  negativeReviews:
+    type: integer
+    format: int64
+    minimum: 0
+

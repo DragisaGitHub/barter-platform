@@ -25,6 +25,7 @@ import { UserDetailPage } from "../features/admin/UserDetailPage";
 import { RolesPage } from "../features/admin/RolesPage";
 import { PermissionsPage } from "../features/admin/PermissionsPage";
 import { SystemPage } from "../features/admin/SystemPage";
+import { AdminOperationsPage } from "../features/admin/AdminOperationsPage";
 import { MarketplacePage } from "../features/catalog/MarketplacePage";
 import { MarketplaceCategoriesPage } from "../features/catalog/MarketplaceCategoriesPage";
 import { ItemDetailPage } from "../features/catalog/ItemDetailPage";
@@ -271,6 +272,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/system",
         element: <SystemPage />,
+      },
+      {
+        path: routePaths.admin.operations,
+        element: <AdminOperationsPage />,
       },
       {
         path: "/admin/categories",

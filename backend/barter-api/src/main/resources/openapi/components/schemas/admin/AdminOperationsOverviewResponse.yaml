@@ -1,0 +1,26 @@
+type: object
+additionalProperties: false
+required:
+  - system
+  - health
+  - users
+  - marketplace
+  - moderation
+  - storage
+  - deployment
+properties:
+  system:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminOperationsSystemResponse'
+  health:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminOperationsHealthResponse'
+  users:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminOperationsUsersResponse'
+  marketplace:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminOperationsMarketplaceResponse'
+  moderation:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminOperationsModerationResponse'
+  storage:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminOperationsStorageResponse'
+  deployment:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminOperationsDeploymentResponse'
+

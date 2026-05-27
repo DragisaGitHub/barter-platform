@@ -22,6 +22,7 @@
   "permissionsDescription": "Proveri autorizacione mogućnosti i pokrivenost dozvolama.",
   "system": "Sistem",
   "systemDescription": "Pregled zdravlja platforme i internih operativnih podešavanja.",
+  "operations": "Operacije",
   "listings": "Oglasi",
   "listingsDescription": "Pregledaj prijavljene oglase i po potrebi preduzmi direktne moderatorske akcije.",
   "reports": "Prijave",

@@ -1,0 +1,25 @@
+type: object
+additionalProperties: false
+required:
+  - applicationName
+  - activeProfiles
+  - serverTime
+properties:
+  applicationName:
+    type: string
+  applicationVersion:
+    type: string
+    nullable: true
+  activeProfiles:
+    type: array
+    items:
+      type: string
+  serverTime:
+    type: string
+    format: date-time
+  uptimeSeconds:
+    type: integer
+    format: int64
+    minimum: 0
+    nullable: true
+

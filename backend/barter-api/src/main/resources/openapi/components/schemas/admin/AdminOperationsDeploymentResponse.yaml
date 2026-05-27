@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+required:
+  - environment
+  - deploymentStateAvailability
+properties:
+  environment:
+    type: string
+    description: Safe profile/environment label derived from active Spring profiles.
+  deploymentStateAvailability:
+    type: string
+    description: Availability of deployment state metadata to the application, such as unavailable or configured.
+  lastDeploymentTimestamp:
+    type: string
+    format: date-time
+    nullable: true
+

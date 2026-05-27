@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import {
+  Activity,
   ArrowRight,
   Flag,
   FolderTree,
@@ -57,6 +58,13 @@ const adminModules: AdminModule[] = [
     tone: "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300",
   },
   {
+    titleKey: "operations",
+    descriptionKey: "dashboard.modules.operations",
+    to: routePaths.admin.operations,
+    icon: Activity,
+    tone: "bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300",
+  },
+  {
     titleKey: "reports",
     descriptionKey: "dashboard.modules.reports",
     to: routePaths.admin.reports,
@@ -108,7 +116,7 @@ export function AdminDashboardPage() {
         {adminModules.map((module) => {
           const isReportsModule = module.to === routePaths.admin.reports;
           const content = (
-            <Card className="flex h-full flex-col justify-between border-slate-200 bg-gradient-to-br from-white to-slate-50/70 transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
+            <Card className="flex h-full flex-col justify-between border-slate-200 bg-linear-to-br from-white to-slate-50/70 transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:from-slate-900 dark:to-slate-950">
               <CardHeader>
                 <div className="mb-3 flex items-start justify-between gap-3">
                   <div className={`flex size-12 items-center justify-center rounded-xl ${module.tone}`}>

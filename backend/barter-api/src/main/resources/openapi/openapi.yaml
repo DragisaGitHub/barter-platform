@@ -31,6 +31,8 @@ tags:
     description: User-facing moderation report submission operations
   - name: AdminReports
     description: Staff moderation report triage and review operations
+  - name: AdminOperations
+    description: Administrator operational overview and runtime awareness operations
   - name: TradeOffers
     description: Trade offer creation, listing, and lifecycle management
   - name: Reviews
@@ -116,6 +118,8 @@ paths:
     $ref: './paths/admin-reports.yaml#/reportByUuid'
   /admin/reports/{reportUuid}/status:
     $ref: './paths/admin-reports.yaml#/reportUpdate'
+  /admin/operations/overview:
+    $ref: './paths/admin-operations.yaml#/overview'
   /catalog/tags:
     $ref: './paths/catalog.yaml#/tags'
   /admin/tags:
@@ -345,6 +349,22 @@ components:
       $ref: './components/schemas/report/CreateReportRequest.yaml'
     AdminUpdateReportRequest:
       $ref: './components/schemas/report/AdminUpdateReportRequest.yaml'
+    AdminOperationsOverviewResponse:
+      $ref: './components/schemas/admin/AdminOperationsOverviewResponse.yaml'
+    AdminOperationsSystemResponse:
+      $ref: './components/schemas/admin/AdminOperationsSystemResponse.yaml'
+    AdminOperationsHealthResponse:
+      $ref: './components/schemas/admin/AdminOperationsHealthResponse.yaml'
+    AdminOperationsUsersResponse:
+      $ref: './components/schemas/admin/AdminOperationsUsersResponse.yaml'
+    AdminOperationsMarketplaceResponse:
+      $ref: './components/schemas/admin/AdminOperationsMarketplaceResponse.yaml'
+    AdminOperationsModerationResponse:
+      $ref: './components/schemas/admin/AdminOperationsModerationResponse.yaml'
+    AdminOperationsStorageResponse:
+      $ref: './components/schemas/admin/AdminOperationsStorageResponse.yaml'
+    AdminOperationsDeploymentResponse:
+      $ref: './components/schemas/admin/AdminOperationsDeploymentResponse.yaml'
     ReputationSummaryResponse:
       $ref: './components/schemas/reputation/ReputationSummaryResponse.yaml'
     NotificationType:

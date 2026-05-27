@@ -1,0 +1,30 @@
+type: object
+additionalProperties: false
+required:
+  - totalItems
+  - activeListings
+  - removedListings
+  - openTradeOffers
+  - completedTrades
+properties:
+  totalItems:
+    type: integer
+    format: int64
+    minimum: 0
+  activeListings:
+    type: integer
+    format: int64
+    minimum: 0
+  removedListings:
+    type: integer
+    format: int64
+    minimum: 0
+  openTradeOffers:
+    type: integer
+    format: int64
+    minimum: 0
+  completedTrades:
+    type: integer
+    format: int64
+    minimum: 0
+

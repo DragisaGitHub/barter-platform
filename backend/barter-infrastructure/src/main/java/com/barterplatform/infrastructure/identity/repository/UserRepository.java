@@ -1,6 +1,7 @@
 package com.barterplatform.infrastructure.identity.repository;
 
 import com.barterplatform.domain.identity.entity.UserEntity;
+import com.barterplatform.domain.identity.enums.UserStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,5 +37,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     boolean existsByUsername(String username);
 
     boolean existsByUsernameIgnoreCase(String username);
+
+    long countByStatus(UserStatus status);
 }
 

@@ -31,5 +31,7 @@ public interface TradeReviewRepository extends JpaRepository<TradeReviewEntity, 
     long countByReviewedUserIdAndRating(Long reviewedUserId, TradeReviewRating rating);
 
     long countByReviewedUserId(Long reviewedUserId);
+
+    long countByRating(TradeReviewRating rating);
 }
 
