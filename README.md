@@ -1,123 +1,170 @@
 # Barter Platform
 
-A modern barter marketplace platform for item exchange and community-driven trading. Users can list items, propose trades, and manage exchanges — all without money changing hands.
+Barter Platform is a barter marketplace for listing items, discovering matches, and managing trade offers without money changing hands.
 
 ## Current Status
 
-**Phase: Backend Complete · Frontend In Progress**
+**Phase: active full-stack development**
 
-The backend is fully functional with authentication, user management, RBAC, and an OpenAPI-first API. The frontend (React + TypeScript) is planned and will be generated next.
+- The backend is a Gradle multi-module Spring Boot application running on **Spring Boot 4.0.6** and **Java 21**.
+- A **React + TypeScript** frontend already exists in `frontend/` and is being expanded alongside the backend.
+- Local development is available today, and a separate DEV deployment stack exists under `deployment/`.
+- The project is usable for ongoing development and DEV testing, but it should **not** be described as production-ready yet.
 
-## Features Implemented
+## What Exists Today
 
-- **JWT Authentication** — register, login, token refresh, logout
-- **Role-Based Access Control** — USER, MODERATOR, ADMIN roles with granular permissions
-- **User Management** — paginated user listing, status management (ACTIVE, SUSPENDED, BANNED, etc.)
-- **OpenAPI-First API** — contract-first design with generated DTOs and API interfaces
-- **Global Error Handling** — structured `ErrorResponse` with field-level validation errors
-- **Pagination & Sorting** — backend-driven pagination matching Spring Data conventions
-- **Database Migrations** — versioned schema management via Flyway
-- **Integration Tests** — Testcontainers-based tests running against real PostgreSQL
-- **API Documentation** — Swagger UI with full endpoint documentation
+- **Authentication and account APIs** — register, login, refresh, logout, current-user lookup
+- **RBAC and user administration** — roles, permissions, user status management, admin/moderator protections
+- **Catalog and listing APIs** — categories, tags, item search, item CRUD, favorites, image upload/serving
+- **Trade workflows** — trade offers, offer messaging, offer status transitions, reviews
+- **Community and moderation features** — public profiles, notifications, reports, admin listing/report/review management
+- **OpenAPI-first backend** — generated API interfaces and Swagger/OpenAPI docs
+- **Frontend foundations** — active React/Vite SPA work for landing, auth, dashboard, admin, and marketplace flows
+- **Operational basics** — Flyway migrations, PostgreSQL, Testcontainers-based integration tests, Docker-based local/dev setup
 
-## Architecture Overview
+## Repository Overview
 
-The backend follows a **clean architecture** pattern with a Gradle multi-module structure:
-
+```text
+backend/      Spring Boot 4 multi-module backend
+frontend/     React 18 + TypeScript + Vite frontend
+deployment/   DEV deployment assets, Compose stack, Caddy, env examples, ops scripts
+docs/         Product, architecture, and delivery notes
+uploads/      Local-profile file storage
 ```
+
+### Backend module structure
+
+```text
 backend/
-├── barter-api            # OpenAPI specs, generated DTOs and API interfaces
-├── barter-domain         # Domain entities, enums, repository interfaces
-├── barter-application    # Use cases, services, business logic
-├── barter-infrastructure # JPA repositories, persistence implementations
-├── barter-web            # REST controllers, security config, Spring Boot app
-└── barter-common         # Shared utilities and cross-cutting concerns
+├── barter-api            OpenAPI specs, generated DTOs and API interfaces
+├── barter-domain         Domain entities, enums, repository interfaces
+├── barter-application    Use cases and business services
+├── barter-infrastructure Persistence implementations and adapters
+├── barter-web            REST layer, security, Spring Boot app
+└── barter-common         Shared utilities and cross-cutting concerns
 ```
 
 ## Tech Stack
 
-| Layer          | Technology                          |
-|----------------|-------------------------------------|
-| Language       | Java 21                             |
-| Framework      | Spring Boot 3.5                     |
-| Build          | Gradle (multi-module)               |
-| Database       | PostgreSQL 16                       |
-| Migrations     | Flyway                              |
-| API Design     | OpenAPI 3.0 (contract-first)        |
-| Auth           | JWT (access + refresh tokens)       |
-| Testing        | JUnit 5, Testcontainers             |
-| Containers     | Docker Compose                      |
-| Frontend       | React 18+, TypeScript, Tailwind CSS |
+| Layer | Technology |
+|---|---|
+| Backend language | Java 21 |
+| Backend framework | Spring Boot 4.0.6 |
+| Backend build | Gradle wrapper, multi-module project |
+| Frontend | React 18, TypeScript, Vite |
+| Database | PostgreSQL 16 |
+| Migrations | Flyway |
+| API contract | OpenAPI 3 |
+| Authentication | JWT access + refresh tokens |
+| Testing | JUnit 5, Testcontainers |
+| Local containers | Docker Compose |
+| DEV edge/runtime | Docker Compose + Caddy HTTPS |
+| Image storage | Local filesystem in `local`; Azure Blob Storage in DEV-style deployments |
 
 ## Local Development Setup
 
 ### Prerequisites
 
-- Java 21+
-- Docker & Docker Compose
-- Gradle (wrapper included)
+- Java 21
+- Docker Desktop / Docker Engine with `docker compose`
+- Node.js 18+ and Yarn
+- Gradle wrapper (already included in `backend/`)
 
-### 1. Start PostgreSQL
+### 1. Start local services
 
-```bash
+Run this from the repository root:
+
+```powershell
 docker compose up -d
 ```
 
-This starts PostgreSQL 16 on port `5432` with default credentials (`barter_user` / `barter_password` / `barter_db`).
+This starts:
 
-### 2. Build the Backend
+- PostgreSQL 16 on `localhost:5432`
+- Mailpit on `localhost:8025` for local email capture
 
-```bash
-cd backend
+Default database credentials:
+
+- database: `barter_db`
+- username: `barter_user`
+- password: `barter_password`
+
+### 2. Build the backend
+
+```powershell
+Set-Location backend
 .\gradlew.bat clean build
 ```
 
-### 3. Run the Backend
+### 3. Run the backend with the local profile
 
-```bash
-cd backend
-.\gradlew.bat :barter-web:bootRun --args='--spring.profiles.active=local'
+```powershell
+Set-Location backend
+.\gradlew.bat :barter-web:bootRun --args="--spring.profiles.active=local"
 ```
 
-The application starts on port `8080`.
+The backend starts on port `8080`.
 
-## Application URLs
+### 4. Run the frontend
 
-| Resource       | URL                                                        |
-|----------------|------------------------------------------------------------|
-| API Base       | http://localhost:8080/api/v1                                |
-| Swagger UI     | http://localhost:8080/api/v1/swagger-ui/index.html          |
-| OpenAPI JSON   | http://localhost:8080/api/v1/v3/api-docs                    |
+Open a second terminal from the repository root:
 
-## Authentication Smoke Test
-
-Verify the backend is running with a quick auth flow:
-
-```bash
-# 1. Health check
-curl http://localhost:8080/api/v1/ping
-
-# 2. Register a user
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"username":"testuser","email":"test@example.com","password":"Test1234!"}'
-
-# 3. Login
-curl -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"identifier":"testuser","password":"Test1234!"}'
-
-# 4. Use the returned accessToken for authenticated requests
-curl http://localhost:8080/api/v1/auth/me \
-  -H "Authorization: Bearer <accessToken>"
+```powershell
+Set-Location frontend
+yarn install
+Copy-Item .env.example .env -ErrorAction SilentlyContinue
+yarn dev
 ```
+
+The Vite dev server runs on port `5173` by default and targets `http://localhost:8080/api/v1`.
+
+### Local storage note
+
+With the `local` Spring profile, uploaded files are stored on the local filesystem under `uploads/`.
+The Azure Blob Storage path is used in the DEV-style deployment configuration, not for default local startup.
+
+## Local URLs
+
+| Resource | URL |
+|---|---|
+| Frontend dev server | http://localhost:5173 |
+| API Base | http://localhost:8080/api/v1 |
+| Swagger UI | http://localhost:8080/api/v1/swagger-ui/index.html |
+| OpenAPI JSON | http://localhost:8080/api/v1/v3/api-docs |
+| Mailpit | http://localhost:8025 |
+
+## DEV Deployment
+
+A separate DEV deployment setup already exists under `deployment/`.
+
+At a high level, that stack uses:
+
+- Docker Compose for multi-container runtime orchestration
+- **Caddy** for public HTTP/HTTPS and reverse proxying
+- **PostgreSQL** for application data
+- separate backend and frontend containers
+- **Azure Blob Storage** for item-image binaries in DEV-style deployed environments
+
+See `deployment/docs/DEV_DEPLOYMENT.md` for deployment details and operational notes.
+
+## Quick Backend Smoke Test
+
+Once the backend is running locally, you can verify the basics with PowerShell:
+
+```powershell
+Invoke-WebRequest http://localhost:8080/api/v1/ping | Select-Object -ExpandProperty Content
+```
+
+Or open Swagger UI directly:
+
+- http://localhost:8080/api/v1/swagger-ui/index.html
 
 ## Documentation
 
-Detailed design documents are available in the [`docs/`](docs/) directory:
+Detailed design and implementation notes live in `docs/`:
 
 | Document | Topic |
-|----------|-------|
+|---|---|
 | [01 — Product Vision](docs/01-product-vision.md) | Product goals and scope |
 | [02 — Domain Model](docs/02-domain-model.md) | Core domain concepts |
 | [03 — Data Model](docs/03-data-model.md) | Database schema design |
@@ -128,24 +175,22 @@ Detailed design documents are available in the [`docs/`](docs/) directory:
 | [16 — OpenAPI Generation](docs/16-openapi-generation-strategy.md) | Code generation strategy |
 | [17 — Pagination & Search](docs/17-pagination-search-strategy.md) | Pagination conventions |
 | [18 — Auth & JWT](docs/18-auth-jwt-strategy.md) | JWT token architecture |
-| [20 — Frontend Architecture](docs/20-frontend-architecture.md) | Frontend design plan |
+| [20 — Frontend Architecture](docs/20-frontend-architecture.md) | Frontend architecture notes |
+| [28 — Production Readiness Roadmap](docs/28-production-readiness-roadmap.md) | Hardening and launch planning |
 
 ## Known Limitations
 
-- **No frontend yet** — the React frontend is designed but not yet implemented
-- **No email verification** — registration creates users in `PENDING_VERIFICATION` status but no email is sent
-- **No OAuth/social login** — only username/password authentication is available
-- **No item/listing endpoints** — marketplace functionality is not yet built
-- **Admin stats are placeholder** — no aggregation endpoints exist yet
+- The product is still in active development; some frontend flows and broader UX polish are not finished yet.
+- The current documented hosted environment is a DEV/public-beta style Compose deployment, not a fully hardened production platform.
+- Local and deployed environments intentionally differ in a few areas, such as file storage (`uploads/` locally vs Azure Blob Storage in DEV-style deployments).
+- OAuth/social login, real-time messaging, and broader launch hardening remain future work.
 
 ## Roadmap
 
-- [ ] Generate React + TypeScript frontend with Figma Make
-- [ ] Implement item listing and marketplace endpoints
-- [ ] Add trade/offer proposal flow
-- [ ] Email verification and password reset
-- [ ] OAuth2 social login integration
-- [ ] Real-time messaging between users
-- [ ] Admin analytics and reporting
-- [ ] Production deployment configuration
+- Continue expanding the React frontend across catalog, offers, messaging, and admin workflows
+- Keep refining backend marketplace and moderation capabilities
+- Harden deployment, operations, and release practices beyond the current DEV setup
+- Improve onboarding, email/account flows, and password-recovery experience
+- Add OAuth/social login options
+- Add richer messaging and notification experiences
 
