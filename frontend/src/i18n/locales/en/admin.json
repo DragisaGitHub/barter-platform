@@ -84,6 +84,104 @@
       "description": "Existing admin pages and routes remain intact while the control panel stays focused on moderation, access control, and platform operations."
     }
   },
+  "operationsPage": {
+    "title": "Operational dashboard",
+    "description": "ADMIN-only runtime visibility for launch and beta operations. This summarizes safe counters and status signals without exposing secrets, raw configuration, or PII-heavy lists.",
+    "badges": {
+      "adminOnly": "Admin only"
+    },
+    "loading": "Loading operational overview…",
+    "errorTitle": "Operational overview unavailable",
+    "errorDescription": "The admin operations endpoint could not be reached.",
+    "tryAgain": "Try again",
+    "runtimeOverviewTitle": "Runtime overview",
+    "runtimeOverviewDescription": "Counts are loaded from simple aggregate queries. Storage health avoids expensive remote blob calls.",
+    "cards": {
+      "systemHealth": {
+        "title": "System health",
+        "description": "Runtime identity and lightweight backend status."
+      },
+      "usersSecurity": {
+        "title": "Users & security",
+        "description": "Account state counters for identity operations."
+      },
+      "marketplaceActivity": {
+        "title": "Marketplace activity",
+        "description": "Listing and trade-offer counters for operational awareness."
+      },
+      "moderationQueue": {
+        "title": "Moderation queue",
+        "description": "Report queue state and negative review signal."
+      },
+      "storage": {
+        "title": "Storage",
+        "description": "Image metadata counts and configured provider type."
+      },
+      "deployment": {
+        "title": "Deployment",
+        "description": "Safe environment metadata available to the application."
+      }
+    },
+    "metrics": {
+      "application": "Application",
+      "version": "Version",
+      "profiles": "Profiles",
+      "serverTime": "Server time",
+      "uptime": "Uptime",
+      "overallStatus": "Overall status",
+      "database": "Database",
+      "totalUsers": "Total users",
+      "active": "Active",
+      "pendingVerification": "Pending verification",
+      "suspended": "Suspended",
+      "banned": "Banned",
+      "totalItems": "Total items",
+      "activeListings": "Active listings",
+      "removedListings": "Removed listings",
+      "openTradeOffers": "Open trade offers",
+      "completedTrades": "Completed trades",
+      "openReports": "Open reports",
+      "inReview": "In review",
+      "resolved": "Resolved",
+      "dismissed": "Dismissed",
+      "negativeReviews": "Negative reviews",
+      "provider": "Provider",
+      "providerHealth": "Provider health",
+      "imageRecords": "Image records",
+      "primaryImages": "Primary images",
+      "environment": "Environment",
+      "deploymentState": "Deployment state",
+      "lastDeployment": "Last deployment"
+    },
+    "statusLabels": {
+      "UP": "UP",
+      "DOWN": "DOWN",
+      "DEGRADED": "DEGRADED",
+      "CONFIGURED_NOT_CHECKED": "Configured, not checked",
+      "UNKNOWN": "UNKNOWN",
+      "unknown": "Unknown",
+      "unavailable": "Unavailable",
+      "notLoaded": "Not loaded"
+    },
+    "deploymentAvailability": {
+      "configured": "Configured",
+      "unavailable": "Unavailable"
+    },
+    "storageProviders": {
+      "local": "Local storage",
+      "azure": "Azure Blob Storage",
+      "unknown": "Unknown"
+    },
+    "helpers": {
+      "storageConfiguredNotChecked": "Configured provider is reported without remote object-storage probing."
+    },
+    "duration": {
+      "seconds": "{{value}}s",
+      "minutes": "{{value}}m",
+      "hoursMinutes": "{{hours}}h {{minutes}}m",
+      "daysHours": "{{days}}d {{hours}}h"
+    }
+  },
   "reviewsPage": {
     "title": "Trade reviews queue",
     "description": "Review completed-trade feedback for governance visibility. Negative reviews appear by default in this queue, while backend filtering remains explicit.",
