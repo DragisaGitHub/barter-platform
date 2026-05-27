@@ -515,7 +515,9 @@ class AuthServiceImplTest {
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         assertEquals("Account is suspended.", ex.getMessage());
-        verify(refreshTokenService).revoke(existingToken);
+        verify(refreshTokenService).revokePresentedTokenForRejectedRefresh(existingToken);
+        verify(refreshTokenService, never()).revoke(existingToken);
+        verify(refreshTokenService, never()).createRefreshToken(user.getId());
     }
 
     @Test
@@ -534,7 +536,9 @@ class AuthServiceImplTest {
 
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         assertEquals("Account is banned.", ex.getMessage());
-        verify(refreshTokenService).revoke(existingToken);
+        verify(refreshTokenService).revokePresentedTokenForRejectedRefresh(existingToken);
+        verify(refreshTokenService, never()).revoke(existingToken);
+        verify(refreshTokenService, never()).createRefreshToken(user.getId());
     }
 
     @Test

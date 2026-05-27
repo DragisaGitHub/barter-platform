@@ -20,6 +20,12 @@ public interface RefreshTokenService {
      */
     void revoke(RefreshTokenEntity token);
 
+    /**
+     * Revokes the refresh token in a separate transaction so revocation survives
+     * caller rollback when a rejected refresh attempt must still harden the token.
+     */
+    void revokePresentedTokenForRejectedRefresh(RefreshTokenEntity token);
+
     long getRefreshTokenExpirationSeconds();
 
     record RefreshTokenResult(String rawToken, RefreshTokenEntity entity) {}

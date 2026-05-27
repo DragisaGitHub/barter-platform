@@ -14,6 +14,8 @@ import java.util.HexFormat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RefreshTokenServiceImpl implements RefreshTokenService {
@@ -79,6 +81,23 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     public void revoke(RefreshTokenEntity token) {
         token.setRevokedAt(OffsetDateTime.now());
         refreshTokenRepository.save(token);
+    }
+
+    @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void revokePresentedTokenForRejectedRefresh(RefreshTokenEntity token) {
+        OffsetDateTime revokedAt = OffsetDateTime.now();
+        if (token.getId() != null) {
+            int updated = refreshTokenRepository.revokeByIdIfActive(token.getId(), revokedAt);
+            if (updated > 0) {
+                token.setRevokedAt(revokedAt);
+                return;
+            }
+        }
+
+        if (token.getRevokedAt() == null) {
+            token.setRevokedAt(revokedAt);
+        }
     }
 
     @Override

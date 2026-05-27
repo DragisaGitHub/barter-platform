@@ -235,8 +235,10 @@ class AuthRefreshLogoutIntegrationTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.error").value("Bad Request"))
-                .andExpect(jsonPath("$.code").value("BAD_REQUEST"))
-                .andExpect(jsonPath("$.message").value("Refresh token is required."))
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.message").value("must not be null"))
+                .andExpect(jsonPath("$.fieldErrors[0].field").value("refreshToken"))
+                .andExpect(jsonPath("$.fieldErrors[0].message").value("must not be null"))
                 .andExpect(jsonPath("$.path").value("/api/v1/auth/refresh"));
     }
 

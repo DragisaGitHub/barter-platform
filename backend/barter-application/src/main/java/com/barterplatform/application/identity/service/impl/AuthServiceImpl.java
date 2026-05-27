@@ -293,7 +293,7 @@ public class AuthServiceImpl implements AuthService {
             validateUserStatus(user);
         } catch (ApiException ex) {
             if (ex.getStatus() == HttpStatus.FORBIDDEN && tokenEntity.getRevokedAt() == null) {
-                refreshTokenService.revoke(tokenEntity);
+                refreshTokenService.revokePresentedTokenForRejectedRefresh(tokenEntity);
             }
             throw ex;
         }
