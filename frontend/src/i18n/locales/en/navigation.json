@@ -22,6 +22,7 @@
   "permissionsDescription": "Audit authorization capabilities and permission coverage.",
   "system": "System",
   "systemDescription": "Review platform health and internal operational settings.",
+  "operations": "Operations",
   "listings": "Listings",
   "listingsDescription": "Review reported listings and take direct moderation actions when needed.",
   "reports": "Reports",

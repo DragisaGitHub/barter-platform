@@ -1,0 +1,21 @@
+overview:
+  get:
+    tags:
+      - AdminOperations
+    operationId: getAdminOperationsOverview
+    summary: Get production-safe operational overview for administrators
+    description: Returns lightweight aggregate counters and runtime status for admin operational awareness. The response intentionally excludes secrets, raw environment values, user PII lists, filesystem paths, and provider connection details.
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Operational overview returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminOperationsOverviewResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+

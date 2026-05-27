@@ -17,7 +17,9 @@
 # Current State
 
 - Admin dashboard and admin pages exist.
-- No reported operational metrics such as pending reports, new users, active listings, failed uploads, negative reviews, or system status.
+- Implemented: an ADMIN-only operational dashboard is available at `/admin/operations`.
+- Implemented: the backend exposes `GET /api/v1/admin/operations/overview` for production-safe operational visibility.
+- Implemented: the endpoint uses simple aggregate count queries and lightweight runtime checks only.
 
 # Risks
 
@@ -61,15 +63,32 @@
 
 # Backend Changes
 
-- Add admin operational summary endpoint(s).
-- Implement aggregate queries with clear time windows.
-- Protect endpoint with admin/moderator roles as appropriate.
+- Added OpenAPI contract and generated DTO alignment for `GET /api/v1/admin/operations/overview`.
+- Added `AdminOperationsController` protected with `hasRole('ADMIN')`.
+- Added `AdminOperationsOverviewService` to aggregate lightweight, production-safe sections:
+  - system: application name, optional version, active profiles, server time, uptime;
+  - health: overall status, database status, storage provider type, storage readiness note;
+  - users / identity: total, active, suspended, banned, pending verification users;
+  - marketplace: total items, active listings, removed listings, open offers, completed trades;
+  - moderation: open, in-review, resolved, dismissed reports, negative reviews;
+  - storage: total image records, primary image count, provider type;
+  - deployment: active environment/profile, deployment-state availability, optional last deployment timestamp.
+- Added repository count methods only where needed; no large dataset loading or new schema was introduced.
+- Storage status intentionally reports configured provider readiness without probing Azure Blob Storage, avoiding expensive or brittle remote calls from the dashboard endpoint.
 
 # Frontend Changes
 
-- Replace or augment dashboard navigation cards with metric cards, status badges, and links.
-- Add loading/error/empty states.
-- Avoid chart-heavy UI until metrics prove useful.
+- Added `/admin/operations` route inside the existing ADMIN-only admin shell.
+- Added sidebar and admin landing-page navigation to the operations dashboard.
+- Added operational cards for:
+  - System Health;
+  - Users & Security;
+  - Marketplace Activity;
+  - Moderation Queue;
+  - Storage;
+  - Deployment.
+- Added loading state, error state, and manual refresh action using existing TanStack Query/API patterns.
+- The UI uses simple cards and badges only; no charting, WebSockets, streaming, or new monitoring infrastructure was added.
 
 # Database Changes
 
@@ -80,13 +99,36 @@
 
 - No new infrastructure.
 - Include dashboard endpoint in admin smoke tests.
+- Optional deployment timestamp support is intentionally passive: if `barter.deployment.deployed-at` or `BARTER_DEPLOYED_AT` is supplied as an ISO-8601 timestamp, the dashboard displays it; otherwise it shows deployment state as unavailable.
 
 # Testing Strategy
 
-- Backend tests for aggregate correctness with seeded data.
-- Authorization tests.
-- Frontend rendering tests for loading/error/metric states.
-- Manual smoke test after reports dashboard exists.
+- Added backend service tests for aggregate mapping and degraded database status handling.
+- Added backend integration/security coverage:
+  - admin can access;
+  - regular user receives `403`;
+  - unauthenticated user receives `401`;
+  - response includes expected summary sections.
+- Frontend build validation covers the new page and typed API wiring. Dedicated frontend tests were not added because the current frontend does not have stable admin page test conventions.
+
+# Security and Privacy Boundaries
+
+- The operations endpoint is ADMIN-only, not MODERATOR-accessible.
+- The response intentionally does **not** expose:
+  - JWT secrets;
+  - Azure Storage connection strings;
+  - SMTP credentials;
+  - raw environment dumps;
+  - raw filesystem paths;
+  - user email lists or PII-heavy records;
+  - provider-native blob URLs or internal infrastructure details.
+- The dashboard is for operational awareness, not investigation detail. Admins should use existing focused admin pages for user, report, listing, and review records.
+
+# Metrics Platform Non-Goal
+
+- This dashboard is not a Prometheus/Grafana replacement.
+- It does not implement alerting, time-series retention, live streaming, WebSockets, Kubernetes observability, distributed tracing, CDN logs, or paid monitoring services.
+- It is a compact launch/beta operations view for the current Docker Compose DEV deployment model.
 
 # Rollout Plan
 
@@ -101,6 +143,7 @@
 - Exportable operational reports.
 - Alert thresholds linked to metrics.
 - Admin analytics after core dashboard is stable.
+- Optional Prometheus/Grafana, CDN/access-log summaries, and object-storage diagnostics after production usage proves the need.
 
 # Explicitly Deferred
 

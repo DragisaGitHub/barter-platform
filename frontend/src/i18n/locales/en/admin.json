@@ -4,6 +4,7 @@
   "roles": "Roles",
   "permissions": "Permissions",
   "system": "System",
+  "operations": "Operations",
   "categories": "Categories",
   "tags": "Tags",
   "listings": "Listings",
@@ -65,6 +66,7 @@
       "roles": "Inspect platform role definitions and role assignments.",
       "permissions": "Audit permission coverage used across the authorization model.",
       "system": "Check platform status and review operational configuration surfaces.",
+      "operations": "Review production-safe runtime counters, health, storage, and deployment awareness.",
       "reports": "Review user-submitted safety reports and manage moderation triage status.",
       "categories": "Manage category taxonomy, parent structure, ordering, and archive state.",
       "tags": "Manage reusable item metadata labels, slugs, and archive state."

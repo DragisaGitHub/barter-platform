@@ -1,0 +1,30 @@
+type: object
+additionalProperties: false
+required:
+  - totalUsers
+  - activeUsers
+  - suspendedUsers
+  - bannedUsers
+  - pendingVerificationUsers
+properties:
+  totalUsers:
+    type: integer
+    format: int64
+    minimum: 0
+  activeUsers:
+    type: integer
+    format: int64
+    minimum: 0
+  suspendedUsers:
+    type: integer
+    format: int64
+    minimum: 0
+  bannedUsers:
+    type: integer
+    format: int64
+    minimum: 0
+  pendingVerificationUsers:
+    type: integer
+    format: int64
+    minimum: 0
+

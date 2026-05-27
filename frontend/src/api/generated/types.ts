@@ -100,6 +100,17 @@ export type ReportDetailResponse = components["schemas"]["ReportDetailResponse"]
 export type ReportPagedResponse = components["schemas"]["ReportPagedResponse"];
 export type AdminReportQueueSummaryResponse = components["schemas"]["AdminReportQueueSummaryResponse"];
 
+// ─── Admin Operations Response DTOs ─────────────────────────────────────────
+
+export type AdminOperationsOverviewResponse = components["schemas"]["AdminOperationsOverviewResponse"];
+export type AdminOperationsSystemResponse = components["schemas"]["AdminOperationsSystemResponse"];
+export type AdminOperationsHealthResponse = components["schemas"]["AdminOperationsHealthResponse"];
+export type AdminOperationsUsersResponse = components["schemas"]["AdminOperationsUsersResponse"];
+export type AdminOperationsMarketplaceResponse = components["schemas"]["AdminOperationsMarketplaceResponse"];
+export type AdminOperationsModerationResponse = components["schemas"]["AdminOperationsModerationResponse"];
+export type AdminOperationsStorageResponse = components["schemas"]["AdminOperationsStorageResponse"];
+export type AdminOperationsDeploymentResponse = components["schemas"]["AdminOperationsDeploymentResponse"];
+
 // ─── Reporting Request DTOs ─────────────────────────────────────────────────
 
 export type CreateReportRequest = components["schemas"]["CreateReportRequest"];

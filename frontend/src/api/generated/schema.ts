@@ -654,6 +654,26 @@ export interface paths {
         patch: operations["updateAdminReport"];
         trace?: never;
     };
+    "/admin/operations/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get production-safe operational overview for administrators
+         * @description Returns lightweight aggregate counters and runtime status for admin operational awareness. The response intentionally excludes secrets, raw environment values, user PII lists, filesystem paths, and provider connection details.
+         */
+        get: operations["getAdminOperationsOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalog/tags": {
         parameters: {
             query?: never;
@@ -2001,6 +2021,86 @@ export interface components {
         AdminUpdateReportRequest: {
             status: components["schemas"]["ReportStatus"];
             resolutionNote?: string | null;
+        };
+        AdminOperationsOverviewResponse: {
+            system: components["schemas"]["AdminOperationsSystemResponse"];
+            health: components["schemas"]["AdminOperationsHealthResponse"];
+            users: components["schemas"]["AdminOperationsUsersResponse"];
+            marketplace: components["schemas"]["AdminOperationsMarketplaceResponse"];
+            moderation: components["schemas"]["AdminOperationsModerationResponse"];
+            storage: components["schemas"]["AdminOperationsStorageResponse"];
+            deployment: components["schemas"]["AdminOperationsDeploymentResponse"];
+        };
+        AdminOperationsSystemResponse: {
+            applicationName: string;
+            applicationVersion?: string | null;
+            activeProfiles: string[];
+            /** Format: date-time */
+            serverTime: string;
+            /** Format: int64 */
+            uptimeSeconds?: number | null;
+        };
+        AdminOperationsHealthResponse: {
+            /** @description High-level operational status such as UP, DEGRADED, or UNKNOWN. */
+            overallStatus: string;
+            /** @description Database connectivity status from a lightweight validation check. */
+            databaseStatus: string;
+            /** @description Configured image storage provider type, for example local or azure. */
+            storageProviderType: string;
+            /** @description Safe storage readiness status. Remote provider health is not probed by this endpoint. */
+            storageStatus: string;
+            storageStatusDetail?: string | null;
+        };
+        AdminOperationsUsersResponse: {
+            /** Format: int64 */
+            totalUsers: number;
+            /** Format: int64 */
+            activeUsers: number;
+            /** Format: int64 */
+            suspendedUsers: number;
+            /** Format: int64 */
+            bannedUsers: number;
+            /** Format: int64 */
+            pendingVerificationUsers: number;
+        };
+        AdminOperationsMarketplaceResponse: {
+            /** Format: int64 */
+            totalItems: number;
+            /** Format: int64 */
+            activeListings: number;
+            /** Format: int64 */
+            removedListings: number;
+            /** Format: int64 */
+            openTradeOffers: number;
+            /** Format: int64 */
+            completedTrades: number;
+        };
+        AdminOperationsModerationResponse: {
+            /** Format: int64 */
+            openReports: number;
+            /** Format: int64 */
+            inReviewReports: number;
+            /** Format: int64 */
+            resolvedReports: number;
+            /** Format: int64 */
+            dismissedReports: number;
+            /** Format: int64 */
+            negativeReviews: number;
+        };
+        AdminOperationsStorageResponse: {
+            /** Format: int64 */
+            totalImageRecords: number;
+            /** Format: int64 */
+            primaryImageCount: number;
+            storageProviderType: string;
+        };
+        AdminOperationsDeploymentResponse: {
+            /** @description Safe profile/environment label derived from active Spring profiles. */
+            environment: string;
+            /** @description Availability of deployment state metadata to the application, such as unavailable or configured. */
+            deploymentStateAvailability: string;
+            /** Format: date-time */
+            lastDeploymentTimestamp?: string | null;
         };
         ReputationSummaryResponse: {
             /** Format: int32 */
@@ -3422,6 +3522,28 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
             409: components["responses"]["Conflict"];
+        };
+    };
+    getAdminOperationsOverview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Operational overview returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOperationsOverviewResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     listTags: {

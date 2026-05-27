@@ -1,0 +1,24 @@
+type: object
+additionalProperties: false
+required:
+  - overallStatus
+  - databaseStatus
+  - storageProviderType
+  - storageStatus
+properties:
+  overallStatus:
+    type: string
+    description: High-level operational status such as UP, DEGRADED, or UNKNOWN.
+  databaseStatus:
+    type: string
+    description: Database connectivity status from a lightweight validation check.
+  storageProviderType:
+    type: string
+    description: Configured image storage provider type, for example local or azure.
+  storageStatus:
+    type: string
+    description: Safe storage readiness status. Remote provider health is not probed by this endpoint.
+  storageStatusDetail:
+    type: string
+    nullable: true
+

@@ -2,6 +2,7 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   FolderTree,
+  Activity,
   KeyRound,
   LayoutDashboard,
   Lock,
@@ -45,6 +46,7 @@ export function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     { to: routePaths.admin.roles, label: t("navigation:roles"), icon: KeyRound, roles: ["ADMIN"] },
     { to: routePaths.admin.permissions, label: t("navigation:permissions"), icon: Lock, roles: ["ADMIN"] },
     { to: routePaths.admin.system, label: t("navigation:system"), icon: Settings, roles: ["ADMIN"] },
+    { to: routePaths.admin.operations, label: t("navigation:operations"), icon: Activity, roles: ["ADMIN"] },
     { to: routePaths.admin.categories, label: t("navigation:categories"), icon: FolderTree, end: true, roles: ["ADMIN"] },
     { to: routePaths.admin.listings, label: t("navigation:listings"), icon: Package, end: true, roles: ["ADMIN", "MODERATOR"] },
     { to: routePaths.admin.reports, label: t("navigation:reports"), icon: Shield, end: true, roles: ["ADMIN", "MODERATOR"], badge: unresolvedCount },

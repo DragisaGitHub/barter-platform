@@ -4,6 +4,7 @@
   "roles": "Uloge",
   "permissions": "Dozvole",
   "system": "Sistem",
+  "operations": "Operacije",
   "categories": "Kategorije",
   "tags": "Oznake",
   "listings": "Oglasi",
@@ -65,6 +66,7 @@
       "roles": "Pregledaj definicije uloga platforme i dodele uloga.",
       "permissions": "Proveri pokrivenost dozvolama u modelu autorizacije.",
       "system": "Proveri status platforme i operativne konfiguracije.",
+      "operations": "Pregledaj bezbedne operativne brojače, zdravlje, skladište i informacije o deploy-u.",
       "reports": "Pregledaj prijave bezbednosti koje šalju korisnici i upravljaj statusom moderatorske obrade.",
       "categories": "Upravljaj taksonomijom kategorija, strukturom roditelja, redosledom i arhiviranjem.",
       "tags": "Upravljaj višekratnim oznakama metapodataka, slugovima i arhiviranjem."

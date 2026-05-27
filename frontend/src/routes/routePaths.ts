@@ -61,6 +61,7 @@ export const routePaths = {
     roles: "/admin/roles",
     permissions: "/admin/permissions",
     system: "/admin/system",
+    operations: "/admin/operations",
     categories: "/admin/categories",
     tags: "/admin/tags",
     listings: "/admin/listings",

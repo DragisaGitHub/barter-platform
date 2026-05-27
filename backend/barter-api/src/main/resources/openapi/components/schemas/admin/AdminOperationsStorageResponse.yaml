@@ -1,0 +1,18 @@
+type: object
+additionalProperties: false
+required:
+  - totalImageRecords
+  - primaryImageCount
+  - storageProviderType
+properties:
+  totalImageRecords:
+    type: integer
+    format: int64
+    minimum: 0
+  primaryImageCount:
+    type: integer
+    format: int64
+    minimum: 0
+  storageProviderType:
+    type: string
+
