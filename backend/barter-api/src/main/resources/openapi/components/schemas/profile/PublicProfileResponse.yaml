@@ -8,6 +8,7 @@ required:
   - completedTradeCount
   - cancelledTradeCount
   - reputationSummary
+  - recentReviews
 properties:
   uuid:
     type: string
@@ -35,4 +36,8 @@ properties:
     nullable: true
   reputationSummary:
     $ref: '../../../openapi.yaml#/components/schemas/ReputationSummaryResponse'
+  recentReviews:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/PublicProfileReviewSnippetResponse'
 

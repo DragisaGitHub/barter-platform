@@ -377,6 +377,8 @@ components:
       $ref: './components/schemas/notification/NotificationUnreadCountResponse.yaml'
     PublicProfileResponse:
       $ref: './components/schemas/profile/PublicProfileResponse.yaml'
+    PublicProfileReviewSnippetResponse:
+      $ref: './components/schemas/profile/PublicProfileReviewSnippetResponse.yaml'
   requestBodies:
     RegisterUserRequest:
       content:
