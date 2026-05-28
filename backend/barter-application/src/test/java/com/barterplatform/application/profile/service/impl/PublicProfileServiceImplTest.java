@@ -1,16 +1,20 @@
 package com.barterplatform.application.profile.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.PublicProfileResponse;
+import com.barterplatform.api.model.PublicProfileReviewSnippetResponse;
 import com.barterplatform.api.model.ReputationSummaryResponse;
 import com.barterplatform.application.catalog.mapper.ItemImageMapper;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
@@ -24,21 +28,27 @@ import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.identity.enums.UserStatus;
+import com.barterplatform.domain.reputation.enums.TradeReviewRating;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
+import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
+import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Stream;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
@@ -55,6 +65,7 @@ class PublicProfileServiceImplTest {
     @Mock private TradeOfferRepository tradeOfferRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private ItemImageRepository itemImageRepository;
+    @Mock private TradeReviewRepository tradeReviewRepository;
     @Mock private ItemMapper itemMapper;
     @Mock private ItemImageMapper itemImageMapper;
     @Mock private PageResponseMapper pageResponseMapper;
@@ -68,7 +79,7 @@ class PublicProfileServiceImplTest {
     void setUp() {
         service = new PublicProfileServiceImpl(
                 userRepository, itemRepository, tradeOfferRepository,
-                categoryRepository, itemImageRepository,
+                categoryRepository, itemImageRepository, tradeReviewRepository,
                 itemMapper, itemImageMapper,
                 pageRequestFactory, pageResponseMapper,
                 reputationService);
@@ -98,6 +109,47 @@ class PublicProfileServiceImplTest {
         e.setCondition(ItemCondition.GOOD);
         e.setCreatedAt(OffsetDateTime.now());
         return e;
+    }
+
+    private ReputationSummaryResponse emptyReputationSummary() {
+        return new ReputationSummaryResponse()
+                .positiveReviewCount(0)
+                .negativeReviewCount(0)
+                .totalReviewCount(0)
+                .positivePercentage(null);
+    }
+
+    private record ReviewSnippetProjection(
+            UUID uuid,
+            String reviewerUsername,
+            TradeReviewRating rating,
+            String comment,
+            OffsetDateTime createdAt)
+            implements TradeReviewRepository.PublicProfileReviewSnippetProjection {
+        @Override
+        public UUID getUuid() {
+            return uuid;
+        }
+
+        @Override
+        public String getReviewerUsername() {
+            return reviewerUsername;
+        }
+
+        @Override
+        public TradeReviewRating getRating() {
+            return rating;
+        }
+
+        @Override
+        public String getComment() {
+            return comment;
+        }
+
+        @Override
+        public OffsetDateTime getCreatedAt() {
+            return createdAt;
+        }
     }
 
     // ── getPublicProfile ──────────────────────────────────────────
@@ -137,6 +189,99 @@ class PublicProfileServiceImplTest {
             assertNotNull(result.getReputationSummary());
             assertEquals(4, result.getReputationSummary().getPositiveReviewCount());
             assertEquals(80.0, result.getReputationSummary().getPositivePercentage());
+            assertNotNull(result.getRecentReviews());
+        }
+
+        @Test
+        @DisplayName("includes latest public-safe recent review snippets")
+        void includesRecentReviewSnippets() {
+            UUID uuid = UUID.randomUUID();
+            UserEntity activeUser = user(uuid, "alice", UserStatus.ACTIVE);
+            OffsetDateTime newest = OffsetDateTime.now();
+            String longComment = "Reliable and friendly trader. ".repeat(8) + "Kept communication clear.";
+
+            when(userRepository.findByUuid(uuid)).thenReturn(Optional.of(activeUser));
+            when(itemRepository.countByOwnerIdAndStatus(10L, ItemStatus.ACTIVE)).thenReturn(0L);
+            when(tradeOfferRepository.countBySenderUserIdAndStatus(eq(10L), any())).thenReturn(0L);
+            when(tradeOfferRepository.countByReceiverUserIdAndStatus(eq(10L), any())).thenReturn(0L);
+            when(reputationService.getReputationSummary(10L)).thenReturn(emptyReputationSummary());
+            when(tradeReviewRepository.findLatestCommentedReviewsForReviewedUser(
+                    eq(10L), eq(UserStatus.ACTIVE), any(Pageable.class)))
+                    .thenReturn(List.of(
+                            new ReviewSnippetProjection(UUID.randomUUID(), "reviewer-one",
+                                    TradeReviewRating.POSITIVE, longComment, newest),
+                            new ReviewSnippetProjection(UUID.randomUUID(), "reviewer-two",
+                                    TradeReviewRating.NEGATIVE, "Item condition was different than expected.", newest.minusDays(1))));
+
+            PublicProfileResponse result = service.getPublicProfile(uuid);
+
+            assertEquals(2, result.getRecentReviews().size());
+            PublicProfileReviewSnippetResponse first = result.getRecentReviews().getFirst();
+            assertEquals("reviewer-one", first.getReviewerUsername());
+            assertEquals(com.barterplatform.api.model.TradeReviewRating.POSITIVE, first.getRating());
+            assertEquals(newest, first.getCreatedAt());
+            assertFalse(first.getCommentSnippet().isBlank());
+            assertTrue(first.getCommentSnippet().codePointCount(0, first.getCommentSnippet().length()) <= 160);
+            assertEquals("…", first.getCommentSnippet().substring(first.getCommentSnippet().length() - 1));
+        }
+
+        @Test
+        @DisplayName("returns empty recent reviews when no commented reviews exist")
+        void returnsEmptyRecentReviews() {
+            UUID uuid = UUID.randomUUID();
+            UserEntity activeUser = user(uuid, "alice", UserStatus.ACTIVE);
+
+            when(userRepository.findByUuid(uuid)).thenReturn(Optional.of(activeUser));
+            when(itemRepository.countByOwnerIdAndStatus(10L, ItemStatus.ACTIVE)).thenReturn(0L);
+            when(tradeOfferRepository.countBySenderUserIdAndStatus(eq(10L), any())).thenReturn(0L);
+            when(tradeOfferRepository.countByReceiverUserIdAndStatus(eq(10L), any())).thenReturn(0L);
+            when(reputationService.getReputationSummary(10L)).thenReturn(emptyReputationSummary());
+            when(tradeReviewRepository.findLatestCommentedReviewsForReviewedUser(
+                    eq(10L), eq(UserStatus.ACTIVE), any(Pageable.class)))
+                    .thenReturn(List.of());
+
+            PublicProfileResponse result = service.getPublicProfile(uuid);
+
+            assertNotNull(result.getRecentReviews());
+            assertEquals(List.of(), result.getRecentReviews());
+        }
+
+        @Test
+        @DisplayName("requests recent reviews only from active reviewers and limits to three")
+        void inactiveReviewerSnippetsAreOmittedByRepositoryFilter() {
+            UUID uuid = UUID.randomUUID();
+            UserEntity activeUser = user(uuid, "alice", UserStatus.ACTIVE);
+            ArgumentCaptor<Pageable> pageableCaptor = ArgumentCaptor.forClass(Pageable.class);
+
+            when(userRepository.findByUuid(uuid)).thenReturn(Optional.of(activeUser));
+            when(itemRepository.countByOwnerIdAndStatus(10L, ItemStatus.ACTIVE)).thenReturn(0L);
+            when(tradeOfferRepository.countBySenderUserIdAndStatus(eq(10L), any())).thenReturn(0L);
+            when(tradeOfferRepository.countByReceiverUserIdAndStatus(eq(10L), any())).thenReturn(0L);
+            when(reputationService.getReputationSummary(10L)).thenReturn(emptyReputationSummary());
+            when(tradeReviewRepository.findLatestCommentedReviewsForReviewedUser(
+                    eq(10L), eq(UserStatus.ACTIVE), any(Pageable.class)))
+                    .thenReturn(List.of());
+
+            PublicProfileResponse result = service.getPublicProfile(uuid);
+
+            assertEquals(List.of(), result.getRecentReviews());
+            verify(tradeReviewRepository).findLatestCommentedReviewsForReviewedUser(
+                    eq(10L), eq(UserStatus.ACTIVE), pageableCaptor.capture());
+            assertEquals(3, pageableCaptor.getValue().getPageSize());
+        }
+
+        @Test
+        @DisplayName("review snippets expose no sensitive fields")
+        void recentReviewSnippetsExposeNoSensitiveFields() {
+            List<String> publicGetterNames = Stream.of(PublicProfileReviewSnippetResponse.class.getMethods())
+                    .map(Method::getName)
+                    .toList();
+
+            assertFalse(publicGetterNames.contains("getTradeOfferUuid"));
+            assertFalse(publicGetterNames.contains("getReviewerEmail"));
+            assertFalse(publicGetterNames.contains("getReviewerStatus"));
+            assertFalse(publicGetterNames.contains("getReviewerUserId"));
+            assertFalse(publicGetterNames.contains("getId"));
         }
 
         @Test

@@ -153,9 +153,9 @@ export function PublicProfilePage() {
         ) : null}
       </div>
 
-      <Card className="overflow-hidden border-violet-100/80 bg-gradient-to-br from-violet-50 via-white to-white p-0 shadow-sm dark:border-violet-900/40 dark:from-violet-950/20 dark:via-slate-900 dark:to-slate-900">
+      <Card className="overflow-hidden border-violet-100/80 bg-linear-to-br from-violet-50 via-white to-white p-0 shadow-sm dark:border-violet-900/40 dark:from-violet-950/20 dark:via-slate-900 dark:to-slate-900">
         <div className="relative">
-          <div className="absolute inset-x-0 top-0 h-28 bg-gradient-to-r from-violet-500/12 via-indigo-500/6 to-transparent" />
+          <div className="absolute inset-x-0 top-0 h-28 bg-linear-to-r from-violet-500/12 via-indigo-500/6 to-transparent" />
 
           <div className="relative flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between lg:p-8">
             <div className="flex min-w-0 flex-1 flex-col gap-5 sm:flex-row sm:items-center">
@@ -207,7 +207,7 @@ export function PublicProfilePage() {
               </div>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:w-[360px] lg:shrink-0">
+            <div className="grid gap-3 sm:grid-cols-2 lg:w-90 lg:shrink-0">
               <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm backdrop-blur dark:border-slate-700/70 dark:bg-slate-900/80">
                 <p className="text-xs font-semibold uppercase tracking-[0.16em] text-violet-600 dark:text-violet-300">
                   {t("profile:public.marketplaceViewTitle")}
@@ -242,6 +242,7 @@ export function PublicProfilePage() {
           cancelledTradeCount={profile.cancelledTradeCount}
           averageRating={profile.averageRating}
           reputationSummary={profile.reputationSummary}
+          recentReviews={profile.recentReviews}
         />
       </div>
 
@@ -324,7 +325,7 @@ function ListingsSkeletonGrid() {
           key={index}
           className="overflow-hidden border-slate-200/80 p-0 shadow-sm dark:border-slate-700/80"
         >
-          <Skeleton className="aspect-[4/3] w-full rounded-none" />
+          <Skeleton className="aspect-4/3 w-full rounded-none" />
           <div className="space-y-3 p-4">
             <div className="flex gap-2">
               <Skeleton className="h-5 w-16 rounded-full" />

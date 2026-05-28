@@ -107,7 +107,9 @@
   },
   "trust": {
     "title": "Poverenje i aktivnost",
-    "description": "Kratak sažetak marketplace aktivnosti zasnovan na trenutno dostupnom javnom profilu.",
+    "description": "Transparentni javni signali iz marketplace aktivnosti. Bez skorova, bedževa ili skrivenih formula reputacije.",
+    "newTraderTitle": "Novi učesnik razmene",
+    "newTraderDescription": "Ovaj profil još nema završene razmene ili javne ocene. To je neutralno — nije upozorenje — zato pregledaj aktivne oglase i jasno se dogovori pre razmene.",
     "activeListings": "Aktivni oglasi",
     "activeListingsDescription_one": "Oglas je trenutno dostupan za pregled.",
     "activeListingsDescription_other": "Oglasi su trenutno dostupni za pregled.",
@@ -120,9 +122,19 @@
     "positiveReviews": "Pozitivne ocene",
     "positiveReviewsDescription": "Ocene završenih razmena koje su partneri označili kao pozitivne.",
     "negativeReviews": "Negativne ocene",
-    "negativeReviewsDescription": "Negativne ocene završenih razmena vidljive administratorima za upravljanje.",
+    "negativeReviewsDescription": "Ocene završenih razmena u kojima su partneri prijavili problem.",
     "positivePercentage": "Procenat pozitivnih",
     "totalReviews": "{{count}} ukupna ocena završene razmene.",
-    "totalReviews_plural": "{{count}} ukupnih ocena završenih razmena."
+    "totalReviews_plural": "{{count}} ukupnih ocena završenih razmena.",
+    "recentReviewsTitle": "Nedavni isečci ocena",
+    "recentReviewsDescription": "Najnoviji javni komentari iz ocena završenih razmena, prikazani kao kratki isečci.",
+    "recentReviewsEmpty": "Još nema javnih komentara ocena. Brojevi završenih ocena iznad se i dalje prikazuju kada postoje.",
+    "reviewedByOn": "od {{username}} · {{date}}",
+    "safetyNoticeTitle": "Razmenjuj bezbedno",
+    "safetyNoticeDescription": "Sastani se na javnom mestu, zadrži komunikaciju na platformi, proveri predmete pre završetka razmene i prijavi sumnjivo ponašanje.",
+    "rating": {
+      "POSITIVE": "Pozitivno",
+      "NEGATIVE": "Problem prijavljen"
+    }
   }
 }

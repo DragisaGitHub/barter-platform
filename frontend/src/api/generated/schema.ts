@@ -2162,6 +2162,16 @@ export interface components {
             /** Format: double */
             averageRating?: number | null;
             reputationSummary: components["schemas"]["ReputationSummaryResponse"];
+            recentReviews: components["schemas"]["PublicProfileReviewSnippetResponse"][];
+        };
+        PublicProfileReviewSnippetResponse: {
+            /** Format: uuid */
+            uuid: string;
+            reviewerUsername: string;
+            rating: components["schemas"]["TradeReviewRating"];
+            commentSnippet: string;
+            /** Format: date-time */
+            createdAt: string;
         };
         RegisterUserRequest: {
             /** @example alex99 */

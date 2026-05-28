@@ -1,0 +1,22 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - reviewerUsername
+  - rating
+  - commentSnippet
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  reviewerUsername:
+    type: string
+  rating:
+    $ref: '../../../openapi.yaml#/components/schemas/TradeReviewRating'
+  commentSnippet:
+    type: string
+  createdAt:
+    type: string
+    format: date-time
+

@@ -107,7 +107,9 @@
   },
   "trust": {
     "title": "Trust & activity",
-    "description": "A quick marketplace summary based on the public profile activity available right now.",
+    "description": "Transparent public signals from marketplace activity. No scores, badges, or hidden reputation formulas.",
+    "newTraderTitle": "New trader",
+    "newTraderDescription": "This profile does not have completed trades or public reviews yet. That is neutral—not a warning—so review active listings and communicate clearly before exchanging.",
     "activeListings": "Active listings",
     "activeListingsDescription_one": "Listing currently available for browsing.",
     "activeListingsDescription_other": "Listings currently available for browsing.",
@@ -120,9 +122,19 @@
     "positiveReviews": "Positive reviews",
     "positiveReviewsDescription": "Completed-trade reviews marked positive by trading partners.",
     "negativeReviews": "Negative reviews",
-    "negativeReviewsDescription": "Negative completed-trade reviews visible to admins for governance.",
+    "negativeReviewsDescription": "Completed-trade reviews where partners reported a concern.",
     "positivePercentage": "Positive percentage",
     "totalReviews": "{{count}} total completed-trade review.",
-    "totalReviews_plural": "{{count}} total completed-trade reviews."
+    "totalReviews_plural": "{{count}} total completed-trade reviews.",
+    "recentReviewsTitle": "Recent review snippets",
+    "recentReviewsDescription": "Latest public comments from completed-trade reviews, limited to short snippets.",
+    "recentReviewsEmpty": "No public review comments yet. Completed review counts above are still shown when available.",
+    "reviewedByOn": "by {{username}} · {{date}}",
+    "safetyNoticeTitle": "Trade safely",
+    "safetyNoticeDescription": "Meet in a public place, keep communication on-platform, inspect items before completing an exchange, and report suspicious behavior.",
+    "rating": {
+      "POSITIVE": "Positive",
+      "NEGATIVE": "Concern noted"
+    }
   }
 }

@@ -160,4 +160,5 @@ export type NotificationUnreadCountResponse = components["schemas"]["Notificatio
 // ─── Profile Response DTOs ──────────────────────────────────────────────────
 
 export type PublicProfileResponse = components["schemas"]["PublicProfileResponse"];
+export type PublicProfileReviewSnippetResponse = components["schemas"]["PublicProfileReviewSnippetResponse"];
 

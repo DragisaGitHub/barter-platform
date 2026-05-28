@@ -3,6 +3,7 @@ package com.barterplatform.application.profile.service.impl;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.PublicProfileResponse;
+import com.barterplatform.api.model.PublicProfileReviewSnippetResponse;
 import com.barterplatform.application.catalog.mapper.ItemImageMapper;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
@@ -21,6 +22,7 @@ import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
+import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +41,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class PublicProfileServiceImpl implements PublicProfileService {
 
     private static final String DEFAULT_ITEM_SORT_FIELD = "createdAt";
+    private static final int RECENT_REVIEW_LIMIT = 3;
+    private static final int COMMENT_SNIPPET_MAX_LENGTH = 160;
     private static final Set<String> ALLOWED_ITEM_SORT_FIELDS = Set.of(
             "createdAt", "updatedAt", "title");
 
@@ -46,6 +51,7 @@ public class PublicProfileServiceImpl implements PublicProfileService {
     private final TradeOfferRepository tradeOfferRepository;
     private final CategoryRepository categoryRepository;
     private final ItemImageRepository itemImageRepository;
+    private final TradeReviewRepository tradeReviewRepository;
     private final ItemMapper itemMapper;
     private final ItemImageMapper itemImageMapper;
     private final PageRequestFactory pageRequestFactory;
@@ -57,6 +63,7 @@ public class PublicProfileServiceImpl implements PublicProfileService {
                                     TradeOfferRepository tradeOfferRepository,
                                     CategoryRepository categoryRepository,
                                     ItemImageRepository itemImageRepository,
+                                     TradeReviewRepository tradeReviewRepository,
                                     ItemMapper itemMapper,
                                     ItemImageMapper itemImageMapper,
                                     PageRequestFactory pageRequestFactory,
@@ -67,6 +74,7 @@ public class PublicProfileServiceImpl implements PublicProfileService {
         this.tradeOfferRepository = tradeOfferRepository;
         this.categoryRepository = categoryRepository;
         this.itemImageRepository = itemImageRepository;
+        this.tradeReviewRepository = tradeReviewRepository;
         this.itemMapper = itemMapper;
         this.itemImageMapper = itemImageMapper;
         this.pageRequestFactory = pageRequestFactory;
@@ -100,7 +108,8 @@ public class PublicProfileServiceImpl implements PublicProfileService {
                 .completedTradeCount(completedTradeCount)
                 .cancelledTradeCount(cancelledTradeCount)
                 .averageRating(null)
-                .reputationSummary(reputationService.getReputationSummary(user.getId()));
+                .reputationSummary(reputationService.getReputationSummary(user.getId()))
+                .recentReviews(getRecentReviews(user.getId()));
     }
 
     @Override
@@ -164,6 +173,57 @@ public class PublicProfileServiceImpl implements PublicProfileService {
                     owner.getUsername(),
                     primaryImageUrl);
         }).toList();
+    }
+
+    private List<PublicProfileReviewSnippetResponse> getRecentReviews(Long reviewedUserId) {
+        List<TradeReviewRepository.PublicProfileReviewSnippetProjection> reviews =
+                tradeReviewRepository.findLatestCommentedReviewsForReviewedUser(
+                        reviewedUserId,
+                        UserStatus.ACTIVE,
+                        PageRequest.of(0, RECENT_REVIEW_LIMIT));
+
+        if (reviews == null || reviews.isEmpty()) {
+            return List.of();
+        }
+
+        return reviews.stream()
+                .map(this::toPublicProfileReviewSnippet)
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    private PublicProfileReviewSnippetResponse toPublicProfileReviewSnippet(
+            TradeReviewRepository.PublicProfileReviewSnippetProjection review) {
+        String commentSnippet = truncateComment(review.getComment());
+        if (commentSnippet == null) {
+            return null;
+        }
+
+        return new PublicProfileReviewSnippetResponse()
+                .uuid(review.getUuid())
+                .reviewerUsername(review.getReviewerUsername())
+                .rating(com.barterplatform.api.model.TradeReviewRating.valueOf(review.getRating().name()))
+                .commentSnippet(commentSnippet)
+                .createdAt(review.getCreatedAt());
+    }
+
+    private String truncateComment(String comment) {
+        if (comment == null) {
+            return null;
+        }
+
+        String normalized = comment.trim().replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) {
+            return null;
+        }
+
+        int codePointCount = normalized.codePointCount(0, normalized.length());
+        if (codePointCount <= COMMENT_SNIPPET_MAX_LENGTH) {
+            return normalized;
+        }
+
+        int truncateAt = normalized.offsetByCodePoints(0, COMMENT_SNIPPET_MAX_LENGTH - 1);
+        return normalized.substring(0, truncateAt).stripTrailing() + "…";
     }
 
     private ApiException notFound(String messageTemplate, Object... args) {
