@@ -1,0 +1,7 @@
+type: string
+description: Listing structure for an item.
+enum:
+  - SINGLE
+  - BUNDLE
+  - PICK_ANY
+

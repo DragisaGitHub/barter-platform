@@ -1463,6 +1463,11 @@ export interface components {
         ItemStatus: "DRAFT" | "ACTIVE" | "RESERVED" | "ARCHIVED" | "REMOVED";
         /** @enum {string} */
         ItemCondition: "NEW" | "LIKE_NEW" | "GOOD" | "USED" | "FOR_PARTS";
+        /**
+         * @description Listing structure for an item.
+         * @enum {string}
+         */
+        ListingMode: "SINGLE" | "BUNDLE" | "PICK_ANY";
         CategoryResponse: {
             /** Format: uuid */
             uuid: string;
@@ -1555,6 +1560,13 @@ export interface components {
             title: string;
             status: components["schemas"]["ItemStatus"];
             condition: components["schemas"]["ItemCondition"];
+            listingMode?: components["schemas"]["ListingMode"];
+            /**
+             * Format: int32
+             * @default 0
+             */
+            entryCount: number;
+            previewEntries?: components["schemas"]["ItemListingEntryResponse"][];
             /** Format: uuid */
             categoryUuid: string;
             categoryName: string;
@@ -1576,6 +1588,7 @@ export interface components {
             description?: string | null;
             status: components["schemas"]["ItemStatus"];
             condition: components["schemas"]["ItemCondition"];
+            listingMode?: components["schemas"]["ListingMode"];
             category: components["schemas"]["CategoryResponse"];
             tags: components["schemas"]["TagResponse"][];
             /** Format: uuid */
@@ -1587,6 +1600,7 @@ export interface components {
             exchangeCity?: string | null;
             exchangeArea?: string | null;
             images: components["schemas"]["ItemImageResponse"][];
+            entries?: components["schemas"]["ItemListingEntryResponse"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -1610,6 +1624,22 @@ export interface components {
             first: boolean;
             last: boolean;
             sort: string;
+        };
+        ItemListingEntryRequest: {
+            title: string;
+            description?: string | null;
+            /** Format: int32 */
+            quantity?: number | null;
+        };
+        ItemListingEntryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            title: string;
+            description?: string | null;
+            /** Format: int32 */
+            quantity?: number | null;
+            /** Format: int32 */
+            sortOrder: number;
         };
         /**
          * @description Explainable reason shown with a recommended listing. No scores are exposed to users.
@@ -1752,6 +1782,9 @@ export interface components {
             categoryUuid: string;
             tagUuids?: string[];
             condition: components["schemas"]["ItemCondition"];
+            /** @description Defaults to SINGLE when omitted. */
+            listingMode?: components["schemas"]["ListingMode"];
+            entries?: components["schemas"]["ItemListingEntryRequest"][];
             /** @description Optional initial status. Defaults to DRAFT if omitted. */
             status?: components["schemas"]["ItemStatus"];
         };
@@ -1784,6 +1817,9 @@ export interface components {
             categoryUuid?: string;
             tagUuids?: string[];
             condition?: components["schemas"]["ItemCondition"];
+            listingMode?: components["schemas"]["ListingMode"];
+            /** @description When provided, replaces the full structured entry list for this listing. */
+            entries?: components["schemas"]["ItemListingEntryRequest"][];
             /** @description Only DRAFT and ACTIVE transitions are allowed by the owner. */
             status?: components["schemas"]["ItemStatus"];
         };

@@ -1,0 +1,27 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - title
+  - sortOrder
+properties:
+  uuid:
+    type: string
+    format: uuid
+  title:
+    type: string
+    maxLength: 200
+  description:
+    type: string
+    nullable: true
+    maxLength: 1000
+  quantity:
+    type: integer
+    format: int32
+    nullable: true
+    minimum: 1
+  sortOrder:
+    type: integer
+    format: int32
+    minimum: 0
+

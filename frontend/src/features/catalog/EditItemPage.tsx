@@ -33,6 +33,15 @@ export function EditItemPage() {
         categoryUuid: data.categoryUuid,
         tagUuids: data.tagUuids?.length ? data.tagUuids : undefined,
         condition: data.condition,
+        listingMode: data.listingMode,
+        entries:
+          data.listingMode === "SINGLE"
+            ? undefined
+            : data.entries?.map((entry) => ({
+                title: entry.title.trim(),
+                description: entry.description?.trim() || undefined,
+                quantity: entry.quantity,
+              })),
         status: data.status,
       },
       {
@@ -84,7 +93,7 @@ export function EditItemPage() {
       </div>
 
       <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
-        <div className="bg-gradient-to-r from-indigo-500/10 via-slate-100 to-sky-500/10 px-5 py-6 dark:from-indigo-500/10 dark:via-slate-800 dark:to-sky-500/10 sm:px-6 lg:px-8">
+        <div className="bg-linear-to-r from-indigo-500/10 via-slate-100 to-sky-500/10 px-5 py-6 dark:from-indigo-500/10 dark:via-slate-800 dark:to-sky-500/10 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
             <div className="max-w-2xl">
               <div className="flex flex-wrap items-center gap-2">
@@ -172,6 +181,12 @@ export function EditItemPage() {
               tagUuids: item.tags.map((t) => t.uuid),
               condition: item.condition,
               status: item.status,
+              listingMode: item.listingMode ?? "SINGLE",
+              entries: item.entries?.map((entry) => ({
+                title: entry.title,
+                description: entry.description ?? "",
+                quantity: entry.quantity ?? undefined,
+              })) ?? [],
             }}
             onSubmit={handleSubmit}
             isSubmitting={updateMutation.isPending}

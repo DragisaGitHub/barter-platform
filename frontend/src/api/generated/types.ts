@@ -44,6 +44,7 @@ export type MessageResponse = components["schemas"]["MessageResponse"];
 
 export type ItemStatus = components["schemas"]["ItemStatus"];
 export type ItemCondition = components["schemas"]["ItemCondition"];
+export type ListingMode = components["schemas"]["ListingMode"];
 
 // ─── Catalog Response DTOs ──────────────────────────────────────────────────
 
@@ -60,6 +61,8 @@ export type AdminTagPagedResponse = components["schemas"]["AdminTagPagedResponse
 export type ItemSummaryResponse = components["schemas"]["ItemSummaryResponse"];
 export type ItemDetailResponse = components["schemas"]["ItemDetailResponse"];
 export type ItemPagedResponse = components["schemas"]["ItemPagedResponse"];
+export type ItemListingEntryRequest = components["schemas"]["ItemListingEntryRequest"];
+export type ItemListingEntryResponse = components["schemas"]["ItemListingEntryResponse"];
 export type RecommendationReason = components["schemas"]["RecommendationReason"];
 export type RecommendationItemResponse = components["schemas"]["RecommendationItemResponse"];
 export type RecommendationPagedResponse = components["schemas"]["RecommendationPagedResponse"];

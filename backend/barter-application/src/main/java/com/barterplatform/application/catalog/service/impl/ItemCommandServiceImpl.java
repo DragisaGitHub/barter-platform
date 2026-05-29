@@ -3,6 +3,7 @@ package com.barterplatform.application.catalog.service.impl;
 import com.barterplatform.api.model.ArchiveItemRequest;
 import com.barterplatform.api.model.CreateItemRequest;
 import com.barterplatform.api.model.ItemDetailResponse;
+import com.barterplatform.api.model.ItemListingEntryRequest;
 import com.barterplatform.api.model.UpdateItemRequest;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.application.catalog.service.ItemCommandService;
@@ -10,18 +11,22 @@ import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
+import com.barterplatform.domain.catalog.entity.ItemListingEntryEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagId;
 import com.barterplatform.domain.catalog.entity.TagEntity;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
+import com.barterplatform.domain.catalog.enums.ListingMode;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
+import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.catalog.repository.TagRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.springframework.http.HttpStatus;
@@ -32,10 +37,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public class ItemCommandServiceImpl implements ItemCommandService {
 
+    private static final int MAX_LISTING_ENTRIES = 20;
+
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
     private final ItemTagRepository itemTagRepository;
+    private final ItemListingEntryRepository itemListingEntryRepository;
     private final UserRepository userRepository;
     private final ItemMapper itemMapper;
 
@@ -43,12 +51,14 @@ public class ItemCommandServiceImpl implements ItemCommandService {
                                   CategoryRepository categoryRepository,
                                   TagRepository tagRepository,
                                   ItemTagRepository itemTagRepository,
+                                   ItemListingEntryRepository itemListingEntryRepository,
                                   UserRepository userRepository,
                                   ItemMapper itemMapper) {
         this.itemRepository = itemRepository;
         this.categoryRepository = categoryRepository;
         this.tagRepository = tagRepository;
         this.itemTagRepository = itemTagRepository;
+        this.itemListingEntryRepository = itemListingEntryRepository;
         this.userRepository = userRepository;
         this.itemMapper = itemMapper;
     }
@@ -69,6 +79,9 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         item.setExchangeCity(normalizeOptionalText(request.getExchangeCity()));
         item.setExchangeArea(normalizeOptionalText(request.getExchangeArea()));
         item.setCondition(mapConditionToDomain(request.getCondition()));
+        ListingMode listingMode = mapListingModeToDomain(request.getListingMode());
+        item.setListingMode(listingMode);
+        List<ItemListingEntryEntity> entries = validateAndBuildEntries(request.getEntries(), listingMode);
 
         // Default to DRAFT unless an explicit status is provided
         if (request.getStatus() != null) {
@@ -81,9 +94,10 @@ public class ItemCommandServiceImpl implements ItemCommandService {
 
         // Save tags
         List<TagEntity> tags = resolveAndSaveTags(saved.getId(), request.getTagUuids());
+        List<ItemListingEntryEntity> savedEntries = saveEntries(saved.getId(), entries);
 
         return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
-                null, java.util.List.of());
+                null, java.util.List.of(), savedEntries);
     }
 
     // ── Update ───────────────────────────────────────────────────
@@ -113,6 +127,16 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         if (request.getCondition() != null) {
             item.setCondition(mapConditionToDomain(request.getCondition()));
         }
+        ListingMode requestedListingMode = request.getListingMode() != null
+                ? mapListingModeToDomain(request.getListingMode())
+                : defaultListingMode(item.getListingMode());
+        List<ItemListingEntryEntity> replacementEntries = null;
+        if (request.getEntries() != null) {
+            replacementEntries = validateAndBuildEntries(request.getEntries(), requestedListingMode);
+        } else {
+            validateExistingEntriesForMode(item.getId(), requestedListingMode);
+        }
+        item.setListingMode(requestedListingMode);
         if (request.getStatus() != null) {
             validateStatusTransition(item.getStatus(), mapStatusToDomain(request.getStatus()));
             item.setStatus(mapStatusToDomain(request.getStatus()));
@@ -139,8 +163,16 @@ public class ItemCommandServiceImpl implements ItemCommandService {
             tags = loadTagsForItem(saved.getId());
         }
 
+        List<ItemListingEntryEntity> entries;
+        if (replacementEntries != null || requestedListingMode == ListingMode.SINGLE) {
+            itemListingEntryRepository.deleteByItemId(saved.getId());
+            entries = replacementEntries == null ? List.of() : saveEntries(saved.getId(), replacementEntries);
+        } else {
+            entries = itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(saved.getId());
+        }
+
         return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
-                null, java.util.List.of());
+                null, java.util.List.of(), entries);
     }
 
     // ── Archive ──────────────────────────────────────────────────
@@ -159,9 +191,10 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         CategoryEntity category = categoryRepository.findById(saved.getCategoryId())
                 .orElseThrow(() -> notFound("Category for item '%s' was not found.", itemUuid));
         List<TagEntity> tags = loadTagsForItem(saved.getId());
+        List<ItemListingEntryEntity> entries = itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(saved.getId());
 
         return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
-                null, java.util.List.of());
+                null, java.util.List.of(), entries);
     }
 
     // ── Private helpers ──────────────────────────────────────────
@@ -252,12 +285,84 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         return ItemCondition.valueOf(apiCondition.name());
     }
 
+    private ListingMode mapListingModeToDomain(com.barterplatform.api.model.ListingMode apiListingMode) {
+        return apiListingMode == null ? ListingMode.SINGLE : ListingMode.valueOf(apiListingMode.name());
+    }
+
+    private ListingMode defaultListingMode(ListingMode listingMode) {
+        return listingMode == null ? ListingMode.SINGLE : listingMode;
+    }
+
+    private List<ItemListingEntryEntity> validateAndBuildEntries(
+            List<ItemListingEntryRequest> requestedEntries, ListingMode listingMode) {
+        List<ItemListingEntryRequest> entries = requestedEntries == null ? List.of() : requestedEntries;
+        if (entries.size() > MAX_LISTING_ENTRIES) {
+            throw badRequest("A listing can contain at most %d entries.".formatted(MAX_LISTING_ENTRIES));
+        }
+        if (listingMode == ListingMode.SINGLE && !entries.isEmpty()) {
+            throw badRequest("SINGLE listings cannot include structured entries.");
+        }
+        if ((listingMode == ListingMode.BUNDLE || listingMode == ListingMode.PICK_ANY) && entries.isEmpty()) {
+            throw badRequest("BUNDLE and PICK_ANY listings require at least one entry.");
+        }
+
+        List<ItemListingEntryEntity> normalized = new ArrayList<>();
+        for (int i = 0; i < entries.size(); i++) {
+            ItemListingEntryRequest entryRequest = entries.get(i);
+            String title = normalizeOptionalText(entryRequest.getTitle());
+            if (title == null) {
+                throw badRequest("Entry title is required.");
+            }
+            Integer quantity = entryRequest.getQuantity();
+            if (quantity != null && quantity < 1) {
+                throw badRequest("Entry quantity must be at least 1 when provided.");
+            }
+
+            ItemListingEntryEntity entry = new ItemListingEntryEntity();
+            entry.setTitle(title);
+            entry.setDescription(normalizeOptionalText(entryRequest.getDescription()));
+            entry.setQuantity(quantity);
+            entry.setSortOrder(i);
+            normalized.add(entry);
+        }
+        return normalized;
+    }
+
+    private void validateExistingEntriesForMode(Long itemId, ListingMode listingMode) {
+        if (listingMode == ListingMode.BUNDLE || listingMode == ListingMode.PICK_ANY) {
+            long existingEntryCount = itemListingEntryRepository.countByItemId(itemId);
+            if (existingEntryCount == 0) {
+                throw badRequest("BUNDLE and PICK_ANY listings require at least one entry.");
+            }
+            if (existingEntryCount > MAX_LISTING_ENTRIES) {
+                throw badRequest("A listing can contain at most %d entries.".formatted(MAX_LISTING_ENTRIES));
+            }
+        }
+    }
+
+    private List<ItemListingEntryEntity> saveEntries(Long itemId, List<ItemListingEntryEntity> entries) {
+        if (entries == null || entries.isEmpty()) {
+            return List.of();
+        }
+        return entries.stream()
+                .peek(entry -> entry.setItemId(itemId))
+                .map(itemListingEntryRepository::save)
+                .toList();
+    }
+
     private String normalizeOptionalText(String value) {
         if (value == null) {
             return null;
         }
         String normalized = value.trim().replaceAll("\\s+", " ");
         return normalized.isBlank() ? null : normalized;
+    }
+
+    private ApiException badRequest(String message) {
+        return new ApiException(
+                HttpStatus.BAD_REQUEST,
+                ErrorCode.BAD_REQUEST,
+                message);
     }
 
     private ApiException notFound(String messageTemplate, Object... args) {

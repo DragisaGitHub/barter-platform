@@ -23,6 +23,7 @@ import com.barterplatform.application.common.pagination.PageResponseMapper;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
+import com.barterplatform.domain.catalog.entity.ItemListingEntryEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagId;
 import com.barterplatform.domain.catalog.entity.TagEntity;
@@ -31,6 +32,7 @@ import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
+import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.catalog.repository.ListingModerationActionRepository;
@@ -63,6 +65,7 @@ class CatalogQueryServiceImplTest {
     @Mock private ItemTagRepository itemTagRepository;
     @Mock private UserRepository userRepository;
     @Mock private ItemImageRepository itemImageRepository;
+    @Mock private ItemListingEntryRepository itemListingEntryRepository;
     @Mock private ListingModerationActionRepository listingModerationActionRepository;
     @Mock private CategoryMapper categoryMapper;
     @Mock private TagMapper tagMapper;
@@ -79,6 +82,7 @@ class CatalogQueryServiceImplTest {
         service = new CatalogQueryServiceImpl(
                 categoryRepository, tagRepository, itemRepository,
                 itemTagRepository, userRepository, itemImageRepository,
+                itemListingEntryRepository,
                 listingModerationActionRepository,
                 categoryMapper, tagMapper, itemMapper, itemImageMapper,
                 pageRequestFactory, pageResponseMapper);
@@ -251,16 +255,52 @@ class CatalogQueryServiceImplTest {
             when(tagRepository.findAllById(List.of(5L))).thenReturn(List.of(t1));
             when(itemImageRepository.findByItemIdOrderBySortOrderAsc(1L)).thenReturn(List.of());
             when(itemImageMapper.toResponseList(List.of())).thenReturn(List.of());
+            when(itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(1L)).thenReturn(List.of());
 
             ItemDetailResponse expectedResponse = new ItemDetailResponse()
                     .uuid(itemUuid).title("Test Item");
-            when(itemMapper.toDetailResponse(entity, cat, List.of(t1), ownerUuid, "alice", null, List.of()))
+            when(itemMapper.toDetailResponse(entity, cat, List.of(t1), ownerUuid, "alice", null, List.of(), List.of()))
                     .thenReturn(expectedResponse);
 
             ItemDetailResponse result = service.getItemByUuid(itemUuid, null, false);
 
             assertNotNull(result);
             assertEquals(itemUuid, result.getUuid());
+        }
+
+        @Test
+        @DisplayName("returns safe structured entries in public detail response")
+        void returnsSafeEntriesForDetail() {
+            UUID itemUuid = UUID.randomUUID();
+            UUID ownerUuid = UUID.randomUUID();
+            ItemEntity entity = item(itemUuid, ItemStatus.ACTIVE, ItemCondition.GOOD);
+            CategoryEntity cat = category(20L, UUID.randomUUID(), "Books");
+            UserEntity owner = user(ownerUuid, "alice");
+            ItemListingEntryEntity entry = new ItemListingEntryEntity();
+            entry.setId(99L);
+            entry.setUuid(UUID.randomUUID());
+            entry.setItemId(1L);
+            entry.setTitle("Safe public entry");
+            entry.setQuantity(1);
+            entry.setSortOrder(0);
+
+            when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(entity));
+            when(categoryRepository.findById(20L)).thenReturn(Optional.of(cat));
+            when(userRepository.findById(10L)).thenReturn(Optional.of(owner));
+            when(itemTagRepository.findByIdItemId(1L)).thenReturn(List.of());
+            when(itemImageRepository.findByItemIdOrderBySortOrderAsc(1L)).thenReturn(List.of());
+            when(itemImageMapper.toResponseList(List.of())).thenReturn(List.of());
+            when(itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(1L)).thenReturn(List.of(entry));
+
+            ItemDetailResponse expectedResponse = new ItemDetailResponse()
+                    .uuid(itemUuid).title("Test Item");
+            when(itemMapper.toDetailResponse(entity, cat, List.of(), ownerUuid, "alice", null, List.of(), List.of(entry)))
+                    .thenReturn(expectedResponse);
+
+            ItemDetailResponse result = service.getItemByUuid(itemUuid, null, false);
+
+            assertNotNull(result);
+            verify(itemListingEntryRepository).findByItemIdOrderBySortOrderAsc(1L);
         }
     }
 
@@ -299,9 +339,11 @@ class CatalogQueryServiceImplTest {
             when(userRepository.findAllById(any())).thenReturn(List.of(owner));
             when(itemImageRepository.findFirstByItemIdAndPrimaryTrue(1L))
                     .thenReturn(java.util.Optional.empty());
+            when(itemListingEntryRepository.findByItemIdInOrderByItemIdAscSortOrderAsc(any()))
+                    .thenReturn(List.of());
 
             ItemSummaryResponse summary = new ItemSummaryResponse().uuid(entity.getUuid());
-            when(itemMapper.toSummaryResponse(entity, cat, ownerUuid, "bob", null))
+            when(itemMapper.toSummaryResponse(entity, cat, ownerUuid, "bob", null, 0, List.of()))
                     .thenReturn(summary);
 
             ItemPagedResponse expected = new ItemPagedResponse()

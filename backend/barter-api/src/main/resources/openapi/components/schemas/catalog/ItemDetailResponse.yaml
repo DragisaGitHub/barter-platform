@@ -25,6 +25,8 @@ properties:
     $ref: '../../../openapi.yaml#/components/schemas/ItemStatus'
   condition:
     $ref: '../../../openapi.yaml#/components/schemas/ItemCondition'
+  listingMode:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingMode'
   category:
     $ref: '../../../openapi.yaml#/components/schemas/CategoryResponse'
   tags:
@@ -56,6 +58,11 @@ properties:
     type: array
     items:
       $ref: '../../../openapi.yaml#/components/schemas/ItemImageResponse'
+  entries:
+    type: array
+    maxItems: 20
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/ItemListingEntryResponse'
   createdAt:
     type: string
     format: date-time

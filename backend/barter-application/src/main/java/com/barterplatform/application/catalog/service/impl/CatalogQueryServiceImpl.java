@@ -21,6 +21,7 @@ import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
 import com.barterplatform.domain.catalog.entity.ItemImageEntity;
+import com.barterplatform.domain.catalog.entity.ItemListingEntryEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagEntity;
 import com.barterplatform.domain.catalog.entity.TagEntity;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
@@ -29,6 +30,7 @@ import com.barterplatform.domain.catalog.moderation.ListingModerationActionEntit
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
+import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.catalog.repository.ListingModerationActionRepository;
@@ -63,6 +65,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     private final ItemTagRepository itemTagRepository;
     private final UserRepository userRepository;
     private final ItemImageRepository itemImageRepository;
+    private final ItemListingEntryRepository itemListingEntryRepository;
     private final ListingModerationActionRepository listingModerationActionRepository;
     private final CategoryMapper categoryMapper;
     private final TagMapper tagMapper;
@@ -77,6 +80,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                                    ItemTagRepository itemTagRepository,
                                    UserRepository userRepository,
                                    ItemImageRepository itemImageRepository,
+                                    ItemListingEntryRepository itemListingEntryRepository,
                                    ListingModerationActionRepository listingModerationActionRepository,
                                    CategoryMapper categoryMapper,
                                    TagMapper tagMapper,
@@ -90,6 +94,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         this.itemTagRepository = itemTagRepository;
         this.userRepository = userRepository;
         this.itemImageRepository = itemImageRepository;
+        this.itemListingEntryRepository = itemListingEntryRepository;
         this.listingModerationActionRepository = listingModerationActionRepository;
         this.categoryMapper = categoryMapper;
         this.tagMapper = tagMapper;
@@ -175,7 +180,8 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                 .orElse(null);
 
         ItemDetailResponse response = itemMapper.toDetailResponse(
-                item, category, tags, owner.getUuid(), owner.getUsername(), primaryImageUrl, images);
+                item, category, tags, owner.getUuid(), owner.getUsername(), primaryImageUrl, images,
+                itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(item.getId()));
         if (elevatedAccess) {
             response.setModerationSummary(loadModerationSummary(item.getId()));
         }
@@ -307,16 +313,24 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                             itemImageMapper.toResponse(img).getUrl()));
         }
 
+        Map<Long, List<ItemListingEntryEntity>> entriesByItemId = itemListingEntryRepository
+                .findByItemIdInOrderByItemIdAscSortOrderAsc(itemIds)
+                .stream()
+                .collect(Collectors.groupingBy(ItemListingEntryEntity::getItemId, LinkedHashMap::new, Collectors.toList()));
+
         return items.stream().map(item -> {
             CategoryEntity category = categoriesById.get(item.getCategoryId());
             UserEntity owner = ownersById.get(item.getOwnerId());
             String primaryImageUrl = primaryImageUrlByItemId.get(item.getId());
+            List<ItemListingEntryEntity> entries = entriesByItemId.getOrDefault(item.getId(), List.of());
             return itemMapper.toSummaryResponse(
                     item,
                     category,
                     owner != null ? owner.getUuid() : null,
                     owner != null ? owner.getUsername() : null,
-                    primaryImageUrl);
+                    primaryImageUrl,
+                    entries.size(),
+                    entries.stream().limit(3).toList());
         }).toList();
     }
 

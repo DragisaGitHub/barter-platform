@@ -3,6 +3,7 @@ package com.barterplatform.domain.catalog.entity;
 import com.barterplatform.common.persistence.AuditableEntity;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
+import com.barterplatform.domain.catalog.enums.ListingMode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -46,6 +47,10 @@ public class ItemEntity extends AuditableEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "condition", nullable = false, length = 40)
     private ItemCondition condition;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "listing_mode", nullable = false, length = 40)
+    private ListingMode listingMode = ListingMode.SINGLE;
 
     @Column(name = "archived_at")
     private OffsetDateTime archivedAt;

@@ -132,6 +132,11 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {t("trade:byUser", { username: receiverItem.ownerUsername })} • {receiverItem.category?.name}
         </p>
+        {receiverItem.listingMode && receiverItem.listingMode !== "SINGLE" ? (
+          <p className="mt-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
+            {t(`catalog:listingMode.badge.${receiverItem.listingMode}`)} · {t("catalog:itemDetail.entryCount", { count: receiverItem.entries?.length ?? 0 })}
+          </p>
+        ) : null}
       </div>
 
       {/* ── Trade Mode Selector ─────────────────────────────── */}
@@ -258,6 +263,13 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                          {item.categoryName} • {t(`catalog:condition.${item.condition === "LIKE_NEW" ? "likeNew" : item.condition === "FOR_PARTS" ? "forParts" : item.condition.toLowerCase()}`)}
                       </p>
+                      {item.listingMode && item.listingMode !== "SINGLE" ? (
+                        <p className="mt-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
+                          {t(`catalog:listingMode.badge.${item.listingMode}`)} · {item.listingMode === "BUNDLE"
+                            ? t("catalog:itemCard.bundleEntryCount", { count: item.entryCount ?? 0 })
+                            : t("catalog:itemCard.pickAnyEntryCount", { count: item.entryCount ?? 0 })}
+                        </p>
+                      ) : null}
                     </div>
                   </button>
                 );

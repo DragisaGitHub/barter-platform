@@ -45,12 +45,28 @@
     "used": "Korišćeno",
     "forParts": "Za delove"
   },
+  "listingMode": {
+    "single": "Jedan predmet",
+    "bundle": "Paket",
+    "pickAny": "Izbor iz seta",
+    "label": {
+      "SINGLE": "Jedan predmet",
+      "BUNDLE": "Paket",
+      "PICK_ANY": "Izbor iz seta"
+    },
+    "badge": {
+      "SINGLE": "Jedan predmet",
+      "BUNDLE": "Paket",
+      "PICK_ANY": "Izbor iz seta"
+    }
+  },
   "fields": {
     "title": "Naslov",
     "description": "Opis",
     "category": "Kategorija",
     "condition": "Stanje",
     "status": "Status",
+    "listingMode": "Tip oglasa",
     "exchangeCity": "Približan javni grad za razmenu",
     "exchangeArea": "Približna javna oblast za razmenu",
     "exchangeLocation": "Napomena o javnoj lokaciji razmene",
@@ -184,6 +200,13 @@
     "tradeSafelyDescription": "Registruj se da kontaktiraš vlasnika i pošalješ ponudu za razmenu.",
     "exchangeLocation": "Približna oblast razmene",
     "exchangeLocationPrivacy": "Ovo je samo javna približna oblast. Ne deli tačnu kućnu adresu u oglasu.",
+    "bundleExplanation": "Svi navedeni predmeti nude se zajedno.",
+    "pickAnyExplanation": "Drugi korisnik može da izabere šta mu treba.",
+    "entriesTitle": "Uključeni predmeti",
+    "entryCount": "{{count}} stavka",
+    "entryCount_plural": "{{count}} stavki",
+    "entryNumber": "Stavka {{number}}",
+    "entryQuantity": "Kol. {{quantity}}",
     "createAccountToTrade": "Kreiraj nalog za predlog razmene",
     "alreadyHaveAccount": "Već imaš nalog? Prijavi se",
     "proposeTrade": "Predloži razmenu",
@@ -200,6 +223,22 @@
     "exchangeCityPlaceholder": "npr. Beograd",
     "exchangeAreaPlaceholder": "npr. Vračar ili Novi Beograd",
     "exchangeLocationPlaceholder": "npr. blizu biblioteke ili tržnog centra",
+    "listingMode": {
+      "singleHelper": "Koristi ovo za standardni oglas sa jednim predmetom.",
+      "bundleHelper": "Svi navedeni predmeti nude se zajedno.",
+      "pickAnyHelper": "Drugi korisnik može da izabere šta mu treba."
+    },
+    "entriesTitle": "Strukturirane stavke oglasa",
+    "entriesHelper": "Dodaj do 20 stavki. Detalji neka budu kratki, bez privatnih adresa ili cena.",
+    "addEntry": "Dodaj stavku",
+    "removeEntry": "Ukloni",
+    "entryNumber": "Stavka {{number}}",
+    "entryTitle": "Naslov stavke",
+    "entryTitlePlaceholder": "npr. Knjiga 1, sličica A, autić",
+    "entryDescription": "Opis stavke (opciono)",
+    "entryDescriptionPlaceholder": "Kratka napomena o ovoj stavki",
+    "entryQuantity": "Količina",
+    "noEntries": "Dodaj najmanje jednu stavku za paket ili izbor iz seta.",
     "selectCategory": "Izaberi kategoriju",
     "selectCondition": "Izaberi stanje",
     "loadingTags": "Učitavanje oznaka...",
@@ -212,7 +251,12 @@
     "exchangeAreaTooLong": "Oblast može imati najviše 120 karaktera",
     "exchangeLocationTooLong": "Napomena o lokaciji može imati najviše 255 karaktera",
     "categoryRequired": "Kategorija je obavezna",
-    "conditionRequired": "Stanje je obavezno"
+    "conditionRequired": "Stanje je obavezno",
+    "entriesRequiredForMultiItem": "Paket i izbor iz seta zahtevaju najmanje jednu stavku",
+    "entriesTooMany": "Oglas može imati najviše 20 stavki",
+    "entryTitleRequired": "Naslov stavke je obavezan",
+    "entryTitleTooLong": "Naslov stavke može imati najviše 200 karaktera",
+    "entryQuantityMin": "Količina mora biti najmanje 1"
   },
   "createItem": {
     "title": "Kreiraj novi oglas",
@@ -288,7 +332,13 @@
       "catalogFilters": "Marketplace filteri"
     }
   },
-  "itemCard": { "byOwner": "od {{username}}" },
+  "itemCard": {
+    "byOwner": "od {{username}}",
+    "bundleEntryCount": "{{count}} predmet uključen",
+    "bundleEntryCount_plural": "{{count}} predmeta uključeno",
+    "pickAnyEntryCount": "Izbor od {{count}} predmeta",
+    "pickAnyEntryCount_plural": "Izbor od {{count}} predmeta"
+  },
   "images": {
     "primaryImage": "Primarna slika",
     "itemPhotoAlt": "Fotografija predmeta {{number}}",
