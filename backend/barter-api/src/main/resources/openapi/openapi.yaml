@@ -21,6 +21,8 @@ tags:
     description: Placeholder system operations for generator validation
   - name: Catalog
     description: Catalog browsing, item listings, and item management
+  - name: SavedSearches
+    description: Authenticated saved catalog search management
   - name: AdminCategories
     description: Administrator category management operations
   - name: AdminListings
@@ -144,6 +146,10 @@ paths:
     $ref: './paths/catalog-images.yaml#/itemImageByUuid'
   /catalog/items/{itemUuid}/images/{imageUuid}/primary:
     $ref: './paths/catalog-images.yaml#/itemImagePrimary'
+  /saved-searches:
+    $ref: './paths/saved-searches.yaml#/savedSearches'
+  /saved-searches/{savedSearchUuid}:
+    $ref: './paths/saved-searches.yaml#/savedSearchByUuid'
   /trade-offers:
     $ref: './paths/trade-offers.yaml#/create'
   /trade-offers/incoming:
@@ -255,6 +261,52 @@ components:
       $ref: './components/schemas/catalog/ItemDetailResponse.yaml'
     ItemPagedResponse:
       $ref: './components/schemas/catalog/ItemPagedResponse.yaml'
+    SavedSearchCriteria:
+      $ref: './components/schemas/saved-search/SavedSearchCriteria.yaml'
+    SavedSearchResponse:
+      $ref: './components/schemas/saved-search/SavedSearchResponse.yaml'
+    SavedSearchPagedResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - content
+        - page
+        - size
+        - totalElements
+        - totalPages
+        - first
+        - last
+        - sort
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/SavedSearchResponse'
+        page:
+          type: integer
+          format: int32
+          minimum: 0
+        size:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 100
+        totalElements:
+          type: integer
+          format: int64
+          minimum: 0
+        totalPages:
+          type: integer
+          format: int32
+          minimum: 0
+        first:
+          type: boolean
+        last:
+          type: boolean
+        sort:
+          type: string
+    CreateSavedSearchRequest:
+      $ref: './components/schemas/saved-search/CreateSavedSearchRequest.yaml'
     AdminListingSummaryResponse:
       $ref: './components/schemas/catalog/AdminListingSummaryResponse.yaml'
     AdminListingDetailResponse:
@@ -457,6 +509,8 @@ components:
       $ref: './components/parameters/notification/NotificationUuid.yaml#/NotificationUuid'
     ImageUuid:
       $ref: './components/parameters/catalog/ImageUuid.yaml#/ImageUuid'
+    SavedSearchUuid:
+      $ref: './components/parameters/saved-search/SavedSearchUuid.yaml#/SavedSearchUuid'
   responses:
     BadRequest:
       $ref: './components/responses/BadRequest.yaml'

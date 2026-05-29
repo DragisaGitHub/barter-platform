@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
+  Bookmark,
   Clock,
   Heart,
   LogIn,
@@ -15,12 +16,14 @@ import type { SearchItemsParams } from "@/api/catalogApi";
 import type {
   CategoryResponse,
   ItemSummaryResponse,
+  SavedSearchCriteria,
 } from "@/api/generated/types";
 import { buildPathWithQuery, routePaths } from "@/routes/routePaths";
 import { parseApiError } from "@/utils";
 import { useAuth } from "../../auth/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
+import { Modal } from "../../components/ui/Modal";
 import { Spinner } from "../../components/ui/Spinner";
 import {
   useCategories,
@@ -31,6 +34,8 @@ import {
   useTags,
   useUnfavoriteItem,
 } from "./useCatalog";
+import { SavedSearchesPanel } from "./SavedSearchesPanel";
+import { useCreateSavedSearch } from "./useSavedSearches";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -49,13 +54,18 @@ export function MarketplacePage() {
   const [params, setParams] = useState<SearchItemsParams>(() => ({
     page: 0,
     size: 20,
-    sort: "createdAt,desc",
+    sort: searchParams.get("sort") ?? "createdAt,desc",
+    q: searchParams.get("q")?.trim() || undefined,
     categoryUuid: categoryUuidFromUrl,
+    tagUuids: searchParams.getAll("tagUuids").filter(Boolean),
+    condition: (searchParams.get("condition") as SearchItemsParams["condition"]) ?? undefined,
   }));
-  const [searchInput, setSearchInput] = useState("");
+  const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
   const [loadedItems, setLoadedItems] = useState<ItemSummaryResponse[]>([]);
   const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>({});
   const [pendingFavoriteUuid, setPendingFavoriteUuid] = useState<string | null>(null);
+  const [isSaveSearchOpen, setIsSaveSearchOpen] = useState(false);
+  const [savedSearchName, setSavedSearchName] = useState("");
   const resetResults = () => setLoadedItems([]);
 
   const { data, isLoading, isFetching, isError } = useSearchItems(params);
@@ -69,6 +79,7 @@ export function MarketplacePage() {
   const { data: favoriteItemsData } = useFavoriteItems(favoriteListParams, isAuthenticated);
   const favoriteItemMutation = useFavoriteItem();
   const unfavoriteItemMutation = useUnfavoriteItem();
+  const createSavedSearchMutation = useCreateSavedSearch();
 
   const orderedCategories = useMemo(
     () =>
@@ -172,6 +183,8 @@ export function MarketplacePage() {
 
   const resultsMeta = t("catalog:marketplace.results.liveListings", { count: filteredItems.length });
 
+  const canSaveCurrentSearch = hasSearchCriteria(params);
+
 
   const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -182,6 +195,7 @@ export function MarketplacePage() {
       page: 0,
       q: nextQuery || undefined,
     }));
+    updateMarketplaceSearchParams({ ...params, page: 0, q: nextQuery || undefined }, setSearchParams);
   };
 
   const selectCategory = (categoryUuid: string) => {
@@ -220,13 +234,65 @@ export function MarketplacePage() {
       const next = current.includes(tagUuid)
         ? current.filter((id) => id !== tagUuid)
         : [...current, tagUuid];
-      return { ...previous, page: 0, tagUuids: next.length > 0 ? next : undefined };
+      const nextParams = { ...previous, page: 0, tagUuids: next.length > 0 ? next : undefined };
+      updateMarketplaceSearchParams(nextParams, setSearchParams);
+      return nextParams;
     });
   };
 
   const clearTags = () => {
     resetResults();
-    setParams((previous) => ({ ...previous, page: 0, tagUuids: undefined }));
+    setParams((previous) => {
+      const nextParams = { ...previous, page: 0, tagUuids: undefined };
+      updateMarketplaceSearchParams(nextParams, setSearchParams);
+      return nextParams;
+    });
+  };
+
+  const openSaveSearch = () => {
+    if (!isAuthenticated) {
+      navigate(buildPathWithQuery(routePaths.login, { redirect: routePaths.marketplace }));
+      return;
+    }
+
+    setSavedSearchName(defaultSavedSearchName(params, selectedCategory?.name));
+    setIsSaveSearchOpen(true);
+  };
+
+  const handleSaveSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    createSavedSearchMutation.mutate(
+      {
+        name: savedSearchName,
+        criteria: buildSavedSearchCriteria(params),
+      },
+      {
+        onSuccess: () => {
+          setIsSaveSearchOpen(false);
+          toast.success(t("catalog:savedSearches.saveSuccess"));
+        },
+        onError: (error) => toast.error(parseApiError(error)),
+      }
+    );
+  };
+
+  const applySavedSearch = (criteria: SavedSearchCriteria) => {
+    const nextParams: SearchItemsParams = {
+      page: 0,
+      size: 20,
+      sort: criteria.sort ?? "createdAt,desc",
+      q: criteria.q || undefined,
+      categoryUuid: criteria.categoryUuid,
+      tagUuids: criteria.tagUuids && criteria.tagUuids.length > 0 ? criteria.tagUuids : undefined,
+      condition: criteria.condition,
+    };
+
+    resetResults();
+    setSearchInput(criteria.q ?? "");
+    setParams(nextParams);
+    updateMarketplaceSearchParams(nextParams, setSearchParams);
+    document.getElementById("marketplace-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const loadMore = () => {
@@ -277,7 +343,7 @@ export function MarketplacePage() {
   return (
     <div className="marketplace-page min-h-screen text-slate-900">
       <header className="marketplace-nav sticky top-0 z-40 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 sm:px-6 xl:flex-row xl:items-center xl:gap-8">
+        <div className="mx-auto flex max-w-400 flex-col gap-4 px-4 py-4 sm:px-6 xl:flex-row xl:items-center xl:gap-8">
           <div className="flex items-center justify-between gap-4 xl:shrink-0">
             <Link
               to={routePaths.marketplace}
@@ -366,8 +432,8 @@ export function MarketplacePage() {
         </div>
       </header>
 
-      <div className="mx-auto flex max-w-[1600px] flex-col gap-6 px-4 py-6 sm:px-6 xl:flex-row xl:items-start">
-        <aside className="hidden w-64 shrink-0 space-y-4 xl:sticky xl:top-[89px] xl:block">
+      <div className="mx-auto flex max-w-400 flex-col gap-6 px-4 py-6 sm:px-6 xl:flex-row xl:items-start">
+        <aside className="hidden w-64 shrink-0 space-y-4 xl:sticky xl:top-22.25 xl:block">
           <div className={`${pageShellClassName} p-4`}>
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-base font-medium text-slate-900">{t("catalog:categories")}</h2>
@@ -462,6 +528,21 @@ export function MarketplacePage() {
                   );
                 })}
               </div>
+            </div>
+          ) : null}
+
+          {isAuthenticated ? (
+            <div className={`${pageShellClassName} p-4`}>
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-base font-medium text-slate-900">{t("catalog:savedSearches.sidebarTitle")}</h2>
+                <Link
+                  to={routePaths.savedSearches}
+                  className="text-xs font-medium text-violet-600 transition hover:text-violet-800"
+                >
+                  {t("catalog:savedSearches.viewAll")}
+                </Link>
+              </div>
+              <SavedSearchesPanel compact onApply={applySavedSearch} />
             </div>
           ) : null}
 
@@ -580,7 +661,7 @@ export function MarketplacePage() {
             ) : null}
           </section>
 
-          <section className={`${pageShellClassName} p-4`}>
+          <section id="marketplace-results" className={`${pageShellClassName} p-4`}>
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <h2 className="text-lg font-medium text-slate-900">{resultsTitle}</h2>
@@ -591,8 +672,20 @@ export function MarketplacePage() {
                 </p>
               </div>
 
-              <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
-                {data?.last ? t("catalog:latestListingsLoaded") : t("catalog:freshListings")}
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={openSaveSearch}
+                  disabled={!canSaveCurrentSearch}
+                  className="h-10 rounded-lg border-slate-200 bg-white px-3 text-slate-700 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Bookmark className="mr-2 size-4" />
+                  {t("catalog:savedSearches.saveCurrent")}
+                </Button>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500">
+                  {data?.last ? t("catalog:latestListingsLoaded") : t("catalog:freshListings")}
+                </div>
               </div>
             </div>
 
@@ -653,6 +746,40 @@ export function MarketplacePage() {
           </section>
         </main>
       </div>
+
+      <Modal
+        isOpen={isSaveSearchOpen}
+        onClose={() => setIsSaveSearchOpen(false)}
+        title={t("catalog:savedSearches.saveDialogTitle")}
+      >
+        <form onSubmit={handleSaveSearch} className="space-y-4">
+          <div>
+            <label htmlFor="saved-search-name" className="text-sm font-medium text-slate-700">
+              {t("catalog:savedSearches.nameLabel")}
+            </label>
+            <input
+              id="saved-search-name"
+              value={savedSearchName}
+              onChange={(event) => setSavedSearchName(event.target.value)}
+              maxLength={120}
+              className="mt-2 h-10 w-full rounded-lg border border-slate-200 px-3 text-sm text-slate-900 outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+              placeholder={t("catalog:savedSearches.namePlaceholder")}
+              required
+            />
+          </div>
+          <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-500">
+            {formatSavedSearchCriteriaPreview(buildSavedSearchCriteria(params), t)}
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button type="button" variant="outline" onClick={() => setIsSaveSearchOpen(false)}>
+              {t("common:cancel")}
+            </Button>
+            <Button type="submit" isLoading={createSavedSearchMutation.isPending}>
+              {t("catalog:savedSearches.save")}
+            </Button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }
@@ -695,7 +822,7 @@ function MarketplaceItemCard({
         to={routePaths.marketplaceItem(item.uuid)}
         className="marketplace-item-card flex h-full flex-col overflow-hidden transition-colors duration-200"
       >
-        <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+        <div className="relative aspect-4/3 overflow-hidden bg-slate-100">
           {item.primaryImageUrl ? (
             <img
               src={item.primaryImageUrl}
@@ -724,7 +851,7 @@ function MarketplaceItemCard({
             </span>
           </div>
 
-          <h3 className="line-clamp-2 min-h-[2.5rem] text-sm font-medium leading-5 text-slate-900 transition-colors group-hover:text-violet-600">
+          <h3 className="line-clamp-2 min-h-10 text-sm font-medium leading-5 text-slate-900 transition-colors group-hover:text-violet-600">
             {item.title}
           </h3>
 
@@ -760,5 +887,56 @@ function conditionTranslationKey(value: string) {
     FOR_PARTS: "condition.forParts",
   };
   return keys[value] ?? value;
+}
+
+function hasSearchCriteria(params: SearchItemsParams) {
+  return Boolean(params.q || params.categoryUuid || params.tagUuids?.length || params.condition);
+}
+
+function buildSavedSearchCriteria(params: SearchItemsParams): SavedSearchCriteria {
+  return {
+    q: params.q,
+    categoryUuid: params.categoryUuid,
+    tagUuids: params.tagUuids,
+    condition: params.condition,
+    sort: params.sort,
+  };
+}
+
+function updateMarketplaceSearchParams(
+  params: SearchItemsParams,
+  setSearchParams: ReturnType<typeof useSearchParams>[1]
+) {
+  setSearchParams(() => {
+    const next = new URLSearchParams();
+    if (params.q) next.set("q", params.q);
+    if (params.categoryUuid) next.set("categoryUuid", params.categoryUuid);
+    params.tagUuids?.forEach((tagUuid) => next.append("tagUuids", tagUuid));
+    if (params.condition) next.set("condition", params.condition);
+    if (params.sort && params.sort !== "createdAt,desc") next.set("sort", params.sort);
+    return next;
+  });
+}
+
+function defaultSavedSearchName(params: SearchItemsParams, categoryName?: string) {
+  if (params.q) {
+    return params.q;
+  }
+  if (categoryName) {
+    return categoryName;
+  }
+  return "Marketplace search";
+}
+
+function formatSavedSearchCriteriaPreview(
+  criteria: SavedSearchCriteria,
+  t: (key: string, options?: Record<string, unknown>) => string
+) {
+  const parts: string[] = [];
+  if (criteria.q) parts.push(t("catalog:savedSearches.criteria.query", { query: criteria.q }));
+  if (criteria.categoryUuid) parts.push(t("catalog:savedSearches.criteria.category"));
+  if (criteria.tagUuids?.length) parts.push(t("catalog:savedSearches.criteria.tags", { count: criteria.tagUuids.length }));
+  if (criteria.condition) parts.push(t("catalog:savedSearches.criteria.condition", { condition: criteria.condition }));
+  return parts.length ? parts.join(" · ") : t("catalog:savedSearches.criteria.catalogFilters");
 }
 

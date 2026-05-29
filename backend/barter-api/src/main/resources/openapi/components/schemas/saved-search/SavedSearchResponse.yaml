@@ -1,0 +1,23 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - name
+  - criteria
+  - createdAt
+  - updatedAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  name:
+    type: string
+  criteria:
+    $ref: '../../../openapi.yaml#/components/schemas/SavedSearchCriteria'
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+

@@ -13,6 +13,7 @@ dependencies {
     api 'jakarta.servlet:jakarta.servlet-api'
     api 'io.swagger.core.v3:swagger-annotations-jakarta:2.2.29'
     api 'com.fasterxml.jackson.core:jackson-annotations:2.19.0'
+    api 'com.fasterxml.jackson.core:jackson-databind'
 }
 
 openApiGenerate {

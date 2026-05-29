@@ -1,0 +1,9 @@
+SavedSearchUuid:
+  name: savedSearchUuid
+  in: path
+  required: true
+  description: Saved search UUID.
+  schema:
+    type: string
+    format: uuid
+

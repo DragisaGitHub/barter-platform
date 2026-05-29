@@ -226,6 +226,33 @@
     "savedListingsDescription": "Omiljeni oglasi su poređani od najskorije sačuvanih.",
     "continueBrowsing": "Nastavi pregled"
   },
+  "savedSearches": {
+    "badge": "Sačuvana pretraga",
+    "title": "Sačuvane pretrage",
+    "subtitle": "Sačuvaj korisne marketplace filtere i otvori ih ponovo kada želiš da proveriš nove prilike za razmenu.",
+    "sidebarTitle": "Sačuvane pretrage",
+    "viewAll": "Prikaži sve",
+    "saveCurrent": "Sačuvaj pretragu",
+    "saveDialogTitle": "Sačuvaj trenutnu pretragu",
+    "nameLabel": "Naziv pretrage",
+    "namePlaceholder": "npr. Dečije knjige",
+    "save": "Sačuvaj pretragu",
+    "saveSuccess": "Pretraga je sačuvana",
+    "loadError": "Učitavanje sačuvanih pretraga nije uspelo.",
+    "emptyTitle": "Još nema sačuvanih pretraga",
+    "emptyDescription": "Sačuvaj marketplace pretragu da bi se kasnije vratio istim filterima.",
+    "emptyCompact": "Sačuvane pretrage će se pojaviti ovde kada sačuvaš prvu.",
+    "apply": "Primeni pretragu",
+    "delete": "Obriši sačuvanu pretragu",
+    "criteria": {
+      "query": "Upit: {{query}}",
+      "category": "Filter kategorije",
+      "tags": "{{count}} tag",
+      "tags_plural": "{{count}} tagova",
+      "condition": "Stanje: {{condition}}",
+      "catalogFilters": "Marketplace filteri"
+    }
+  },
   "itemCard": { "byOwner": "od {{username}}" },
   "images": {
     "primaryImage": "Primarna slika",

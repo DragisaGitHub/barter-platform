@@ -1,0 +1,66 @@
+savedSearches:
+  get:
+    tags:
+      - SavedSearches
+    operationId: listSavedSearches
+    summary: List saved catalog searches for the authenticated user
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+    responses:
+      '200':
+        description: Saved searches returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SavedSearchPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+  post:
+    tags:
+      - SavedSearches
+    operationId: createSavedSearch
+    summary: Save catalog search criteria for the authenticated user
+    security:
+      - bearerJwt: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CreateSavedSearchRequest'
+    responses:
+      '201':
+        description: Saved search created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/SavedSearchResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+savedSearchByUuid:
+  delete:
+    tags:
+      - SavedSearches
+    operationId: deleteSavedSearch
+    summary: Delete one saved catalog search owned by the authenticated user
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/SavedSearchUuid'
+    responses:
+      '204':
+        description: Saved search deleted successfully
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'

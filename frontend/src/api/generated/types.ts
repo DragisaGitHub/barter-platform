@@ -60,6 +60,9 @@ export type AdminTagPagedResponse = components["schemas"]["AdminTagPagedResponse
 export type ItemSummaryResponse = components["schemas"]["ItemSummaryResponse"];
 export type ItemDetailResponse = components["schemas"]["ItemDetailResponse"];
 export type ItemPagedResponse = components["schemas"]["ItemPagedResponse"];
+export type SavedSearchCriteria = components["schemas"]["SavedSearchCriteria"];
+export type SavedSearchResponse = components["schemas"]["SavedSearchResponse"];
+export type SavedSearchPagedResponse = components["schemas"]["SavedSearchPagedResponse"];
 export type ListingModerationActionResponse = components["schemas"]["ListingModerationActionResponse"];
 export type OwnerListingModerationSummary = components["schemas"]["OwnerListingModerationSummary"];
 
@@ -73,6 +76,7 @@ export type CreateItemRequest = components["schemas"]["CreateItemRequest"];
 export type CreateCategoryRequest = components["schemas"]["CreateCategoryRequest"];
 export type CreateTagRequest = components["schemas"]["CreateTagRequest"];
 export type UpdateItemRequest = components["schemas"]["UpdateItemRequest"];
+export type CreateSavedSearchRequest = components["schemas"]["CreateSavedSearchRequest"];
 export type UpdateCategoryRequest = components["schemas"]["UpdateCategoryRequest"];
 export type UpdateTagRequest = components["schemas"]["UpdateTagRequest"];
 export type ArchiveItemRequest = components["schemas"]["ArchiveItemRequest"];
