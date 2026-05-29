@@ -1,35 +1,9 @@
 package com.barterplatform.web.catalog.controller;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
-import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
-import com.barterplatform.api.model.ArchiveItemRequest;
-import com.barterplatform.api.model.CategoryResponse;
-import com.barterplatform.api.model.CreateItemRequest;
-import com.barterplatform.api.model.ItemDetailResponse;
-import com.barterplatform.api.model.ItemPagedResponse;
-import com.barterplatform.api.model.ItemSummaryResponse;
-import com.barterplatform.api.model.MessageResponse;
-import com.barterplatform.api.model.PopularCategoryResponse;
-import com.barterplatform.api.model.TagResponse;
-import com.barterplatform.application.catalog.service.CatalogQueryService;
-import com.barterplatform.application.catalog.service.FavoriteItemService;
-import com.barterplatform.application.catalog.service.ItemCommandService;
-import com.barterplatform.application.catalog.service.ItemImageService;
+import com.barterplatform.api.model.*;
+import com.barterplatform.application.catalog.service.*;
 import com.barterplatform.web.exception.GlobalExceptionHandler;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
-import java.util.List;
-import java.util.UUID;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +14,16 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+import java.util.List;
+import java.util.UUID;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 class CatalogControllerMvcTest {
 
     private static final UUID USER_UUID = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -49,6 +33,7 @@ class CatalogControllerMvcTest {
     private FavoriteItemService favoriteItemService;
     private ItemCommandService itemCommandService;
     private ItemImageService itemImageService;
+    private RecommendationService recommendationService;
 
     @BeforeEach
     void setUp() {
@@ -56,9 +41,10 @@ class CatalogControllerMvcTest {
         favoriteItemService = mock(FavoriteItemService.class);
         itemCommandService = mock(ItemCommandService.class);
         itemImageService = mock(ItemImageService.class);
+        recommendationService = mock(RecommendationService.class);
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new CatalogController(
-                        catalogQueryService, favoriteItemService, itemCommandService, itemImageService))
+                        catalogQueryService, favoriteItemService, itemCommandService, itemImageService, recommendationService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
         SecurityContextHolder.clearContext();
@@ -151,6 +137,26 @@ class CatalogControllerMvcTest {
                 .andExpect(jsonPath("$.title").value("My Book"));
 
         verify(catalogQueryService).getItemByUuid(itemUuid, null, false);
+    }
+
+    @Test
+    void listRecommendationsShouldReturnAnonymousFallback() throws Exception {
+        ItemSummaryResponse item = new ItemSummaryResponse().uuid(UUID.randomUUID()).title("Recommended Book");
+        RecommendationPagedResponse response = new RecommendationPagedResponse()
+                .content(List.of(new RecommendationItemResponse()
+                        .item(item)
+                        .reason(RecommendationReason.POPULAR_RECENTLY)))
+                .page(0).size(12).totalElements(1L).totalPages(1).first(true).last(true);
+        when(recommendationService.listRecommendations(null, 0, 12, "recommendationScore,desc")).thenReturn(response);
+
+        mockMvc.perform(apiGet("/catalog/recommendations")
+                        .queryParam("page", "0")
+                        .queryParam("size", "12"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].item.title").value("Recommended Book"))
+                .andExpect(jsonPath("$.content[0].reason").value("POPULAR_RECENTLY"));
+
+        verify(recommendationService).listRecommendations(null, 0, 12, "recommendationScore,desc");
     }
 
     // ── Authenticated: createItem ────────────────────────────────

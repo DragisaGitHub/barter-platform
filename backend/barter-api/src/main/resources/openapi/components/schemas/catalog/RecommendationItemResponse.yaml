@@ -1,0 +1,11 @@
+type: object
+additionalProperties: false
+required:
+  - item
+  - reason
+properties:
+  item:
+    $ref: '../../../openapi.yaml#/components/schemas/ItemSummaryResponse'
+  reason:
+    $ref: '../../../openapi.yaml#/components/schemas/RecommendationReason'
+

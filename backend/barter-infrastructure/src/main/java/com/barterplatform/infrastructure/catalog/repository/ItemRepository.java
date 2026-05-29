@@ -23,6 +23,8 @@ public interface ItemRepository extends JpaRepository<ItemEntity, Long>, JpaSpec
     Page<ItemEntity> findByOwnerIdAndStatusAndDeletedAtIsNull(
             Long ownerId, ItemStatus status, Pageable pageable);
 
+    Page<ItemEntity> findByStatusAndDeletedAtIsNull(ItemStatus status, Pageable pageable);
+
     long countByOwnerIdAndStatus(Long ownerId, ItemStatus status);
 
     long countByStatus(ItemStatus status);

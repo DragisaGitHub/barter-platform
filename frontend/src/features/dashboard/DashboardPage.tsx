@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Ca
 import { Button } from "../../components/ui/Button";
 import { Spinner } from "../../components/ui/Spinner";
 import { useMyItems, useSearchItems } from "../catalog/useCatalog";
+import { RecommendationsSection } from "../catalog/RecommendationsSection";
 import { useIncomingTradeOffers, useSentTradeOffers } from "../trade/useTradeOffers";
 import { TradeOfferStatusBadge } from "../trade/TradeOfferStatusBadge";
 import { useTranslation } from "react-i18next";
@@ -252,6 +253,8 @@ export function DashboardPage() {
           </Link>
         </div>
       </div>
+
+      <RecommendationsSection className="mb-8" size={4} />
 
       <div className="grid gap-8 lg:grid-cols-2 mb-8">
         {/* Recent Marketplace Items */}

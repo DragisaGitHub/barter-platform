@@ -746,6 +746,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/catalog/recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List lightweight item recommendations
+         * @description Returns deterministic, privacy-safe recommendations using existing marketplace data only. Authenticated users receive personalized results when signals exist; anonymous or signal-free requests receive a safe recent-popular fallback.
+         */
+        get: operations["listRecommendations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalog/favorites": {
         parameters: {
             query?: never;
@@ -1579,6 +1599,29 @@ export interface components {
         };
         ItemPagedResponse: {
             content: components["schemas"]["ItemSummaryResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort: string;
+        };
+        /**
+         * @description Explainable reason shown with a recommended listing. No scores are exposed to users.
+         * @enum {string}
+         */
+        RecommendationReason: "BECAUSE_OF_INTERESTS" | "SIMILAR_TO_YOUR_LISTINGS" | "NEAR_PREFERRED_EXCHANGE_AREA" | "POPULAR_RECENTLY";
+        RecommendationItemResponse: {
+            item: components["schemas"]["ItemSummaryResponse"];
+            reason: components["schemas"]["RecommendationReason"];
+        };
+        RecommendationPagedResponse: {
+            content: components["schemas"]["RecommendationItemResponse"][];
             /** Format: int32 */
             page: number;
             /** Format: int32 */
@@ -3887,6 +3930,33 @@ export interface operations {
             400: components["responses"]["BadRequest"];
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+        };
+    };
+    listRecommendations: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                size?: number;
+                /** @description Reserved for contract consistency. Recommendation ordering is deterministic and score-based; unsupported values are ignored. */
+                sort?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Recommendations returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecommendationPagedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
         };
     };
     listFavoriteItems: {

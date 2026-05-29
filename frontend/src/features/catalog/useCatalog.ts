@@ -4,6 +4,7 @@ import {
   listPopularCategories,
   listTags,
   searchItems,
+  listRecommendations,
   getItemByUuid,
   listMyItems,
   listFavoriteItems,
@@ -16,12 +17,14 @@ import {
   type SearchItemsParams,
   type MyItemsParams,
   type FavoriteItemsParams,
+  type RecommendationParams,
 } from "@/api/catalogApi.ts";
 import type {
   CategoryResponse,
   PopularCategoryResponse,
   TagResponse,
   ItemPagedResponse,
+  RecommendationPagedResponse,
   ItemDetailResponse,
   CreateItemRequest,
   UpdateItemRequest,
@@ -37,6 +40,7 @@ export const catalogKeys = {
   items: ["catalog", "items"] as const,
   favorites: ["catalog", "favorites"] as const,
   itemSearch: (params: SearchItemsParams) => ["catalog", "items", "search", params] as const,
+  recommendations: (params: RecommendationParams) => ["catalog", "recommendations", params] as const,
   itemDetail: (uuid: string) => ["catalog", "items", uuid] as const,
   myItems: (params: MyItemsParams) => ["catalog", "items", "mine", params] as const,
   favoriteItems: (params: FavoriteItemsParams) => ["catalog", "favorites", params] as const,
@@ -74,6 +78,14 @@ export function useSearchItems(params: SearchItemsParams = {}) {
   return useQuery<ItemPagedResponse>({
     queryKey: catalogKeys.itemSearch(params),
     queryFn: () => searchItems(params),
+  });
+}
+
+export function useRecommendations(params: RecommendationParams = {}) {
+  return useQuery<RecommendationPagedResponse>({
+    queryKey: catalogKeys.recommendations(params),
+    queryFn: () => listRecommendations(params),
+    staleTime: 60 * 1000,
   });
 }
 

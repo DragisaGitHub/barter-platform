@@ -148,6 +148,41 @@ items:
       '403':
         $ref: '../components/responses/Forbidden.yaml'
 
+recommendations:
+  get:
+    tags:
+      - Catalog
+    operationId: listRecommendations
+    summary: List lightweight item recommendations
+    description: Returns deterministic, privacy-safe recommendations using existing marketplace data only. Authenticated users receive personalized results when signals exist; anonymous or signal-free requests receive a safe recent-popular fallback.
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - name: size
+        in: query
+        required: false
+        schema:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 50
+          default: 12
+      - name: sort
+        in: query
+        required: false
+        description: Reserved for contract consistency. Recommendation ordering is deterministic and score-based; unsupported values are ignored.
+        schema:
+          type: string
+          default: recommendationScore,desc
+    responses:
+      '200':
+        description: Recommendations returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/RecommendationPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+
 itemsMine:
   get:
     tags:

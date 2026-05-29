@@ -36,6 +36,7 @@ import {
   useUnfavoriteItem,
 } from "./useCatalog";
 import { SavedSearchesPanel } from "./SavedSearchesPanel";
+import { RecommendationsSection } from "./RecommendationsSection";
 import { useCreateSavedSearch } from "./useSavedSearches";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -723,6 +724,14 @@ export function MarketplacePage() {
               </div>
             ) : null}
           </section>
+
+          <RecommendationsSection
+            size={5}
+            className={`${pageShellClassName} p-4`}
+            titleClassName="text-lg font-medium text-slate-900"
+            gridClassName="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+            showViewAllLink={false}
+          />
 
           <section id="marketplace-results" className={`${pageShellClassName} p-4`}>
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
