@@ -23,6 +23,9 @@ const STATUSES: { value: ItemStatus; labelKey: string }[] = [
 const itemFormSchema = z.object({
   title: z.string().min(1, "validation.titleRequired").max(255, "validation.titleTooLong"),
   description: z.string().optional(),
+  exchangeCity: z.string().max(120, "validation.exchangeCityTooLong").optional(),
+  exchangeArea: z.string().max(120, "validation.exchangeAreaTooLong").optional(),
+  exchangeLocation: z.string().max(255, "validation.exchangeLocationTooLong").optional(),
   categoryUuid: z.string().min(1, "validation.categoryRequired"),
   tagUuids: z.array(z.string()).optional(),
   condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "USED", "FOR_PARTS"] as const, {
@@ -55,6 +58,9 @@ export function ItemForm({
     defaultValues: {
       title: "",
       description: "",
+      exchangeCity: "",
+      exchangeArea: "",
+      exchangeLocation: "",
       categoryUuid: "",
       tagUuids: [],
       condition: undefined,
@@ -105,6 +111,42 @@ export function ItemForm({
             rows={4}
             placeholder={t("catalog:itemForm.descriptionPlaceholder")}
           />
+        </div>
+
+        <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t("catalog:itemForm.exchangeLocationTitle")}
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {t("catalog:itemForm.exchangeLocationHelper")}
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label={t("catalog:fields.exchangeCity")}
+              {...register("exchangeCity")}
+              error={translateError(errors.exchangeCity?.message)}
+              placeholder={t("catalog:itemForm.exchangeCityPlaceholder")}
+            />
+
+            <Input
+              label={t("catalog:fields.exchangeArea")}
+              {...register("exchangeArea")}
+              error={translateError(errors.exchangeArea?.message)}
+              placeholder={t("catalog:itemForm.exchangeAreaPlaceholder")}
+            />
+          </div>
+
+          <div className="mt-4">
+            <Input
+              label={t("catalog:fields.exchangeLocation")}
+              {...register("exchangeLocation")}
+              error={translateError(errors.exchangeLocation?.message)}
+              placeholder={t("catalog:itemForm.exchangeLocationPlaceholder")}
+            />
+          </div>
         </div>
 
         <div>

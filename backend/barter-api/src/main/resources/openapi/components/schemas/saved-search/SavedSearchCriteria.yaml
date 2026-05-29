@@ -19,6 +19,10 @@ properties:
     description: Tag filters to reapply.
   condition:
     $ref: '../catalog/ItemCondition.yaml'
+  location:
+    type: string
+    maxLength: 255
+    description: Approximate location text filter to reapply.
   sort:
     type: string
     maxLength: 80

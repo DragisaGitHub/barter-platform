@@ -1542,6 +1542,10 @@ export interface components {
             ownerUuid: string;
             ownerUsername: string;
             primaryImageUrl?: string | null;
+            /** @description Coarse public exchange location label only; never an exact private address. */
+            exchangeLocation?: string | null;
+            exchangeCity?: string | null;
+            exchangeArea?: string | null;
             /** Format: date-time */
             createdAt: string;
         };
@@ -1558,6 +1562,10 @@ export interface components {
             ownerUuid: string;
             ownerUsername: string;
             primaryImageUrl?: string | null;
+            /** @description Coarse public exchange location label only; never an exact private address. */
+            exchangeLocation?: string | null;
+            exchangeCity?: string | null;
+            exchangeArea?: string | null;
             images: components["schemas"]["ItemImageResponse"][];
             /** Format: date-time */
             createdAt: string;
@@ -1594,6 +1602,8 @@ export interface components {
             /** @description Tag filters to reapply. */
             tagUuids?: string[];
             condition?: components["schemas"]["ItemCondition"];
+            /** @description Approximate location text filter to reapply. */
+            location?: string;
             /** @description Catalog sort expression such as createdAt,desc. */
             sort?: string;
         };
@@ -1689,6 +1699,12 @@ export interface components {
         CreateItemRequest: {
             title: string;
             description?: string;
+            /** @description Optional coarse public exchange location label. Do not include exact home addresses. */
+            exchangeLocation?: string;
+            /** @description Optional approximate city for public exchange discovery. */
+            exchangeCity?: string;
+            /** @description Optional neighborhood or area label for public exchange discovery; avoid exact addresses. */
+            exchangeArea?: string;
             /** Format: uuid */
             categoryUuid: string;
             tagUuids?: string[];
@@ -1715,6 +1731,12 @@ export interface components {
         UpdateItemRequest: {
             title?: string;
             description?: string;
+            /** @description Optional coarse public exchange location label. Do not include exact home addresses. */
+            exchangeLocation?: string;
+            /** @description Optional approximate city for public exchange discovery. */
+            exchangeCity?: string;
+            /** @description Optional neighborhood or area label for public exchange discovery; avoid exact addresses. */
+            exchangeArea?: string;
             /** Format: uuid */
             categoryUuid?: string;
             tagUuids?: string[];
@@ -3819,6 +3841,8 @@ export interface operations {
                 status?: components["schemas"]["ItemStatus"];
                 /** @description Filter by item condition. */
                 condition?: components["schemas"]["ItemCondition"];
+                /** @description Case-insensitive text filter across approximate exchange city, area, and location labels. No GPS, maps, or distance calculations are used. */
+                location?: string;
             };
             header?: never;
             path?: never;

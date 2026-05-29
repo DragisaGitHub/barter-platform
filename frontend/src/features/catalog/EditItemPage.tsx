@@ -27,6 +27,9 @@ export function EditItemPage() {
       {
         title: data.title,
         description: data.description || undefined,
+        exchangeCity: data.exchangeCity?.trim() || undefined,
+        exchangeArea: data.exchangeArea?.trim() || undefined,
+        exchangeLocation: data.exchangeLocation?.trim() || undefined,
         categoryUuid: data.categoryUuid,
         tagUuids: data.tagUuids?.length ? data.tagUuids : undefined,
         condition: data.condition,
@@ -162,6 +165,9 @@ export function EditItemPage() {
             defaultValues={{
               title: item.title,
               description: item.description ?? "",
+              exchangeCity: item.exchangeCity ?? "",
+              exchangeArea: item.exchangeArea ?? "",
+              exchangeLocation: item.exchangeLocation ?? "",
               categoryUuid: item.category.uuid,
               tagUuids: item.tags.map((t) => t.uuid),
               condition: item.condition,

@@ -6,6 +6,7 @@ import {
   Clock,
   Heart,
   LogIn,
+  MapPin,
   Package,
   Search,
   Sparkles,
@@ -59,8 +60,10 @@ export function MarketplacePage() {
     categoryUuid: categoryUuidFromUrl,
     tagUuids: searchParams.getAll("tagUuids").filter(Boolean),
     condition: (searchParams.get("condition") as SearchItemsParams["condition"]) ?? undefined,
+    location: searchParams.get("location")?.trim() || undefined,
   }));
   const [searchInput, setSearchInput] = useState(searchParams.get("q") ?? "");
+  const [locationInput, setLocationInput] = useState(searchParams.get("location") ?? "");
   const [loadedItems, setLoadedItems] = useState<ItemSummaryResponse[]>([]);
   const [favoriteOverrides, setFavoriteOverrides] = useState<Record<string, boolean>>({});
   const [pendingFavoriteUuid, setPendingFavoriteUuid] = useState<string | null>(null);
@@ -249,6 +252,27 @@ export function MarketplacePage() {
     });
   };
 
+  const handleLocationSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const nextLocation = locationInput.trim();
+    resetResults();
+    setParams((previous) => {
+      const nextParams = { ...previous, page: 0, location: nextLocation || undefined };
+      updateMarketplaceSearchParams(nextParams, setSearchParams);
+      return nextParams;
+    });
+  };
+
+  const clearLocation = () => {
+    setLocationInput("");
+    resetResults();
+    setParams((previous) => {
+      const nextParams = { ...previous, page: 0, location: undefined };
+      updateMarketplaceSearchParams(nextParams, setSearchParams);
+      return nextParams;
+    });
+  };
+
   const openSaveSearch = () => {
     if (!isAuthenticated) {
       navigate(buildPathWithQuery(routePaths.login, { redirect: routePaths.marketplace }));
@@ -286,10 +310,12 @@ export function MarketplacePage() {
       categoryUuid: criteria.categoryUuid,
       tagUuids: criteria.tagUuids && criteria.tagUuids.length > 0 ? criteria.tagUuids : undefined,
       condition: criteria.condition,
+      location: criteria.location || undefined,
     };
 
     resetResults();
     setSearchInput(criteria.q ?? "");
+    setLocationInput(criteria.location ?? "");
     setParams(nextParams);
     updateMarketplaceSearchParams(nextParams, setSearchParams);
     document.getElementById("marketplace-results")?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -531,6 +557,43 @@ export function MarketplacePage() {
             </div>
           ) : null}
 
+          <div className={`${pageShellClassName} p-4`}>
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-medium text-slate-900">{t("catalog:marketplace.location.title")}</h2>
+              {params.location ? (
+                <button
+                  type="button"
+                  onClick={clearLocation}
+                  className="text-xs font-medium text-violet-600 transition hover:text-violet-800"
+                >
+                  {t("catalog:clear")}
+                </button>
+              ) : null}
+            </div>
+            <p className="mb-3 text-xs leading-5 text-slate-500">
+              {t("catalog:marketplace.location.helper")}
+            </p>
+            <form onSubmit={handleLocationSubmit} className="space-y-2">
+              <div className="relative">
+                <MapPin className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="search"
+                  value={locationInput}
+                  onChange={(event) => setLocationInput(event.target.value)}
+                  placeholder={t("catalog:marketplace.location.placeholder")}
+                  className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-900 outline-none transition focus:border-violet-300 focus:ring-2 focus:ring-violet-100"
+                />
+              </div>
+              <Button
+                type="submit"
+                variant="outline"
+                className="h-9 w-full rounded-lg border-slate-200 bg-white text-slate-700 hover:border-violet-200 hover:bg-violet-50 hover:text-violet-700"
+              >
+                {t("catalog:marketplace.location.apply")}
+              </Button>
+            </form>
+          </div>
+
           {isAuthenticated ? (
             <div className={`${pageShellClassName} p-4`}>
               <div className="mb-3 flex items-center justify-between">
@@ -669,6 +732,7 @@ export function MarketplacePage() {
                   {resultsMeta}
                   {params.categoryUuid && selectedCategory ? t("catalog:marketplace.results.inCategory", { category: selectedCategory.name }) : t("catalog:marketplace.results.fromCommunity")}
                   {params.q ? t("catalog:marketplace.results.matchingQuery", { query: params.q }) : ""}
+                  {params.location ? t("catalog:marketplace.results.nearLocation", { location: params.location }) : ""}
                 </p>
               </div>
 
@@ -796,6 +860,7 @@ function MarketplaceItemCard({
   onToggleFavorite: (itemUuid: string) => void;
 }) {
   const { t, i18n } = useTranslation("catalog");
+  const approximateLocation = formatApproximateExchangeLocation(item);
   const createdLabel = useMemo(() => {
     try {
       return new Date(item.createdAt).toLocaleDateString(i18n.language === "sr" ? "sr-Latn-RS" : "en-US");
@@ -855,6 +920,13 @@ function MarketplaceItemCard({
             {item.title}
           </h3>
 
+          {approximateLocation ? (
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+              <MapPin className="size-3.5 shrink-0 text-slate-400" />
+              <span className="truncate">{approximateLocation}</span>
+            </div>
+          ) : null}
+
           <div className="mt-auto space-y-2 pt-2">
             <div className="h-px w-full bg-slate-100" />
             <div className="flex items-center justify-between gap-3 text-xs text-slate-500">
@@ -890,7 +962,7 @@ function conditionTranslationKey(value: string) {
 }
 
 function hasSearchCriteria(params: SearchItemsParams) {
-  return Boolean(params.q || params.categoryUuid || params.tagUuids?.length || params.condition);
+  return Boolean(params.q || params.categoryUuid || params.tagUuids?.length || params.condition || params.location);
 }
 
 function buildSavedSearchCriteria(params: SearchItemsParams): SavedSearchCriteria {
@@ -899,6 +971,7 @@ function buildSavedSearchCriteria(params: SearchItemsParams): SavedSearchCriteri
     categoryUuid: params.categoryUuid,
     tagUuids: params.tagUuids,
     condition: params.condition,
+    location: params.location,
     sort: params.sort,
   };
 }
@@ -913,6 +986,7 @@ function updateMarketplaceSearchParams(
     if (params.categoryUuid) next.set("categoryUuid", params.categoryUuid);
     params.tagUuids?.forEach((tagUuid) => next.append("tagUuids", tagUuid));
     if (params.condition) next.set("condition", params.condition);
+    if (params.location) next.set("location", params.location);
     if (params.sort && params.sort !== "createdAt,desc") next.set("sort", params.sort);
     return next;
   });
@@ -924,6 +998,9 @@ function defaultSavedSearchName(params: SearchItemsParams, categoryName?: string
   }
   if (categoryName) {
     return categoryName;
+  }
+  if (params.location) {
+    return params.location;
   }
   return "Marketplace search";
 }
@@ -937,6 +1014,12 @@ function formatSavedSearchCriteriaPreview(
   if (criteria.categoryUuid) parts.push(t("catalog:savedSearches.criteria.category"));
   if (criteria.tagUuids?.length) parts.push(t("catalog:savedSearches.criteria.tags", { count: criteria.tagUuids.length }));
   if (criteria.condition) parts.push(t("catalog:savedSearches.criteria.condition", { condition: criteria.condition }));
+  if (criteria.location) parts.push(t("catalog:savedSearches.criteria.location", { location: criteria.location }));
   return parts.length ? parts.join(" · ") : t("catalog:savedSearches.criteria.catalogFilters");
+}
+
+function formatApproximateExchangeLocation(item: ItemSummaryResponse) {
+  const locality = [item.exchangeArea, item.exchangeCity].filter(Boolean).join(", ");
+  return [locality, item.exchangeLocation].filter(Boolean).join(" · ");
 }
 

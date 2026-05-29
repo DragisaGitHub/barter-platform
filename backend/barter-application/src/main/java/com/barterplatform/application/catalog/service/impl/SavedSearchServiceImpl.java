@@ -182,6 +182,15 @@ public class SavedSearchServiceImpl implements SavedSearchService {
             hasCriteria = true;
         }
 
+        if (criteria.getLocation() != null && !criteria.getLocation().isBlank()) {
+            String location = criteria.getLocation().trim().replaceAll("\\s+", " ");
+            if (location.length() > MAX_QUERY_LENGTH) {
+                throw badRequest("Location filter must be %d characters or fewer.".formatted(MAX_QUERY_LENGTH));
+            }
+            normalized.setLocation(location);
+            hasCriteria = true;
+        }
+
         if (criteria.getSort() != null && !criteria.getSort().isBlank()) {
             String sort = criteria.getSort().trim();
             if (!ALLOWED_CATALOG_SORTS.contains(sort)) {

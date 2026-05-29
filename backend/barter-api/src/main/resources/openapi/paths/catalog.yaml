@@ -105,6 +105,13 @@ items:
         description: Filter by item condition.
         schema:
           $ref: '../components/schemas/catalog/ItemCondition.yaml'
+      - name: location
+        in: query
+        required: false
+        description: Case-insensitive text filter across approximate exchange city, area, and location labels. No GPS, maps, or distance calculations are used.
+        schema:
+          type: string
+          maxLength: 255
     responses:
       '200':
         description: Items returned successfully

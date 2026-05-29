@@ -51,6 +51,9 @@
     "category": "Kategorija",
     "condition": "Stanje",
     "status": "Status",
+    "exchangeCity": "Približan javni grad za razmenu",
+    "exchangeArea": "Približna javna oblast za razmenu",
+    "exchangeLocation": "Napomena o javnoj lokaciji razmene",
     "created": "Kreirano"
   },
   "myItems": {
@@ -113,6 +116,12 @@
     "popularCategoriesDescription": "Kratke prečice za otkrivanje zasnovane na aktivnostima na marketplace-u, da oglasi ostanu u fokusu.",
     "noPopularCategories": "Popularne kategorije će se pojaviti ovde kada aktivni oglasi dobiju zamah.",
     "defaultCategoryDescription": "Odmah pređi na najaktivnije oglase u ovoj kategoriji.",
+    "location": {
+      "title": "Lokacija",
+      "helper": "Filtriraj po približnom gradu, oblasti ili javnoj lokaciji za razmenu. Bez mapa i tačnih adresa.",
+      "placeholder": "npr. Beograd, Vračar",
+      "apply": "Primeni lokaciju"
+    },
     "results": {
       "searchResults": "Rezultati pretrage za „{{query}}”",
       "categoryItems": "Oglasi u kategoriji {{category}}",
@@ -120,7 +129,8 @@
       "liveListings_plural": "{{count}} aktivnih oglasa",
       "inCategory": " u kategoriji {{category}}",
       "fromCommunity": " iz zajednice",
-      "matchingQuery": " koji odgovaraju upitu „{{query}}”"
+      "matchingQuery": " koji odgovaraju upitu „{{query}}”",
+      "nearLocation": " blizu „{{location}}”"
     }
   },
   "categoriesPage": {
@@ -158,6 +168,8 @@
     "memberTrader": "Član za razmenu na Barter Platform",
     "tradeSafely": "Razmenjuj bezbedno",
     "tradeSafelyDescription": "Registruj se da kontaktiraš vlasnika i pošalješ ponudu za razmenu.",
+    "exchangeLocation": "Približna oblast razmene",
+    "exchangeLocationPrivacy": "Ovo je samo javna približna oblast. Ne deli tačnu kućnu adresu u oglasu.",
     "createAccountToTrade": "Kreiraj nalog za predlog razmene",
     "alreadyHaveAccount": "Već imaš nalog? Prijavi se",
     "proposeTrade": "Predloži razmenu",
@@ -169,6 +181,11 @@
   "itemForm": {
     "titlePlaceholder": "Šta oglašavaš?",
     "descriptionPlaceholder": "Opiši svoj predmet...",
+    "exchangeLocationTitle": "Približna javna oblast za razmenu",
+    "exchangeLocationHelper": "Unesi samo grad, kraj ili oblast javnog mesta. Nemoj unositi tačnu kućnu adresu.",
+    "exchangeCityPlaceholder": "npr. Beograd",
+    "exchangeAreaPlaceholder": "npr. Vračar ili Novi Beograd",
+    "exchangeLocationPlaceholder": "npr. blizu biblioteke ili tržnog centra",
     "selectCategory": "Izaberi kategoriju",
     "selectCondition": "Izaberi stanje",
     "loadingTags": "Učitavanje oznaka...",
@@ -177,6 +194,9 @@
   "validation": {
     "titleRequired": "Naslov je obavezan",
     "titleTooLong": "Naslov može imati najviše 255 karaktera",
+    "exchangeCityTooLong": "Grad može imati najviše 120 karaktera",
+    "exchangeAreaTooLong": "Oblast može imati najviše 120 karaktera",
+    "exchangeLocationTooLong": "Napomena o lokaciji može imati najviše 255 karaktera",
     "categoryRequired": "Kategorija je obavezna",
     "conditionRequired": "Stanje je obavezno"
   },
@@ -250,6 +270,7 @@
       "tags": "{{count}} tag",
       "tags_plural": "{{count}} tagova",
       "condition": "Stanje: {{condition}}",
+      "location": "Lokacija: {{location}}",
       "catalogFilters": "Marketplace filteri"
     }
   },

@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRightLeft,
   CalendarDays,
+  MapPin,
   ZoomIn,
   Package,
   ShieldCheck,
@@ -189,6 +190,7 @@ export function ItemDetailPage() {
     routePaths.marketplaceItem(item.uuid)
   )}`;
   const descriptionPreview = item.description?.trim();
+  const approximateLocation = formatApproximateExchangeLocation(item);
   const listedDate = new Date(item.createdAt).toLocaleDateString(i18n.language === "sr" ? "sr-Latn-RS" : "en-US", {
     day: "numeric",
     month: "short",
@@ -242,6 +244,19 @@ export function ItemDetailPage() {
                 </div>
                 <p className="mt-1 text-sm font-medium text-slate-900">{item.category.name}</p>
               </div>
+
+              {approximateLocation ? (
+                <div className="rounded-lg border border-emerald-100 bg-emerald-50 px-3.5 py-2.5 sm:col-span-2">
+                  <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.08em] text-emerald-700">
+                    <MapPin className="size-3.5" />
+                    {t("catalog:itemDetail.exchangeLocation")}
+                  </div>
+                  <p className="mt-1 text-sm font-medium text-slate-900">{approximateLocation}</p>
+                  <p className="mt-1 text-xs leading-5 text-slate-500">
+                    {t("catalog:itemDetail.exchangeLocationPrivacy")}
+                  </p>
+                </div>
+              ) : null}
             </div>
 
             {item.tags.length > 0 ? (
@@ -382,5 +397,14 @@ export function ItemDetailPage() {
       )}
     </div>
   );
+}
+
+function formatApproximateExchangeLocation(item: {
+  exchangeArea?: string | null;
+  exchangeCity?: string | null;
+  exchangeLocation?: string | null;
+}) {
+  const locality = [item.exchangeArea, item.exchangeCity].filter(Boolean).join(", ");
+  return [locality, item.exchangeLocation].filter(Boolean).join(" · ");
 }
 

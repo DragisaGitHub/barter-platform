@@ -30,6 +30,15 @@ public class ItemEntity extends AuditableEntity {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "exchange_location", length = 255)
+    private String exchangeLocation;
+
+    @Column(name = "exchange_city", length = 120)
+    private String exchangeCity;
+
+    @Column(name = "exchange_area", length = 120)
+    private String exchangeArea;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 40)
     private ItemStatus status;

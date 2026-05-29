@@ -125,6 +125,9 @@ class ItemCommandServiceImplTest {
 
             CreateItemRequest request = new CreateItemRequest("My Book", catUuid,
                     com.barterplatform.api.model.ItemCondition.GOOD);
+            request.setExchangeCity("  Belgrade  ");
+            request.setExchangeArea("Vračar");
+            request.setExchangeLocation("Near the community center");
 
             // The save returns the entity with an id
             when(itemRepository.save(any(ItemEntity.class))).thenAnswer(invocation -> {
@@ -150,6 +153,39 @@ class ItemCommandServiceImplTest {
             assertEquals(ItemCondition.GOOD, captor.getValue().getCondition());
             assertEquals(1L, captor.getValue().getOwnerId());
             assertEquals(10L, captor.getValue().getCategoryId());
+            assertEquals("Belgrade", captor.getValue().getExchangeCity());
+            assertEquals("Vračar", captor.getValue().getExchangeArea());
+            assertEquals("Near the community center", captor.getValue().getExchangeLocation());
+        }
+
+        @Test
+        @DisplayName("creates item without requiring exact address or location fields")
+        void createWithoutLocationFields() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID catUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, catUuid, "Books");
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+            when(itemRepository.save(any(ItemEntity.class))).thenAnswer(invocation -> {
+                ItemEntity arg = invocation.getArgument(0);
+                arg.setId(100L);
+                return arg;
+            });
+            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new ItemDetailResponse().uuid(UUID.randomUUID()).title("My Book"));
+
+            CreateItemRequest request = new CreateItemRequest("My Book", catUuid,
+                    com.barterplatform.api.model.ItemCondition.GOOD);
+
+            service.createItem(ownerUuid, request);
+
+            ArgumentCaptor<ItemEntity> captor = ArgumentCaptor.forClass(ItemEntity.class);
+            verify(itemRepository).save(captor.capture());
+            assertEquals(null, captor.getValue().getExchangeLocation());
+            assertEquals(null, captor.getValue().getExchangeCity());
+            assertEquals(null, captor.getValue().getExchangeArea());
         }
 
         @Test
@@ -236,6 +272,37 @@ class ItemCommandServiceImplTest {
             // Verify old tags were deleted and new ones saved (2 tags)
             verify(itemTagRepository).deleteByIdItemId(50L);
             verify(itemTagRepository, org.mockito.Mockito.times(2)).save(any(ItemTagEntity.class));
+        }
+
+        @Test
+        @DisplayName("updates approximate exchange location fields")
+        void updateLocationFields() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID itemUuid = UUID.randomUUID();
+
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, UUID.randomUUID(), "Books");
+            ItemEntity existingItem = item(50L, itemUuid, 1L, 10L, ItemStatus.DRAFT, ItemCondition.GOOD);
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(existingItem));
+            when(categoryRepository.findById(10L)).thenReturn(Optional.of(cat));
+            when(itemRepository.save(any(ItemEntity.class))).thenAnswer(i -> i.getArgument(0));
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new ItemDetailResponse().uuid(itemUuid).title("Test Item"));
+
+            UpdateItemRequest request = new UpdateItemRequest()
+                    .exchangeCity("  Novi Sad  ")
+                    .exchangeArea("Limani")
+                    .exchangeLocation("Public square area");
+
+            service.updateItem(ownerUuid, itemUuid, request);
+
+            ArgumentCaptor<ItemEntity> captor = ArgumentCaptor.forClass(ItemEntity.class);
+            verify(itemRepository).save(captor.capture());
+            assertEquals("Novi Sad", captor.getValue().getExchangeCity());
+            assertEquals("Limani", captor.getValue().getExchangeArea());
+            assertEquals("Public square area", captor.getValue().getExchangeLocation());
         }
     }
 

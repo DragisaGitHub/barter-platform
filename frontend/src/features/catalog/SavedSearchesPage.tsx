@@ -52,6 +52,9 @@ function buildMarketplacePath(criteria: SavedSearchCriteria) {
   if (criteria.condition) {
     searchParams.set("condition", criteria.condition);
   }
+  if (criteria.location) {
+    searchParams.set("location", criteria.location);
+  }
   if (criteria.sort) {
     searchParams.set("sort", criteria.sort);
   }
