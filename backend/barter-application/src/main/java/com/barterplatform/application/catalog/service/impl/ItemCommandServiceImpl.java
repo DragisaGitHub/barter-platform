@@ -65,6 +65,9 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         item.setCategoryId(category.getId());
         item.setTitle(request.getTitle());
         item.setDescription(request.getDescription());
+        item.setExchangeLocation(normalizeOptionalText(request.getExchangeLocation()));
+        item.setExchangeCity(normalizeOptionalText(request.getExchangeCity()));
+        item.setExchangeArea(normalizeOptionalText(request.getExchangeArea()));
         item.setCondition(mapConditionToDomain(request.getCondition()));
 
         // Default to DRAFT unless an explicit status is provided
@@ -97,6 +100,15 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         }
         if (request.getDescription() != null) {
             item.setDescription(request.getDescription());
+        }
+        if (request.getExchangeLocation() != null) {
+            item.setExchangeLocation(normalizeOptionalText(request.getExchangeLocation()));
+        }
+        if (request.getExchangeCity() != null) {
+            item.setExchangeCity(normalizeOptionalText(request.getExchangeCity()));
+        }
+        if (request.getExchangeArea() != null) {
+            item.setExchangeArea(normalizeOptionalText(request.getExchangeArea()));
         }
         if (request.getCondition() != null) {
             item.setCondition(mapConditionToDomain(request.getCondition()));
@@ -238,6 +250,14 @@ public class ItemCommandServiceImpl implements ItemCommandService {
 
     private ItemCondition mapConditionToDomain(com.barterplatform.api.model.ItemCondition apiCondition) {
         return ItemCondition.valueOf(apiCondition.name());
+    }
+
+    private String normalizeOptionalText(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim().replaceAll("\\s+", " ");
+        return normalized.isBlank() ? null : normalized;
     }
 
     private ApiException notFound(String messageTemplate, Object... args) {

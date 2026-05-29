@@ -338,7 +338,7 @@ class CatalogQueryServiceImplTest {
                     .thenReturn(expected);
 
             ItemPagedResponse result = service.searchItems(
-                    0, 20, null, null, null, null, null, null);
+                    0, 20, null, null, null, null, null, null, null);
 
             assertNotNull(result);
             assertEquals(0, result.getTotalElements());
@@ -364,7 +364,7 @@ class CatalogQueryServiceImplTest {
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
             ItemPagedResponse result = service.searchItems(
-                    0, 20, null, "test", catUuid, null, ItemStatus.ACTIVE, ItemCondition.NEW);
+                    0, 20, null, "test", catUuid, null, ItemStatus.ACTIVE, ItemCondition.NEW, null);
 
             assertNotNull(result);
             verify(categoryRepository).findByUuid(catUuid);
@@ -383,7 +383,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, null, null, null);
+            service.searchItems(0, 20, null, null, null, null, null, null, null);
 
             verify(tagRepository, never()).findByUuid(any());
         }
@@ -400,7 +400,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, List.of(), null, null);
+            service.searchItems(0, 20, null, null, null, List.of(), null, null, null);
 
             verify(tagRepository, never()).findByUuid(any());
         }
@@ -421,7 +421,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, List.of(tagUuid), null, null);
+            service.searchItems(0, 20, null, null, null, List.of(tagUuid), null, null, null);
 
             verify(tagRepository).findByUuid(tagUuid);
             verify(itemRepository).findAll(any(Specification.class), any(Pageable.class));
@@ -444,10 +444,28 @@ class CatalogQueryServiceImplTest {
 
             // Should not throw; unknown UUID is skipped
             ItemPagedResponse result = service.searchItems(
-                    0, 20, null, null, null, List.of(unknownUuid), null, null);
+                    0, 20, null, null, null, List.of(unknownUuid), null, null, null);
 
             assertNotNull(result);
             verify(tagRepository).findByUuid(unknownUuid);
+        }
+
+        @Test
+        @DisplayName("location text filter is applied without tag lookup")
+        @SuppressWarnings("unchecked")
+        void locationFilterApplied() {
+            Page<ItemEntity> emptyPage = new PageImpl<>(List.of(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt")), 0);
+
+            when(itemRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(emptyPage);
+            when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
+                    .thenReturn(new ItemPagedResponse().content(List.of()));
+
+            service.searchItems(0, 20, null, null, null, null, null, null, "belgrade");
+
+            verify(tagRepository, never()).findByUuid(any());
+            verify(itemRepository).findAll(any(Specification.class), any(Pageable.class));
         }
     }
 }

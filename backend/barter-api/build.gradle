@@ -31,12 +31,17 @@ openApiGenerate {
         useJakartaEe        : 'true',
         useTags             : 'true',
         openApiNullable     : 'false',
+        containerDefaultToNull: 'true',
         delegatePattern     : 'false',
         hideGenerationTimestamp: 'true'
     ]
 }
 
 sourceSets.main.java.srcDir layout.buildDirectory.dir("generated/openapi/src/main/java")
+
+tasks.named('openApiGenerate') {
+    inputs.files(fileTree("$projectDir/src/main/resources/openapi") { include '**/*.yaml' })
+}
 
 tasks.named('compileJava') {
     dependsOn tasks.named('openApiGenerate')

@@ -58,11 +58,12 @@ public class CatalogController implements CatalogApi {
             Integer page, Integer size, String sort,
             String q, UUID categoryUuid,
             List<UUID> tagUuids, ItemStatus status,
-            ItemCondition condition) {
+            ItemCondition condition, String location) {
         return ResponseEntity.ok(catalogQueryService.searchItems(
                 page, size, sort, q, categoryUuid, tagUuids,
                 mapStatusToDomain(status),
-                mapConditionToDomain(condition)));
+                mapConditionToDomain(condition),
+                location));
     }
 
     @Override

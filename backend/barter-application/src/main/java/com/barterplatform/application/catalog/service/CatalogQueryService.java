@@ -31,10 +31,12 @@ public interface CatalogQueryService {
      * @param tagUuids     filter by tag UUIDs — items matching at least one tag are returned; ignored when null/empty
      * @param status       public marketplace visibility is always ACTIVE only
      * @param condition    filter by item condition
+     * @param location     case-insensitive text filter across approximate exchange city/area/location fields
      */
     ItemPagedResponse searchItems(Integer page, Integer size, String sort,
                                   String q, UUID categoryUuid, List<UUID> tagUuids,
-                                  ItemStatus status, ItemCondition condition);
+                                   ItemStatus status, ItemCondition condition,
+                                   String location);
 
     /**
      * Get full item detail by UUID.

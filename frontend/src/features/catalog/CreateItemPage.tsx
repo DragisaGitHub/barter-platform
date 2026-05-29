@@ -17,6 +17,9 @@ export function CreateItemPage() {
       {
         title: data.title,
         description: data.description || undefined,
+        exchangeCity: data.exchangeCity?.trim() || undefined,
+        exchangeArea: data.exchangeArea?.trim() || undefined,
+        exchangeLocation: data.exchangeLocation?.trim() || undefined,
         categoryUuid: data.categoryUuid,
         tagUuids: data.tagUuids?.length ? data.tagUuids : undefined,
         condition: data.condition,

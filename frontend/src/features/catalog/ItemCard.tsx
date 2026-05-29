@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Package } from "lucide-react";
+import { MapPin, Package } from "lucide-react";
 import type { ItemSummaryResponse } from "@/api/generated/types.ts";
 import { Card } from "../../components/ui/Card";
 import { ItemStatusBadge, ItemConditionBadge } from "./ItemBadges";
@@ -13,6 +13,7 @@ interface ItemCardProps {
 
 export function ItemCard({ item, linkPrefix = "/marketplace/items" }: ItemCardProps) {
   const { t } = useTranslation("catalog");
+  const approximateLocation = formatApproximateExchangeLocation(item);
   return (
     <Link to={`${linkPrefix}/${item.uuid}`} className="block group">
       <Card className="h-full transition-shadow hover:shadow-md">
@@ -53,8 +54,20 @@ export function ItemCard({ item, linkPrefix = "/marketplace/items" }: ItemCardPr
             <span>{t("itemCard.byOwner", { username: item.ownerUsername })}</span>
           )}
         </div>
+
+        {approximateLocation ? (
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <MapPin className="size-3.5 shrink-0" />
+            <span className="truncate">{approximateLocation}</span>
+          </div>
+        ) : null}
       </Card>
     </Link>
   );
+}
+
+function formatApproximateExchangeLocation(item: ItemSummaryResponse) {
+  const locality = [item.exchangeArea, item.exchangeCity].filter(Boolean).join(", ");
+  return [locality, item.exchangeLocation].filter(Boolean).join(" · ");
 }
 

@@ -114,6 +114,9 @@ function formatCriteria(
   if (criteria.condition) {
     parts.push(t("catalog:savedSearches.criteria.condition", { condition: t(conditionTranslationKey(criteria.condition)) }));
   }
+  if (criteria.location) {
+    parts.push(t("catalog:savedSearches.criteria.location", { location: criteria.location }));
+  }
 
   return parts.length > 0 ? parts.join(" · ") : t("catalog:savedSearches.criteria.catalogFilters");
 }

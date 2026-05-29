@@ -11,6 +11,18 @@ properties:
     maxLength: 255
   description:
     type: string
+  exchangeLocation:
+    type: string
+    maxLength: 255
+    description: Optional coarse public exchange location label. Do not include exact home addresses.
+  exchangeCity:
+    type: string
+    maxLength: 120
+    description: Optional approximate city for public exchange discovery.
+  exchangeArea:
+    type: string
+    maxLength: 120
+    description: Optional neighborhood or area label for public exchange discovery; avoid exact addresses.
   categoryUuid:
     type: string
     format: uuid

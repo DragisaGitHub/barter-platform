@@ -39,6 +39,19 @@ properties:
   primaryImageUrl:
     type: string
     nullable: true
+  exchangeLocation:
+    type: string
+    nullable: true
+    maxLength: 255
+    description: Coarse public exchange location label only; never an exact private address.
+  exchangeCity:
+    type: string
+    nullable: true
+    maxLength: 120
+  exchangeArea:
+    type: string
+    nullable: true
+    maxLength: 120
   images:
     type: array
     items:

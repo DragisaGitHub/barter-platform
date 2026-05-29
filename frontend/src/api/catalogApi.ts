@@ -24,6 +24,7 @@ export interface SearchItemsParams {
   tagUuids?: string[];
   status?: ItemStatus;
   condition?: ItemCondition;
+  location?: string;
 }
 
 export interface MyItemsParams {

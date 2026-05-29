@@ -575,6 +575,87 @@ class CatalogIntegrationTest {
                 .andExpect(jsonPath("$.status").value("DRAFT"));
     }
 
+    @Test
+    void shouldCreateUpdateReturnAndSearchByApproximateExchangeLocation() throws Exception {
+        String token = registerActivateAndLogin("location-user", "location@example.com", "P@ssword123");
+
+        MvcResult createResult = mockMvc.perform(apiPost("/catalog/items")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "Board Game",
+                                  "categoryUuid": "%s",
+                                  "condition": "GOOD",
+                                  "status": "ACTIVE",
+                                  "exchangeCity": "Belgrade",
+                                  "exchangeArea": "Novi Beograd",
+                                  "exchangeLocation": "Near the public library area"
+                                }
+                                """.formatted(CATEGORY_TOYS_UUID)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.exchangeCity").value("Belgrade"))
+                .andExpect(jsonPath("$.exchangeArea").value("Novi Beograd"))
+                .andExpect(jsonPath("$.exchangeLocation").value("Near the public library area"))
+                .andReturn();
+
+        String itemUuid = extractField(createResult, "uuid");
+        ItemEntity savedItem = itemRepository.findByUuid(UUID.fromString(itemUuid)).orElseThrow();
+        assertThat(savedItem.getExchangeCity()).isEqualTo("Belgrade");
+        assertThat(savedItem.getExchangeArea()).isEqualTo("Novi Beograd");
+        assertThat(savedItem.getExchangeLocation()).isEqualTo("Near the public library area");
+
+        mockMvc.perform(apiGet("/catalog/items")
+                        .queryParam("location", "beograd"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].uuid").value(itemUuid))
+                .andExpect(jsonPath("$.content[0].exchangeCity").value("Belgrade"))
+                .andExpect(jsonPath("$.content[0].exchangeArea").value("Novi Beograd"))
+                .andExpect(jsonPath("$.content[0].exchangeLocation").value("Near the public library area"));
+
+        mockMvc.perform(apiPatch("/catalog/items/" + itemUuid)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "exchangeCity": "Zemun",
+                                  "exchangeArea": "Gardoš",
+                                  "exchangeLocation": "Main pedestrian zone"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.exchangeCity").value("Zemun"))
+                .andExpect(jsonPath("$.exchangeArea").value("Gardoš"))
+                .andExpect(jsonPath("$.exchangeLocation").value("Main pedestrian zone"));
+
+        mockMvc.perform(apiGet("/catalog/items/" + itemUuid))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.exchangeCity").value("Zemun"))
+                .andExpect(jsonPath("$.exchangeArea").value("Gardoš"))
+                .andExpect(jsonPath("$.exchangeLocation").value("Main pedestrian zone"));
+
+        mockMvc.perform(apiGet("/catalog/items")
+                        .queryParam("location", "gardoš"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].uuid").value(itemUuid));
+
+        mockMvc.perform(apiPost("/catalog/items")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "No Location Required",
+                                  "categoryUuid": "%s",
+                                  "condition": "GOOD",
+                                  "status": "ACTIVE"
+                                }
+                                """.formatted(CATEGORY_TOYS_UUID)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.title").value("No Location Required"));
+    }
+
     // ══════════════════════════════════════════════════════════════
     //  Favorites / wishlist
     // ══════════════════════════════════════════════════════════════

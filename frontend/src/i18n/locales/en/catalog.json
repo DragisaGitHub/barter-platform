@@ -51,6 +51,9 @@
     "category": "Category",
     "condition": "Condition",
     "status": "Status",
+    "exchangeCity": "Approximate public exchange city",
+    "exchangeArea": "Approximate public exchange area",
+    "exchangeLocation": "Public exchange location note",
     "created": "Created"
   },
   "myItems": {
@@ -113,6 +116,12 @@
     "popularCategoriesDescription": "Compact discovery shortcuts based on live marketplace activity, so listings stay front and center.",
     "noPopularCategories": "Popular categories will appear here as active listings build momentum across the marketplace.",
     "defaultCategoryDescription": "Jump straight into the most active listings in this category.",
+    "location": {
+      "title": "Location",
+      "helper": "Filter by approximate city, area, or public exchange location. No maps or exact addresses.",
+      "placeholder": "e.g. Belgrade, Vračar",
+      "apply": "Apply location"
+    },
     "results": {
       "searchResults": "Search results for “{{query}}”",
       "categoryItems": "{{category}} items",
@@ -120,7 +129,8 @@
       "liveListings_plural": "{{count}} live listings",
       "inCategory": " in {{category}}",
       "fromCommunity": " from the community",
-      "matchingQuery": " matching “{{query}}”"
+      "matchingQuery": " matching “{{query}}”",
+      "nearLocation": " near “{{location}}”"
     }
   },
   "categoriesPage": {
@@ -158,6 +168,8 @@
     "memberTrader": "Member trader on Barter Platform",
     "tradeSafely": "Trade safely",
     "tradeSafelyDescription": "Sign up to contact the owner and send a trade offer.",
+    "exchangeLocation": "Approximate exchange area",
+    "exchangeLocationPrivacy": "This is a public approximate area only. Do not share an exact home address in the listing.",
     "createAccountToTrade": "Create account to propose trade",
     "alreadyHaveAccount": "Already have an account? Login",
     "proposeTrade": "Propose Trade",
@@ -169,6 +181,11 @@
   "itemForm": {
     "titlePlaceholder": "What are you listing?",
     "descriptionPlaceholder": "Describe your item...",
+    "exchangeLocationTitle": "Approximate public exchange area",
+    "exchangeLocationHelper": "Add only a city, neighborhood, or public-place area. Do not enter your exact home address.",
+    "exchangeCityPlaceholder": "e.g. Belgrade",
+    "exchangeAreaPlaceholder": "e.g. Vračar or Novi Beograd",
+    "exchangeLocationPlaceholder": "e.g. near a public library or shopping area",
     "selectCategory": "Select a category",
     "selectCondition": "Select condition",
     "loadingTags": "Loading tags...",
@@ -177,6 +194,9 @@
   "validation": {
     "titleRequired": "Title is required",
     "titleTooLong": "Title must be 255 characters or fewer",
+    "exchangeCityTooLong": "City must be 120 characters or fewer",
+    "exchangeAreaTooLong": "Area must be 120 characters or fewer",
+    "exchangeLocationTooLong": "Location note must be 255 characters or fewer",
     "categoryRequired": "Category is required",
     "conditionRequired": "Condition is required"
   },
@@ -250,6 +270,7 @@
       "tags": "{{count}} tag",
       "tags_plural": "{{count}} tags",
       "condition": "Condition: {{condition}}",
+      "location": "Location: {{location}}",
       "catalogFilters": "Catalog filters"
     }
   },

@@ -126,12 +126,13 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     @Override
     public ItemPagedResponse searchItems(Integer page, Integer size, String sort,
                                          String q, UUID categoryUuid, List<UUID> tagUuids,
-                                         ItemStatus status, ItemCondition condition) {
+                                          ItemStatus status, ItemCondition condition,
+                                          String location) {
 
         PageRequestFactory.ResolvedPageRequest pageRequest = pageRequestFactory.create(
                 page, size, sort, DEFAULT_ITEM_SORT_FIELD, ALLOWED_ITEM_SORT_FIELDS);
 
-        Specification<ItemEntity> spec = buildSearchSpecification(q, categoryUuid, tagUuids, condition);
+        Specification<ItemEntity> spec = buildSearchSpecification(q, categoryUuid, tagUuids, condition, location);
 
         Page<ItemEntity> itemPage = itemRepository.findAll(spec, pageRequest.pageable());
 
@@ -209,7 +210,8 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
 
     private Specification<ItemEntity> buildSearchSpecification(String q, UUID categoryUuid,
                                                                List<UUID> tagUuids,
-                                                               ItemCondition condition) {
+                                                                ItemCondition condition,
+                                                                String location) {
         List<Specification<ItemEntity>> specs = new ArrayList<>();
 
         // Always exclude soft-deleted items
@@ -230,6 +232,10 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
 
         if (q != null && !q.isBlank()) {
             specs.add(ItemSpecifications.titleContainsIgnoreCase(q.trim()));
+        }
+
+        if (location != null && !location.isBlank()) {
+            specs.add(ItemSpecifications.locationContainsIgnoreCase(location.trim()));
         }
 
         if (tagUuids != null && !tagUuids.isEmpty()) {

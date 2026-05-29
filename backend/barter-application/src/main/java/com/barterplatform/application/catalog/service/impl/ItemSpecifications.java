@@ -44,6 +44,17 @@ final class ItemSpecifications {
         );
     }
 
+    static Specification<ItemEntity> locationContainsIgnoreCase(String location) {
+        return (root, query, cb) -> {
+            String pattern = "%" + location.toLowerCase() + "%";
+            return cb.or(
+                    cb.like(cb.lower(root.get("exchangeLocation")), pattern),
+                    cb.like(cb.lower(root.get("exchangeCity")), pattern),
+                    cb.like(cb.lower(root.get("exchangeArea")), pattern)
+            );
+        };
+    }
+
     /**
      * Returns items that have at least one tag whose internal ID is in {@code tagIds}.
      * Implemented as an EXISTS subquery on the item_tags join table.
