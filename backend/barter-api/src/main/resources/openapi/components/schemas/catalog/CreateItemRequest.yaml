@@ -33,6 +33,14 @@ properties:
       format: uuid
   condition:
     $ref: '../../../openapi.yaml#/components/schemas/ItemCondition'
+  listingMode:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingMode'
+    description: Defaults to SINGLE when omitted.
+  entries:
+    type: array
+    maxItems: 20
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/ItemListingEntryRequest'
   status:
     $ref: '../../../openapi.yaml#/components/schemas/ItemStatus'
     description: Optional initial status. Defaults to DRAFT if omitted.

@@ -45,12 +45,28 @@
     "used": "Used",
     "forParts": "For Parts"
   },
+  "listingMode": {
+    "single": "Single item",
+    "bundle": "Bundle",
+    "pickAny": "Pick from set",
+    "label": {
+      "SINGLE": "Single item",
+      "BUNDLE": "Bundle",
+      "PICK_ANY": "Pick from set"
+    },
+    "badge": {
+      "SINGLE": "Single item",
+      "BUNDLE": "Bundle",
+      "PICK_ANY": "Pick from set"
+    }
+  },
   "fields": {
     "title": "Title",
     "description": "Description",
     "category": "Category",
     "condition": "Condition",
     "status": "Status",
+    "listingMode": "Listing type",
     "exchangeCity": "Approximate public exchange city",
     "exchangeArea": "Approximate public exchange area",
     "exchangeLocation": "Public exchange location note",
@@ -184,6 +200,13 @@
     "tradeSafelyDescription": "Sign up to contact the owner and send a trade offer.",
     "exchangeLocation": "Approximate exchange area",
     "exchangeLocationPrivacy": "This is a public approximate area only. Do not share an exact home address in the listing.",
+    "bundleExplanation": "All listed items are offered together.",
+    "pickAnyExplanation": "The other user can choose what they need.",
+    "entriesTitle": "Included items",
+    "entryCount": "{{count}} entry",
+    "entryCount_plural": "{{count}} entries",
+    "entryNumber": "Entry {{number}}",
+    "entryQuantity": "Qty {{quantity}}",
     "createAccountToTrade": "Create account to propose trade",
     "alreadyHaveAccount": "Already have an account? Login",
     "proposeTrade": "Propose Trade",
@@ -200,6 +223,22 @@
     "exchangeCityPlaceholder": "e.g. Belgrade",
     "exchangeAreaPlaceholder": "e.g. Vračar or Novi Beograd",
     "exchangeLocationPlaceholder": "e.g. near a public library or shopping area",
+    "listingMode": {
+      "singleHelper": "Use this for a normal one-item listing.",
+      "bundleHelper": "All listed items are offered together.",
+      "pickAnyHelper": "The other user can choose what they need."
+    },
+    "entriesTitle": "Structured listing entries",
+    "entriesHelper": "Add up to 20 entries. Keep details short and avoid private addresses or pricing.",
+    "addEntry": "Add entry",
+    "removeEntry": "Remove",
+    "entryNumber": "Entry {{number}}",
+    "entryTitle": "Entry title",
+    "entryTitlePlaceholder": "e.g. Book 1, sticker A, toy car",
+    "entryDescription": "Entry description (optional)",
+    "entryDescriptionPlaceholder": "Short note about this entry",
+    "entryQuantity": "Quantity",
+    "noEntries": "Add at least one entry for bundle or pick-from-set listings.",
     "selectCategory": "Select a category",
     "selectCondition": "Select condition",
     "loadingTags": "Loading tags...",
@@ -212,7 +251,12 @@
     "exchangeAreaTooLong": "Area must be 120 characters or fewer",
     "exchangeLocationTooLong": "Location note must be 255 characters or fewer",
     "categoryRequired": "Category is required",
-    "conditionRequired": "Condition is required"
+    "conditionRequired": "Condition is required",
+    "entriesRequiredForMultiItem": "Bundle and pick-from-set listings require at least one entry",
+    "entriesTooMany": "A listing can include at most 20 entries",
+    "entryTitleRequired": "Entry title is required",
+    "entryTitleTooLong": "Entry title must be 200 characters or fewer",
+    "entryQuantityMin": "Quantity must be at least 1"
   },
   "createItem": {
     "title": "Create New Item",
@@ -288,7 +332,13 @@
       "catalogFilters": "Catalog filters"
     }
   },
-  "itemCard": { "byOwner": "by {{username}}" },
+  "itemCard": {
+    "byOwner": "by {{username}}",
+    "bundleEntryCount": "{{count}} item included",
+    "bundleEntryCount_plural": "{{count}} items included",
+    "pickAnyEntryCount": "Choose from {{count}} item",
+    "pickAnyEntryCount_plural": "Choose from {{count}} items"
+  },
   "images": {
     "primaryImage": "Primary image",
     "itemPhotoAlt": "Item photo {{number}}",

@@ -191,6 +191,8 @@ export function ItemDetailPage() {
   )}`;
   const descriptionPreview = item.description?.trim();
   const approximateLocation = formatApproximateExchangeLocation(item);
+  const listingMode = item.listingMode ?? "SINGLE";
+  const isMultiItem = listingMode !== "SINGLE";
   const listedDate = new Date(item.createdAt).toLocaleDateString(i18n.language === "sr" ? "sr-Latn-RS" : "en-US", {
     day: "numeric",
     month: "short",
@@ -219,6 +221,11 @@ export function ItemDetailPage() {
             <div className="flex flex-wrap gap-1.5">
               <ItemStatusBadge status={item.status} />
               <ItemConditionBadge condition={item.condition} />
+              {isMultiItem ? (
+                <Badge variant="warning" className="rounded-full">
+                  {t(`catalog:listingMode.badge.${listingMode}`)}
+                </Badge>
+              ) : null}
               <span className="marketplace-soft-badge inline-flex items-center bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700">
                 {item.category.name}
               </span>
@@ -282,6 +289,17 @@ export function ItemDetailPage() {
                 {descriptionPreview || t("catalog:itemDetail.noDescription")}
               </p>
             </div>
+
+            {isMultiItem ? (
+              <div className="mt-4 rounded-lg border border-amber-100 bg-amber-50 px-3.5 py-3 text-sm text-amber-800">
+                <p className="font-medium">{t(`catalog:listingMode.label.${listingMode}`)}</p>
+                <p className="mt-1 leading-5">
+                  {listingMode === "BUNDLE"
+                    ? t("catalog:itemDetail.bundleExplanation")
+                    : t("catalog:itemDetail.pickAnyExplanation")}
+                </p>
+              </div>
+            ) : null}
           </section>
 
           <aside className="space-y-3">
@@ -386,6 +404,47 @@ export function ItemDetailPage() {
             </p>
           </div>
         </section>
+
+        {isMultiItem ? (
+          <section className="marketplace-panel mt-4 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-medium text-slate-900">{t("catalog:itemDetail.entriesTitle")}</h2>
+                <p className="mt-1 text-sm text-slate-500">
+                  {listingMode === "BUNDLE"
+                    ? t("catalog:itemDetail.bundleExplanation")
+                    : t("catalog:itemDetail.pickAnyExplanation")}
+                </p>
+              </div>
+              <Badge variant="warning">
+                {t("catalog:itemDetail.entryCount", { count: item.entries?.length ?? 0 })}
+              </Badge>
+            </div>
+
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {(item.entries ?? []).map((entry, index) => (
+                <div key={entry.uuid} className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-medium uppercase tracking-[0.08em] text-slate-500">
+                        {t("catalog:itemDetail.entryNumber", { number: index + 1 })}
+                      </p>
+                      <h3 className="mt-1 font-semibold text-slate-900">{entry.title}</h3>
+                    </div>
+                    {entry.quantity ? (
+                      <span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
+                        {t("catalog:itemDetail.entryQuantity", { quantity: entry.quantity })}
+                      </span>
+                    ) : null}
+                  </div>
+                  {entry.description ? (
+                    <p className="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">{entry.description}</p>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </div>
 
       {canProposeTrade && (

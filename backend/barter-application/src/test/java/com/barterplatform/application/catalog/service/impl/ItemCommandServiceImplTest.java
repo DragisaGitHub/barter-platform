@@ -11,18 +11,22 @@ import static org.mockito.Mockito.when;
 import com.barterplatform.api.model.ArchiveItemRequest;
 import com.barterplatform.api.model.CreateItemRequest;
 import com.barterplatform.api.model.ItemDetailResponse;
+import com.barterplatform.api.model.ItemListingEntryRequest;
 import com.barterplatform.api.model.UpdateItemRequest;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
+import com.barterplatform.domain.catalog.entity.ItemListingEntryEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagId;
 import com.barterplatform.domain.catalog.entity.TagEntity;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
+import com.barterplatform.domain.catalog.enums.ListingMode;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
+import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.catalog.repository.TagRepository;
@@ -47,6 +51,7 @@ class ItemCommandServiceImplTest {
     @Mock private CategoryRepository categoryRepository;
     @Mock private TagRepository tagRepository;
     @Mock private ItemTagRepository itemTagRepository;
+    @Mock private ItemListingEntryRepository itemListingEntryRepository;
     @Mock private UserRepository userRepository;
     @Mock private ItemMapper itemMapper;
 
@@ -56,7 +61,7 @@ class ItemCommandServiceImplTest {
     void setUp() {
         service = new ItemCommandServiceImpl(
                 itemRepository, categoryRepository, tagRepository,
-                itemTagRepository, userRepository, itemMapper);
+                itemTagRepository, itemListingEntryRepository, userRepository, itemMapper);
     }
 
     // ── Helpers ──────────────────────────────────────────────────
@@ -138,7 +143,7 @@ class ItemCommandServiceImplTest {
 
             ItemDetailResponse expectedResponse = new ItemDetailResponse()
                     .uuid(UUID.randomUUID()).title("My Book");
-            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any(), any(), any()))
+            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(expectedResponse);
 
             ItemDetailResponse result = service.createItem(ownerUuid, request);
@@ -151,6 +156,7 @@ class ItemCommandServiceImplTest {
             verify(itemRepository).save(captor.capture());
             assertEquals(ItemStatus.DRAFT, captor.getValue().getStatus());
             assertEquals(ItemCondition.GOOD, captor.getValue().getCondition());
+            assertEquals(ListingMode.SINGLE, captor.getValue().getListingMode());
             assertEquals(1L, captor.getValue().getOwnerId());
             assertEquals(10L, captor.getValue().getCategoryId());
             assertEquals("Belgrade", captor.getValue().getExchangeCity());
@@ -173,7 +179,7 @@ class ItemCommandServiceImplTest {
                 arg.setId(100L);
                 return arg;
             });
-            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any(), any(), any()))
+            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(new ItemDetailResponse().uuid(UUID.randomUUID()).title("My Book"));
 
             CreateItemRequest request = new CreateItemRequest("My Book", catUuid,
@@ -204,6 +210,121 @@ class ItemCommandServiceImplTest {
             ApiException ex = assertThrows(ApiException.class,
                     () -> service.createItem(ownerUuid, request));
             assertEquals(404, ex.getStatus().value());
+            verify(itemRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("creates bundle item with validated entries")
+        void createBundleWithEntries() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID catUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, catUuid, "Books");
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+            when(itemRepository.save(any(ItemEntity.class))).thenAnswer(invocation -> {
+                ItemEntity arg = invocation.getArgument(0);
+                arg.setId(100L);
+                return arg;
+            });
+            when(itemListingEntryRepository.save(any(ItemListingEntryEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new ItemDetailResponse().uuid(UUID.randomUUID()).title("Bundle"));
+
+            CreateItemRequest request = new CreateItemRequest("Bundle", catUuid,
+                    com.barterplatform.api.model.ItemCondition.GOOD)
+                    .listingMode(com.barterplatform.api.model.ListingMode.BUNDLE)
+                    .entries(List.of(
+                            new ItemListingEntryRequest("Book one").description("  First book  ").quantity(1),
+                            new ItemListingEntryRequest("Book two").description("   ")));
+
+            service.createItem(ownerUuid, request);
+
+            ArgumentCaptor<ItemEntity> itemCaptor = ArgumentCaptor.forClass(ItemEntity.class);
+            verify(itemRepository).save(itemCaptor.capture());
+            assertEquals(ListingMode.BUNDLE, itemCaptor.getValue().getListingMode());
+
+            ArgumentCaptor<ItemListingEntryEntity> entryCaptor = ArgumentCaptor.forClass(ItemListingEntryEntity.class);
+            verify(itemListingEntryRepository, org.mockito.Mockito.times(2)).save(entryCaptor.capture());
+            assertEquals("First book", entryCaptor.getAllValues().get(0).getDescription());
+            assertEquals(null, entryCaptor.getAllValues().get(1).getDescription());
+            assertEquals(0, entryCaptor.getAllValues().get(0).getSortOrder());
+        }
+
+        @Test
+        @DisplayName("creates pick-any item with entries")
+        void createPickAnyWithEntries() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID catUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, catUuid, "Books");
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+            when(itemRepository.save(any(ItemEntity.class))).thenAnswer(invocation -> {
+                ItemEntity arg = invocation.getArgument(0);
+                arg.setId(100L);
+                return arg;
+            });
+            when(itemListingEntryRepository.save(any(ItemListingEntryEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new ItemDetailResponse().uuid(UUID.randomUUID()).title("Pick set"));
+
+            CreateItemRequest request = new CreateItemRequest("Pick set", catUuid,
+                    com.barterplatform.api.model.ItemCondition.GOOD)
+                    .listingMode(com.barterplatform.api.model.ListingMode.PICK_ANY)
+                    .entries(List.of(new ItemListingEntryRequest("Sticker A")));
+
+            service.createItem(ownerUuid, request);
+
+            ArgumentCaptor<ItemEntity> itemCaptor = ArgumentCaptor.forClass(ItemEntity.class);
+            verify(itemRepository).save(itemCaptor.capture());
+            assertEquals(ListingMode.PICK_ANY, itemCaptor.getValue().getListingMode());
+            verify(itemListingEntryRepository).save(any(ItemListingEntryEntity.class));
+        }
+
+        @Test
+        @DisplayName("rejects multi-item listing without entries")
+        void rejectMultiItemWithoutEntries() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID catUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, catUuid, "Books");
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+
+            CreateItemRequest request = new CreateItemRequest("Bundle", catUuid,
+                    com.barterplatform.api.model.ItemCondition.GOOD)
+                    .listingMode(com.barterplatform.api.model.ListingMode.BUNDLE);
+
+            ApiException ex = assertThrows(ApiException.class, () -> service.createItem(ownerUuid, request));
+            assertEquals(400, ex.getStatus().value());
+            verify(itemRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("rejects more than twenty entries")
+        void rejectTooManyEntries() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID catUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, catUuid, "Books");
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+
+            List<ItemListingEntryRequest> entries = java.util.stream.IntStream.rangeClosed(1, 21)
+                    .mapToObj(i -> new ItemListingEntryRequest("Entry " + i))
+                    .toList();
+            CreateItemRequest request = new CreateItemRequest("Bundle", catUuid,
+                    com.barterplatform.api.model.ItemCondition.GOOD)
+                    .listingMode(com.barterplatform.api.model.ListingMode.BUNDLE)
+                    .entries(entries);
+
+            ApiException ex = assertThrows(ApiException.class, () -> service.createItem(ownerUuid, request));
+            assertEquals(400, ex.getStatus().value());
             verify(itemRepository, never()).save(any());
         }
     }
@@ -259,7 +380,7 @@ class ItemCommandServiceImplTest {
 
             ItemDetailResponse expectedResponse = new ItemDetailResponse()
                     .uuid(itemUuid).title("Test Item");
-            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any()))
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(expectedResponse);
 
             UpdateItemRequest request = new UpdateItemRequest()
@@ -288,7 +409,7 @@ class ItemCommandServiceImplTest {
             when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(existingItem));
             when(categoryRepository.findById(10L)).thenReturn(Optional.of(cat));
             when(itemRepository.save(any(ItemEntity.class))).thenAnswer(i -> i.getArgument(0));
-            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any()))
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(new ItemDetailResponse().uuid(itemUuid).title("Test Item"));
 
             UpdateItemRequest request = new UpdateItemRequest()
@@ -303,6 +424,39 @@ class ItemCommandServiceImplTest {
             assertEquals("Novi Sad", captor.getValue().getExchangeCity());
             assertEquals("Limani", captor.getValue().getExchangeArea());
             assertEquals("Public square area", captor.getValue().getExchangeLocation());
+        }
+
+        @Test
+        @DisplayName("updates entries for owner by replacing the structured entry list")
+        void updateEntriesForOwner() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID itemUuid = UUID.randomUUID();
+
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, UUID.randomUUID(), "Books");
+            ItemEntity existingItem = item(50L, itemUuid, 1L, 10L, ItemStatus.DRAFT, ItemCondition.GOOD);
+            existingItem.setListingMode(ListingMode.BUNDLE);
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(existingItem));
+            when(categoryRepository.findById(10L)).thenReturn(Optional.of(cat));
+            when(itemRepository.save(any(ItemEntity.class))).thenAnswer(i -> i.getArgument(0));
+            when(itemListingEntryRepository.save(any(ItemListingEntryEntity.class))).thenAnswer(i -> i.getArgument(0));
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new ItemDetailResponse().uuid(itemUuid).title("Test Item"));
+
+            UpdateItemRequest request = new UpdateItemRequest()
+                    .listingMode(com.barterplatform.api.model.ListingMode.PICK_ANY)
+                    .entries(List.of(new ItemListingEntryRequest("Updated entry").quantity(2)));
+
+            service.updateItem(ownerUuid, itemUuid, request);
+
+            verify(itemListingEntryRepository).deleteByItemId(50L);
+            ArgumentCaptor<ItemListingEntryEntity> captor = ArgumentCaptor.forClass(ItemListingEntryEntity.class);
+            verify(itemListingEntryRepository).save(captor.capture());
+            assertEquals("Updated entry", captor.getValue().getTitle());
+            assertEquals(2, captor.getValue().getQuantity());
+            assertEquals(ListingMode.PICK_ANY, existingItem.getListingMode());
         }
     }
 
@@ -330,7 +484,7 @@ class ItemCommandServiceImplTest {
 
             ItemDetailResponse expectedResponse = new ItemDetailResponse()
                     .uuid(itemUuid).title("Test Item");
-            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any()))
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any(), any()))
                     .thenReturn(expectedResponse);
 
             ArchiveItemRequest request = new ArchiveItemRequest().reason("No longer needed");

@@ -243,6 +243,8 @@ components:
       $ref: './components/schemas/catalog/ItemStatus.yaml'
     ItemCondition:
       $ref: './components/schemas/catalog/ItemCondition.yaml'
+    ListingMode:
+      $ref: './components/schemas/catalog/ListingMode.yaml'
     CategoryResponse:
       $ref: './components/schemas/catalog/CategoryResponse.yaml'
     PopularCategoryResponse:
@@ -263,6 +265,10 @@ components:
       $ref: './components/schemas/catalog/ItemDetailResponse.yaml'
     ItemPagedResponse:
       $ref: './components/schemas/catalog/ItemPagedResponse.yaml'
+    ItemListingEntryRequest:
+      $ref: './components/schemas/catalog/ItemListingEntryRequest.yaml'
+    ItemListingEntryResponse:
+      $ref: './components/schemas/catalog/ItemListingEntryResponse.yaml'
     RecommendationReason:
       $ref: './components/schemas/catalog/RecommendationReason.yaml'
     RecommendationItemResponse:

@@ -21,6 +21,18 @@ properties:
     $ref: '../../../openapi.yaml#/components/schemas/ItemStatus'
   condition:
     $ref: '../../../openapi.yaml#/components/schemas/ItemCondition'
+  listingMode:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingMode'
+  entryCount:
+    type: integer
+    format: int32
+    minimum: 0
+    default: 0
+  previewEntries:
+    type: array
+    maxItems: 3
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/ItemListingEntryResponse'
   categoryUuid:
     type: string
     format: uuid
