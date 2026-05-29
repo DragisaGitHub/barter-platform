@@ -9,6 +9,8 @@ public interface ItemTagRepository extends JpaRepository<ItemTagEntity, ItemTagI
 
     List<ItemTagEntity> findByIdItemId(Long itemId);
 
+    List<ItemTagEntity> findByIdItemIdIn(List<Long> itemIds);
+
     void deleteByIdItemId(Long itemId);
 }
 

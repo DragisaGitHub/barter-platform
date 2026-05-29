@@ -130,6 +130,8 @@ paths:
     $ref: './paths/admin-tags.yaml#/tagByUuid'
   /catalog/items:
     $ref: './paths/catalog.yaml#/items'
+  /catalog/recommendations:
+    $ref: './paths/catalog.yaml#/recommendations'
   /catalog/favorites:
     $ref: './paths/catalog.yaml#/favorites'
   /catalog/items/mine:
@@ -261,6 +263,12 @@ components:
       $ref: './components/schemas/catalog/ItemDetailResponse.yaml'
     ItemPagedResponse:
       $ref: './components/schemas/catalog/ItemPagedResponse.yaml'
+    RecommendationReason:
+      $ref: './components/schemas/catalog/RecommendationReason.yaml'
+    RecommendationItemResponse:
+      $ref: './components/schemas/catalog/RecommendationItemResponse.yaml'
+    RecommendationPagedResponse:
+      $ref: './components/schemas/catalog/RecommendationPagedResponse.yaml'
     SavedSearchCriteria:
       $ref: './components/schemas/saved-search/SavedSearchCriteria.yaml'
     SavedSearchResponse:

@@ -4,6 +4,7 @@ import type {
   PopularCategoryResponse,
   TagResponse,
   ItemPagedResponse,
+  RecommendationPagedResponse,
   ItemDetailResponse,
   MessageResponse,
   CreateItemRequest,
@@ -44,6 +45,12 @@ export interface PopularCategoriesParams {
   limit?: number;
 }
 
+export interface RecommendationParams {
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
 // ─── API functions ──────────────────────────────────────────────────────────
 
 export async function listCategories(): Promise<CategoryResponse[]> {
@@ -67,6 +74,13 @@ export async function listTags(): Promise<TagResponse[]> {
 
 export async function searchItems(params: SearchItemsParams = {}): Promise<ItemPagedResponse> {
   const response = await apiClient.get<ItemPagedResponse>("/catalog/items", { params });
+  return response.data;
+}
+
+export async function listRecommendations(
+  params: RecommendationParams = {}
+): Promise<RecommendationPagedResponse> {
+  const response = await apiClient.get<RecommendationPagedResponse>("/catalog/recommendations", { params });
   return response.data;
 }
 

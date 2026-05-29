@@ -133,6 +133,20 @@
       "nearLocation": " blizu „{{location}}”"
     }
   },
+  "recommendations": {
+    "title": "Preporučeno za tebe",
+    "subtitle": "Korisni predlozi za otkrivanje na osnovu aktivnosti na marketplace-u i tvojih postojećih filtera ili oglasa.",
+    "browseAll": "Pregledaj sve",
+    "loadError": "Preporuke trenutno nije moguće učitati.",
+    "emptyTitle": "Još nema preporuka",
+    "emptyDescription": "Kako se bude pojavljivalo više aktivnih oglasa, korisni predlozi će biti prikazani ovde.",
+    "reasons": {
+      "becauseOfInterests": "Zbog tvojih interesovanja",
+      "similarToYourListings": "Slično tvojim oglasima",
+      "nearPreferredExchangeArea": "Blizu tvoje željene oblasti razmene",
+      "popularRecently": "Nedavno popularno"
+    }
+  },
   "categoriesPage": {
     "title": "Pregled svih kategorija marketplace-a",
     "subtitle": "Pretraži ceo direktorijum kategorija i vrati se na marketplace sa već primenjenim odgovarajućim filterom.",

@@ -6,6 +6,7 @@ import com.barterplatform.application.catalog.service.CatalogQueryService;
 import com.barterplatform.application.catalog.service.FavoriteItemService;
 import com.barterplatform.application.catalog.service.ItemCommandService;
 import com.barterplatform.application.catalog.service.ItemImageService;
+import com.barterplatform.application.catalog.service.RecommendationService;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,15 +26,18 @@ public class CatalogController implements CatalogApi {
     private final FavoriteItemService favoriteItemService;
     private final ItemCommandService itemCommandService;
     private final ItemImageService itemImageService;
+    private final RecommendationService recommendationService;
 
     public CatalogController(CatalogQueryService catalogQueryService,
                              FavoriteItemService favoriteItemService,
                              ItemCommandService itemCommandService,
-                             ItemImageService itemImageService) {
+                             ItemImageService itemImageService,
+                             RecommendationService recommendationService) {
         this.catalogQueryService = catalogQueryService;
         this.favoriteItemService = favoriteItemService;
         this.itemCommandService = itemCommandService;
         this.itemImageService = itemImageService;
+        this.recommendationService = recommendationService;
     }
 
     // ── Public endpoints ─────────────────────────────────────────
@@ -72,6 +76,12 @@ public class CatalogController implements CatalogApi {
                 itemUuid,
                 currentUserUuidOrNull(),
                 currentUserIsAdmin()));
+    }
+
+    @Override
+    public ResponseEntity<RecommendationPagedResponse> listRecommendations(Integer page, Integer size, String sort) {
+        return ResponseEntity.ok(recommendationService.listRecommendations(
+                currentUserUuidOrNull(), page, size, sort));
     }
 
     // ── Authenticated item endpoints ─────────────────────────────

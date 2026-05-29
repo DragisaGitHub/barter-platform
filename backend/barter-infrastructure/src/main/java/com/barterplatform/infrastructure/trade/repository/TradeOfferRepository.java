@@ -25,6 +25,8 @@ public interface TradeOfferRepository extends JpaRepository<TradeOfferEntity, Lo
 
     Page<TradeOfferEntity> findBySenderUserIdAndStatus(Long senderUserId, TradeOfferStatus status, Pageable pageable);
 
+    Page<TradeOfferEntity> findBySenderUserIdOrReceiverUserId(Long senderUserId, Long receiverUserId, Pageable pageable);
+
     @Query("""
             SELECT DISTINCT o FROM TradeOfferEntity o
             LEFT JOIN o.items toi

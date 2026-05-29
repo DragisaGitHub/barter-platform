@@ -1,0 +1,8 @@
+type: string
+description: Explainable reason shown with a recommended listing. No scores are exposed to users.
+enum:
+  - BECAUSE_OF_INTERESTS
+  - SIMILAR_TO_YOUR_LISTINGS
+  - NEAR_PREFERRED_EXCHANGE_AREA
+  - POPULAR_RECENTLY
+

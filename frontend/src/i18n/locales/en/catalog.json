@@ -133,6 +133,20 @@
       "nearLocation": " near “{{location}}”"
     }
   },
+  "recommendations": {
+    "title": "Recommended for you",
+    "subtitle": "Helpful discovery picks based on marketplace activity and your existing filters or listings.",
+    "browseAll": "Browse all",
+    "loadError": "Recommendations could not be loaded right now.",
+    "emptyTitle": "No recommendations yet",
+    "emptyDescription": "As more active listings appear, helpful suggestions will show here.",
+    "reasons": {
+      "becauseOfInterests": "Because of your interests",
+      "similarToYourListings": "Similar to your listings",
+      "nearPreferredExchangeArea": "Near your preferred exchange area",
+      "popularRecently": "Popular recently"
+    }
+  },
   "categoriesPage": {
     "title": "Browse every marketplace category",
     "subtitle": "Search the full category directory and jump back into the marketplace with the right filter already applied.",
