@@ -1,0 +1,14 @@
+type: object
+additionalProperties: false
+required:
+  - name
+  - criteria
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: User-visible saved search name. Must be unique per user.
+  criteria:
+    $ref: '../../../openapi.yaml#/components/schemas/SavedSearchCriteria'
+

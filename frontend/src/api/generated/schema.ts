@@ -886,6 +886,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/saved-searches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List saved catalog searches for the authenticated user */
+        get: operations["listSavedSearches"];
+        put?: never;
+        /** Save catalog search criteria for the authenticated user */
+        post: operations["createSavedSearch"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/saved-searches/{savedSearchUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete one saved catalog search owned by the authenticated user */
+        delete: operations["deleteSavedSearch"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/trade-offers": {
         parameters: {
             query?: never;
@@ -1547,6 +1582,49 @@ export interface components {
             first: boolean;
             last: boolean;
             sort: string;
+        };
+        SavedSearchCriteria: {
+            /** @description Free-text catalog search query. */
+            q?: string;
+            /**
+             * Format: uuid
+             * @description Category filter to reapply.
+             */
+            categoryUuid?: string;
+            /** @description Tag filters to reapply. */
+            tagUuids?: string[];
+            condition?: components["schemas"]["ItemCondition"];
+            /** @description Catalog sort expression such as createdAt,desc. */
+            sort?: string;
+        };
+        SavedSearchResponse: {
+            /** Format: uuid */
+            uuid: string;
+            name: string;
+            criteria: components["schemas"]["SavedSearchCriteria"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        SavedSearchPagedResponse: {
+            content: components["schemas"]["SavedSearchResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort: string;
+        };
+        CreateSavedSearchRequest: {
+            /** @description User-visible saved search name. Must be unique per user. */
+            name: string;
+            criteria: components["schemas"]["SavedSearchCriteria"];
         };
         AdminListingSummaryResponse: {
             /** Format: uuid */
@@ -2329,6 +2407,8 @@ export interface components {
         NotificationUuid: string;
         /** @description Public image UUID. */
         ImageUuid: string;
+        /** @description Saved search UUID. */
+        SavedSearchUuid: string;
     };
     requestBodies: {
         RegisterUserRequest: {
@@ -4113,6 +4193,85 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    listSavedSearches: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Saved searches returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedSearchPagedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    createSavedSearch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSavedSearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Saved search created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SavedSearchResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    deleteSavedSearch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Saved search UUID. */
+                savedSearchUuid: components["parameters"]["SavedSearchUuid"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Saved search deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
         };
     };

@@ -31,6 +31,7 @@ import { MarketplaceCategoriesPage } from "../features/catalog/MarketplaceCatego
 import { ItemDetailPage } from "../features/catalog/ItemDetailPage";
 import { MyItemsPage } from "../features/catalog/MyItemsPage";
 import { FavoritesPage } from "../features/catalog/FavoritesPage";
+import { SavedSearchesPage } from "../features/catalog/SavedSearchesPage";
 import { CreateItemPage } from "../features/catalog/CreateItemPage";
 import { EditItemPage } from "../features/catalog/EditItemPage";
 import { IncomingOffersPage } from "../features/trade/IncomingOffersPage";
@@ -180,6 +181,10 @@ export const router = createBrowserRouter([
       {
         path: "/favorites",
         element: <FavoritesPage />,
+      },
+      {
+        path: routePaths.savedSearches,
+        element: <SavedSearchesPage />,
       },
       {
         path: "/my-items/new",

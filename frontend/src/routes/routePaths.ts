@@ -42,6 +42,7 @@ export const routePaths = {
   dashboard: "/dashboard",
   marketplaceItem: (uuid: string) => `/marketplace/items/${uuid}`,
   favorites: "/favorites",
+  savedSearches: "/saved-searches",
   myItems: "/my-items",
   myItemsNew: "/my-items/new",
   myItemDetail: (uuid: string) => `/my-items/${uuid}`,

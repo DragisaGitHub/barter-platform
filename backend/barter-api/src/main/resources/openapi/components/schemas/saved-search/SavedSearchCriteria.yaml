@@ -1,0 +1,26 @@
+type: object
+additionalProperties: false
+properties:
+  q:
+    type: string
+    maxLength: 255
+    description: Free-text catalog search query.
+  categoryUuid:
+    type: string
+    format: uuid
+    description: Category filter to reapply.
+  tagUuids:
+    type: array
+    maxItems: 20
+    uniqueItems: true
+    items:
+      type: string
+      format: uuid
+    description: Tag filters to reapply.
+  condition:
+    $ref: '../catalog/ItemCondition.yaml'
+  sort:
+    type: string
+    maxLength: 80
+    description: Catalog sort expression such as createdAt,desc.
+

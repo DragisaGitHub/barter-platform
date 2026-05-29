@@ -226,6 +226,33 @@
     "savedListingsDescription": "Your favorites are ordered by the most recently saved items first.",
     "continueBrowsing": "Continue browsing"
   },
+  "savedSearches": {
+    "badge": "Saved discovery",
+    "title": "Saved Searches",
+    "subtitle": "Save useful marketplace filters and reopen them when you want to check for new barter opportunities.",
+    "sidebarTitle": "Saved searches",
+    "viewAll": "View all",
+    "saveCurrent": "Save search",
+    "saveDialogTitle": "Save current search",
+    "nameLabel": "Search name",
+    "namePlaceholder": "e.g. Kids books near me",
+    "save": "Save search",
+    "saveSuccess": "Search saved",
+    "loadError": "Saved searches could not be loaded.",
+    "emptyTitle": "No saved searches yet",
+    "emptyDescription": "Save a marketplace search to return to those filters later.",
+    "emptyCompact": "Your saved searches will appear here after you save one.",
+    "apply": "Apply search",
+    "delete": "Delete saved search",
+    "criteria": {
+      "query": "Query: {{query}}",
+      "category": "Category filter",
+      "tags": "{{count}} tag",
+      "tags_plural": "{{count}} tags",
+      "condition": "Condition: {{condition}}",
+      "catalogFilters": "Catalog filters"
+    }
+  },
   "itemCard": { "byOwner": "by {{username}}" },
   "images": {
     "primaryImage": "Primary image",
