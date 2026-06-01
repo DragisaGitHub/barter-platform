@@ -137,6 +137,13 @@ export function TradeOfferCard({ offer, currentUserUuid }: TradeOfferCardProps) 
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
               {isReceiver ? t("yourItem") : t("toUser", { username: offer.receiver.username })}
             </p>
+            {offer.requestedEntries?.length ? (
+              <p className="mt-2 text-xs text-indigo-700 dark:text-indigo-300 line-clamp-2">
+                {t("card.requestedEntriesSummary", {
+                  entries: offer.requestedEntries.map((entry) => entry.title).join(", "),
+                })}
+              </p>
+            ) : null}
           </div>
         </div>
       </Link>

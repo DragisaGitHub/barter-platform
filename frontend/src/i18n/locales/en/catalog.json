@@ -60,6 +60,36 @@
       "PICK_ANY": "Pick from set"
     }
   },
+  "listingTemplate": {
+    "label": {
+      "STANDARD_ITEM": "Standard item",
+      "BUNDLE": "Bundle",
+      "PICK_FROM_COLLECTION": "Pick from collection",
+      "COLLECTION_ALBUM": "Collection album",
+      "WISHLIST": "Wishlist / looking for"
+    },
+    "badge": {
+      "STANDARD_ITEM": "Standard item",
+      "BUNDLE": "Bundle",
+      "PICK_FROM_COLLECTION": "Pick from collection",
+      "COLLECTION_ALBUM": "Collection album",
+      "WISHLIST": "Wishlist"
+    },
+    "helper": {
+      "STANDARD_ITEM": "A straightforward one-item listing with no extra structure.",
+      "BUNDLE": "Offer multiple related items together as one trade package.",
+      "PICK_FROM_COLLECTION": "Let other traders choose specific entries from a larger collection.",
+      "COLLECTION_ALBUM": "Track owned, duplicate, and wanted collectible entries in one listing.",
+      "WISHLIST": "Describe what you are looking for even if you do not have a matching offer ready yet."
+    },
+    "adaptiveHelper": {
+      "STANDARD_ITEM": "Keep the flow lightweight and focus on the normal title, description, category, and condition fields.",
+      "BUNDLE": "Add optional context to explain why these items belong together and what the bundle includes.",
+      "PICK_FROM_COLLECTION": "Guide traders on what they can pick and how selection should work.",
+      "COLLECTION_ALBUM": "Capture collectible progress, duplicates, and the entries you still want to find.",
+      "WISHLIST": "Highlight what you want to receive so future matching and discovery stay useful."
+    }
+  },
   "fields": {
     "title": "Title",
     "description": "Description",
@@ -67,6 +97,17 @@
     "condition": "Condition",
     "status": "Status",
     "listingMode": "Listing type",
+    "bundleTitle": "Bundle title",
+    "groupingDescription": "Grouping description",
+    "selectionHint": "Selection hint",
+    "collectionName": "Collection name",
+    "totalOwned": "Total owned",
+    "duplicateCount": "Duplicate count",
+    "missingEntries": "Missing entries",
+    "wantedEntries": "Wanted entries",
+    "exchangeRules": "Exchange rules",
+    "wishlistSummary": "Wishlist summary",
+    "wantedConditionNotes": "Wanted condition notes",
     "exchangeCity": "Approximate public exchange city",
     "exchangeArea": "Approximate public exchange area",
     "exchangeLocation": "Public exchange location note",
@@ -202,6 +243,11 @@
     "exchangeLocationPrivacy": "This is a public approximate area only. Do not share an exact home address in the listing.",
     "bundleExplanation": "All listed items are offered together.",
     "pickAnyExplanation": "The other user can choose what they need.",
+    "collectionAlbumOwned": "{{count}} owned entries tracked",
+    "collectionAlbumDuplicates": "{{count}} duplicate entry",
+    "collectionAlbumDuplicates_plural": "{{count}} duplicate entries",
+    "collectionAlbumWanted": "{{count}} wanted entry",
+    "collectionAlbumWanted_plural": "{{count}} wanted entries",
     "entriesTitle": "Included items",
     "entryCount": "{{count}} entry",
     "entryCount_plural": "{{count}} entries",
@@ -218,6 +264,11 @@
   "itemForm": {
     "titlePlaceholder": "What are you listing?",
     "descriptionPlaceholder": "Describe your item...",
+    "templateSelectorTitle": "Choose a listing template",
+    "templateSelectorHelper": "Pick the structure that best matches this listing. The rest of the form adapts automatically.",
+    "templateDetailsTitle": "Template-specific helper details",
+    "templateModeHint": "{{template}} uses {{mode}} mode under the hood.",
+    "standardTemplateNote": "No extra template metadata is needed here — the standard listing fields are enough.",
     "exchangeLocationTitle": "Approximate public exchange area",
     "exchangeLocationHelper": "Add only a city, neighborhood, or public-place area. Do not enter your exact home address.",
     "exchangeCityPlaceholder": "e.g. Belgrade",
@@ -239,6 +290,15 @@
     "entryDescriptionPlaceholder": "Short note about this entry",
     "entryQuantity": "Quantity",
     "noEntries": "Add at least one entry for bundle or pick-from-set listings.",
+    "bundleTitlePlaceholder": "e.g. Starter manga bundle",
+    "groupingDescriptionPlaceholder": "Explain what makes this bundle useful together.",
+    "collectionNamePlaceholder": "e.g. World Cup stickers 1998",
+    "selectionHintPlaceholder": "Explain how another trader should pick items from the collection.",
+    "exchangeRulesPlaceholder": "Optional rules or expectations for the exchange.",
+    "missingEntriesPlaceholder": "One entry per line, or separate with commas",
+    "wantedEntriesPlaceholder": "One entry per line, or separate with commas",
+    "wishlistSummaryPlaceholder": "Describe what you are hoping to receive.",
+    "wantedConditionNotesPlaceholder": "Optional condition or quality notes for what you want.",
     "selectCategory": "Select a category",
     "selectCondition": "Select condition",
     "loadingTags": "Loading tags...",
@@ -252,11 +312,21 @@
     "exchangeLocationTooLong": "Location note must be 255 characters or fewer",
     "categoryRequired": "Category is required",
     "conditionRequired": "Condition is required",
+    "templateModeMismatch": "This template must use its supported listing mode",
     "entriesRequiredForMultiItem": "Bundle and pick-from-set listings require at least one entry",
     "entriesTooMany": "A listing can include at most 20 entries",
     "entryTitleRequired": "Entry title is required",
     "entryTitleTooLong": "Entry title must be 200 characters or fewer",
-    "entryQuantityMin": "Quantity must be at least 1"
+    "entryQuantityMin": "Quantity must be at least 1",
+    "templateTextTooLong": "This field is too long",
+    "templateTextareaTooLong": "This note is too long",
+    "templateListTooLong": "This list is too long",
+    "totalOwnedMin": "Total owned must be at least 1",
+    "totalOwnedMax": "Total owned must be 10000 or less",
+    "duplicateCountMin": "Duplicate count cannot be negative",
+    "duplicateCountMax": "Duplicate count must be 10000 or less",
+    "duplicateCountCannotExceedOwned": "Duplicate count cannot exceed total owned",
+    "wishlistSummaryRequired": "Wishlist listings need a summary or at least one wanted entry"
   },
   "createItem": {
     "title": "Create New Item",
@@ -337,7 +407,8 @@
     "bundleEntryCount": "{{count}} item included",
     "bundleEntryCount_plural": "{{count}} items included",
     "pickAnyEntryCount": "Choose from {{count}} item",
-    "pickAnyEntryCount_plural": "Choose from {{count}} items"
+    "pickAnyEntryCount_plural": "Choose from {{count}} items",
+    "collectionAlbumSummary": "{{name}} · {{duplicates}} duplicates"
   },
   "images": {
     "primaryImage": "Primary image",

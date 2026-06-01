@@ -5,6 +5,7 @@ import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemImageResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
+import com.barterplatform.api.model.ListingTemplateMetadata;
 import com.barterplatform.api.model.OwnerListingModerationSummary;
 import com.barterplatform.api.model.PopularCategoryResponse;
 import com.barterplatform.api.model.TagResponse;
@@ -58,6 +59,8 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     private static final int MAX_POPULAR_CATEGORY_LIMIT = 20;
     private static final Set<String> ALLOWED_ITEM_SORT_FIELDS = Set.of(
             "createdAt", "updatedAt", "title", "status");
+
+    private final ListingTemplateMetadataSupport listingTemplateMetadataSupport = new ListingTemplateMetadataSupport();
 
     private final CategoryRepository categoryRepository;
     private final TagRepository tagRepository;
@@ -182,6 +185,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         ItemDetailResponse response = itemMapper.toDetailResponse(
                 item, category, tags, owner.getUuid(), owner.getUsername(), primaryImageUrl, images,
                 itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(item.getId()));
+        enrichTemplateFields(response, item);
         if (elevatedAccess) {
             response.setModerationSummary(loadModerationSummary(item.getId()));
         }
@@ -323,7 +327,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
             UserEntity owner = ownersById.get(item.getOwnerId());
             String primaryImageUrl = primaryImageUrlByItemId.get(item.getId());
             List<ItemListingEntryEntity> entries = entriesByItemId.getOrDefault(item.getId(), List.of());
-            return itemMapper.toSummaryResponse(
+            ItemSummaryResponse response = itemMapper.toSummaryResponse(
                     item,
                     category,
                     owner != null ? owner.getUuid() : null,
@@ -331,7 +335,21 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                     primaryImageUrl,
                     entries.size(),
                     entries.stream().limit(3).toList());
+            enrichTemplateFields(response, item);
+            return response;
         }).toList();
+    }
+
+    private void enrichTemplateFields(ItemSummaryResponse response, ItemEntity item) {
+        response.setListingTemplateType(listingTemplateMetadataSupport.toApiType(item.getListingTemplateType(), item.getListingMode()));
+        ListingTemplateMetadata metadata = listingTemplateMetadataSupport.deserialize(item.getTemplateMetadataJson());
+        response.setTemplateMetadata(metadata);
+    }
+
+    private void enrichTemplateFields(ItemDetailResponse response, ItemEntity item) {
+        response.setListingTemplateType(listingTemplateMetadataSupport.toApiType(item.getListingTemplateType(), item.getListingMode()));
+        ListingTemplateMetadata metadata = listingTemplateMetadataSupport.deserialize(item.getTemplateMetadataJson());
+        response.setTemplateMetadata(metadata);
     }
 
     private List<TagEntity> loadTagsForItem(Long itemId) {

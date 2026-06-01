@@ -26,17 +26,21 @@ import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
+import com.barterplatform.domain.catalog.entity.ItemListingEntryEntity;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
+import com.barterplatform.domain.catalog.enums.ListingMode;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferEntity;
 import com.barterplatform.domain.trade.enums.TradeOfferItemSide;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
+import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
+import com.barterplatform.infrastructure.trade.repository.TradeOfferRequestedEntryRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import java.time.OffsetDateTime;
 import java.util.Collection;
@@ -61,6 +65,7 @@ class TradeOfferServiceImplTest {
     @Mock private TradeOfferItemRepository tradeOfferItemRepository;
     @Mock private UserRepository userRepository;
     @Mock private ItemRepository itemRepository;
+    @Mock private ItemListingEntryRepository itemListingEntryRepository;
     @Mock private CategoryRepository categoryRepository;
     @Mock private TradeOfferMapper tradeOfferMapper;
     @Mock private TradeReviewRepository tradeReviewRepository;
@@ -68,6 +73,7 @@ class TradeOfferServiceImplTest {
     @Mock private PageRequestFactory pageRequestFactory;
     @Mock private PageResponseMapper pageResponseMapper;
     @Mock private NotificationService notificationService;
+    @Mock private TradeOfferRequestedEntryRepository tradeOfferRequestedEntryRepository;
 
     private TradeOfferServiceImpl service;
 
@@ -75,11 +81,11 @@ class TradeOfferServiceImplTest {
     void setUp() {
         service = new TradeOfferServiceImpl(
                 tradeOfferRepository, tradeOfferItemRepository,
-                userRepository, itemRepository,
+                userRepository, itemRepository, itemListingEntryRepository,
                 categoryRepository, tradeOfferMapper,
                 tradeReviewRepository, tradeReviewMapper,
                 pageRequestFactory, pageResponseMapper,
-                notificationService);
+                notificationService, tradeOfferRequestedEntryRepository);
 
         lenient().when(tradeReviewRepository.findByTradeOfferId(anyLong())).thenReturn(List.of());
     }
@@ -116,6 +122,17 @@ class TradeOfferServiceImplTest {
         c.setName("Books");
         c.setCreatedAt(OffsetDateTime.now());
         return c;
+    }
+
+    private ItemListingEntryEntity listingEntry(Long id, UUID uuid, Long itemId, String title, int sortOrder) {
+        ItemListingEntryEntity entry = new ItemListingEntryEntity();
+        entry.setId(id);
+        entry.setUuid(uuid);
+        entry.setItemId(itemId);
+        entry.setTitle(title);
+        entry.setSortOrder(sortOrder);
+        entry.setCreatedAt(OffsetDateTime.now());
+        return entry;
     }
 
     private TradeOfferEntity offer(Long id, UUID uuid, Long senderUserId, Long receiverUserId,
@@ -336,6 +353,118 @@ class TradeOfferServiceImplTest {
             ApiException ex = assertThrows(ApiException.class,
                     () -> service.createOffer(senderUuid, request));
             assertEquals(400, ex.getStatus().value());
+        }
+
+        @Test
+        @DisplayName("requires requested child entries for PICK_ANY listings")
+        void createPickAnyWithoutRequestedEntries() {
+            UUID senderUuid = UUID.randomUUID();
+            UUID senderItemUuid = UUID.randomUUID();
+            UUID receiverItemUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, senderUuid, "alice");
+            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, ItemStatus.ACTIVE);
+            receiverItem.setListingMode(ListingMode.PICK_ANY);
+
+            when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
+            when(itemRepository.findByUuid(receiverItemUuid)).thenReturn(Optional.of(receiverItem));
+
+            CreateTradeOfferRequest request = createItemExchangeRequest(receiverItemUuid, senderItemUuid);
+
+            ApiException ex = assertThrows(ApiException.class, () -> service.createOffer(senderUuid, request));
+            assertEquals(400, ex.getStatus().value());
+            verify(tradeOfferRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("rejects requested child entries for non PICK_ANY listings")
+        void rejectRequestedEntriesForSingleListing() {
+            UUID senderUuid = UUID.randomUUID();
+            UUID senderItemUuid = UUID.randomUUID();
+            UUID receiverItemUuid = UUID.randomUUID();
+            UUID requestedEntryUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, senderUuid, "alice");
+            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, ItemStatus.ACTIVE);
+
+            when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
+            when(itemRepository.findByUuid(receiverItemUuid)).thenReturn(Optional.of(receiverItem));
+
+            CreateTradeOfferRequest request = createItemExchangeRequest(receiverItemUuid, senderItemUuid);
+            request.setRequestedEntryUuids(List.of(requestedEntryUuid));
+
+            ApiException ex = assertThrows(ApiException.class, () -> service.createOffer(senderUuid, request));
+            assertEquals(400, ex.getStatus().value());
+            verify(tradeOfferRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("creates offer with requested child entries for PICK_ANY listing")
+        void createPickAnyWithRequestedEntries() {
+            UUID senderUuid = UUID.randomUUID();
+            UUID senderItemUuid = UUID.randomUUID();
+            UUID receiverItemUuid = UUID.randomUUID();
+            UUID requestedEntryUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, senderUuid, "alice");
+            UserEntity receiver = user(2L, UUID.randomUUID(), "bob");
+            ItemEntity senderItem = item(10L, senderItemUuid, 1L, ItemStatus.ACTIVE);
+            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, ItemStatus.ACTIVE);
+            receiverItem.setListingMode(ListingMode.PICK_ANY);
+            ItemListingEntryEntity requestedEntry = listingEntry(300L, requestedEntryUuid, 20L, "Sticker 10", 0);
+            CategoryEntity cat = category();
+
+            when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
+            when(itemRepository.findByUuid(senderItemUuid)).thenReturn(Optional.of(senderItem));
+            when(itemRepository.findByUuid(receiverItemUuid)).thenReturn(Optional.of(receiverItem));
+            when(itemListingEntryRepository.findByItemIdAndUuidInOrderBySortOrderAsc(eq(20L), anyList()))
+                    .thenReturn(List.of(requestedEntry));
+            when(itemListingEntryRepository.findByIdInOrderBySortOrderAsc(List.of(300L))).thenReturn(List.of(requestedEntry));
+            when(tradeOfferRequestedEntryRepository.findEntryIdsByTradeOfferId(50L)).thenReturn(List.of(300L));
+            when(userRepository.findById(2L)).thenReturn(Optional.of(receiver));
+            when(categoryRepository.findById(100L)).thenReturn(Optional.of(cat));
+            when(tradeOfferRepository.save(any(TradeOfferEntity.class))).thenAnswer(i -> {
+                TradeOfferEntity arg = i.getArgument(0);
+                if (arg.getId() == null) arg.setId(50L);
+                if (arg.getUuid() == null) arg.setUuid(UUID.randomUUID());
+                return arg;
+            });
+            when(tradeOfferRequestedEntryRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+            stubMapperToResponse();
+
+            CreateTradeOfferRequest request = createItemExchangeRequest(receiverItemUuid, senderItemUuid);
+            request.setRequestedEntryUuids(List.of(requestedEntryUuid));
+
+            TradeOfferResponse result = service.createOffer(senderUuid, request);
+
+            assertNotNull(result);
+            assertEquals(1, result.getRequestedEntries().size());
+            assertEquals("Sticker 10", result.getRequestedEntries().getFirst().getTitle());
+            verify(tradeOfferRequestedEntryRepository).save(any());
+        }
+
+        @Test
+        @DisplayName("rejects requested child entries that do not belong to target listing")
+        void rejectRequestedEntriesOutsideTargetListing() {
+            UUID senderUuid = UUID.randomUUID();
+            UUID senderItemUuid = UUID.randomUUID();
+            UUID receiverItemUuid = UUID.randomUUID();
+            UUID requestedEntryUuid = UUID.randomUUID();
+
+            UserEntity sender = user(1L, senderUuid, "alice");
+            ItemEntity receiverItem = item(20L, receiverItemUuid, 2L, ItemStatus.ACTIVE);
+            receiverItem.setListingMode(ListingMode.PICK_ANY);
+
+            when(userRepository.findByUuid(senderUuid)).thenReturn(Optional.of(sender));
+            when(itemRepository.findByUuid(receiverItemUuid)).thenReturn(Optional.of(receiverItem));
+            when(itemListingEntryRepository.findByItemIdAndUuidInOrderBySortOrderAsc(eq(20L), anyList())).thenReturn(List.of());
+
+            CreateTradeOfferRequest request = createItemExchangeRequest(receiverItemUuid, senderItemUuid);
+            request.setRequestedEntryUuids(List.of(requestedEntryUuid));
+
+            ApiException ex = assertThrows(ApiException.class, () -> service.createOffer(senderUuid, request));
+            assertEquals(400, ex.getStatus().value());
+            verify(tradeOfferRepository, never()).save(any());
         }
     }
 

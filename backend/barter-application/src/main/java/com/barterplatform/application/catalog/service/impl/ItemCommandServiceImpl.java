@@ -4,6 +4,7 @@ import com.barterplatform.api.model.ArchiveItemRequest;
 import com.barterplatform.api.model.CreateItemRequest;
 import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemListingEntryRequest;
+import com.barterplatform.api.model.ListingTemplateMetadata;
 import com.barterplatform.api.model.UpdateItemRequest;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.application.catalog.service.ItemCommandService;
@@ -18,6 +19,7 @@ import com.barterplatform.domain.catalog.entity.TagEntity;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.catalog.enums.ListingMode;
+import com.barterplatform.domain.catalog.enums.ListingTemplateType;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
@@ -38,6 +40,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class ItemCommandServiceImpl implements ItemCommandService {
 
     private static final int MAX_LISTING_ENTRIES = 20;
+
+    private final ListingTemplateMetadataSupport listingTemplateMetadataSupport = new ListingTemplateMetadataSupport();
 
     private final ItemRepository itemRepository;
     private final CategoryRepository categoryRepository;
@@ -81,6 +85,11 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         item.setCondition(mapConditionToDomain(request.getCondition()));
         ListingMode listingMode = mapListingModeToDomain(request.getListingMode());
         item.setListingMode(listingMode);
+        ListingTemplateType listingTemplateType = listingTemplateMetadataSupport.resolveTemplateType(
+                request.getListingTemplateType(), listingMode, null);
+        item.setListingTemplateType(listingTemplateType);
+        item.setTemplateMetadataJson(listingTemplateMetadataSupport.validateAndSerializeMetadata(
+                request.getTemplateMetadata(), listingTemplateType, listingMode));
         List<ItemListingEntryEntity> entries = validateAndBuildEntries(request.getEntries(), listingMode);
 
         // Default to DRAFT unless an explicit status is provided
@@ -96,8 +105,10 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         List<TagEntity> tags = resolveAndSaveTags(saved.getId(), request.getTagUuids());
         List<ItemListingEntryEntity> savedEntries = saveEntries(saved.getId(), entries);
 
-        return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
+        ItemDetailResponse response = itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
                 null, java.util.List.of(), savedEntries);
+        enrichTemplateFields(response, saved);
+        return response;
     }
 
     // ── Update ───────────────────────────────────────────────────
@@ -136,7 +147,19 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         } else {
             validateExistingEntriesForMode(item.getId(), requestedListingMode);
         }
+        ListingTemplateType requestedTemplateType = listingTemplateMetadataSupport.resolveTemplateType(
+                request.getListingTemplateType(), requestedListingMode, item.getListingTemplateType());
         item.setListingMode(requestedListingMode);
+        item.setListingTemplateType(requestedTemplateType);
+        if (request.getTemplateMetadata() != null || request.getListingTemplateType() != null) {
+            item.setTemplateMetadataJson(listingTemplateMetadataSupport.validateAndSerializeMetadata(
+                    request.getTemplateMetadata(), requestedTemplateType, requestedListingMode));
+        } else if (item.getTemplateMetadataJson() != null) {
+            item.setTemplateMetadataJson(listingTemplateMetadataSupport.validateAndSerializeMetadata(
+                    listingTemplateMetadataSupport.deserialize(item.getTemplateMetadataJson()),
+                    requestedTemplateType,
+                    requestedListingMode));
+        }
         if (request.getStatus() != null) {
             validateStatusTransition(item.getStatus(), mapStatusToDomain(request.getStatus()));
             item.setStatus(mapStatusToDomain(request.getStatus()));
@@ -171,8 +194,10 @@ public class ItemCommandServiceImpl implements ItemCommandService {
             entries = itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(saved.getId());
         }
 
-        return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
+        ItemDetailResponse response = itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
                 null, java.util.List.of(), entries);
+        enrichTemplateFields(response, saved);
+        return response;
     }
 
     // ── Archive ──────────────────────────────────────────────────
@@ -193,8 +218,10 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         List<TagEntity> tags = loadTagsForItem(saved.getId());
         List<ItemListingEntryEntity> entries = itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(saved.getId());
 
-        return itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
+        ItemDetailResponse response = itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
                 null, java.util.List.of(), entries);
+        enrichTemplateFields(response, saved);
+        return response;
     }
 
     // ── Private helpers ──────────────────────────────────────────
@@ -291,6 +318,14 @@ public class ItemCommandServiceImpl implements ItemCommandService {
 
     private ListingMode defaultListingMode(ListingMode listingMode) {
         return listingMode == null ? ListingMode.SINGLE : listingMode;
+    }
+
+    private void enrichTemplateFields(ItemDetailResponse response, ItemEntity item) {
+        response.setListingTemplateType(listingTemplateMetadataSupport.toApiType(
+                item.getListingTemplateType(),
+                defaultListingMode(item.getListingMode())));
+        ListingTemplateMetadata metadata = listingTemplateMetadataSupport.deserialize(item.getTemplateMetadataJson());
+        response.setTemplateMetadata(metadata);
     }
 
     private List<ItemListingEntryEntity> validateAndBuildEntries(

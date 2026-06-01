@@ -17,6 +17,14 @@ properties:
       UUIDs of items offered by the sender. Required for ITEM_EXCHANGE (at least one),
       forbidden for GIFT, optional for NEGOTIABLE. All must belong to the authenticated user
       and be ACTIVE.
+  requestedEntryUuids:
+    type: array
+    items:
+      type: string
+      format: uuid
+    description: >
+      Selected child entry UUIDs from the requested listing. Supported only when the
+      requested item uses a PICK_ANY-based listing mode. Must belong to the requested listing.
   mode:
     $ref: '../../../openapi.yaml#/components/schemas/TradeOfferMode'
   message:

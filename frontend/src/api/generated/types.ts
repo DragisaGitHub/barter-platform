@@ -45,6 +45,8 @@ export type MessageResponse = components["schemas"]["MessageResponse"];
 export type ItemStatus = components["schemas"]["ItemStatus"];
 export type ItemCondition = components["schemas"]["ItemCondition"];
 export type ListingMode = components["schemas"]["ListingMode"];
+export type ListingTemplateType = components["schemas"]["ListingTemplateType"];
+export type ListingTemplateMetadata = components["schemas"]["ListingTemplateMetadata"];
 
 // ─── Catalog Response DTOs ──────────────────────────────────────────────────
 

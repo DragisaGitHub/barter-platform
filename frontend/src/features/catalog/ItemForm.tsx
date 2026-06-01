@@ -1,11 +1,16 @@
+import { useEffect } from "react";
 import { useFieldArray, useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCategories, useTags } from "./useCatalog";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import type { ItemCondition, ItemStatus, ListingMode } from "@/api/generated/types.ts";
+import type { ItemCondition, ItemStatus, ListingMode, ListingTemplateType } from "@/api/generated/types.ts";
 import { useTranslation } from "react-i18next";
+import {
+  LISTING_TEMPLATE_OPTIONS,
+  resolveListingModeForTemplate,
+} from "./listingTemplates";
 
 const CONDITIONS: { value: ItemCondition; labelKey: string }[] = [
   { value: "NEW", labelKey: "condition.new" },
@@ -42,6 +47,13 @@ const entrySchema = z.object({
 
 const itemFormSchema = z
   .object({
+    listingTemplateType: z.enum([
+      "STANDARD_ITEM",
+      "BUNDLE",
+      "PICK_FROM_COLLECTION",
+      "COLLECTION_ALBUM",
+      "WISHLIST",
+    ] as const),
     title: z.string().min(1, "validation.titleRequired").max(255, "validation.titleTooLong"),
     description: z.string().optional(),
     exchangeCity: z.string().max(120, "validation.exchangeCityTooLong").optional(),
@@ -55,8 +67,33 @@ const itemFormSchema = z
     status: z.enum(["DRAFT", "ACTIVE", "RESERVED", "ARCHIVED", "REMOVED"] as const).optional(),
     listingMode: z.enum(["SINGLE", "BUNDLE", "PICK_ANY"] as const),
     entries: z.array(entrySchema).max(20, "validation.entriesTooMany").optional(),
+    bundleTitle: z.string().max(120, "validation.templateTextTooLong").optional(),
+    groupingDescription: z.string().max(300, "validation.templateTextareaTooLong").optional(),
+    selectionHint: z.string().max(300, "validation.templateTextareaTooLong").optional(),
+    collectionName: z.string().max(120, "validation.templateTextTooLong").optional(),
+    totalOwned: z.preprocess(
+      (value) => (value === "" || value == null || (typeof value === "number" && Number.isNaN(value)) ? undefined : value),
+      z.number().int().min(1, "validation.totalOwnedMin").max(10000, "validation.totalOwnedMax").optional(),
+    ),
+    duplicateCount: z.preprocess(
+      (value) => (value === "" || value == null || (typeof value === "number" && Number.isNaN(value)) ? undefined : value),
+      z.number().int().min(0, "validation.duplicateCountMin").max(10000, "validation.duplicateCountMax").optional(),
+    ),
+    missingEntriesText: z.string().max(2000, "validation.templateListTooLong").optional(),
+    wantedEntriesText: z.string().max(2000, "validation.templateListTooLong").optional(),
+    exchangeRules: z.string().max(300, "validation.templateTextareaTooLong").optional(),
+    wishlistSummary: z.string().max(300, "validation.templateTextareaTooLong").optional(),
+    wantedConditionNotes: z.string().max(300, "validation.templateTextareaTooLong").optional(),
   })
   .superRefine((value, ctx) => {
+    const expectedMode = resolveListingModeForTemplate(value.listingTemplateType);
+    if (value.listingMode !== expectedMode) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["listingTemplateType"],
+        message: "validation.templateModeMismatch",
+      });
+    }
     if (value.listingMode !== "SINGLE" && (!value.entries || value.entries.length === 0)) {
       ctx.addIssue({
         code: "custom",
@@ -64,12 +101,36 @@ const itemFormSchema = z
         message: "validation.entriesRequiredForMultiItem",
       });
     }
+    if (
+      value.listingTemplateType === "COLLECTION_ALBUM" &&
+      value.totalOwned != null &&
+      value.duplicateCount != null &&
+      value.duplicateCount > value.totalOwned
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["duplicateCount"],
+        message: "validation.duplicateCountCannotExceedOwned",
+      });
+    }
+    if (
+      value.listingTemplateType === "WISHLIST" &&
+      !value.wishlistSummary?.trim() &&
+      !value.wantedEntriesText?.trim()
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["wishlistSummary"],
+        message: "validation.wishlistSummaryRequired",
+      });
+    }
   });
 
-export type ItemFormValues = z.infer<typeof itemFormSchema>;
+type ItemFormInput = z.input<typeof itemFormSchema>;
+export type ItemFormValues = z.output<typeof itemFormSchema>;
 
 interface ItemFormProps {
-  defaultValues?: Partial<ItemFormValues>;
+  defaultValues?: Partial<ItemFormInput>;
   onSubmit: (data: ItemFormValues) => void;
   isSubmitting?: boolean;
   submitLabel?: string;
@@ -85,10 +146,11 @@ export function ItemForm({
   const { data: categories, isLoading: categoriesLoading } = useCategories();
   const { data: tags, isLoading: tagsLoading } = useTags();
 
-  const methods = useForm<ItemFormValues>({
+  const methods = useForm<ItemFormInput, unknown, ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
     defaultValues: {
       title: "",
+      listingTemplateType: "STANDARD_ITEM",
       description: "",
       exchangeCity: "",
       exchangeArea: "",
@@ -99,6 +161,17 @@ export function ItemForm({
       status: "DRAFT",
       listingMode: "SINGLE",
       entries: [],
+      bundleTitle: "",
+      groupingDescription: "",
+      selectionHint: "",
+      collectionName: "",
+      totalOwned: undefined,
+      duplicateCount: undefined,
+      missingEntriesText: "",
+      wantedEntriesText: "",
+      exchangeRules: "",
+      wishlistSummary: "",
+      wantedConditionNotes: "",
       ...defaultValues,
     },
   });
@@ -127,15 +200,66 @@ export function ItemForm({
   };
 
   const selectedTags = methods.watch("tagUuids") ?? [];
+  const selectedTemplate = methods.watch("listingTemplateType") ?? "STANDARD_ITEM";
   const selectedListingMode = methods.watch("listingMode") ?? "SINGLE";
   const showEntries = selectedListingMode !== "SINGLE";
+  const selectedTemplateOption = LISTING_TEMPLATE_OPTIONS.find((template) => template.value === selectedTemplate);
   const selectedListingModeOption = LISTING_MODES.find((mode) => mode.value === selectedListingMode);
 
   const translateError = (message?: string) => (message ? t(`catalog:${message}`) : undefined);
 
+  useEffect(() => {
+    const expectedMode = resolveListingModeForTemplate(selectedTemplate);
+    if (methods.getValues("listingMode") !== expectedMode) {
+      methods.setValue("listingMode", expectedMode, { shouldValidate: true });
+    }
+  }, [methods, selectedTemplate]);
+
   return (
     <FormProvider {...methods}>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4 dark:border-sky-900/50 dark:bg-sky-950/20">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t("catalog:itemForm.templateSelectorTitle")}
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {t("catalog:itemForm.templateSelectorHelper")}
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {LISTING_TEMPLATE_OPTIONS.map((template) => {
+              const isActive = selectedTemplate === template.value;
+              return (
+                <button
+                  key={template.value}
+                  type="button"
+                  onClick={() => methods.setValue("listingTemplateType", template.value, { shouldValidate: true })}
+                  className={`rounded-2xl border p-4 text-left transition-colors ${
+                    isActive
+                      ? "border-sky-500 bg-white shadow-sm dark:border-sky-400 dark:bg-slate-900/60"
+                      : "border-slate-200 bg-white/80 hover:border-sky-300 dark:border-slate-700 dark:bg-slate-900/30 dark:hover:border-sky-600"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {t(`catalog:${template.labelKey}`)}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    {t(`catalog:${template.helperKey}`)}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {errors.listingTemplateType ? (
+            <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+              {translateError(errors.listingTemplateType.message)}
+            </p>
+          ) : null}
+        </div>
+
         <Input
           label={t("catalog:fields.title")}
           {...register("title")}
@@ -150,6 +274,7 @@ export function ItemForm({
           <select
             {...register("listingMode")}
             className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
+            disabled
           >
             {LISTING_MODES.map((mode) => (
               <option key={mode.value} value={mode.value}>
@@ -160,6 +285,14 @@ export function ItemForm({
           <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
             {selectedListingModeOption ? t(`catalog:${selectedListingModeOption.helperKey}`) : null}
           </p>
+          {selectedTemplateOption ? (
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              {t("catalog:itemForm.templateModeHint", {
+                template: t(`catalog:${selectedTemplateOption.labelKey}`),
+                mode: t(`catalog:${selectedListingModeOption?.labelKey ?? "listingMode.single"}`),
+              })}
+            </p>
+          ) : null}
 
           {showEntries ? (
             <div className="mt-4 space-y-3">
@@ -243,6 +376,14 @@ export function ItemForm({
             </div>
           ) : null}
         </div>
+
+        <TemplateAdaptiveFields
+          selectedTemplate={selectedTemplate}
+          register={register}
+          errors={errors}
+          translateError={translateError}
+          t={t}
+        />
 
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
@@ -389,6 +530,200 @@ export function ItemForm({
         </div>
       </form>
     </FormProvider>
+  );
+}
+
+function TemplateAdaptiveFields({
+  selectedTemplate,
+  register,
+  errors,
+  translateError,
+  t,
+}: {
+  selectedTemplate: ListingTemplateType;
+  register: any;
+  errors: any;
+  translateError: (message?: string) => string | undefined;
+  t: (key: string, options?: Record<string, unknown>) => string;
+}) {
+  const textareaClassName =
+    "w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm text-slate-900 placeholder:text-slate-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20";
+
+  return (
+    <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-4 dark:border-violet-900/50 dark:bg-violet-950/20">
+      <div className="mb-4">
+        <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+          {t("catalog:itemForm.templateDetailsTitle")}
+        </h3>
+        <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+          {t(`catalog:listingTemplate.adaptiveHelper.${selectedTemplate}`)}
+        </p>
+      </div>
+
+      {selectedTemplate === "STANDARD_ITEM" ? (
+        <p className="rounded-xl border border-dashed border-violet-200 bg-white/70 px-4 py-3 text-sm text-slate-600 dark:border-violet-800 dark:bg-slate-900/40 dark:text-slate-300">
+          {t("catalog:itemForm.standardTemplateNote")}
+        </p>
+      ) : null}
+
+      {selectedTemplate === "BUNDLE" ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input
+            label={t("catalog:fields.bundleTitle")}
+            {...register("bundleTitle")}
+            error={translateError(errors.bundleTitle?.message)}
+            placeholder={t("catalog:itemForm.bundleTitlePlaceholder")}
+          />
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t("catalog:fields.groupingDescription")}
+            </label>
+            <textarea
+              {...register("groupingDescription")}
+              className={textareaClassName}
+              rows={3}
+              placeholder={t("catalog:itemForm.groupingDescriptionPlaceholder")}
+            />
+            {errors.groupingDescription ? <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{translateError(errors.groupingDescription.message)}</p> : null}
+          </div>
+        </div>
+      ) : null}
+
+      {selectedTemplate === "PICK_FROM_COLLECTION" ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input
+            label={t("catalog:fields.collectionName")}
+            {...register("collectionName")}
+            error={translateError(errors.collectionName?.message)}
+            placeholder={t("catalog:itemForm.collectionNamePlaceholder")}
+          />
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t("catalog:fields.selectionHint")}
+            </label>
+            <textarea
+              {...register("selectionHint")}
+              className={textareaClassName}
+              rows={3}
+              placeholder={t("catalog:itemForm.selectionHintPlaceholder")}
+            />
+            {errors.selectionHint ? <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{translateError(errors.selectionHint.message)}</p> : null}
+          </div>
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t("catalog:fields.exchangeRules")}
+            </label>
+            <textarea
+              {...register("exchangeRules")}
+              className={textareaClassName}
+              rows={3}
+              placeholder={t("catalog:itemForm.exchangeRulesPlaceholder")}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {selectedTemplate === "COLLECTION_ALBUM" ? (
+        <div className="grid gap-4 md:grid-cols-2">
+          <Input
+            label={t("catalog:fields.collectionName")}
+            {...register("collectionName")}
+            error={translateError(errors.collectionName?.message)}
+            placeholder={t("catalog:itemForm.collectionNamePlaceholder")}
+          />
+          <Input
+            type="number"
+            min={1}
+            label={t("catalog:fields.totalOwned")}
+            {...register("totalOwned", { valueAsNumber: true })}
+            error={translateError(errors.totalOwned?.message)}
+            placeholder="1"
+          />
+          <Input
+            type="number"
+            min={0}
+            label={t("catalog:fields.duplicateCount")}
+            {...register("duplicateCount", { valueAsNumber: true })}
+            error={translateError(errors.duplicateCount?.message)}
+            placeholder="0"
+          />
+          <div className="md:col-span-2 grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t("catalog:fields.missingEntries")}
+              </label>
+              <textarea
+                {...register("missingEntriesText")}
+                className={textareaClassName}
+                rows={4}
+                placeholder={t("catalog:itemForm.missingEntriesPlaceholder")}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+                {t("catalog:fields.wantedEntries")}
+              </label>
+              <textarea
+                {...register("wantedEntriesText")}
+                className={textareaClassName}
+                rows={4}
+                placeholder={t("catalog:itemForm.wantedEntriesPlaceholder")}
+              />
+            </div>
+          </div>
+          <div className="md:col-span-2">
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t("catalog:fields.exchangeRules")}
+            </label>
+            <textarea
+              {...register("exchangeRules")}
+              className={textareaClassName}
+              rows={3}
+              placeholder={t("catalog:itemForm.exchangeRulesPlaceholder")}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {selectedTemplate === "WISHLIST" ? (
+        <div className="grid gap-4">
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t("catalog:fields.wishlistSummary")}
+            </label>
+            <textarea
+              {...register("wishlistSummary")}
+              className={textareaClassName}
+              rows={3}
+              placeholder={t("catalog:itemForm.wishlistSummaryPlaceholder")}
+            />
+            {errors.wishlistSummary ? <p className="mt-1.5 text-sm text-red-600 dark:text-red-400">{translateError(errors.wishlistSummary.message)}</p> : null}
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t("catalog:fields.wantedEntries")}
+            </label>
+            <textarea
+              {...register("wantedEntriesText")}
+              className={textareaClassName}
+              rows={4}
+              placeholder={t("catalog:itemForm.wantedEntriesPlaceholder")}
+            />
+          </div>
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+              {t("catalog:fields.wantedConditionNotes")}
+            </label>
+            <textarea
+              {...register("wantedConditionNotes")}
+              className={textareaClassName}
+              rows={3}
+              placeholder={t("catalog:itemForm.wantedConditionNotesPlaceholder")}
+            />
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

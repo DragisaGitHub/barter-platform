@@ -23,6 +23,10 @@ properties:
     $ref: '../../../openapi.yaml#/components/schemas/ItemCondition'
   listingMode:
     $ref: '../../../openapi.yaml#/components/schemas/ListingMode'
+  listingTemplateType:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingTemplateType'
+  templateMetadata:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingTemplateMetadata'
   entryCount:
     type: integer
     format: int32

@@ -191,6 +191,28 @@ export function TradeOfferDetailPage() {
             label="Requested Item"
             sublabel={isReceiver ? "Your item" : `From ${offer.receiver.username}`}
           />
+          {offer.requestedEntries?.length ? (
+            <div className="mt-4 rounded-lg border border-indigo-100 bg-indigo-50/60 p-3 dark:border-indigo-900/60 dark:bg-indigo-950/20">
+              <p className="text-xs font-medium uppercase tracking-wider text-indigo-700 dark:text-indigo-300 mb-2">
+                {t("trade:detail.requestedEntriesTitle", { count: offer.requestedEntries.length })}
+              </p>
+              <div className="space-y-2">
+                {offer.requestedEntries.map((entry) => (
+                  <div key={entry.uuid} className="rounded-md bg-white/80 px-3 py-2 text-sm dark:bg-slate-900/40">
+                    <p className="font-medium text-slate-900 dark:text-slate-100">{entry.title}</p>
+                    {entry.quantity ? (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {t("catalog:itemDetail.entryQuantity", { quantity: entry.quantity })}
+                      </p>
+                    ) : null}
+                    {entry.description ? (
+                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{entry.description}</p>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </Card>
 
         {/* Offered items (sender side) */}

@@ -9,6 +9,7 @@ import { useCreateTradeOffer } from "./useTradeOffers";
 import type { ItemDetailResponse, TradeOfferMode } from "@/api/generated/types.ts";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { inferListingTemplateType } from "@/features/catalog/listingTemplates.ts";
 
 interface SendOfferModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
   const { t } = useTranslation(["trade", "common", "catalog"]);
   const [mode, setMode] = useState<TradeOfferMode>("ITEM_EXCHANGE");
   const [selectedItemUuids, setSelectedItemUuids] = useState<string[]>([]);
+  const [selectedRequestedEntryUuids, setSelectedRequestedEntryUuids] = useState<string[]>([]);
   const [message, setMessage] = useState("");
   const [itemSearch, setItemSearch] = useState("");
 
@@ -48,6 +50,7 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
   const createMutation = useCreateTradeOffer();
 
   const activeItems = data?.content ?? [];
+  const requiresRequestedEntrySelection = receiverItem.listingMode === "PICK_ANY";
 
   // Filter items by search
   const filteredItems = useMemo(() => {
@@ -67,6 +70,12 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
     }
   }, [mode]);
 
+  useEffect(() => {
+    if (!requiresRequestedEntrySelection) {
+      setSelectedRequestedEntryUuids([]);
+    }
+  }, [requiresRequestedEntrySelection]);
+
   const toggleItem = (uuid: string) => {
     setSelectedItemUuids((prev) =>
       prev.includes(uuid) ? prev.filter((u) => u !== uuid) : [...prev, uuid],
@@ -77,6 +86,12 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
     setSelectedItemUuids((prev) => prev.filter((u) => u !== uuid));
   };
 
+  const toggleRequestedEntry = (uuid: string) => {
+    setSelectedRequestedEntryUuids((prev) =>
+      prev.includes(uuid) ? prev.filter((entryUuid) => entryUuid !== uuid) : [...prev, uuid],
+    );
+  };
+
   // Validation
   const messageRequired = mode === "GIFT" || mode === "NEGOTIABLE";
   const itemsRequired = mode === "ITEM_EXCHANGE";
@@ -84,9 +99,10 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
 
   const isFormValid = useMemo(() => {
     if (itemsRequired && selectedItemUuids.length === 0) return false;
+    if (requiresRequestedEntrySelection && selectedRequestedEntryUuids.length === 0) return false;
     return !(messageRequired && !message.trim());
 
-  }, [mode, selectedItemUuids, message, itemsRequired, messageRequired]);
+  }, [mode, selectedItemUuids, selectedRequestedEntryUuids, message, itemsRequired, messageRequired, requiresRequestedEntrySelection]);
 
   const handleSubmit = () => {
     if (!isFormValid) return;
@@ -95,6 +111,7 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
       {
         receiverItemUuid: receiverItem.uuid,
         senderItemUuids: selectedItemUuids.length > 0 ? selectedItemUuids : undefined,
+        requestedEntryUuids: requiresRequestedEntrySelection ? selectedRequestedEntryUuids : undefined,
         mode,
         message: message.trim() || undefined,
       },
@@ -114,12 +131,14 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
   const resetAndClose = () => {
     setMode("ITEM_EXCHANGE");
     setSelectedItemUuids([]);
+    setSelectedRequestedEntryUuids([]);
     setMessage("");
     setItemSearch("");
     onClose();
   };
 
   const selectedItemDetails = activeItems.filter((i) => selectedItemUuids.includes(i.uuid));
+  const receiverTemplateType = inferListingTemplateType(receiverItem.listingMode, receiverItem.listingTemplateType);
 
   return (
     <Modal isOpen={isOpen} onClose={resetAndClose} title={t("trade:sendOffer.title")} size="lg">
@@ -132,12 +151,75 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {t("trade:byUser", { username: receiverItem.ownerUsername })} • {receiverItem.category?.name}
         </p>
-        {receiverItem.listingMode && receiverItem.listingMode !== "SINGLE" ? (
+        {receiverTemplateType !== "STANDARD_ITEM" ? (
           <p className="mt-1 text-xs font-medium text-indigo-700 dark:text-indigo-300">
-            {t(`catalog:listingMode.badge.${receiverItem.listingMode}`)} · {t("catalog:itemDetail.entryCount", { count: receiverItem.entries?.length ?? 0 })}
+            {t(`catalog:listingTemplate.badge.${receiverTemplateType}`)}
+            {receiverItem.entries?.length ? ` · ${t("catalog:itemDetail.entryCount", { count: receiverItem.entries.length })}` : ""}
           </p>
         ) : null}
+        {receiverItem.templateMetadata?.wishlistSummary ? (
+          <p className="mt-1 text-xs text-indigo-700/80 dark:text-indigo-200/80">{receiverItem.templateMetadata.wishlistSummary}</p>
+        ) : null}
       </div>
+
+      {requiresRequestedEntrySelection && (
+        <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-900/20">
+          <label className="block text-sm font-medium text-amber-900 dark:text-amber-100 mb-2">
+            {t("trade:sendOffer.chooseRequestedEntries")}
+            <span className="text-red-500 ml-1">*</span>
+          </label>
+          <p className="mb-3 text-xs text-amber-800/80 dark:text-amber-200/80">
+            {t("trade:sendOffer.chooseRequestedEntriesHelper")}
+          </p>
+          <div className="space-y-2">
+            {(receiverItem.entries ?? []).map((entry) => {
+              const isSelected = selectedRequestedEntryUuids.includes(entry.uuid);
+              return (
+                <button
+                  key={entry.uuid}
+                  type="button"
+                  onClick={() => toggleRequestedEntry(entry.uuid)}
+                  className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
+                    isSelected
+                      ? "border-amber-500 bg-white dark:bg-slate-900/40"
+                      : "border-amber-200/70 bg-white/70 hover:border-amber-300 dark:border-amber-900/60 dark:bg-slate-900/20"
+                  }`}
+                >
+                  <div
+                    className={`mt-0.5 flex size-5 shrink-0 items-center justify-center rounded border-2 ${
+                      isSelected
+                        ? "border-amber-500 bg-amber-500 text-white"
+                        : "border-amber-300 dark:border-amber-700"
+                    }`}
+                  >
+                    {isSelected ? (
+                      <svg className="size-3" viewBox="0 0 12 12" fill="none">
+                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    ) : null}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-slate-900 dark:text-slate-100">{entry.title}</p>
+                    {entry.quantity ? (
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        {t("catalog:itemDetail.entryQuantity", { quantity: entry.quantity })}
+                      </p>
+                    ) : null}
+                    {entry.description ? (
+                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">{entry.description}</p>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          {selectedRequestedEntryUuids.length === 0 && (
+            <p className="mt-3 text-xs text-red-600 dark:text-red-400">
+              {t("trade:sendOffer.requestedEntriesRequired")}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* ── Trade Mode Selector ─────────────────────────────── */}
       <div className="mb-5">
@@ -232,6 +314,7 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
             <div className="max-h-48 overflow-y-auto space-y-1.5 border border-slate-200 dark:border-slate-700 rounded-lg p-2">
               {filteredItems.map((item) => {
                 const isSelected = selectedItemUuids.includes(item.uuid);
+                const templateType = inferListingTemplateType(item.listingMode, item.listingTemplateType);
                 return (
                   <button
                     key={item.uuid}
@@ -263,11 +346,10 @@ export function SendOfferModal({ isOpen, onClose, receiverItem }: SendOfferModal
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                          {item.categoryName} • {t(`catalog:condition.${item.condition === "LIKE_NEW" ? "likeNew" : item.condition === "FOR_PARTS" ? "forParts" : item.condition.toLowerCase()}`)}
                       </p>
-                      {item.listingMode && item.listingMode !== "SINGLE" ? (
+                      {templateType !== "STANDARD_ITEM" ? (
                         <p className="mt-0.5 text-xs font-medium text-amber-700 dark:text-amber-300">
-                          {t(`catalog:listingMode.badge.${item.listingMode}`)} · {item.listingMode === "BUNDLE"
-                            ? t("catalog:itemCard.bundleEntryCount", { count: item.entryCount ?? 0 })
-                            : t("catalog:itemCard.pickAnyEntryCount", { count: item.entryCount ?? 0 })}
+                          {t(`catalog:listingTemplate.badge.${templateType}`)}
+                          {item.entryCount ? ` · ${t("catalog:itemDetail.entryCount", { count: item.entryCount })}` : ""}
                         </p>
                       ) : null}
                     </div>

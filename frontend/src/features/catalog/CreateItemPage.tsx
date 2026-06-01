@@ -6,6 +6,7 @@ import { Card, CardContent } from "../../components/ui/Card";
 import { Badge } from "../../components/ui/Badge";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { buildTemplateMetadataRequest } from "./listingTemplates";
 
 export function CreateItemPage() {
   const navigate = useNavigate();
@@ -23,6 +24,8 @@ export function CreateItemPage() {
         categoryUuid: data.categoryUuid,
         tagUuids: data.tagUuids?.length ? data.tagUuids : undefined,
         condition: data.condition,
+        listingTemplateType: data.listingTemplateType,
+        templateMetadata: buildTemplateMetadataRequest(data),
         listingMode: data.listingMode,
         entries:
           data.listingMode === "SINGLE"

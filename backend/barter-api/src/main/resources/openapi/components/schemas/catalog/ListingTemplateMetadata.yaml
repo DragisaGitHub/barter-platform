@@ -1,0 +1,48 @@
+type: object
+additionalProperties: false
+description: Optional metadata that refines supported listing templates.
+properties:
+  bundleTitle:
+    type: string
+    maxLength: 120
+  groupingDescription:
+    type: string
+    maxLength: 300
+  selectionHint:
+    type: string
+    maxLength: 300
+  collectionName:
+    type: string
+    maxLength: 120
+  totalOwned:
+    type: integer
+    format: int32
+    minimum: 1
+    maximum: 10000
+  duplicateCount:
+    type: integer
+    format: int32
+    minimum: 0
+    maximum: 10000
+  missingEntries:
+    type: array
+    maxItems: 100
+    items:
+      type: string
+      maxLength: 80
+  wantedEntries:
+    type: array
+    maxItems: 100
+    items:
+      type: string
+      maxLength: 80
+  exchangeRules:
+    type: string
+    maxLength: 300
+  wishlistSummary:
+    type: string
+    maxLength: 300
+  wantedConditionNotes:
+    type: string
+    maxLength: 300
+

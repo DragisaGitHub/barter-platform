@@ -6,6 +6,7 @@ import { Badge } from "../../components/ui/Badge";
 import { ItemStatusBadge, ItemConditionBadge } from "./ItemBadges";
 import { routePaths } from "@/routes/routePaths.ts";
 import { useTranslation } from "react-i18next";
+import { inferListingTemplateType } from "./listingTemplates";
 
 interface ItemCardProps {
   item: ItemSummaryResponse;
@@ -16,7 +17,9 @@ export function ItemCard({ item, linkPrefix = "/marketplace/items" }: ItemCardPr
   const { t } = useTranslation("catalog");
   const approximateLocation = formatApproximateExchangeLocation(item);
   const listingMode = item.listingMode ?? "SINGLE";
+  const templateType = inferListingTemplateType(listingMode, item.listingTemplateType);
   const isMultiItem = listingMode !== "SINGLE";
+  const templateSummary = getTemplateSummary(item, templateType, t);
   return (
     <Link to={`${linkPrefix}/${item.uuid}`} className="block group">
       <Card className="h-full transition-shadow hover:shadow-md">
@@ -41,9 +44,9 @@ export function ItemCard({ item, linkPrefix = "/marketplace/items" }: ItemCardPr
         <div className="flex flex-wrap items-center gap-2 mb-3">
           <ItemStatusBadge status={item.status} />
           <ItemConditionBadge condition={item.condition} />
-          {isMultiItem ? (
+          {templateType !== "STANDARD_ITEM" || isMultiItem ? (
             <Badge variant="secondary" className="rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
-              {t(`listingMode.badge.${listingMode}`)}
+              {t(`listingTemplate.badge.${templateType}`)}
             </Badge>
           ) : null}
         </div>
@@ -61,6 +64,10 @@ export function ItemCard({ item, linkPrefix = "/marketplace/items" }: ItemCardPr
               </p>
             ) : null}
           </div>
+        ) : null}
+
+        {templateSummary ? (
+          <p className="mb-3 text-xs leading-5 text-slate-500 dark:text-slate-400 line-clamp-2">{templateSummary}</p>
         ) : null}
 
         <div className="flex items-center justify-between text-sm text-slate-500 dark:text-slate-400">
@@ -92,5 +99,31 @@ export function ItemCard({ item, linkPrefix = "/marketplace/items" }: ItemCardPr
 function formatApproximateExchangeLocation(item: ItemSummaryResponse) {
   const locality = [item.exchangeArea, item.exchangeCity].filter(Boolean).join(", ");
   return [locality, item.exchangeLocation].filter(Boolean).join(" · ");
+}
+
+function getTemplateSummary(
+  item: ItemSummaryResponse,
+  templateType: ReturnType<typeof inferListingTemplateType>,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) {
+  const metadata = item.templateMetadata;
+  switch (templateType) {
+    case "BUNDLE":
+      return metadata?.bundleTitle ?? metadata?.groupingDescription ?? undefined;
+    case "PICK_FROM_COLLECTION":
+      return metadata?.selectionHint ?? metadata?.collectionName ?? undefined;
+    case "COLLECTION_ALBUM":
+      if (metadata?.collectionName) {
+        return t("itemCard.collectionAlbumSummary", {
+          name: metadata.collectionName,
+          duplicates: metadata.duplicateCount ?? 0,
+        });
+      }
+      return metadata?.exchangeRules ?? undefined;
+    case "WISHLIST":
+      return metadata?.wishlistSummary ?? metadata?.wantedEntries?.slice(0, 3).join(" · ") ?? undefined;
+    default:
+      return undefined;
+  }
 }
 

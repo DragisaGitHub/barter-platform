@@ -12,6 +12,7 @@ import com.barterplatform.api.model.ArchiveItemRequest;
 import com.barterplatform.api.model.CreateItemRequest;
 import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemListingEntryRequest;
+import com.barterplatform.api.model.ListingTemplateMetadata;
 import com.barterplatform.api.model.UpdateItemRequest;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.common.exception.ApiException;
@@ -24,6 +25,7 @@ import com.barterplatform.domain.catalog.entity.TagEntity;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.catalog.enums.ListingMode;
+import com.barterplatform.domain.catalog.enums.ListingTemplateType;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
@@ -157,6 +159,7 @@ class ItemCommandServiceImplTest {
             assertEquals(ItemStatus.DRAFT, captor.getValue().getStatus());
             assertEquals(ItemCondition.GOOD, captor.getValue().getCondition());
             assertEquals(ListingMode.SINGLE, captor.getValue().getListingMode());
+            assertEquals(ListingTemplateType.STANDARD_ITEM, captor.getValue().getListingTemplateType());
             assertEquals(1L, captor.getValue().getOwnerId());
             assertEquals(10L, captor.getValue().getCategoryId());
             assertEquals("Belgrade", captor.getValue().getExchangeCity());
@@ -244,6 +247,7 @@ class ItemCommandServiceImplTest {
             ArgumentCaptor<ItemEntity> itemCaptor = ArgumentCaptor.forClass(ItemEntity.class);
             verify(itemRepository).save(itemCaptor.capture());
             assertEquals(ListingMode.BUNDLE, itemCaptor.getValue().getListingMode());
+            assertEquals(ListingTemplateType.BUNDLE, itemCaptor.getValue().getListingTemplateType());
 
             ArgumentCaptor<ItemListingEntryEntity> entryCaptor = ArgumentCaptor.forClass(ItemListingEntryEntity.class);
             verify(itemListingEntryRepository, org.mockito.Mockito.times(2)).save(entryCaptor.capture());
@@ -281,7 +285,84 @@ class ItemCommandServiceImplTest {
             ArgumentCaptor<ItemEntity> itemCaptor = ArgumentCaptor.forClass(ItemEntity.class);
             verify(itemRepository).save(itemCaptor.capture());
             assertEquals(ListingMode.PICK_ANY, itemCaptor.getValue().getListingMode());
+            assertEquals(ListingTemplateType.PICK_FROM_COLLECTION, itemCaptor.getValue().getListingTemplateType());
             verify(itemListingEntryRepository).save(any(ItemListingEntryEntity.class));
+        }
+
+        @Test
+        @DisplayName("rejects unsupported listing template and mode combination")
+        void rejectUnsupportedTemplateModeCombination() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID catUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, catUuid, "Books");
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+
+            CreateItemRequest request = new CreateItemRequest("Wishlist", catUuid,
+                    com.barterplatform.api.model.ItemCondition.GOOD)
+                    .listingMode(com.barterplatform.api.model.ListingMode.BUNDLE)
+                    .listingTemplateType(com.barterplatform.api.model.ListingTemplateType.WISHLIST)
+                    .entries(List.of(new ItemListingEntryRequest("Book one")));
+
+            ApiException ex = assertThrows(ApiException.class, () -> service.createItem(ownerUuid, request));
+            assertEquals(400, ex.getStatus().value());
+            verify(itemRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("rejects unsupported metadata fields for bundle template")
+        void rejectUnsupportedMetadataFields() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID catUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, catUuid, "Books");
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+
+            ListingTemplateMetadata metadata = new ListingTemplateMetadata();
+            metadata.setWishlistSummary("Need this soon");
+
+            CreateItemRequest request = new CreateItemRequest("Bundle", catUuid,
+                    com.barterplatform.api.model.ItemCondition.GOOD)
+                    .listingMode(com.barterplatform.api.model.ListingMode.BUNDLE)
+                    .listingTemplateType(com.barterplatform.api.model.ListingTemplateType.BUNDLE)
+                    .templateMetadata(metadata)
+                    .entries(List.of(new ItemListingEntryRequest("Book one")));
+
+            ApiException ex = assertThrows(ApiException.class, () -> service.createItem(ownerUuid, request));
+            assertEquals(400, ex.getStatus().value());
+            verify(itemRepository, never()).save(any());
+        }
+
+        @Test
+        @DisplayName("rejects invalid collection album totals")
+        void rejectInvalidCollectionAlbumTotals() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID catUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, catUuid, "Books");
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+
+            ListingTemplateMetadata metadata = new ListingTemplateMetadata();
+            metadata.setCollectionName("World Cup 98");
+            metadata.setTotalOwned(10);
+            metadata.setDuplicateCount(11);
+
+            CreateItemRequest request = new CreateItemRequest("Album", catUuid,
+                    com.barterplatform.api.model.ItemCondition.GOOD)
+                    .listingMode(com.barterplatform.api.model.ListingMode.PICK_ANY)
+                    .listingTemplateType(com.barterplatform.api.model.ListingTemplateType.COLLECTION_ALBUM)
+                    .templateMetadata(metadata)
+                    .entries(List.of(new ItemListingEntryRequest("Sticker 10")));
+
+            ApiException ex = assertThrows(ApiException.class, () -> service.createItem(ownerUuid, request));
+            assertEquals(400, ex.getStatus().value());
+            verify(itemRepository, never()).save(any());
         }
 
         @Test
@@ -457,6 +538,40 @@ class ItemCommandServiceImplTest {
             assertEquals("Updated entry", captor.getValue().getTitle());
             assertEquals(2, captor.getValue().getQuantity());
             assertEquals(ListingMode.PICK_ANY, existingItem.getListingMode());
+            assertEquals(ListingTemplateType.PICK_FROM_COLLECTION, existingItem.getListingTemplateType());
+        }
+
+        @Test
+        @DisplayName("updates wishlist metadata for single listings")
+        void updateWishlistMetadata() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID itemUuid = UUID.randomUUID();
+
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, UUID.randomUUID(), "Books");
+            ItemEntity existingItem = item(50L, itemUuid, 1L, 10L, ItemStatus.DRAFT, ItemCondition.GOOD);
+            existingItem.setListingMode(ListingMode.SINGLE);
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(existingItem));
+            when(categoryRepository.findById(10L)).thenReturn(Optional.of(cat));
+            when(itemRepository.save(any(ItemEntity.class))).thenAnswer(i -> i.getArgument(0));
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new ItemDetailResponse().uuid(itemUuid).title("Test Item"));
+
+            ListingTemplateMetadata metadata = new ListingTemplateMetadata();
+            metadata.setWishlistSummary("Looking for missing Harry Potter books");
+
+            UpdateItemRequest request = new UpdateItemRequest()
+                    .listingTemplateType(com.barterplatform.api.model.ListingTemplateType.WISHLIST)
+                    .templateMetadata(metadata);
+
+            service.updateItem(ownerUuid, itemUuid, request);
+
+            ArgumentCaptor<ItemEntity> captor = ArgumentCaptor.forClass(ItemEntity.class);
+            verify(itemRepository).save(captor.capture());
+            assertEquals(ListingTemplateType.WISHLIST, captor.getValue().getListingTemplateType());
+            org.junit.jupiter.api.Assertions.assertTrue(captor.getValue().getTemplateMetadataJson().contains("wishlistSummary"));
         }
     }
 

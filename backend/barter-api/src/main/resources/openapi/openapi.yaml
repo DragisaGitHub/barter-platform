@@ -245,6 +245,10 @@ components:
       $ref: './components/schemas/catalog/ItemCondition.yaml'
     ListingMode:
       $ref: './components/schemas/catalog/ListingMode.yaml'
+    ListingTemplateType:
+      $ref: './components/schemas/catalog/ListingTemplateType.yaml'
+    ListingTemplateMetadata:
+      $ref: './components/schemas/catalog/ListingTemplateMetadata.yaml'
     CategoryResponse:
       $ref: './components/schemas/catalog/CategoryResponse.yaml'
     PopularCategoryResponse:

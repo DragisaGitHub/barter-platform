@@ -23,9 +23,10 @@ import { SendOfferModal } from "../trade/SendOfferModal";
 import { ReportTrigger } from "@/features/reports/ReportTrigger";
 import { useAuth } from "../../auth/AuthContext";
 import { routePaths } from "@/routes/routePaths.ts";
-import type { ItemImageResponse } from "@/api/generated/types.ts";
+import type { ItemDetailResponse, ItemImageResponse } from "@/api/generated/types.ts";
 import { cn } from "@/utils";
 import { useTranslation } from "react-i18next";
+import { inferListingTemplateType } from "./listingTemplates";
 
 function ImageSection({ images }: { images: ItemImageResponse[] }) {
   const { t } = useTranslation("catalog");
@@ -192,7 +193,9 @@ export function ItemDetailPage() {
   const descriptionPreview = item.description?.trim();
   const approximateLocation = formatApproximateExchangeLocation(item);
   const listingMode = item.listingMode ?? "SINGLE";
+  const templateType = inferListingTemplateType(listingMode, item.listingTemplateType);
   const isMultiItem = listingMode !== "SINGLE";
+  const templateDetails = buildTemplateDetails(item, templateType, t);
   const listedDate = new Date(item.createdAt).toLocaleDateString(i18n.language === "sr" ? "sr-Latn-RS" : "en-US", {
     day: "numeric",
     month: "short",
@@ -221,9 +224,9 @@ export function ItemDetailPage() {
             <div className="flex flex-wrap gap-1.5">
               <ItemStatusBadge status={item.status} />
               <ItemConditionBadge condition={item.condition} />
-              {isMultiItem ? (
+              {templateType !== "STANDARD_ITEM" || isMultiItem ? (
                 <Badge variant="warning" className="rounded-full">
-                  {t(`catalog:listingMode.badge.${listingMode}`)}
+                  {t(`catalog:listingTemplate.badge.${templateType}`)}
                 </Badge>
               ) : null}
               <span className="marketplace-soft-badge inline-flex items-center bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700">
@@ -289,6 +292,20 @@ export function ItemDetailPage() {
                 {descriptionPreview || t("catalog:itemDetail.noDescription")}
               </p>
             </div>
+
+            {templateType !== "STANDARD_ITEM" ? (
+              <div className="mt-4 rounded-lg border border-violet-100 bg-violet-50 px-3.5 py-3 text-sm text-violet-800">
+                <p className="font-medium">{t(`catalog:listingTemplate.label.${templateType}`)}</p>
+                <p className="mt-1 leading-5">{t(`catalog:listingTemplate.helper.${templateType}`)}</p>
+                {templateDetails.length ? (
+                  <ul className="mt-2 space-y-1 text-xs leading-5 text-violet-700">
+                    {templateDetails.slice(0, 3).map((detail) => (
+                      <li key={detail}>• {detail}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : null}
 
             {isMultiItem ? (
               <div className="mt-4 rounded-lg border border-amber-100 bg-amber-50 px-3.5 py-3 text-sm text-amber-800">
@@ -465,5 +482,35 @@ function formatApproximateExchangeLocation(item: {
 }) {
   const locality = [item.exchangeArea, item.exchangeCity].filter(Boolean).join(", ");
   return [locality, item.exchangeLocation].filter(Boolean).join(" · ");
+}
+
+function buildTemplateDetails(
+  item: ItemDetailResponse,
+  templateType: ReturnType<typeof inferListingTemplateType>,
+  t: (key: string, options?: Record<string, unknown>) => string,
+) {
+  const metadata = item.templateMetadata;
+  switch (templateType) {
+    case "BUNDLE":
+      return [metadata?.bundleTitle, metadata?.groupingDescription].filter(Boolean) as string[];
+    case "PICK_FROM_COLLECTION":
+      return [metadata?.collectionName, metadata?.selectionHint, metadata?.exchangeRules].filter(Boolean) as string[];
+    case "COLLECTION_ALBUM":
+      return [
+        metadata?.collectionName,
+        metadata?.totalOwned != null ? t("catalog:itemDetail.collectionAlbumOwned", { count: metadata.totalOwned }) : undefined,
+        metadata?.duplicateCount != null ? t("catalog:itemDetail.collectionAlbumDuplicates", { count: metadata.duplicateCount }) : undefined,
+        metadata?.wantedEntries?.length ? t("catalog:itemDetail.collectionAlbumWanted", { count: metadata.wantedEntries.length }) : undefined,
+        metadata?.exchangeRules,
+      ].filter(Boolean) as string[];
+    case "WISHLIST":
+      return [
+        metadata?.wishlistSummary,
+        metadata?.wantedEntries?.length ? metadata.wantedEntries.slice(0, 5).join(" · ") : undefined,
+        metadata?.wantedConditionNotes,
+      ].filter(Boolean) as string[];
+    default:
+      return [];
+  }
 }
 
