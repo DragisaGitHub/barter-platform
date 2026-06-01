@@ -1,0 +1,9 @@
+type: string
+description: Optional listing template overlay used to guide creation and presentation.
+enum:
+  - STANDARD_ITEM
+  - BUNDLE
+  - PICK_FROM_COLLECTION
+  - COLLECTION_ALBUM
+  - WISHLIST
+

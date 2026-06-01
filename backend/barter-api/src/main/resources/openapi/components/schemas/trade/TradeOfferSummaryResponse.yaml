@@ -38,6 +38,11 @@ properties:
     items:
       $ref: '../../../openapi.yaml#/components/schemas/TradeOfferItemSummary'
     description: Items offered by the sender. Empty for GIFT mode.
+  requestedEntries:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/ItemListingEntryResponse'
+    description: Selected child entries from the requested listing for PICK_ANY-based offers.
   createdAt:
     type: string
     format: date-time

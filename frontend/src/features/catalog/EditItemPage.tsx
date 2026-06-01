@@ -13,6 +13,11 @@ import { useItemImages } from "./useItemImages";
 import { ImageUploader } from "./components/ImageUploader";
 import { ItemImageGallery } from "./components/ItemImageGallery";
 import { useTranslation } from "react-i18next";
+import {
+  buildTemplateMetadataRequest,
+  inferListingTemplateType,
+  multilineEntriesValue,
+} from "./listingTemplates";
 
 export function EditItemPage() {
   const { uuid } = useParams<{ uuid: string }>();
@@ -33,6 +38,8 @@ export function EditItemPage() {
         categoryUuid: data.categoryUuid,
         tagUuids: data.tagUuids?.length ? data.tagUuids : undefined,
         condition: data.condition,
+        listingTemplateType: data.listingTemplateType,
+        templateMetadata: buildTemplateMetadataRequest(data),
         listingMode: data.listingMode,
         entries:
           data.listingMode === "SINGLE"
@@ -181,12 +188,24 @@ export function EditItemPage() {
               tagUuids: item.tags.map((t) => t.uuid),
               condition: item.condition,
               status: item.status,
+              listingTemplateType: inferListingTemplateType(item.listingMode, item.listingTemplateType),
               listingMode: item.listingMode ?? "SINGLE",
               entries: item.entries?.map((entry) => ({
                 title: entry.title,
                 description: entry.description ?? "",
                 quantity: entry.quantity ?? undefined,
               })) ?? [],
+              bundleTitle: item.templateMetadata?.bundleTitle ?? "",
+              groupingDescription: item.templateMetadata?.groupingDescription ?? "",
+              selectionHint: item.templateMetadata?.selectionHint ?? "",
+              collectionName: item.templateMetadata?.collectionName ?? "",
+              totalOwned: item.templateMetadata?.totalOwned ?? undefined,
+              duplicateCount: item.templateMetadata?.duplicateCount ?? undefined,
+              missingEntriesText: multilineEntriesValue(item.templateMetadata?.missingEntries),
+              wantedEntriesText: multilineEntriesValue(item.templateMetadata?.wantedEntries),
+              exchangeRules: item.templateMetadata?.exchangeRules ?? "",
+              wishlistSummary: item.templateMetadata?.wishlistSummary ?? "",
+              wantedConditionNotes: item.templateMetadata?.wantedConditionNotes ?? "",
             }}
             onSubmit={handleSubmit}
             isSubmitting={updateMutation.isPending}

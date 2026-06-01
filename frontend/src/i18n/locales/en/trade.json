@@ -62,6 +62,7 @@
     "none": "None",
     "moreItems": "+{{count}} more",
     "requestedItem": "Requested Item",
+    "requestedEntriesSummary": "Selected entries: {{entries}}",
     "responded": "Responded: {{date}}"
   },
   "actions": {
@@ -86,6 +87,8 @@
   "sendOffer": {
     "title": "Send Trade Offer",
     "youWant": "You want",
+    "chooseRequestedEntries": "Choose requested entries",
+    "chooseRequestedEntriesHelper": "Select the specific entries you want from this multi-entry listing.",
     "tradeMode": "Trade Mode",
     "youOffer": "You offer",
     "noOfferedItemsSelected": "No offered items selected yet.",
@@ -95,6 +98,7 @@
     "noItemsMatchSearch": "No items match your search.",
     "giftModeExplanation": "Gift mode — no items to offer. Your message will explain the arrangement.",
     "messageRequired": "Message is required for {{mode}} mode.",
+    "requestedEntriesRequired": "Select at least one requested entry.",
     "submit": "Send Offer",
     "toast": { "success": "Trade offer sent!", "error": "Failed to send trade offer." },
     "modeDescription": {
@@ -224,6 +228,7 @@
     "giftMessage": "Gift Message",
     "yourRequestedItem": "Your Requested Item",
     "requestedItem": "Requested Item",
+    "requestedEntriesTitle": "Selected requested entries ({{count}})",
     "yourOfferedItems": "Your Offered Item",
     "yourOfferedItems_plural": "Your Offered Items",
     "offeredItems": "Offered Item",

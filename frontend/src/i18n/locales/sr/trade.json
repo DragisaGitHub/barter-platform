@@ -62,6 +62,7 @@
     "none": "Ništa",
     "moreItems": "+{{count}} još",
     "requestedItem": "Traženi oglas",
+    "requestedEntriesSummary": "Izabrane stavke: {{entries}}",
     "responded": "Odgovoreno: {{date}}"
   },
   "actions": {
@@ -86,6 +87,8 @@
   "sendOffer": {
     "title": "Pošalji ponudu za razmenu",
     "youWant": "Želiš",
+    "chooseRequestedEntries": "Izaberi tražene stavke",
+    "chooseRequestedEntriesHelper": "Izaberi konkretne stavke koje želiš iz ovog oglasa sa više unosa.",
     "tradeMode": "Tip razmene",
     "youOffer": "Nudiš",
     "noOfferedItemsSelected": "Još nema izabranih ponuđenih oglasa.",
@@ -95,6 +98,7 @@
     "noItemsMatchSearch": "Nijedan oglas ne odgovara pretrazi.",
     "giftModeExplanation": "Režim poklona — nema oglasa za ponudu. Porukom objasni dogovor.",
     "messageRequired": "Poruka je obavezna za režim {{mode}}.",
+    "requestedEntriesRequired": "Izaberi bar jednu traženu stavku.",
     "submit": "Pošalji ponudu",
     "toast": { "success": "Ponuda za razmenu je poslata!", "error": "Slanje ponude za razmenu nije uspelo." },
     "modeDescription": {
@@ -224,6 +228,7 @@
     "giftMessage": "Poruka za poklon",
     "yourRequestedItem": "Tvoj traženi oglas",
     "requestedItem": "Traženi oglas",
+    "requestedEntriesTitle": "Izabrane tražene stavke ({{count}})",
     "yourOfferedItems": "Tvoj ponuđeni oglas",
     "yourOfferedItems_plural": "Tvoji ponuđeni oglasi",
     "offeredItems": "Ponuđeni oglas",

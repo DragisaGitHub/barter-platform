@@ -60,6 +60,36 @@
       "PICK_ANY": "Izbor iz seta"
     }
   },
+  "listingTemplate": {
+    "label": {
+      "STANDARD_ITEM": "Standardni predmet",
+      "BUNDLE": "Paket",
+      "PICK_FROM_COLLECTION": "Izbor iz kolekcije",
+      "COLLECTION_ALBUM": "Album kolekcije",
+      "WISHLIST": "Lista želja / tražim"
+    },
+    "badge": {
+      "STANDARD_ITEM": "Standardni predmet",
+      "BUNDLE": "Paket",
+      "PICK_FROM_COLLECTION": "Izbor iz kolekcije",
+      "COLLECTION_ALBUM": "Album kolekcije",
+      "WISHLIST": "Lista želja"
+    },
+    "helper": {
+      "STANDARD_ITEM": "Jednostavan oglas za jedan predmet bez dodatne strukture.",
+      "BUNDLE": "Ponudi više povezanih predmeta zajedno kao jedan paket za razmenu.",
+      "PICK_FROM_COLLECTION": "Dozvoli drugim korisnicima da izaberu konkretne stavke iz veće kolekcije.",
+      "COLLECTION_ALBUM": "Prati posedovane, duplikate i željene kolekcionarske stavke u jednom oglasu.",
+      "WISHLIST": "Opiši šta tražiš čak i ako trenutno nemaš spreman odgovarajući predmet za ponudu."
+    },
+    "adaptiveHelper": {
+      "STANDARD_ITEM": "Zadrži tok jednostavnim i fokusiraj se na standardna polja za naslov, opis, kategoriju i stanje.",
+      "BUNDLE": "Dodaj kratak kontekst da objasniš zašto ove stavke idu zajedno i šta paket obuhvata.",
+      "PICK_FROM_COLLECTION": "Usmeri druge korisnike kako mogu da biraju stavke iz kolekcije.",
+      "COLLECTION_ALBUM": "Zabeleži napredak kolekcije, duplikate i stavke koje još tražiš.",
+      "WISHLIST": "Istakni šta želiš da dobiješ kako bi buduće uparivanje i pretraga bili korisniji."
+    }
+  },
   "fields": {
     "title": "Naslov",
     "description": "Opis",
@@ -67,6 +97,17 @@
     "condition": "Stanje",
     "status": "Status",
     "listingMode": "Tip oglasa",
+    "bundleTitle": "Naziv paketa",
+    "groupingDescription": "Opis grupisanja",
+    "selectionHint": "Napomena za izbor",
+    "collectionName": "Naziv kolekcije",
+    "totalOwned": "Ukupno poseduješ",
+    "duplicateCount": "Broj duplikata",
+    "missingEntries": "Nedostajuće stavke",
+    "wantedEntries": "Tražene stavke",
+    "exchangeRules": "Pravila razmene",
+    "wishlistSummary": "Sažetak liste želja",
+    "wantedConditionNotes": "Napomene o željenom stanju",
     "exchangeCity": "Približan javni grad za razmenu",
     "exchangeArea": "Približna javna oblast za razmenu",
     "exchangeLocation": "Napomena o javnoj lokaciji razmene",
@@ -202,6 +243,11 @@
     "exchangeLocationPrivacy": "Ovo je samo javna približna oblast. Ne deli tačnu kućnu adresu u oglasu.",
     "bundleExplanation": "Svi navedeni predmeti nude se zajedno.",
     "pickAnyExplanation": "Drugi korisnik može da izabere šta mu treba.",
+    "collectionAlbumOwned": "Praćeno posedovanih stavki: {{count}}",
+    "collectionAlbumDuplicates": "{{count}} duplikat",
+    "collectionAlbumDuplicates_plural": "{{count}} duplikata",
+    "collectionAlbumWanted": "{{count}} tražena stavka",
+    "collectionAlbumWanted_plural": "{{count}} traženih stavki",
     "entriesTitle": "Uključeni predmeti",
     "entryCount": "{{count}} stavka",
     "entryCount_plural": "{{count}} stavki",
@@ -218,6 +264,11 @@
   "itemForm": {
     "titlePlaceholder": "Šta oglašavaš?",
     "descriptionPlaceholder": "Opiši svoj predmet...",
+    "templateSelectorTitle": "Izaberi šablon oglasa",
+    "templateSelectorHelper": "Izaberi strukturu koja najbolje odgovara ovom oglasu. Ostatak forme se prilagođava automatski.",
+    "templateDetailsTitle": "Pomoćna polja za izabrani šablon",
+    "templateModeHint": "{{template}} koristi režim {{mode}} u pozadini.",
+    "standardTemplateNote": "Ovde nisu potrebni dodatni metapodaci — standardna polja oglasa su dovoljna.",
     "exchangeLocationTitle": "Približna javna oblast za razmenu",
     "exchangeLocationHelper": "Unesi samo grad, kraj ili oblast javnog mesta. Nemoj unositi tačnu kućnu adresu.",
     "exchangeCityPlaceholder": "npr. Beograd",
@@ -239,6 +290,15 @@
     "entryDescriptionPlaceholder": "Kratka napomena o ovoj stavki",
     "entryQuantity": "Količina",
     "noEntries": "Dodaj najmanje jednu stavku za paket ili izbor iz seta.",
+    "bundleTitlePlaceholder": "npr. Početni manga paket",
+    "groupingDescriptionPlaceholder": "Objasni zašto ove stavke imaju smisla zajedno.",
+    "collectionNamePlaceholder": "npr. Sličice Svetsko prvenstvo 1998",
+    "selectionHintPlaceholder": "Objasni kako drugi korisnik treba da bira stavke iz kolekcije.",
+    "exchangeRulesPlaceholder": "Opciona pravila ili očekivanja za razmenu.",
+    "missingEntriesPlaceholder": "Jedna stavka po redu ili odvoji zarezima",
+    "wantedEntriesPlaceholder": "Jedna stavka po redu ili odvoji zarezima",
+    "wishlistSummaryPlaceholder": "Opiši šta želiš da dobiješ.",
+    "wantedConditionNotesPlaceholder": "Opcione napomene o stanju ili kvalitetu onoga što tražiš.",
     "selectCategory": "Izaberi kategoriju",
     "selectCondition": "Izaberi stanje",
     "loadingTags": "Učitavanje oznaka...",
@@ -252,11 +312,21 @@
     "exchangeLocationTooLong": "Napomena o lokaciji može imati najviše 255 karaktera",
     "categoryRequired": "Kategorija je obavezna",
     "conditionRequired": "Stanje je obavezno",
+    "templateModeMismatch": "Ovaj šablon mora da koristi odgovarajući režim oglasa",
     "entriesRequiredForMultiItem": "Paket i izbor iz seta zahtevaju najmanje jednu stavku",
     "entriesTooMany": "Oglas može imati najviše 20 stavki",
     "entryTitleRequired": "Naslov stavke je obavezan",
     "entryTitleTooLong": "Naslov stavke može imati najviše 200 karaktera",
-    "entryQuantityMin": "Količina mora biti najmanje 1"
+    "entryQuantityMin": "Količina mora biti najmanje 1",
+    "templateTextTooLong": "Ovo polje je predugačko",
+    "templateTextareaTooLong": "Ova napomena je predugačka",
+    "templateListTooLong": "Ova lista je predugačka",
+    "totalOwnedMin": "Ukupan broj mora biti najmanje 1",
+    "totalOwnedMax": "Ukupan broj mora biti 10000 ili manji",
+    "duplicateCountMin": "Broj duplikata ne može biti negativan",
+    "duplicateCountMax": "Broj duplikata mora biti 10000 ili manji",
+    "duplicateCountCannotExceedOwned": "Broj duplikata ne može biti veći od ukupnog broja",
+    "wishlistSummaryRequired": "Lista želja mora imati sažetak ili bar jednu traženu stavku"
   },
   "createItem": {
     "title": "Kreiraj novi oglas",
@@ -337,7 +407,8 @@
     "bundleEntryCount": "{{count}} predmet uključen",
     "bundleEntryCount_plural": "{{count}} predmeta uključeno",
     "pickAnyEntryCount": "Izbor od {{count}} predmeta",
-    "pickAnyEntryCount_plural": "Izbor od {{count}} predmeta"
+    "pickAnyEntryCount_plural": "Izbor od {{count}} predmeta",
+    "collectionAlbumSummary": "{{name}} · {{duplicates}} duplikata"
   },
   "images": {
     "primaryImage": "Primarna slika",

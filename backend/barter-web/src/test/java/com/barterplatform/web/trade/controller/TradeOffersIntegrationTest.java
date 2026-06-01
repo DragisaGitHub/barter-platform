@@ -16,6 +16,7 @@ import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
 import com.barterplatform.infrastructure.notification.repository.NotificationRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferMessageRepository;
+import com.barterplatform.infrastructure.trade.repository.TradeOfferRequestedEntryRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -89,6 +90,8 @@ class TradeOffersIntegrationTest {
     @Autowired
     private TradeOfferItemRepository tradeOfferItemRepository;
     @Autowired
+    private TradeOfferRequestedEntryRepository tradeOfferRequestedEntryRepository;
+    @Autowired
     private TradeOfferMessageRepository tradeOfferMessageRepository;
     @Autowired
     private NotificationRepository notificationRepository;
@@ -98,6 +101,7 @@ class TradeOffersIntegrationTest {
         SecurityContextHolder.clearContext();
         // Delete notifications before users (FK constraint)
         notificationRepository.deleteAllInBatch();
+        tradeOfferRequestedEntryRepository.deleteAllInBatch();
         tradeOfferItemRepository.deleteAllInBatch();
         tradeOfferMessageRepository.deleteAllInBatch();
         tradeOfferRepository.deleteAllInBatch();
@@ -274,6 +278,44 @@ class TradeOffersIntegrationTest {
         mockMvc.perform(apiGet("/catalog/items/" + bobItem2Uuid)
                         .header("Authorization", "Bearer " + bobToken))
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
+    }
+
+    @Test
+    void pickAnyRequestedEntriesMustBeSelectedAndReturned() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        PickAnyListing pickAnyListing = createPickAnyListing(aliceToken, "Sticker Duplicates");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Item");
+
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(pickAnyListing.itemUuid(), bobItemUuid)))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "requestedEntryUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE",
+                                  "message": "Interested in this duplicate"
+                                }
+                                """.formatted(pickAnyListing.itemUuid(), bobItemUuid, pickAnyListing.entryUuid())))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.requestedEntries", hasSize(1)))
+                .andExpect(jsonPath("$.requestedEntries[0].uuid").value(pickAnyListing.entryUuid()))
+                .andExpect(jsonPath("$.requestedEntries[0].title").value("Sticker 10"));
     }
 
     // ══════════════════════════════════════════════════════════════
@@ -1286,6 +1328,34 @@ class TradeOffersIntegrationTest {
         return extractField(result);
     }
 
+    private PickAnyListing createPickAnyListing(String token, String title) throws Exception {
+        MvcResult result = mockMvc.perform(apiPost("/catalog/items")
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "%s",
+                                  "categoryUuid": "%s",
+                                  "condition": "GOOD",
+                                  "status": "ACTIVE",
+                                  "listingMode": "PICK_ANY",
+                                  "entries": [
+                                    { "title": "Sticker 10", "quantity": 1 },
+                                    { "title": "Sticker 11", "quantity": 1 }
+                                  ]
+                                }
+                                """.formatted(title, CATEGORY_TOYS_UUID)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.listingMode").value("PICK_ANY"))
+                .andExpect(jsonPath("$.entries", hasSize(2)))
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        return new PickAnyListing(
+                json.get("uuid").asText(),
+                json.get("entries").get(0).get("uuid").asText());
+    }
+
     private String extractField(MvcResult result) throws Exception {
         JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
         return json.get("uuid").asString();
@@ -1303,5 +1373,8 @@ class TradeOffersIntegrationTest {
                 .contextPath("/api/v1")
                 .servletPath(path)
                 .accept(MediaType.APPLICATION_JSON);
+    }
+
+    private record PickAnyListing(String itemUuid, String entryUuid) {
     }
 }

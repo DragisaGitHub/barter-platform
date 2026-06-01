@@ -31,6 +31,12 @@ properties:
     $ref: '../../../openapi.yaml#/components/schemas/ItemCondition'
   listingMode:
     $ref: '../../../openapi.yaml#/components/schemas/ListingMode'
+  listingTemplateType:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingTemplateType'
+    description: Optional template override. When omitted, the existing compatible template is preserved or inferred.
+  templateMetadata:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingTemplateMetadata'
+    description: Optional template-specific metadata replacement. Unsupported fields are rejected.
   entries:
     type: array
     maxItems: 20

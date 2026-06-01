@@ -1468,6 +1468,27 @@ export interface components {
          * @enum {string}
          */
         ListingMode: "SINGLE" | "BUNDLE" | "PICK_ANY";
+        /**
+         * @description Optional listing template overlay used to guide creation and presentation.
+         * @enum {string}
+         */
+        ListingTemplateType: "STANDARD_ITEM" | "BUNDLE" | "PICK_FROM_COLLECTION" | "COLLECTION_ALBUM" | "WISHLIST";
+        /** @description Optional metadata that refines supported listing templates. */
+        ListingTemplateMetadata: {
+            bundleTitle?: string;
+            groupingDescription?: string;
+            selectionHint?: string;
+            collectionName?: string;
+            /** Format: int32 */
+            totalOwned?: number;
+            /** Format: int32 */
+            duplicateCount?: number;
+            missingEntries?: string[];
+            wantedEntries?: string[];
+            exchangeRules?: string;
+            wishlistSummary?: string;
+            wantedConditionNotes?: string;
+        };
         CategoryResponse: {
             /** Format: uuid */
             uuid: string;
@@ -1561,6 +1582,8 @@ export interface components {
             status: components["schemas"]["ItemStatus"];
             condition: components["schemas"]["ItemCondition"];
             listingMode?: components["schemas"]["ListingMode"];
+            listingTemplateType?: components["schemas"]["ListingTemplateType"];
+            templateMetadata?: components["schemas"]["ListingTemplateMetadata"];
             /**
              * Format: int32
              * @default 0
@@ -1589,6 +1612,8 @@ export interface components {
             status: components["schemas"]["ItemStatus"];
             condition: components["schemas"]["ItemCondition"];
             listingMode?: components["schemas"]["ListingMode"];
+            listingTemplateType?: components["schemas"]["ListingTemplateType"];
+            templateMetadata?: components["schemas"]["ListingTemplateMetadata"];
             category: components["schemas"]["CategoryResponse"];
             tags: components["schemas"]["TagResponse"][];
             /** Format: uuid */
@@ -1784,6 +1809,10 @@ export interface components {
             condition: components["schemas"]["ItemCondition"];
             /** @description Defaults to SINGLE when omitted. */
             listingMode?: components["schemas"]["ListingMode"];
+            /** @description Optional template overlay. When omitted, compatible defaults are inferred from listingMode. */
+            listingTemplateType?: components["schemas"]["ListingTemplateType"];
+            /** @description Optional template-specific metadata. Unsupported fields are rejected. */
+            templateMetadata?: components["schemas"]["ListingTemplateMetadata"];
             entries?: components["schemas"]["ItemListingEntryRequest"][];
             /** @description Optional initial status. Defaults to DRAFT if omitted. */
             status?: components["schemas"]["ItemStatus"];
@@ -1818,6 +1847,10 @@ export interface components {
             tagUuids?: string[];
             condition?: components["schemas"]["ItemCondition"];
             listingMode?: components["schemas"]["ListingMode"];
+            /** @description Optional template override. When omitted, the existing compatible template is preserved or inferred. */
+            listingTemplateType?: components["schemas"]["ListingTemplateType"];
+            /** @description Optional template-specific metadata replacement. Unsupported fields are rejected. */
+            templateMetadata?: components["schemas"]["ListingTemplateMetadata"];
             /** @description When provided, replaces the full structured entry list for this listing. */
             entries?: components["schemas"]["ItemListingEntryRequest"][];
             /** @description Only DRAFT and ACTIVE transitions are allowed by the owner. */
@@ -1905,6 +1938,8 @@ export interface components {
             receiverItemUuid: string;
             /** @description UUIDs of items offered by the sender. Required for ITEM_EXCHANGE (at least one), forbidden for GIFT, optional for NEGOTIABLE. All must belong to the authenticated user and be ACTIVE. */
             senderItemUuids?: string[];
+            /** @description Selected child entry UUIDs from the requested listing. Supported only when the requested item uses a PICK_ANY-based listing mode. Must belong to the requested listing. */
+            requestedEntryUuids?: string[];
             mode: components["schemas"]["TradeOfferMode"];
             /** @description Optional message from sender to receiver. Required for GIFT and NEGOTIABLE modes to explain the arrangement. */
             message?: string;
@@ -1935,6 +1970,8 @@ export interface components {
             receiverItem: components["schemas"]["TradeOfferItemSummary"];
             /** @description Items offered by the sender. Empty for GIFT mode. */
             offeredItems: components["schemas"]["TradeOfferItemSummary"][];
+            /** @description Selected child entries from the requested listing for PICK_ANY-based offers. */
+            requestedEntries?: components["schemas"]["ItemListingEntryResponse"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -1964,6 +2001,8 @@ export interface components {
             receiverItem: components["schemas"]["TradeOfferItemSummary"];
             /** @description Items offered by the sender. Empty for GIFT mode. */
             offeredItems: components["schemas"]["TradeOfferItemSummary"][];
+            /** @description Selected child entries from the requested listing for PICK_ANY-based offers. */
+            requestedEntries?: components["schemas"]["ItemListingEntryResponse"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */

@@ -27,6 +27,10 @@ properties:
     $ref: '../../../openapi.yaml#/components/schemas/ItemCondition'
   listingMode:
     $ref: '../../../openapi.yaml#/components/schemas/ListingMode'
+  listingTemplateType:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingTemplateType'
+  templateMetadata:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingTemplateMetadata'
   category:
     $ref: '../../../openapi.yaml#/components/schemas/CategoryResponse'
   tags:

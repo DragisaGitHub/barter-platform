@@ -77,7 +77,7 @@ export function MarketplacePage() {
   const { data: popularCategoriesData, isLoading: isPopularCategoriesLoading } = usePopularCategories({ limit: 10 });
   const { data: tags } = useTags();
   const favoriteListParams = useMemo(
-    () => ({ page: 0, size: 200, sort: "createdAt,desc" }),
+    () => ({ page: 0, size: 100, sort: "createdAt,desc" }),
     []
   );
   const { data: favoriteItemsData } = useFavoriteItems(favoriteListParams, isAuthenticated);

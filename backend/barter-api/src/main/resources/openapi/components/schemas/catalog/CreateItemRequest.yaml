@@ -36,6 +36,12 @@ properties:
   listingMode:
     $ref: '../../../openapi.yaml#/components/schemas/ListingMode'
     description: Defaults to SINGLE when omitted.
+  listingTemplateType:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingTemplateType'
+    description: Optional template overlay. When omitted, compatible defaults are inferred from listingMode.
+  templateMetadata:
+    $ref: '../../../openapi.yaml#/components/schemas/ListingTemplateMetadata'
+    description: Optional template-specific metadata. Unsupported fields are rejected.
   entries:
     type: array
     maxItems: 20

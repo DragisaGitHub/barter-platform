@@ -1,6 +1,7 @@
 package com.barterplatform.application.trade.service.impl;
 
 import com.barterplatform.api.model.CreateTradeOfferRequest;
+import com.barterplatform.api.model.ItemListingEntryResponse;
 import com.barterplatform.api.model.TradeOfferPagedResponse;
 import com.barterplatform.api.model.TradeOfferResponse;
 import com.barterplatform.api.model.TradeOfferSummaryResponse;
@@ -14,20 +15,25 @@ import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
+import com.barterplatform.domain.catalog.entity.ItemListingEntryEntity;
+import com.barterplatform.domain.catalog.enums.ListingMode;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.domain.reputation.entity.TradeReviewEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferItemEntity;
+import com.barterplatform.domain.trade.entity.TradeOfferRequestedEntryEntity;
 import com.barterplatform.domain.trade.enums.TradeOfferItemSide;
 import com.barterplatform.domain.trade.enums.TradeOfferMode;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
+import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.reputation.repository.TradeReviewRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
+import com.barterplatform.infrastructure.trade.repository.TradeOfferRequestedEntryRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -51,6 +57,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
     private final TradeOfferItemRepository tradeOfferItemRepository;
     private final UserRepository userRepository;
     private final ItemRepository itemRepository;
+    private final ItemListingEntryRepository itemListingEntryRepository;
     private final CategoryRepository categoryRepository;
     private final TradeOfferMapper tradeOfferMapper;
     private final TradeReviewRepository tradeReviewRepository;
@@ -58,22 +65,26 @@ public class TradeOfferServiceImpl implements TradeOfferService {
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
     private final NotificationService notificationService;
+    private final TradeOfferRequestedEntryRepository tradeOfferRequestedEntryRepository;
 
     public TradeOfferServiceImpl(TradeOfferRepository tradeOfferRepository,
                                  TradeOfferItemRepository tradeOfferItemRepository,
                                  UserRepository userRepository,
                                  ItemRepository itemRepository,
+                                 ItemListingEntryRepository itemListingEntryRepository,
                                  CategoryRepository categoryRepository,
                                  TradeOfferMapper tradeOfferMapper,
                                  TradeReviewRepository tradeReviewRepository,
                                  TradeReviewMapper tradeReviewMapper,
                                  PageRequestFactory pageRequestFactory,
                                  PageResponseMapper pageResponseMapper,
-                                 NotificationService notificationService) {
+                                 NotificationService notificationService,
+                                 TradeOfferRequestedEntryRepository tradeOfferRequestedEntryRepository) {
         this.tradeOfferRepository = tradeOfferRepository;
         this.tradeOfferItemRepository = tradeOfferItemRepository;
         this.userRepository = userRepository;
         this.itemRepository = itemRepository;
+        this.itemListingEntryRepository = itemListingEntryRepository;
         this.categoryRepository = categoryRepository;
         this.tradeOfferMapper = tradeOfferMapper;
         this.tradeReviewRepository = tradeReviewRepository;
@@ -81,6 +92,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         this.pageRequestFactory = pageRequestFactory;
         this.pageResponseMapper = pageResponseMapper;
         this.notificationService = notificationService;
+        this.tradeOfferRequestedEntryRepository = tradeOfferRequestedEntryRepository;
     }
 
     // ── Create ───────────────────────────────────────────────────
@@ -98,6 +110,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
 
         // Resolve receiver item
         ItemEntity receiverItem = resolveItem(request.getReceiverItemUuid());
+        List<ItemListingEntryEntity> requestedEntries = validateRequestedEntries(receiverItem, request.getRequestedEntryUuids());
 
         // Receiver item must NOT belong to sender (no self-offers)
         if (receiverItem.getOwnerId().equals(sender.getId())) {
@@ -142,6 +155,13 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         requestedToi.setItemId(receiverItem.getId());
         requestedToi.setSide(TradeOfferItemSide.REQUESTED);
         saved.getItems().add(requestedToi);
+
+        for (ItemListingEntryEntity requestedEntry : requestedEntries) {
+            TradeOfferRequestedEntryEntity requestedEntryEntity = new TradeOfferRequestedEntryEntity();
+            requestedEntryEntity.setTradeOffer(saved);
+            requestedEntryEntity.setItemListingEntryId(requestedEntry.getId());
+            tradeOfferRequestedEntryRepository.save(requestedEntryEntity);
+        }
 
         tradeOfferRepository.save(saved);
 
@@ -467,6 +487,35 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         return items;
     }
 
+    private List<ItemListingEntryEntity> validateRequestedEntries(ItemEntity receiverItem, List<UUID> requestedEntryUuids) {
+        List<UUID> uuids = requestedEntryUuids == null ? List.of() : requestedEntryUuids;
+        boolean hasRequestedEntries = !uuids.isEmpty();
+        ListingMode listingMode = receiverItem.getListingMode() == null ? ListingMode.SINGLE : receiverItem.getListingMode();
+
+        if (listingMode != ListingMode.PICK_ANY) {
+            if (hasRequestedEntries) {
+                throw badRequest("Requested child entries are supported only for PICK_ANY listings.");
+            }
+            return List.of();
+        }
+
+        if (!hasRequestedEntries) {
+            throw badRequest("At least one requested child entry must be selected for PICK_ANY listings.");
+        }
+
+        Set<UUID> unique = new HashSet<>(uuids);
+        if (unique.size() != uuids.size()) {
+            throw badRequest("Duplicate requested entry UUIDs are not allowed.");
+        }
+
+        List<ItemListingEntryEntity> entries = itemListingEntryRepository
+                .findByItemIdAndUuidInOrderBySortOrderAsc(receiverItem.getId(), uuids);
+        if (entries.size() != uuids.size()) {
+            throw badRequest("Requested child entries must belong to the target listing.");
+        }
+        return entries;
+    }
+
     private UserEntity resolveUser(UUID userUuid) {
         return userRepository.findByUuid(userUuid)
                 .orElseThrow(() -> notFound("User with uuid '%s' was not found.", userUuid));
@@ -536,6 +585,7 @@ public class TradeOfferServiceImpl implements TradeOfferService {
 
         TradeOfferResponse response = tradeOfferMapper.toResponse(offer, sender, receiver,
                 receiverItem, receiverCategory, offeredItems, offeredCategories);
+        response.setRequestedEntries(loadRequestedEntryResponses(offer));
         enrichCompletionState(response, offer, currentUserId);
         enrichReviewState(response, offer, sender, receiver, currentUserId);
         return response;
@@ -560,9 +610,30 @@ public class TradeOfferServiceImpl implements TradeOfferService {
 
         TradeOfferSummaryResponse response = tradeOfferMapper.toSummaryResponse(offer, sender, receiver,
                 receiverItem, receiverCategory, offeredItems, offeredCategories);
+        response.setRequestedEntries(loadRequestedEntryResponses(offer));
         enrichCompletionState(response, offer, currentUserId);
         enrichReviewState(response, offer, currentUserId);
         return response;
+    }
+
+    private List<ItemListingEntryResponse> loadRequestedEntryResponses(TradeOfferEntity offer) {
+        List<Long> requestedEntryIds = tradeOfferRequestedEntryRepository.findEntryIdsByTradeOfferId(offer.getId());
+        if (requestedEntryIds.isEmpty()) {
+            return List.of();
+        }
+        List<ItemListingEntryEntity> entries = itemListingEntryRepository.findByIdInOrderBySortOrderAsc(requestedEntryIds);
+        return entries.stream()
+                .map(this::toRequestedEntryResponse)
+                .toList();
+    }
+
+    private ItemListingEntryResponse toRequestedEntryResponse(ItemListingEntryEntity entry) {
+        return new ItemListingEntryResponse()
+                .uuid(entry.getUuid())
+                .title(entry.getTitle())
+                .description(entry.getDescription())
+                .quantity(entry.getQuantity())
+                .sortOrder(entry.getSortOrder());
     }
 
     private void enrichCompletionState(TradeOfferResponse response, TradeOfferEntity offer, Long currentUserId) {
