@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM eclipse-temurin:25-jdk-jammy AS build
 WORKDIR /workspace
 
 COPY backend/gradlew backend/settings.gradle backend/build.gradle ./
@@ -15,7 +15,7 @@ COPY backend/barter-web ./barter-web
 RUN chmod +x ./gradlew \
     && ./gradlew --no-daemon :barter-web:bootJar -x test
 
-FROM eclipse-temurin:21-jre-jammy AS runtime
+FROM eclipse-temurin:25-jre-jammy AS runtime
 WORKDIR /app
 
 RUN apt-get update \
