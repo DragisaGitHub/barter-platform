@@ -2,6 +2,8 @@ package com.barterplatform.application.common.pagination;
 
 import com.barterplatform.api.model.AdminCategoryPagedResponse;
 import com.barterplatform.api.model.AdminCategoryResponse;
+import com.barterplatform.api.model.AdminBetaFeedbackPagedResponse;
+import com.barterplatform.api.model.AdminBetaFeedbackSummaryResponse1;
 import com.barterplatform.api.model.AdminListingPagedResponse;
 import com.barterplatform.api.model.AdminListingSummaryResponse;
 import com.barterplatform.api.model.AdminTradeReviewPagedResponse;
@@ -34,6 +36,21 @@ public class PageResponseMapper {
             List<AdminCategoryResponse> content,
             String sort) {
         return new AdminCategoryPagedResponse()
+                .content(content)
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalElements(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .first(page.isFirst())
+                .last(page.isLast())
+                .sort(sort);
+    }
+
+    public AdminBetaFeedbackPagedResponse toAdminBetaFeedbackPagedResponse(
+            Page<?> page,
+            List<AdminBetaFeedbackSummaryResponse1> content,
+            String sort) {
+        return new AdminBetaFeedbackPagedResponse()
                 .content(content)
                 .page(page.getNumber())
                 .size(page.getSize())

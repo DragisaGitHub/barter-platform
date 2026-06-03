@@ -1,0 +1,28 @@
+betaFeedback:
+  post:
+    tags:
+      - Feedback
+    operationId: submitBetaFeedback
+    summary: Submit beta onboarding and product feedback
+    security:
+      - bearerJwt: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/BetaFeedbackRequest'
+    responses:
+      '201':
+        description: Beta feedback submitted successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/MessageResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+

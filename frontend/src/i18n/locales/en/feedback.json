@@ -1,0 +1,83 @@
+{
+  "badge": "Beta feedback",
+  "title": "Tell us what helped and what felt confusing",
+  "subtitle": "Share onboarding friction, listing confusion, offer flow issues, or ideas that would make the first-time experience easier for new traders.",
+  "callout": "This feedback form is for product and onboarding improvements. If you need to report abuse, scams, or unsafe behavior, use the reporting tools on the relevant listing, offer, message, review, or profile instead.",
+  "tips": {
+    "context": {
+      "title": "Add useful context",
+      "description": "Mention what you were trying to do, where you got stuck, and what you expected to happen next."
+    },
+    "reporting": {
+      "title": "Separate from abuse reporting",
+      "description": "Beta feedback goes to the product team. Safety or moderation issues should still be reported through the dedicated reporting flow."
+    }
+  },
+  "fields": {
+    "category": "Topic",
+    "message": "What should we improve?",
+    "messagePlaceholder": "Example: I understood how to create a listing, but I was not sure whether I should save a draft first or publish it immediately..."
+  },
+  "categories": {
+    "ONBOARDING": "Onboarding and first steps",
+    "LISTINGS": "Listings and templates",
+    "MARKETPLACE": "Marketplace browsing",
+    "OFFERS": "Offers and trade flow",
+    "TRUST_AND_SAFETY": "Trust and safety",
+    "GENERAL": "General product feedback"
+  },
+  "helper": "Be specific when possible. Mention the page or flow, what felt unclear, and what would have made the experience easier.",
+  "submit": "Send Beta Feedback",
+  "cta": {
+    "short": "Beta feedback"
+  },
+  "success": {
+    "toast": "Thanks! Your beta feedback was submitted.",
+    "title": "Thanks for helping improve the beta",
+    "description": "Your feedback has been recorded for the product team. Keep exploring and send another note whenever you notice friction in the onboarding journey.",
+    "sendAnother": "Send more feedback",
+    "backToDashboard": "Back to dashboard"
+  },
+  "error": {
+    "toast": "We could not submit your beta feedback right now. Please try again."
+  },
+  "validation": {
+    "categoryRequired": "Choose a feedback topic.",
+    "messageMin": "Add at least 20 characters so the team has enough context.",
+    "messageMax": "Feedback must be 2000 characters or fewer."
+  },
+  "admin": {
+    "title": "Beta feedback inbox",
+    "description": "Review beta-submitted product feedback, keep track of triage status, and resolve onboarding friction reported by testers.",
+    "inboxTitle": "Submitted beta feedback",
+    "inboxDescription": "{{count}} feedback item matched the current inbox filters.",
+    "inboxDescription_plural": "{{count}} feedback items matched the current inbox filters.",
+    "loadErrorTitle": "Unable to load beta feedback",
+    "loadErrorDescription": "The server could not return the beta feedback inbox. Try again or adjust the current filter.",
+    "emptyTitle": "No beta feedback found",
+    "emptyFilteredDescription": "Try broadening the inbox filter or clearing the current status selection.",
+    "emptyDescription": "Submitted beta feedback will appear here once testers start sharing product notes.",
+    "noItemsMatched": "No feedback matched",
+    "reviewSuccess": "Feedback marked as reviewed.",
+    "resolveSuccess": "Feedback marked as resolved.",
+    "columns": {
+      "status": "Status",
+      "category": "Category",
+      "message": "Message",
+      "username": "Username",
+      "sourcePage": "Source page",
+      "createdAt": "Created at",
+      "actions": "Actions"
+    },
+    "actions": {
+      "review": "Mark reviewed",
+      "resolve": "Mark resolved"
+    },
+    "status": {
+      "new": "New",
+      "reviewed": "Reviewed",
+      "resolved": "Resolved"
+    }
+  }
+}
+

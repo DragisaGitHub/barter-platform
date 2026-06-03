@@ -18,6 +18,7 @@ public class RateLimitProperties {
     private Policy tradeOfferCreate = new Policy(20, Duration.ofMinutes(10));
     private Policy tradeMessageSend = new Policy(60, Duration.ofMinutes(10));
     private Policy favoriteMutation = new Policy(120, Duration.ofMinutes(10));
+    private Policy betaFeedback = new Policy(5, Duration.ofHours(1));
 
     public boolean isEnabled() {
         return enabled;
@@ -113,6 +114,14 @@ public class RateLimitProperties {
 
     public void setFavoriteMutation(Policy favoriteMutation) {
         this.favoriteMutation = normalize(favoriteMutation, this.favoriteMutation);
+    }
+
+    public Policy getBetaFeedback() {
+        return betaFeedback;
+    }
+
+    public void setBetaFeedback(Policy betaFeedback) {
+        this.betaFeedback = normalize(betaFeedback, this.betaFeedback);
     }
 
     private Policy normalize(Policy candidate, Policy fallback) {

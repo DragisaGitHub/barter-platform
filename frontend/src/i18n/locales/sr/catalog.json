@@ -17,7 +17,7 @@
   "latestListingsLoaded": "Najnoviji oglasi su učitani",
   "freshListings": "Sveži oglasi se redovno osvežavaju",
   "failedToLoadItems": "Učitavanje oglasa nije uspelo",
-  "failedToLoadItemsBody": "Došlo je do greške pri učitavanju oglasa. Pokušajte ponovo.",
+  "failedToLoadItemsBody": "Došlo je do greške pri učitavanju oglasa. Pokušaj ponovo.",
   "retry": "Pokušaj ponovo",
   "noTradeableItems": "Nema dostupnih oglasa za razmenu",
   "noTradeableItemsBody": "Trenutno nema aktivnih oglasa drugih korisnika. Pokušajte drugu pretragu ili kategoriju.",
@@ -81,6 +81,14 @@
       "PICK_FROM_COLLECTION": "Dozvoli drugim korisnicima da izaberu konkretne stavke iz veće kolekcije.",
       "COLLECTION_ALBUM": "Prati posedovane, duplikate i željene kolekcionarske stavke u jednom oglasu.",
       "WISHLIST": "Opiši šta tražiš čak i ako trenutno nemaš spreman odgovarajući predmet za ponudu."
+    },
+    "exampleLabel": "Primer:",
+    "example": {
+      "STANDARD_ITEM": "Jedan bicikl, jedna igračka ili jedna knjiga kao samostalan oglas.",
+      "BUNDLE": "Pet knjiga ponuđenih zajedno kao jedan paket za razmenu.",
+      "PICK_FROM_COLLECTION": "Izaberi bilo koje dve sličice iz većeg seta duplikata.",
+      "COLLECTION_ALBUM": "Album kartica ili sličica sa duplikatima i nedostajućim stavkama.",
+      "WISHLIST": "Tražiš konkretne kolekcionarske predmete koje još nemaš."
     },
     "adaptiveHelper": {
       "STANDARD_ITEM": "Zadrži tok jednostavnim i fokusiraj se na standardna polja za naslov, opis, kategoriju i stanje.",
@@ -148,7 +156,7 @@
     "error": { "title": "Učitavanje tvojih oglasa nije uspelo", "description": "Došlo je do greške pri učitavanju prodajnog inventara. Pokušaj ponovo." },
     "empty": {
       "title": "Još nema oglasa",
-      "description": "Započni svoj katalog detaljnim oglasom kako bi drugi korisnici brzo razumeli šta nudiš.",
+      "description": "Kreiraj prvi oglas da započneš onboarding putanju. Sačuvaj ga kao nacrt ako ti trebaju fotografije ili bolji tekst, pa ga objavi kada bude spreman.",
       "filteredTitle": "Nijedan oglas ne odgovara filterima",
       "filteredDescription": "Pokušaj da proširiš filtere ili pojmove za pretragu kako bi pronašao više oglasa.",
       "createFirst": "Kreiraj prvi oglas"
@@ -265,10 +273,16 @@
     "titlePlaceholder": "Šta oglašavaš?",
     "descriptionPlaceholder": "Opiši svoj predmet...",
     "templateSelectorTitle": "Izaberi šablon oglasa",
-    "templateSelectorHelper": "Izaberi strukturu koja najbolje odgovara ovom oglasu. Ostatak forme se prilagođava automatski.",
+    "templateSelectorHelper": "Izaberi strukturu koja najbolje odgovara ovom oglasu. Svaki šablon ima primer kako bi početnicima izbor bio jasniji.",
     "templateDetailsTitle": "Pomoćna polja za izabrani šablon",
     "templateModeHint": "{{template}} koristi režim {{mode}} u pozadini.",
     "standardTemplateNote": "Ovde nisu potrebni dodatni metapodaci — standardna polja oglasa su dovoljna.",
+    "statusTitle": "Nacrt ili objava?",
+    "statusHelper": "Nacrti su vidljivi samo tebi dok dorađuješ oglas. Objavljeni oglasi se pojavljuju na marketplace-u i mogu da primaju ponude.",
+    "statusDescription": {
+      "DRAFT": "Sačuvaj napredak privatno dok završavaš detalje, fotografije ili podatke šablona.",
+      "ACTIVE": "Objavi oglas na marketplace-u da bi drugi korisnici mogli da ga pronađu i pošalju ponudu."
+    },
     "exchangeLocationTitle": "Približna javna oblast za razmenu",
     "exchangeLocationHelper": "Unesi samo grad, kraj ili oblast javnog mesta. Nemoj unositi tačnu kućnu adresu.",
     "exchangeCityPlaceholder": "npr. Beograd",
@@ -334,7 +348,7 @@
     "badges": { "newListing": "Novi oglas", "sellerWorkflow": "Tok rada prodavca" },
     "tips": {
       "clarity": { "title": "Počni jasno", "description": "Koristi naslov i opis koji brzo objašnjavaju zašto je predmet vredan razmene." },
-      "status": { "title": "Izaberi pravi status", "description": "Sačuvaj kao nacrt ako želiš dodatno da doradiš oglas ili objavi kada je spreman." },
+      "status": { "title": "Izaberi pravi status", "description": "Koristi Nacrt dok još doteruješ oglas. Koristi Objavi kada je oglas spreman za ponude sa marketplace-a." },
       "images": { "title": "Slike su sledeći korak", "description": "Nakon čuvanja odmah prelaziš na uređivanje da možeš da dodaš fotografije proizvoda." }
     },
     "formDescription": "Dodaj osnovne informacije koje kupci i korisnici za razmenu treba da znaju pre objave oglasa.",
@@ -368,7 +382,7 @@
     "errorTitle": "Učitavanje omiljenih oglasa nije uspelo",
     "errorDescription": "Došlo je do greške pri učitavanju sačuvanih oglasa. Pokušaj ponovo.",
     "emptyTitle": "Još nema omiljenih oglasa",
-    "emptyDescription": "Sačuvaj oglase sa marketplace-a da napraviš uži izbor i vratiš se kada budeš spreman za razmenu.",
+    "emptyDescription": "Pregledaj marketplace i sačuvaj nekoliko oglasa koje bi zaista menjao/la, da ti uži izbor bude spreman kad pošalješ prvu ponudu.",
     "browseMarketplace": "Pregledaj marketplace",
     "savedListings": "Sačuvani oglasi",
     "savedListingsDescription": "Omiljeni oglasi su poređani od najskorije sačuvanih.",
@@ -388,7 +402,7 @@
     "saveSuccess": "Pretraga je sačuvana",
     "loadError": "Učitavanje sačuvanih pretraga nije uspelo.",
     "emptyTitle": "Još nema sačuvanih pretraga",
-    "emptyDescription": "Sačuvaj marketplace pretragu da bi se kasnije vratio istim filterima.",
+    "emptyDescription": "Sačuvaj pretragu kada pronađeš korisnu kombinaciju filtera, kao što su kategorija, stanje ili približna oblast razmene.",
     "emptyCompact": "Sačuvane pretrage će se pojaviti ovde kada sačuvaš prvu.",
     "apply": "Primeni pretragu",
     "delete": "Obriši sačuvanu pretragu",

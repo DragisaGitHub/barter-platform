@@ -11,7 +11,52 @@
   "actions": {
     "browseMarketplace": "Pregledaj marketplace",
     "createItem": "Kreiraj oglas",
-    "viewIncomingOffers": "Prikaži primljene ponude"
+    "viewIncomingOffers": "Prikaži primljene ponude",
+    "sendBetaFeedback": "Pošalji beta utiske"
+  },
+  "onboarding": {
+    "title": "Tvoja beta aktivaciona lista",
+    "description": "Novi/a si na Barter Platform? Završi ove korake da razumeš kako barter funkcioniše, objaviš prvi oglas i brže stigneš do prve razmene.",
+    "progressLabel": "Napredak kontrolne liste",
+    "feedback": {
+      "title": "Reci nam šta je bilo nejasno",
+      "description": "Pošalji onboarding utiske kad god nešto deluje zbunjujuće oko oglasa, šablona, ponuda ili smernica za bezbednost.",
+      "doneDescription": "Već si jednom poslao/la beta utiske — hvala ti. Uvek možeš poslati novu belešku nakon još isprobanih tokova.",
+      "cta": "Otvori formu za utiske",
+      "ctaDone": "Pošalji još utisaka"
+    },
+    "items": {
+      "verifyEmail": {
+        "title": "Potvrdi email",
+        "description": "Potvrdi nalog da bi ostatak beta putanje završio/la sa više sigurnosti.",
+        "cta": "Potvrdi email"
+      },
+      "createListing": {
+        "title": "Kreiraj prvi oglas",
+        "description": "Počni jednim predmetom koji već imaš i objasni zašto vredi za razmenu.",
+        "cta": "Kreiraj oglas"
+      },
+      "uploadPhoto": {
+        "title": "Dodaj prvu fotografiju",
+        "description": "Fotografije čine oglase pouzdanijim i pomažu drugim korisnicima da razumeju šta nudiš.",
+        "cta": "Dodaj fotografije"
+      },
+      "publishListing": {
+        "title": "Objavi prvi oglas",
+        "description": "Premesti nacrt na marketplace kada je spreman da primi ponude.",
+        "cta": "Pregledaj oglase"
+      },
+      "browseMarketplace": {
+        "title": "Pregledaj marketplace",
+        "description": "Istraži aktivne oglase da vidiš kako barter funkcioniše u zajednici i kakve su ponude moguće.",
+        "cta": "Pregledaj sada"
+      },
+      "sendOffer": {
+        "title": "Pošalji prvu ponudu",
+        "description": "Izaberi oglas koji ti se dopada i predloži razmenu da prođeš kroz ceo tok razmene.",
+        "cta": "Pronađi oglas"
+      }
+    }
   },
   "recentMarketplaceItems": "Nedavni oglasi na marketplace-u",
   "recentTradeActivity": "Nedavne aktivnosti razmene",

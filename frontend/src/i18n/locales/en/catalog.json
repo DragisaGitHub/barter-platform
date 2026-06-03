@@ -82,6 +82,14 @@
       "COLLECTION_ALBUM": "Track owned, duplicate, and wanted collectible entries in one listing.",
       "WISHLIST": "Describe what you are looking for even if you do not have a matching offer ready yet."
     },
+    "exampleLabel": "Example:",
+    "example": {
+      "STANDARD_ITEM": "One bicycle, one toy, or one book listed on its own.",
+      "BUNDLE": "Five books offered together as one trade package.",
+      "PICK_FROM_COLLECTION": "Choose any two stickers from a larger duplicate set.",
+      "COLLECTION_ALBUM": "A trading card album showing duplicates and missing entries.",
+      "WISHLIST": "Looking for specific collectible items you still need to find."
+    },
     "adaptiveHelper": {
       "STANDARD_ITEM": "Keep the flow lightweight and focus on the normal title, description, category, and condition fields.",
       "BUNDLE": "Add optional context to explain why these items belong together and what the bundle includes.",
@@ -148,7 +156,7 @@
     "error": { "title": "Failed to load your items", "description": "Something went wrong while loading your seller inventory. Please try again." },
     "empty": {
       "title": "No items yet",
-      "description": "Start your seller catalog with a detailed listing so other traders can quickly understand what you offer.",
+      "description": "Create your first listing to start the onboarding journey. Draft it first if you still need photos or better copy, then publish it when it is ready.",
       "filteredTitle": "No items match your filters",
       "filteredDescription": "Try broadening your filters or search terms to surface more listings in your seller inventory.",
       "createFirst": "Create your first listing"
@@ -265,19 +273,15 @@
     "titlePlaceholder": "What are you listing?",
     "descriptionPlaceholder": "Describe your item...",
     "templateSelectorTitle": "Choose a listing template",
-    "templateSelectorHelper": "Pick the structure that best matches this listing. The rest of the form adapts automatically.",
+    "templateSelectorHelper": "Pick the structure that best matches this listing. Each template includes an example so first-time traders can choose with confidence.",
     "templateDetailsTitle": "Template-specific helper details",
     "templateModeHint": "{{template}} uses {{mode}} mode under the hood.",
     "standardTemplateNote": "No extra template metadata is needed here — the standard listing fields are enough.",
-    "exchangeLocationTitle": "Approximate public exchange area",
-    "exchangeLocationHelper": "Add only a city, neighborhood, or public-place area. Do not enter your exact home address.",
-    "exchangeCityPlaceholder": "e.g. Belgrade",
-    "exchangeAreaPlaceholder": "e.g. Vračar or Novi Beograd",
-    "exchangeLocationPlaceholder": "e.g. near a public library or shopping area",
-    "listingMode": {
-      "singleHelper": "Use this for a normal one-item listing.",
-      "bundleHelper": "All listed items are offered together.",
-      "pickAnyHelper": "The other user can choose what they need."
+    "statusTitle": "Draft or publish?",
+    "statusHelper": "Draft listings are visible only to you while you keep refining them. Published listings appear in the marketplace and can receive offers.",
+    "statusDescription": {
+      "DRAFT": "Save progress privately while you finish details, photos, or template metadata.",
+      "ACTIVE": "Publish the listing to the marketplace so other traders can discover it and send offers."
     },
     "entriesTitle": "Structured listing entries",
     "entriesHelper": "Add up to 20 entries. Keep details short and avoid private addresses or pricing.",
@@ -334,7 +338,7 @@
     "badges": { "newListing": "New listing", "sellerWorkflow": "Seller workflow" },
     "tips": {
       "clarity": { "title": "Lead with clarity", "description": "Use a title and description that quickly explain why the item is worth trading for." },
-      "status": { "title": "Choose the right status", "description": "Save as draft if you want to refine the listing first, or publish when it is ready." },
+      "status": { "title": "Choose the right status", "description": "Use Draft while you are still polishing the listing. Use Publish when the listing is ready for marketplace offers." },
       "images": { "title": "Images come next", "description": "After saving, you will move straight into editing so you can upload product photos." }
     },
     "formDescription": "Add the essential information buyers and traders need before you publish your item.",
@@ -368,7 +372,7 @@
     "errorTitle": "Failed to load favorites",
     "errorDescription": "Something went wrong while loading your saved items. Please try again.",
     "emptyTitle": "No favorites yet",
-    "emptyDescription": "Save listings from the marketplace to build your shortlist and come back when you're ready to trade.",
+    "emptyDescription": "Browse the marketplace and save a few listings you would genuinely trade for, so your shortlist is ready when you send your first offer.",
     "browseMarketplace": "Browse Marketplace",
     "savedListings": "Saved listings",
     "savedListingsDescription": "Your favorites are ordered by the most recently saved items first.",
@@ -388,7 +392,7 @@
     "saveSuccess": "Search saved",
     "loadError": "Saved searches could not be loaded.",
     "emptyTitle": "No saved searches yet",
-    "emptyDescription": "Save a marketplace search to return to those filters later.",
+    "emptyDescription": "Save a search after you find a useful combination of filters, like a category, condition, or nearby exchange area.",
     "emptyCompact": "Your saved searches will appear here after you save one.",
     "apply": "Apply search",
     "delete": "Delete saved search",

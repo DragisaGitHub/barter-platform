@@ -20,6 +20,12 @@ import { RecommendationsSection } from "../catalog/RecommendationsSection";
 import { useIncomingTradeOffers, useSentTradeOffers } from "../trade/useTradeOffers";
 import { TradeOfferStatusBadge } from "../trade/TradeOfferStatusBadge";
 import { useTranslation } from "react-i18next";
+import { routePaths } from "@/routes/routePaths";
+import {
+  hasSubmittedBetaFeedback,
+  hasVisitedMarketplace,
+} from "@/features/onboarding/onboardingState";
+import { OnboardingChecklist } from "./OnboardingChecklist";
 
 /** Safely extract a title from a possibly-null trade offer item. */
 function getItemTitle(item: { title?: string } | null | undefined): string {
@@ -76,6 +82,11 @@ export function DashboardPage() {
   // My items data (active + archived)
   const { data: myActiveData, isLoading: myActiveLoading } = useMyItems({ page: 0, size: 1, status: "ACTIVE" });
   const { data: myArchivedData, isLoading: myArchivedLoading } = useMyItems({ page: 0, size: 1, status: "ARCHIVED" });
+  const { data: myListingsData, isLoading: myListingsLoading } = useMyItems({
+    page: 0,
+    size: 100,
+    sort: "createdAt,desc",
+  });
 
   // Trade offer data (pending)
   const { data: incomingData, isLoading: incomingLoading } = useIncomingTradeOffers({
@@ -136,6 +147,66 @@ export function DashboardPage() {
   const pendingSent = sentData?.totalElements ?? 0;
 
   const isStatsLoading = myActiveLoading || myArchivedLoading || incomingLoading || sentLoading;
+  const hasCreatedListing = (myListingsData?.totalElements ?? 0) > 0;
+  const hasUploadedPhoto =
+    myListingsData?.content.some((item) => Boolean(item.primaryImageUrl)) ?? false;
+  const hasPublishedListing = (myActiveData?.totalElements ?? 0) > 0;
+  const hasBrowsedMarketplace = hasVisitedMarketplace(user?.uuid);
+  const hasSentOffer = (sentData?.totalElements ?? 0) > 0 || (recentSent?.totalElements ?? 0) > 0;
+  const hasProvidedFeedback = hasSubmittedBetaFeedback(user?.uuid);
+  const onboardingItems = [
+    {
+      key: "verify-email",
+      title: t("dashboard:onboarding.items.verifyEmail.title"),
+      description: t("dashboard:onboarding.items.verifyEmail.description"),
+      completed: Boolean(user?.emailVerified),
+      href: user?.emailVerified ? undefined : routePaths.verifyEmail,
+      ctaLabel: user?.emailVerified ? undefined : t("dashboard:onboarding.items.verifyEmail.cta"),
+    },
+    {
+      key: "create-listing",
+      title: t("dashboard:onboarding.items.createListing.title"),
+      description: t("dashboard:onboarding.items.createListing.description"),
+      completed: hasCreatedListing,
+      href: routePaths.myItemsNew,
+      ctaLabel: t("dashboard:onboarding.items.createListing.cta"),
+    },
+    {
+      key: "upload-photo",
+      title: t("dashboard:onboarding.items.uploadPhoto.title"),
+      description: t("dashboard:onboarding.items.uploadPhoto.description"),
+      completed: hasUploadedPhoto,
+      href: hasCreatedListing && myListingsData?.content[0]
+        ? routePaths.myItemsEdit(myListingsData.content[0].uuid)
+        : routePaths.myItemsNew,
+      ctaLabel: t("dashboard:onboarding.items.uploadPhoto.cta"),
+    },
+    {
+      key: "publish-listing",
+      title: t("dashboard:onboarding.items.publishListing.title"),
+      description: t("dashboard:onboarding.items.publishListing.description"),
+      completed: hasPublishedListing,
+      href: routePaths.myItems,
+      ctaLabel: t("dashboard:onboarding.items.publishListing.cta"),
+    },
+    {
+      key: "browse-marketplace",
+      title: t("dashboard:onboarding.items.browseMarketplace.title"),
+      description: t("dashboard:onboarding.items.browseMarketplace.description"),
+      completed: hasBrowsedMarketplace,
+      href: routePaths.marketplace,
+      ctaLabel: t("dashboard:onboarding.items.browseMarketplace.cta"),
+    },
+    {
+      key: "send-offer",
+      title: t("dashboard:onboarding.items.sendOffer.title"),
+      description: t("dashboard:onboarding.items.sendOffer.description"),
+      completed: hasSentOffer,
+      href: routePaths.marketplace,
+      ctaLabel: t("dashboard:onboarding.items.sendOffer.cta"),
+    },
+  ];
+  const shouldShowOnboardingChecklist = !isAdmin && (!myListingsLoading || !incomingLoading || !sentLoading);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -148,6 +219,27 @@ export function DashboardPage() {
           {t("dashboard:subtitle")}
         </p>
       </div>
+
+      {shouldShowOnboardingChecklist && (
+        <OnboardingChecklist
+          title={t("dashboard:onboarding.title")}
+          description={t("dashboard:onboarding.description")}
+          completedLabel={t("dashboard:onboarding.progressLabel")}
+          items={onboardingItems}
+          feedbackTitle={t("dashboard:onboarding.feedback.title")}
+          feedbackDescription={
+            hasProvidedFeedback
+              ? t("dashboard:onboarding.feedback.doneDescription")
+              : t("dashboard:onboarding.feedback.description")
+          }
+          feedbackCta={
+            hasProvidedFeedback
+              ? t("dashboard:onboarding.feedback.ctaDone")
+              : t("dashboard:onboarding.feedback.cta")
+          }
+          feedbackHref={routePaths.betaFeedback}
+        />
+      )}
 
       {/* Stats cards */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-8">
@@ -249,6 +341,11 @@ export function DashboardPage() {
                   {pendingIncoming}
                 </span>
               )}
+            </Button>
+          </Link>
+          <Link to={routePaths.betaFeedback}>
+            <Button variant="outline">
+              {t("dashboard:actions.sendBetaFeedback")}
             </Button>
           </Link>
         </div>

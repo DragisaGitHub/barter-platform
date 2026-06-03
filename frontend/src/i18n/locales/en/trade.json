@@ -12,9 +12,13 @@
   "failedToLoadOffers": "Failed to load offers",
   "failedToLoadOffersBody": "Something went wrong. Please try again.",
   "noIncomingOffers": "No incoming offers",
-  "noIncomingOffersBody": "When someone sends you a trade offer, it will appear here.",
+  "noIncomingOffersBody": "When another trader responds to one of your published listings, the offer will appear here.",
   "noSentOffers": "No sent offers",
-  "noSentOffersBody": "When you send a trade offer, it will appear here.",
+  "noSentOffersBody": "Browse the marketplace and send your first offer to start experiencing the full barter flow.",
+  "emptyCta": {
+    "browseMarketplace": "Browse marketplace",
+    "manageListings": "Review my listings"
+  },
   "you": "You",
   "yourItem": "Your item",
   "from": "From",

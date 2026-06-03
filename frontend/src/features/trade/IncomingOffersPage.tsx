@@ -10,6 +10,8 @@ import { useAuth } from "../../auth/AuthContext";
 import type { TradeOfferStatus } from "@/api/generated/types.ts";
 import type { ListTradeOffersParams } from "@/api/tradeOfferApi.ts";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
+import { routePaths } from "@/routes/routePaths";
 
 const STATUS_OPTIONS: { value: TradeOfferStatus | ""; labelKey: string }[] = [
   { value: "", labelKey: "allStatuses" },
@@ -83,6 +85,11 @@ export function IncomingOffersPage() {
           icon={<Inbox className="size-16" />}
           title={t("trade:noIncomingOffers")}
           description={t("trade:noIncomingOffersBody")}
+          action={
+            <Link to={routePaths.myItems}>
+              <Button>{t("trade:emptyCta.manageListings")}</Button>
+            </Link>
+          }
         />
       )}
 

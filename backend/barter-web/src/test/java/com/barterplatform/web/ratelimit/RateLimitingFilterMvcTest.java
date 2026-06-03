@@ -38,6 +38,7 @@ class RateLimitingFilterMvcTest {
         properties.setLogin(new RateLimitProperties.Policy(2, Duration.ofMinutes(1)));
         properties.setTradeOfferCreate(new RateLimitProperties.Policy(1, Duration.ofMinutes(1)));
         properties.setFavoriteMutation(new RateLimitProperties.Policy(1, Duration.ofMinutes(1)));
+        properties.setBetaFeedback(new RateLimitProperties.Policy(1, Duration.ofMinutes(1)));
 
         RateLimitingFilter filter = new RateLimitingFilter(
                 properties,
@@ -143,6 +144,30 @@ class RateLimitingFilterMvcTest {
                 .andExpect(status().isTooManyRequests());
     }
 
+    @Test
+    void shouldRateLimitBetaFeedbackByAuthenticatedUserAndIp() throws Exception {
+        authenticate(USER_ONE);
+        mockMvc.perform(post("/api/v1/feedback/beta").with(request -> {
+                    request.setRemoteAddr("203.0.113.30");
+                    return request;
+                }))
+                .andExpect(status().isOk());
+
+        authenticate(USER_ONE);
+        mockMvc.perform(post("/api/v1/feedback/beta").with(request -> {
+                    request.setRemoteAddr("203.0.113.30");
+                    return request;
+                }))
+                .andExpect(status().isTooManyRequests());
+
+        authenticate(USER_TWO);
+        mockMvc.perform(post("/api/v1/feedback/beta").with(request -> {
+                    request.setRemoteAddr("203.0.113.30");
+                    return request;
+                }))
+                .andExpect(status().isOk());
+    }
+
     private void authenticate(UUID userUuid) {
         AuthenticatedUser user = new AuthenticatedUser(userUuid, "user-" + userUuid, List.of("USER"));
         SecurityContextHolder.getContext().setAuthentication(
@@ -155,6 +180,7 @@ class RateLimitingFilterMvcTest {
         @PostMapping({
                 "/api/v1/auth/login",
                 "/api/v1/trade-offers",
+                "/api/v1/feedback/beta",
                 "/api/v1/catalog/items",
                 "/api/v1/catalog/items/{itemUuid}/favorite"
         })

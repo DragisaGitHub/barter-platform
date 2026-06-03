@@ -11,7 +11,52 @@
   "actions": {
     "browseMarketplace": "Browse Marketplace",
     "createItem": "Create Item",
-    "viewIncomingOffers": "View Incoming Offers"
+    "viewIncomingOffers": "View Incoming Offers",
+    "sendBetaFeedback": "Send Beta Feedback"
+  },
+  "onboarding": {
+    "title": "Your beta activation checklist",
+    "description": "New to Barter Platform? Complete these steps to understand how barter works, publish your first listing, and reach your first trade faster.",
+    "progressLabel": "Checklist progress",
+    "feedback": {
+      "title": "Tell us what felt unclear",
+      "description": "Send onboarding feedback whenever something feels confusing about listings, templates, offers, or safety guidance.",
+      "doneDescription": "You already sent beta feedback once — thank you. You can always send another note after trying more flows.",
+      "cta": "Open feedback form",
+      "ctaDone": "Send more feedback"
+    },
+    "items": {
+      "verifyEmail": {
+        "title": "Verify your email",
+        "description": "Confirm your account so you can complete the rest of the beta journey with confidence.",
+        "cta": "Verify email"
+      },
+      "createListing": {
+        "title": "Create your first listing",
+        "description": "Start with one item you already have and describe what makes it worth trading.",
+        "cta": "Create listing"
+      },
+      "uploadPhoto": {
+        "title": "Upload your first photo",
+        "description": "Photos make listings easier to trust and help other traders understand what you are offering.",
+        "cta": "Add photos"
+      },
+      "publishListing": {
+        "title": "Publish your first listing",
+        "description": "Move a draft into the marketplace when it is ready to receive offers.",
+        "cta": "Review listings"
+      },
+      "browseMarketplace": {
+        "title": "Browse the marketplace",
+        "description": "Explore live listings to see how barter works in the community and what kinds of offers are possible.",
+        "cta": "Browse now"
+      },
+      "sendOffer": {
+        "title": "Send your first offer",
+        "description": "Choose a listing you like and propose a trade so you can experience the full exchange flow.",
+        "cta": "Find a listing"
+      }
+    }
   },
   "recentMarketplaceItems": "Recent Marketplace Items",
   "recentTradeActivity": "Recent Trade Activity",

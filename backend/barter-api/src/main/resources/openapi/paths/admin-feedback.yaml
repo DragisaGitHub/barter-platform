@@ -1,0 +1,72 @@
+feedbackList:
+  get:
+    tags:
+      - AdminFeedback
+    operationId: listAdminBetaFeedback
+    summary: List beta feedback submissions for the admin inbox
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: status
+        in: query
+        required: false
+        description: Filter feedback by inbox status.
+        schema:
+          $ref: '../components/schemas/feedback/BetaFeedbackStatus.yaml'
+    responses:
+      '200':
+        description: Beta feedback inbox returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminBetaFeedbackPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
+feedbackStatusUpdate:
+  patch:
+    tags:
+      - AdminFeedback
+    operationId: updateAdminBetaFeedbackStatus
+    summary: Update beta feedback inbox status
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: feedbackUuid
+        in: path
+        required: true
+        description: Public beta feedback UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/AdminUpdateBetaFeedbackStatusRequest'
+    responses:
+      '200':
+        description: Beta feedback status updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminBetaFeedbackSummaryResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+

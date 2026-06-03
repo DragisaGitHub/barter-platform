@@ -28,6 +28,10 @@ import srErrors from "./locales/sr/errors.json";
 import enErrors from "./locales/en/errors.json";
 import srDashboard from "./locales/sr/dashboard.json";
 import enDashboard from "./locales/en/dashboard.json";
+import srLanding from "./locales/sr/landing.json";
+import enLanding from "./locales/en/landing.json";
+import srFeedback from "./locales/sr/feedback.json";
+import enFeedback from "./locales/en/feedback.json";
 
 export const translationResources = {
   sr: {
@@ -42,6 +46,8 @@ export const translationResources = {
     reporting: srReporting,
     errors: srErrors,
     dashboard: srDashboard,
+    landing: srLanding,
+    feedback: srFeedback,
   },
   en: {
     common: enCommon,
@@ -55,6 +61,8 @@ export const translationResources = {
     reporting: enReporting,
     errors: enErrors,
     dashboard: enDashboard,
+    landing: enLanding,
+    feedback: enFeedback,
   },
 } as const;
 
@@ -76,6 +84,8 @@ void i18n.use(initReactI18next).init({
     "reporting",
     "errors",
     "dashboard",
+    "landing",
+    "feedback",
   ],
   interpolation: {
     escapeValue: false,

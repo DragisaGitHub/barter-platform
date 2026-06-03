@@ -248,6 +248,12 @@ export function ItemForm({
                   <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
                     {t(`catalog:${template.helperKey}`)}
                   </p>
+                  <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 px-3 py-2 text-xs leading-5 text-slate-600 dark:border-slate-700 dark:bg-slate-950/40 dark:text-slate-400">
+                    <span className="font-semibold text-slate-700 dark:text-slate-300">
+                      {t("catalog:listingTemplate.exampleLabel")}
+                    </span>{" "}
+                    {t(`catalog:${template.exampleKey}`)}
+                  </div>
                 </button>
               );
             })}
@@ -271,17 +277,11 @@ export function ItemForm({
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
             {t("catalog:fields.listingMode")}
           </label>
-          <select
-            {...register("listingMode")}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-            disabled
-          >
-            {LISTING_MODES.map((mode) => (
-              <option key={mode.value} value={mode.value}>
-                {t(`catalog:${mode.labelKey}`)}
-              </option>
-            ))}
-          </select>
+          <div className="mt-2 inline-flex items-center rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm font-semibold text-indigo-700 dark:border-indigo-800 dark:bg-slate-900 dark:text-indigo-300">
+            {selectedListingModeOption
+                ? t(`catalog:${selectedListingModeOption.labelKey}`)
+                : t("catalog:listingMode.single")}
+          </div>
           <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">
             {selectedListingModeOption ? t(`catalog:${selectedListingModeOption.helperKey}`) : null}
           </p>
@@ -478,20 +478,41 @@ export function ItemForm({
           )}
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-            {t("catalog:fields.status")}
-          </label>
-          <select
-            {...register("status")}
-            className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
-          >
-            {STATUSES.map((s) => (
-              <option key={s.value} value={s.value}>
-                {t(`catalog:${s.labelKey}`)}
-              </option>
-            ))}
-          </select>
+        <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
+          <div className="mb-4">
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+              {t("catalog:itemForm.statusTitle")}
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-300">
+              {t("catalog:itemForm.statusHelper")}
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2">
+            {STATUSES.map((statusOption) => {
+              const isSelected = methods.watch("status") === statusOption.value;
+
+              return (
+                <button
+                  key={statusOption.value}
+                  type="button"
+                  onClick={() => methods.setValue("status", statusOption.value, { shouldValidate: true })}
+                  className={`rounded-2xl border p-4 text-left transition-colors ${
+                    isSelected
+                      ? "border-amber-500 bg-white shadow-sm dark:border-amber-400 dark:bg-slate-900/60"
+                      : "border-slate-200 bg-white/80 hover:border-amber-300 dark:border-slate-700 dark:bg-slate-900/30 dark:hover:border-amber-700"
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {t(`catalog:${statusOption.labelKey}`)}
+                  </p>
+                  <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-400">
+                    {t(`catalog:itemForm.statusDescription.${statusOption.value}`)}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div>

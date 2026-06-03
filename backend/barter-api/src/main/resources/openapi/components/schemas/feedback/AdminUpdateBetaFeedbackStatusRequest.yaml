@@ -1,0 +1,8 @@
+type: object
+additionalProperties: false
+required:
+  - status
+properties:
+  status:
+    $ref: '../../../openapi.yaml#/components/schemas/BetaFeedbackStatus'
+

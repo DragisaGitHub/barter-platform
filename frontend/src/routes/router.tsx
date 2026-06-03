@@ -20,6 +20,7 @@ import { AdminListingDetailPage } from "../features/admin/AdminListingDetailPage
 import { AdminReportsPage } from "../features/admin/AdminReportsPage";
 import { AdminReviewsPage } from "../features/admin/AdminReviewsPage";
 import { AdminTagsPage } from "../features/admin/AdminTagsPage";
+import { AdminBetaFeedbackPage } from "../features/admin/AdminBetaFeedbackPage";
 import { UsersListPage } from "../features/admin/UsersListPage";
 import { UserDetailPage } from "../features/admin/UserDetailPage";
 import { RolesPage } from "../features/admin/RolesPage";
@@ -43,9 +44,11 @@ import { ProfilePage } from "../features/profile/ProfilePage";
 import { PublicProfilePage } from "../features/profile/PublicProfilePage";
 import { NotFoundPage } from "../features/error/NotFoundPage";
 import { RouteErrorPage } from "../features/error/ErrorPage";
+import { LandingPage } from "../features/landing/LandingPage";
+import { BetaFeedbackPage } from "../features/feedback/BetaFeedbackPage";
 import { routePaths } from "./routePaths";
 
-function AdminAwareHomeRedirect() {
+function AdminAwareHomePage() {
   const { isAuthenticated, isLoading, hasRole } = useAuth();
 
   if (isLoading) {
@@ -60,7 +63,11 @@ function AdminAwareHomeRedirect() {
     return <Navigate to={routePaths.admin.reports} replace />;
   }
 
-  return <Navigate to={routePaths.marketplace} replace />;
+  if (isAuthenticated) {
+    return <Navigate to={routePaths.dashboard} replace />;
+  }
+
+  return <LandingPage />;
 }
 
 function AdminAwareMarketplacePage() {
@@ -122,7 +129,7 @@ export const router = createBrowserRouter([
     children: [
       {
         path: "/",
-        element: <AdminAwareHomeRedirect />,
+        element: <AdminAwareHomePage />,
       },
       {
         path: "/marketplace",
@@ -222,6 +229,10 @@ export const router = createBrowserRouter([
         path: "/profile",
         element: <ProfilePage />,
       },
+      {
+        path: routePaths.betaFeedback,
+        element: <BetaFeedbackPage />,
+      },
     ],
   },
   {
@@ -285,6 +296,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/categories",
         element: <AdminCategoriesPage />,
+      },
+      {
+        path: routePaths.admin.betaFeedback,
+        element: <AdminBetaFeedbackPage />,
       },
       {
         path: "/admin/reviews",

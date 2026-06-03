@@ -19,36 +19,42 @@ export const LISTING_TEMPLATE_OPTIONS: {
   mode: ListingMode;
   labelKey: string;
   helperKey: string;
+  exampleKey: string;
 }[] = [
   {
     value: "STANDARD_ITEM",
     mode: "SINGLE",
     labelKey: "listingTemplate.label.STANDARD_ITEM",
     helperKey: "listingTemplate.helper.STANDARD_ITEM",
+    exampleKey: "listingTemplate.example.STANDARD_ITEM",
   },
   {
     value: "BUNDLE",
     mode: "BUNDLE",
     labelKey: "listingTemplate.label.BUNDLE",
     helperKey: "listingTemplate.helper.BUNDLE",
+    exampleKey: "listingTemplate.example.BUNDLE",
   },
   {
     value: "PICK_FROM_COLLECTION",
     mode: "PICK_ANY",
     labelKey: "listingTemplate.label.PICK_FROM_COLLECTION",
     helperKey: "listingTemplate.helper.PICK_FROM_COLLECTION",
+    exampleKey: "listingTemplate.example.PICK_FROM_COLLECTION",
   },
   {
     value: "COLLECTION_ALBUM",
     mode: "PICK_ANY",
     labelKey: "listingTemplate.label.COLLECTION_ALBUM",
     helperKey: "listingTemplate.helper.COLLECTION_ALBUM",
+    exampleKey: "listingTemplate.example.COLLECTION_ALBUM",
   },
   {
     value: "WISHLIST",
     mode: "SINGLE",
     labelKey: "listingTemplate.label.WISHLIST",
     helperKey: "listingTemplate.helper.WISHLIST",
+    exampleKey: "listingTemplate.example.WISHLIST",
   },
 ];
 

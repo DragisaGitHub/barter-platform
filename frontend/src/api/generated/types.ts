@@ -39,6 +39,8 @@ export type UpdateUserPreferencesRequest = components["schemas"]["UpdateUserPref
 // ─── Misc Response DTOs ─────────────────────────────────────────────────────
 
 export type MessageResponse = components["schemas"]["MessageResponse"];
+export type BetaFeedbackCategory = components["schemas"]["BetaFeedbackCategory"];
+export type BetaFeedbackRequest = components["schemas"]["BetaFeedbackRequest"];
 
 // ─── Catalog Enums ──────────────────────────────────────────────────────────
 
