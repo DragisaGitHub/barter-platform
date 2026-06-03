@@ -12,6 +12,7 @@ import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { FormInput } from "../../components/forms/FormInput";
 import type { CurrentUserResponse, ErrorResponse } from "@/api/generated/types.ts";
+import { parseApiError } from "@/utils";
 import {
   buildPathWithQuery,
   getSafeRedirectPath,
@@ -23,6 +24,13 @@ type RegisterFormData = {
   email: string;
   password: string;
   confirmPassword: string;
+};
+
+const REGISTER_FORM_FIELDS: Record<keyof RegisterFormData, true> = {
+  username: true,
+  email: true,
+  password: true,
+  confirmPassword: true,
 };
 
 const USERNAME_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]{1,78}[A-Za-z0-9])?$/;
@@ -44,6 +52,10 @@ function shouldUseFriendlyUsernameMessage(field: keyof RegisterFormData, message
     normalizedMessage.includes("must match") ||
     normalizedMessage.includes("must not contain blank spaces")
   );
+}
+
+function isRegisterField(field: string): field is keyof RegisterFormData {
+  return field in REGISTER_FORM_FIELDS;
 }
 
 function PasswordField({
@@ -141,7 +153,14 @@ export function RegisterPage() {
     },
   });
 
+  const formError = methods.formState.errors.root?.message as string | undefined;
+
+  const showFormError = (message: string) => {
+    methods.setError("root", { type: "manual", message });
+  };
+
   const onSubmit = async (data: RegisterFormData) => {
+    methods.clearErrors("root");
     setIsLoading(true);
     try {
       const registeredUser = await registerUser({
@@ -172,9 +191,13 @@ export function RegisterPage() {
       if (error instanceof AxiosError) {
         const errorData = error.response?.data as ErrorResponse | undefined;
 
-        if (errorData?.fieldErrors) {
+        if (errorData?.fieldErrors?.length) {
           errorData.fieldErrors.forEach((fieldError) => {
-            const fieldName = fieldError.field as keyof RegisterFormData;
+            if (!isRegisterField(fieldError.field)) {
+              return;
+            }
+
+            const fieldName = fieldError.field;
 
             methods.setError(
               fieldName,
@@ -185,17 +208,28 @@ export function RegisterPage() {
               }
             );
           });
-        } else if (errorData?.message) {
-          toast.error(errorData.message);
+
+          showFormError(errorData.message ?? t("auth:fixErrors"));
         } else {
-          toast.error(t("auth:registrationFailed"));
+          showFormError(parseApiError(error) || t("auth:registrationFailed"));
         }
       } else {
-        toast.error(t("auth:unexpectedError"));
+        showFormError(parseApiError(error) || t("auth:unexpectedError"));
       }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const onInvalid = () => {
+    const firstErrorMessage =
+      methods.formState.errors.username?.message ??
+      methods.formState.errors.email?.message ??
+      methods.formState.errors.password?.message ??
+      methods.formState.errors.confirmPassword?.message ??
+      t("auth:fixErrors");
+
+    showFormError(firstErrorMessage as string);
   };
 
   return (
@@ -221,7 +255,13 @@ export function RegisterPage() {
             )}
 
           <FormProvider {...methods}>
-            <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-4">
+            <form noValidate onSubmit={methods.handleSubmit(onSubmit, onInvalid)} className="space-y-4">
+              {formError && (
+                <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
+                  {formError}
+                </div>
+              )}
+
               <FormInput
                 name="username"
                 label={t("auth:username")}

@@ -2,9 +2,10 @@ import { Menu, LogOut } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../auth/AuthContext";
 import { Button } from "../components/ui/Button";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { NotificationBell } from "../features/notifications/NotificationBell";
 import { LanguageSwitcher } from "@/features/preferences/LanguageSwitcher";
+import { routePaths } from "@/routes/routePaths";
 
 interface TopbarProps {
   onMenuClick: () => void;
@@ -13,7 +14,7 @@ interface TopbarProps {
 export function Topbar({ onMenuClick }: TopbarProps) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation(["common", "navigation"]);
+  const { t } = useTranslation(["common", "navigation", "feedback"]);
 
   const handleLogout = async () => {
     await logout();
@@ -34,6 +35,12 @@ export function Topbar({ onMenuClick }: TopbarProps) {
         <div className="hidden lg:block" />
 
         <div className="flex items-center gap-3">
+          <Link to={routePaths.betaFeedback} className="hidden md:inline-flex">
+            <Button variant="outline" size="sm">
+              {t("feedback:cta.short")}
+            </Button>
+          </Link>
+
           <LanguageSwitcher />
 
           <NotificationBell />

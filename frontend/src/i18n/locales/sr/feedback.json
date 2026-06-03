@@ -1,0 +1,83 @@
+{
+  "badge": "Beta utisci",
+  "title": "Reci nam šta je pomoglo, a šta je zbunjivalo",
+  "subtitle": "Podeli gde onboarding koči, šta je nejasno kod oglasa, ponuda ili bezbednosti i šta bi novim korisnicima olakšalo prvi dolazak na platformu.",
+  "callout": "Ova forma služi za product i onboarding utiske. Ako treba da prijaviš zloupotrebu, prevaru ili nebezbedno ponašanje, koristi prijavu na odgovarajućem oglasu, ponudi, poruci, oceni ili profilu.",
+  "tips": {
+    "context": {
+      "title": "Dodaj koristan kontekst",
+      "description": "Napiši šta si pokušavao/la da uradiš, gde si zapao/la i šta si očekivao/la da se desi sledeće."
+    },
+    "reporting": {
+      "title": "Odvojeno od prijave zloupotrebe",
+      "description": "Beta utisci idu product timu. Bezbednosne ili moderatorske probleme i dalje prijavljuj kroz namenski tok za prijavu."
+    }
+  },
+  "fields": {
+    "category": "Tema",
+    "message": "Šta treba da poboljšamo?",
+    "messagePlaceholder": "Primer: Razumeo/la sam kako da napravim oglas, ali mi nije bilo jasno da li prvo treba da sačuvam nacrt ili odmah da objavim..."
+  },
+  "categories": {
+    "ONBOARDING": "Onboarding i prvi koraci",
+    "LISTINGS": "Oglasi i šabloni",
+    "MARKETPLACE": "Pregled marketplace-a",
+    "OFFERS": "Ponude i tok razmene",
+    "TRUST_AND_SAFETY": "Poverenje i bezbednost",
+    "GENERAL": "Opšti utisak o proizvodu"
+  },
+  "helper": "Budi što konkretniji/a. Napiši na kojoj stranici ili u kom toku si bio/la, šta je bilo nejasno i šta bi olakšalo iskustvo.",
+  "submit": "Pošalji beta utiske",
+  "cta": {
+    "short": "Beta utisci"
+  },
+  "success": {
+    "toast": "Hvala! Tvoji beta utisci su poslati.",
+    "title": "Hvala što pomažeš da beta bude bolja",
+    "description": "Tvoji utisci su zabeleženi za product tim. Nastavi da istražuješ platformu i pošalji novu belešku kad god primetiš trenje u onboarding toku.",
+    "sendAnother": "Pošalji još utisaka",
+    "backToDashboard": "Nazad na kontrolnu tablu"
+  },
+  "error": {
+    "toast": "Slanje beta utisaka trenutno nije uspelo. Pokušaj ponovo."
+  },
+  "validation": {
+    "categoryRequired": "Izaberi temu utiska.",
+    "messageMin": "Dodaj bar 20 karaktera da bi tim imao dovoljno konteksta.",
+    "messageMax": "Utisak može imati najviše 2000 karaktera."
+  },
+  "admin": {
+    "title": "Sanduče beta utisaka",
+    "description": "Pregledaj beta utiske o proizvodu, prati status obrade i rešavaj onboarding trenja koja prijavljuju testeri.",
+    "inboxTitle": "Poslati beta utisci",
+    "inboxDescription": "{{count}} utisak odgovara trenutnim filterima sandučeta.",
+    "inboxDescription_plural": "{{count}} utisaka odgovara trenutnim filterima sandučeta.",
+    "loadErrorTitle": "Učitavanje beta utisaka nije uspelo",
+    "loadErrorDescription": "Server nije mogao da vrati sanduče beta utisaka. Pokušaj ponovo ili prilagodi trenutni filter.",
+    "emptyTitle": "Nema pronađenih beta utisaka",
+    "emptyFilteredDescription": "Pokušaj širi filter sandučeta ili očisti trenutni izbor statusa.",
+    "emptyDescription": "Poslati beta utisci će se pojaviti ovde kada testeri počnu da dele zapažanja o proizvodu.",
+    "noItemsMatched": "Nijedan utisak ne odgovara",
+    "reviewSuccess": "Utisak je označen kao pregledan.",
+    "resolveSuccess": "Utisak je označen kao rešen.",
+    "columns": {
+      "status": "Status",
+      "category": "Kategorija",
+      "message": "Poruka",
+      "username": "Korisničko ime",
+      "sourcePage": "Izvorna stranica",
+      "createdAt": "Kreirano",
+      "actions": "Akcije"
+    },
+    "actions": {
+      "review": "Označi kao pregledano",
+      "resolve": "Označi kao rešeno"
+    },
+    "status": {
+      "new": "Novo",
+      "reviewed": "Pregledano",
+      "resolved": "Rešeno"
+    }
+  }
+}
+

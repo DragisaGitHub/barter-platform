@@ -28,6 +28,8 @@
   "listingsDescription": "Review reported listings and take direct moderation actions when needed.",
   "reports": "Reports",
   "reportsDescription": "Work the moderation queue, inspect report detail, and record final decisions.",
+  "betaFeedback": "Beta feedback",
+  "betaFeedbackDescription": "Review beta product feedback, track triage status, and close the loop on onboarding friction.",
   "reviews": "Reviews",
   "reviewsDescription": "Review moderation and reputation history",
   "tags": "Tags",

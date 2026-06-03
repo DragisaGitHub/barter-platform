@@ -40,6 +40,7 @@ import { RecommendationsSection } from "./RecommendationsSection";
 import { useCreateSavedSearch } from "./useSavedSearches";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { markMarketplaceVisited } from "@/features/onboarding/onboardingState";
 
 const pageShellClassName = "marketplace-panel";
 
@@ -118,6 +119,12 @@ export function MarketplacePage() {
       setPendingFavoriteUuid(null);
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      markMarketplaceVisited(user?.uuid);
+    }
+  }, [isAuthenticated, user?.uuid]);
 
   useEffect(() => {
     if (categoryUuidFromUrl === (params.categoryUuid ?? undefined)) {

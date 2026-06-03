@@ -28,6 +28,8 @@
   "listingsDescription": "Pregledaj prijavljene oglase i po potrebi preduzmi direktne moderatorske akcije.",
   "reports": "Prijave",
   "reportsDescription": "Obrađuj moderatorski red, pregledaj detalje prijava i zabeleži konačne odluke.",
+  "betaFeedback": "Beta utisci",
+  "betaFeedbackDescription": "Pregledaj beta utiske o proizvodu, prati status obrade i zatvori krug za onboarding trenja.",
   "reviews": "Ocene",
   "reviewsDescription": "Moderacija ocena i istorija reputacije",
   "tags": "Oznake",

@@ -23,6 +23,8 @@ tags:
     description: Catalog browsing, item listings, and item management
   - name: SavedSearches
     description: Authenticated saved catalog search management
+  - name: Feedback
+    description: Authenticated product feedback submission operations
   - name: AdminCategories
     description: Administrator category management operations
   - name: AdminListings
@@ -110,6 +112,10 @@ paths:
     $ref: './paths/admin-listings.yaml#/listingRestore'
   /admin/reviews:
     $ref: './paths/admin-reviews.yaml#/reviews'
+  /admin/feedback/beta:
+    $ref: './paths/admin-feedback.yaml#/feedbackList'
+  /admin/feedback/beta/{feedbackUuid}/status:
+    $ref: './paths/admin-feedback.yaml#/feedbackStatusUpdate'
   /reports:
     $ref: './paths/reports.yaml#/create'
   /admin/reports/summary:
@@ -152,6 +158,8 @@ paths:
     $ref: './paths/saved-searches.yaml#/savedSearches'
   /saved-searches/{savedSearchUuid}:
     $ref: './paths/saved-searches.yaml#/savedSearchByUuid'
+  /feedback/beta:
+    $ref: './paths/feedback.yaml#/betaFeedback'
   /trade-offers:
     $ref: './paths/trade-offers.yaml#/create'
   /trade-offers/incoming:
@@ -239,6 +247,18 @@ components:
       $ref: './components/schemas/TokenResponse.yaml'
     MessageResponse:
       $ref: './components/schemas/MessageResponse.yaml'
+    BetaFeedbackCategory:
+      $ref: './components/schemas/feedback/BetaFeedbackCategory.yaml'
+    BetaFeedbackStatus:
+      $ref: './components/schemas/feedback/BetaFeedbackStatus.yaml'
+    BetaFeedbackRequest:
+      $ref: './components/schemas/feedback/BetaFeedbackRequest.yaml'
+    AdminBetaFeedbackSummaryResponse:
+      $ref: './components/schemas/feedback/AdminBetaFeedbackSummaryResponse.yaml'
+    AdminBetaFeedbackPagedResponse:
+      $ref: './components/schemas/feedback/AdminBetaFeedbackPagedResponse.yaml'
+    AdminUpdateBetaFeedbackStatusRequest:
+      $ref: './components/schemas/feedback/AdminUpdateBetaFeedbackStatusRequest.yaml'
     ItemStatus:
       $ref: './components/schemas/catalog/ItemStatus.yaml'
     ItemCondition:

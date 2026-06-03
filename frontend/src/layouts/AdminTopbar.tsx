@@ -52,6 +52,13 @@ function getAdminSectionMeta(pathname: string, t: TFunction<["navigation"]>) {
     };
   }
 
+  if (pathname.startsWith(routePaths.admin.betaFeedback)) {
+    return {
+      title: t("navigation:betaFeedback"),
+      description: t("navigation:betaFeedbackDescription"),
+    };
+  }
+
   if (pathname.startsWith(routePaths.admin.tags)) {
     return {
       title: t("navigation:tags"),

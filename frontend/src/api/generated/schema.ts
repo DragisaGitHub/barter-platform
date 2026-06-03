@@ -569,6 +569,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/feedback/beta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List beta feedback submissions for the admin inbox */
+        get: operations["listAdminBetaFeedback"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/feedback/beta/{feedbackUuid}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update beta feedback inbox status */
+        patch: operations["updateAdminBetaFeedbackStatus"];
+        trace?: never;
+    };
     "/reports": {
         parameters: {
             query?: never;
@@ -936,6 +970,23 @@ export interface paths {
         post?: never;
         /** Delete one saved catalog search owned by the authenticated user */
         delete: operations["deleteSavedSearch"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/feedback/beta": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit beta onboarding and product feedback */
+        post: operations["submitBetaFeedback"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1458,6 +1509,51 @@ export interface components {
         MessageResponse: {
             /** @example Email verified successfully. */
             message: string;
+        };
+        /** @enum {string} */
+        BetaFeedbackCategory: "ONBOARDING" | "LISTINGS" | "MARKETPLACE" | "OFFERS" | "TRUST_AND_SAFETY" | "GENERAL";
+        /** @enum {string} */
+        BetaFeedbackStatus: "NEW" | "REVIEWED" | "RESOLVED";
+        BetaFeedbackRequest: {
+            category: components["schemas"]["BetaFeedbackCategory"];
+            message: string;
+            sourcePage?: string | null;
+        };
+        AdminBetaFeedbackSummaryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            /** Format: uuid */
+            userUuid: string;
+            username: string;
+            /** Format: email */
+            email?: string | null;
+            category: components["schemas"]["BetaFeedbackCategory"];
+            message: string;
+            sourcePage?: string | null;
+            status: components["schemas"]["BetaFeedbackStatus"];
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            reviewedAt?: string | null;
+            /** Format: date-time */
+            resolvedAt?: string | null;
+        };
+        AdminBetaFeedbackPagedResponse: {
+            content: components["schemas"]["AdminBetaFeedbackSummaryResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort?: string | null;
+        };
+        AdminUpdateBetaFeedbackStatusRequest: {
+            status: components["schemas"]["BetaFeedbackStatus"];
         };
         /** @enum {string} */
         ItemStatus: "DRAFT" | "ACTIVE" | "RESERVED" | "ARCHIVED" | "REMOVED";
@@ -3608,6 +3704,70 @@ export interface operations {
             403: components["responses"]["Forbidden"];
         };
     };
+    listAdminBetaFeedback: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Filter feedback by inbox status. */
+                status?: components["schemas"]["BetaFeedbackStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Beta feedback inbox returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBetaFeedbackPagedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    updateAdminBetaFeedbackStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public beta feedback UUID. */
+                feedbackUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminUpdateBetaFeedbackStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description Beta feedback status updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminBetaFeedbackSummaryResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     createReport: {
         parameters: {
             query?: never;
@@ -4442,6 +4602,33 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    submitBetaFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BetaFeedbackRequest"];
+            };
+        };
+        responses: {
+            /** @description Beta feedback submitted successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MessageResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
         };
     };
     createTradeOffer: {

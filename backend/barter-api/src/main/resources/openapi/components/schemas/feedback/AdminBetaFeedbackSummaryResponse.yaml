@@ -1,0 +1,44 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - userUuid
+  - username
+  - category
+  - message
+  - status
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  userUuid:
+    type: string
+    format: uuid
+  username:
+    type: string
+  email:
+    type: string
+    format: email
+    nullable: true
+  category:
+    $ref: '../../../openapi.yaml#/components/schemas/BetaFeedbackCategory'
+  message:
+    type: string
+  sourcePage:
+    type: string
+    nullable: true
+  status:
+    $ref: '../../../openapi.yaml#/components/schemas/BetaFeedbackStatus'
+  createdAt:
+    type: string
+    format: date-time
+  reviewedAt:
+    type: string
+    format: date-time
+    nullable: true
+  resolvedAt:
+    type: string
+    format: date-time
+    nullable: true
+

@@ -54,6 +54,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                         RateLimitProperties::getTradeOfferCreate),
                 new RateLimitRule("trade-message-send", "POST", "^/trade-offers/[^/]+/messages$", true,
                         RateLimitProperties::getTradeMessageSend),
+                new RateLimitRule("beta-feedback-submit", "POST", "^/feedback/beta$", true,
+                        RateLimitProperties::getBetaFeedback),
                 new RateLimitRule("favorite-add", "POST", "^/catalog/items/[^/]+/favorite$", true,
                         RateLimitProperties::getFavoriteMutation),
                 new RateLimitRule("favorite-remove", "DELETE", "^/catalog/items/[^/]+/favorite$", true,

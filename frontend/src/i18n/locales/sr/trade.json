@@ -12,9 +12,13 @@
   "failedToLoadOffers": "Učitavanje ponuda nije uspelo",
   "failedToLoadOffersBody": "Došlo je do greške. Pokušajte ponovo.",
   "noIncomingOffers": "Nema primljenih ponuda",
-  "noIncomingOffersBody": "Kada ti neko pošalje ponudu za razmenu, pojaviće se ovde.",
+  "noIncomingOffersBody": "Kada drugi korisnik odgovori na neki od tvojih objavljenih oglasa, ponuda će se pojaviti ovde.",
   "noSentOffers": "Nema poslatih ponuda",
-  "noSentOffersBody": "Kada pošalješ ponudu za razmenu, pojaviće se ovde.",
+  "noSentOffersBody": "Pregledaj marketplace i pošalji prvu ponudu da prođeš kroz ceo tok barter razmene.",
+  "emptyCta": {
+    "browseMarketplace": "Pregledaj marketplace",
+    "manageListings": "Pregledaj moje oglase"
+  },
   "you": "Ti",
   "yourItem": "Tvoj oglas",
   "from": "Od",

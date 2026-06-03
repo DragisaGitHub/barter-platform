@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "signIn": "Sign in",
+    "register": "Register",
+    "browseMarketplace": "Browse marketplace"
+  },
+  "hero": {
+    "eyebrow": "Closed beta onboarding",
+    "title": "Trade useful things with your local community — no money required.",
+    "description": "Barter Platform helps neighbors, collectors, and families exchange items they already have for things they actually need. Start with a listing, browse local offers, and arrange safe public exchanges.",
+    "primaryCta": "Register",
+    "secondaryCta": "Browse Marketplace",
+    "signInCta": "Sign In"
+  },
+  "highlights": {
+    "title": "How barter works here",
+    "items": {
+      "list": {
+        "title": "List what you already have",
+        "description": "Create a draft, pick the right template, add photos, and publish when the listing is ready for offers."
+      },
+      "discover": {
+        "title": "Browse community listings",
+        "description": "Search active items, save favorites, and keep useful searches so you can spot good matches faster."
+      },
+      "offer": {
+        "title": "Send an offer and complete the swap",
+        "description": "Propose a trade, keep the conversation on-platform, and confirm the exchange after both sides finish."
+      }
+    }
+  },
+  "benefits": {
+    "title": "Built for community-first beta trading",
+    "items": {
+      "cashless": {
+        "title": "No cash required",
+        "description": "The platform is designed around item-for-item, gift, and negotiable barter flows instead of payments."
+      },
+      "local": {
+        "title": "Local and community focused",
+        "description": "Exchange by city or neighborhood and keep listings centered around approximate public meeting areas."
+      },
+      "trust": {
+        "title": "Trust and safety reminders",
+        "description": "Use public exchange spots, keep communication inside the platform, and review completed trades to help the community."
+      }
+    }
+  },
+  "safety": {
+    "title": "Trade safely during beta",
+    "items": {
+      "publicPlace": "Meet in public, well-lit locations whenever possible.",
+      "keepMessages": "Keep trade details in platform messages so both sides have one clear record.",
+      "protectPrivacy": "Share only approximate exchange areas in listings — never your exact home address."
+    }
+  },
+  "footer": {
+    "title": "Ready to try your first barter?",
+    "description": "Create an account to start your activation checklist, publish your first listing, and send feedback as you explore the beta.",
+    "register": "Register",
+    "signIn": "Sign in"
+  }
+}
+

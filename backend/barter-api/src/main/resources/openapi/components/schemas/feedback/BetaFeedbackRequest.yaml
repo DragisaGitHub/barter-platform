@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+required:
+  - category
+  - message
+properties:
+  category:
+    $ref: '../../../openapi.yaml#/components/schemas/BetaFeedbackCategory'
+  message:
+    type: string
+    minLength: 20
+    maxLength: 2000
+  sourcePage:
+    type: string
+    nullable: true
+    maxLength: 255
+

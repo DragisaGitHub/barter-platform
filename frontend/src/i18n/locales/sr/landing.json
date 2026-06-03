@@ -1,0 +1,64 @@
+{
+  "nav": {
+    "signIn": "Prijava",
+    "register": "Registracija",
+    "browseMarketplace": "Pregledaj marketplace"
+  },
+  "hero": {
+    "eyebrow": "Uvođenje u zatvorenu beta fazu",
+    "title": "Razmeni korisne stvari sa lokalnom zajednicom — bez novca.",
+    "description": "Barter Platform pomaže komšijama, kolekcionarima i porodicama da razmene predmete koje već imaju za stvari koje im zaista trebaju. Počni od oglasa, pregledaj lokalne ponude i dogovori bezbednu javnu razmenu.",
+    "primaryCta": "Registruj se",
+    "secondaryCta": "Pregledaj marketplace",
+    "signInCta": "Prijavi se"
+  },
+  "highlights": {
+    "title": "Kako razmena funkcioniše ovde",
+    "items": {
+      "list": {
+        "title": "Objavi ono što već imaš",
+        "description": "Kreiraj nacrt, izaberi pravi šablon, dodaj fotografije i objavi kada je oglas spreman za ponude."
+      },
+      "discover": {
+        "title": "Pregledaj oglase zajednice",
+        "description": "Pretražuj aktivne oglase, sačuvaj omiljene i korisne pretrage da bi brže pronašao dobar spoj."
+      },
+      "offer": {
+        "title": "Pošalji ponudu i završi razmenu",
+        "description": "Predloži razmenu, vodi razgovor na platformi i potvrdi završetak kada obe strane završe dogovor."
+      }
+    }
+  },
+  "benefits": {
+    "title": "Napravljen za beta trgovanje usmereno na zajednicu",
+    "items": {
+      "cashless": {
+        "title": "Bez gotovine",
+        "description": "Platforma je napravljena za razmenu predmet za predmet, poklon i pregovor — ne za plaćanja."
+      },
+      "local": {
+        "title": "Lokalno i usmereno na zajednicu",
+        "description": "Razmenjuj po gradu ili kraju i drži oglase fokusirane na približne javne lokacije susreta."
+      },
+      "trust": {
+        "title": "Podsetnici za poverenje i bezbednost",
+        "description": "Koristi javna mesta za razmenu, zadrži komunikaciju na platformi i ocenjuj završene razmene da pomogneš zajednici."
+      }
+    }
+  },
+  "safety": {
+    "title": "Razmenjuj bezbedno tokom bete",
+    "items": {
+      "publicPlace": "Kad god je moguće, nalazite se na javnim i dobro osvetljenim mestima.",
+      "keepMessages": "Drži detalje razmene u porukama na platformi da obe strane imaju jasan zapis.",
+      "protectPrivacy": "U oglasima deli samo približnu oblast razmene — nikada tačnu kućnu adresu."
+    }
+  },
+  "footer": {
+    "title": "Spreman/na za svoju prvu razmenu?",
+    "description": "Kreiraj nalog da započneš aktivacionu kontrolnu listu, objaviš prvi oglas i pošalješ utiske dok istražuješ betu.",
+    "register": "Registruj se",
+    "signIn": "Prijava"
+  }
+}
+
