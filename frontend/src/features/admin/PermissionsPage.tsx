@@ -9,8 +9,10 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Lock, Search } from "lucide-react";
 import { AdminPageShell, AdminSurface, AdminToolbar } from "./components/AdminPageShell";
+import { useTranslation } from "react-i18next";
 
 export function PermissionsPage() {
+  const { t } = useTranslation("admin");
   const [search, setSearch] = useState("");
   const { data: permissions, isLoading, isError, refetch } = useQuery({
     queryKey: ["permissions"],
@@ -38,16 +40,16 @@ export function PermissionsPage() {
   if (isLoading) {
     return (
       <AdminPageShell
-        title="Permissions"
-        description="Audit the permission catalog currently exposed by the authorization backend."
+        title={t("permissions")}
+        description={t("permissionsPage.loadingDescription")}
         badges={
           <>
-            <Badge variant="primary">Authorization</Badge>
-            <Badge>Permission catalog</Badge>
+            <Badge variant="primary">{t("permissionsPage.badges.authorization")}</Badge>
+            <Badge>{t("permissionsPage.badges.permissionCatalog")}</Badge>
           </>
         }
       >
-        <AdminSurface title="Loading permissions" description="Fetching permission definitions.">
+        <AdminSurface title={t("permissionsPage.loadingTitle")} description={t("permissionsPage.loadingSurfaceDescription")}>
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
               <Skeleton key={i} className="h-24 w-full" />
@@ -61,23 +63,23 @@ export function PermissionsPage() {
   if (isError || !permissions) {
     return (
       <AdminPageShell
-        title="Permissions"
-        description="Audit the permission catalog currently exposed by the authorization backend."
+        title={t("permissions")}
+        description={t("permissionsPage.loadingDescription")}
         badges={
           <>
-            <Badge variant="primary">Authorization</Badge>
-            <Badge>Permission catalog</Badge>
+            <Badge variant="primary">{t("permissionsPage.badges.authorization")}</Badge>
+            <Badge>{t("permissionsPage.badges.permissionCatalog")}</Badge>
           </>
         }
       >
-        <AdminSurface title="Unable to load permissions" description="The permission catalog request failed.">
+        <AdminSurface title={t("permissionsPage.errorSurfaceTitle")} description={t("permissionsPage.errorSurfaceDescription")}>
           <EmptyState
             icon={<Lock className="size-16" />}
-            title="Permissions unavailable"
-            description="Retry to load permission definitions from the existing backend endpoint."
+            title={t("permissionsPage.errorEmptyTitle")}
+            description={t("permissionsPage.errorEmptyDescription")}
             action={
               <Button type="button" variant="outline" onClick={() => refetch()}>
-                Retry
+                {t("permissionsPage.retry")}
               </Button>
             }
           />
@@ -88,12 +90,12 @@ export function PermissionsPage() {
 
   return (
     <AdminPageShell
-      title="Permissions"
-      description="Review permission coverage and naming in a dedicated admin catalog without faking unsupported edit actions."
+      title={t("permissions")}
+      description={t("permissionsPage.description")}
       badges={
         <>
-          <Badge variant="primary">Authorization</Badge>
-          <Badge>{permissions.length} permissions</Badge>
+          <Badge variant="primary">{t("permissionsPage.badges.authorization")}</Badge>
+          <Badge>{t("permissionsPage.badges.permissions", { count: permissions.length })}</Badge>
         </>
       }
     >
@@ -103,36 +105,36 @@ export function PermissionsPage() {
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search permissions by name, code, or description"
+            placeholder={t("permissionsPage.searchPlaceholder")}
             className="pl-9"
-            aria-label="Search permissions"
+            aria-label={t("permissionsPage.searchAriaLabel")}
           />
         </div>
 
         <div className="text-sm text-slate-600 dark:text-slate-400">
-          Showing {filteredPermissions.length} of {permissions.length} permissions
+          {t("permissionsPage.showingPermissions", { shown: filteredPermissions.length, total: permissions.length })}
         </div>
       </AdminToolbar>
 
       <AdminSurface
-        title="Permission catalog"
-        description="Permissions are rendered from the current API response and can be filtered locally for quicker review."
+        title={t("permissionsPage.catalogTitle")}
+        description={t("permissionsPage.catalogDescription")}
         contentClassName="grid gap-4 md:grid-cols-2"
       >
         {permissions.length === 0 ? (
           <div className="md:col-span-2">
             <EmptyState
               icon={<Lock className="size-16" />}
-              title="No permissions found"
-              description="There are no permissions configured in the system."
+              title={t("permissionsPage.emptyTitle")}
+              description={t("permissionsPage.emptyDescription")}
             />
           </div>
         ) : filteredPermissions.length === 0 ? (
           <div className="md:col-span-2">
             <EmptyState
               icon={<Search className="size-14" />}
-              title="No permissions match this filter"
-              description="Try a different search term to continue reviewing the permission catalog."
+              title={t("permissionsPage.emptyFilteredTitle")}
+              description={t("permissionsPage.emptyFilteredDescription")}
             />
           </div>
         ) : (
@@ -148,19 +150,19 @@ export function PermissionsPage() {
                     <Badge variant="secondary">{permission.code}</Badge>
                   </div>
                   <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                    {permission.description || "No permission description is currently provided by the backend contract."}
+                    {permission.description || t("permissionsPage.noDescription")}
                   </p>
                 </div>
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2 text-xs text-slate-500 dark:text-slate-400">
                 <span className="rounded-full bg-white px-3 py-1 dark:bg-slate-900">
-                  Created {new Date(permission.createdAt).toLocaleDateString()}
+                  {t("permissionsPage.createdDate", { date: new Date(permission.createdAt).toLocaleDateString() })}
                 </span>
                 <span className="rounded-full bg-white px-3 py-1 dark:bg-slate-900">
                   {permission.updatedAt
-                    ? `Updated ${new Date(permission.updatedAt).toLocaleDateString()}`
-                    : "No updates recorded"}
+                    ? t("updatedAt", { date: new Date(permission.updatedAt).toLocaleDateString() })
+                    : t("noUpdatesRecorded")}
                 </span>
               </div>
             </div>

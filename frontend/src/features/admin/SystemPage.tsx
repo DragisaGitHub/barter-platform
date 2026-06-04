@@ -5,8 +5,10 @@ import type { PingResponse } from "@/api/generated/types.ts";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { AdminPageShell, AdminSurface } from "./components/AdminPageShell";
+import { useTranslation } from "react-i18next";
 
 export function SystemPage() {
+  const { t } = useTranslation("admin");
   const { data: ping, isLoading, isError, refetch } = useQuery({
     queryKey: ["ping"],
     queryFn: async () => {
@@ -20,24 +22,24 @@ export function SystemPage() {
 
   return (
     <AdminPageShell
-      title="System"
-      description="Monitor the existing health endpoint in an operational format without introducing fake metrics or new backend contracts."
+      title={t("system")}
+      description={t("systemPage.description")}
       badges={
         <>
-          <Badge variant="primary">Operations</Badge>
-          <Badge>{isHealthy ? "Endpoint reachable" : "Health check required"}</Badge>
+          <Badge variant="primary">{t("operations")}</Badge>
+          <Badge>{isHealthy ? t("systemPage.endpointReachable") : t("systemPage.healthCheckRequired")}</Badge>
         </>
       }
       actions={
         <Button variant="outline" size="sm" onClick={() => refetch()} isLoading={isLoading}>
           <RefreshCw className="size-4" />
-          Refresh
+          {t("refresh")}
         </Button>
       }
     >
       <AdminSurface
-        title="API health"
-        description="Current status from the existing `/ping` endpoint."
+        title={t("systemPage.apiHealthTitle")}
+        description={t("systemPage.apiHealthDescription")}
         contentClassName="space-y-6"
       >
         <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-950">
@@ -56,18 +58,18 @@ export function SystemPage() {
               <div>
                 <div className="flex flex-wrap items-center gap-2">
                   <h2 className="text-xl font-semibold text-slate-900 dark:text-white">
-                    {isHealthy ? "System online" : "System status unknown"}
+                    {isHealthy ? t("systemPage.systemOnline") : t("systemPage.systemStatusUnknown")}
                   </h2>
                   <Badge variant={isHealthy ? "success" : "danger"}>
-                    {isHealthy ? "Healthy" : "Unavailable"}
+                    {isHealthy ? t("systemPage.healthy") : t("systemPage.unavailable")}
                   </Badge>
                 </div>
                 <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                   {isHealthy
-                    ? "The backend responded successfully to the existing health check endpoint."
+                    ? t("systemPage.backendResponded")
                     : isError
-                      ? "The backend health endpoint could not be reached."
-                      : "The system did not return a valid health response yet."}
+                      ? t("systemPage.backendUnreachable")
+                      : t("systemPage.invalidHealthResponse")}
                 </p>
               </div>
             </div>
@@ -75,7 +77,7 @@ export function SystemPage() {
             <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
               <div className="flex items-center gap-2 font-medium text-slate-900 dark:text-slate-100">
                 <Activity className="size-4" />
-                Health endpoint
+                {t("systemPage.healthEndpoint")}
               </div>
               <p className="mt-1 font-mono text-xs text-slate-500 dark:text-slate-400">GET /ping</p>
             </div>
@@ -85,19 +87,19 @@ export function SystemPage() {
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Response summary
+              {t("systemPage.responseSummary")}
             </p>
             <dl className="mt-4 space-y-3 text-sm">
               <div>
-                <dt className="text-slate-500 dark:text-slate-400">Message</dt>
+                <dt className="text-slate-500 dark:text-slate-400">{t("systemPage.message")}</dt>
                 <dd className="mt-1 font-medium text-slate-900 dark:text-slate-100">
-                  {ping?.message ?? "No response payload available"}
+                  {ping?.message ?? t("systemPage.noResponsePayload")}
                 </dd>
               </div>
               <div>
-                <dt className="text-slate-500 dark:text-slate-400">Status</dt>
+                <dt className="text-slate-500 dark:text-slate-400">{t("systemPage.status")}</dt>
                 <dd className="mt-1 text-slate-900 dark:text-slate-100">
-                  {isHealthy ? "Healthy response received" : "Health response missing"}
+                  {isHealthy ? t("systemPage.healthyResponseReceived") : t("systemPage.healthResponseMissing")}
                 </dd>
               </div>
             </dl>
@@ -105,10 +107,14 @@ export function SystemPage() {
 
           <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-950">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Raw payload
+              {t("systemPage.rawPayload")}
             </p>
             <pre className="mt-4 overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs text-slate-100">
-              {JSON.stringify(ping ?? { error: isError ? "Unable to reach backend API" : "No payload" }, null, 2)}
+              {JSON.stringify(
+                ping ?? { error: isError ? t("systemPage.unableToReachBackendApi") : t("systemPage.noPayload") },
+                null,
+                2
+              )}
             </pre>
           </div>
         </div>
