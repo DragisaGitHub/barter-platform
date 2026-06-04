@@ -2,7 +2,7 @@
 
 This deployment foundation runs Barter Platform on a small DEV server, such as an OCI Always Free VM, using separate Docker images for the Spring Boot backend and Vite frontend.
 
-It intentionally does **not** add Kubernetes or server-side deployment automation yet. Docker image publishing is handled by `.github/workflows/docker-publish.yml`; DEV server deployment still uses `deployment/compose/docker-compose.dev.yml` and is started manually on the server.
+It intentionally does **not** add Kubernetes or replace the existing server-side shell scripts with YAML deployment logic. Docker image publishing is handled by `.github/workflows/docker-publish.yml`; manual DEV deployment orchestration is handled by `.github/workflows/dev-deploy.yml`, which SSHes to the server and invokes `deployment/scripts/deploy-dev.sh`.
 
 ## Runtime shape
 
@@ -104,6 +104,38 @@ dragisahub1984/barter-frontend:latest-release
 ```
 
 `latest-release` is a convenience pointer for the newest release build. Future production deployments should pin explicit immutable tags such as `v1.0.0`; production should not deploy `latest`.
+
+## Manual GitHub Actions DEV deploy workflow
+
+DEV deployment can now be triggered manually from GitHub Actions with `.github/workflows/dev-deploy.yml`.
+
+Required GitHub configuration for the `dev` environment or repository scope:
+
+- variables:
+  - `DEV_SSH_HOST`
+  - `DEV_SSH_USER`
+  - `DEV_DEPLOY_PATH`
+  - optional `DEV_SSH_PORT` (defaults to `22`)
+- secrets:
+  - `DEV_SSH_PRIVATE_KEY`
+  - optional `DEV_SSH_KNOWN_HOSTS`
+
+Recommended usage:
+
+1. Ensure the latest `main` images were already published to Docker Hub.
+2. Open **Actions** in GitHub and then select **DEV Deploy**.
+3. Run the workflow manually.
+4. The workflow connects to the DEV server and runs only the existing server-side deploy flow:
+
+   ```bash
+   cd "$DEV_DEPLOY_PATH"
+   git fetch origin main
+   git reset --hard origin/main
+   chmod +x deployment/scripts/*.sh
+   ./deployment/scripts/deploy-dev.sh
+   ```
+
+This keeps all `docker compose pull`, `up`, health waiting, and deployment-state capture behavior inside `deployment/scripts/deploy-dev.sh`.
 
 ## Required server packages
 
@@ -854,14 +886,15 @@ If the VM is under pressure, first reduce backend `-Xmx` to `320m` or `256m`, th
 
 ## Deployment automation boundary
 
-Current CI/CD scope is image publishing only:
+Current CI/CD scope is image publishing plus manual DEV deployment orchestration:
 
 - build backend and frontend Docker images
 - tag images for DEV (`latest`, `main-<full-git-sha>`)
 - tag images for releases (`vX.Y.Z`, `latest-release`)
 - push images to Docker Hub
+- manually SSH to the DEV server and invoke `deployment/scripts/deploy-dev.sh`
 
-The workflow does **not** SSH to the server, run `docker compose up`, or deploy to production. Keep runtime environment secrets on the server, not in GitHub Actions image builds and not in the repository.
+GitHub Actions still does **not** inline `docker compose up`, duplicate deploy shell logic, or deploy to production. Keep runtime environment secrets on the server, not in GitHub Actions and not in the repository.
 
-Recommended next step, when ready, is a separate deployment workflow or release process that updates server env image tags and runs the existing manual pull/up commands. Production should pin explicit version tags such as `v1.0.0`, never `latest`, and should use `deployment/env/prod.env.example` as the starting point for its runtime configuration.
+Recommended next step, when ready, is adding the separate backup-before-deploy and rollback workflows. Production should pin explicit version tags such as `v1.0.0`, never `latest`, and should use `deployment/env/prod.env.example` as the starting point for its runtime configuration.
 
