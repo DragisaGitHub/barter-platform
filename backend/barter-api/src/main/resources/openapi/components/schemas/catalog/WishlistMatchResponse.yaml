@@ -1,0 +1,17 @@
+type: object
+additionalProperties: false
+required:
+  - item
+  - score
+  - reasons
+properties:
+  item:
+    $ref: '../../../openapi.yaml#/components/schemas/ItemSummaryResponse'
+  score:
+    type: integer
+    format: int32
+    minimum: 0
+  reasons:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/WishlistMatchReason'

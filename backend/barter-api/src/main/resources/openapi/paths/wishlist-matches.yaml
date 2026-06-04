@@ -1,0 +1,30 @@
+get:
+  tags:
+    - Catalog
+  summary: List wishlist matches
+  description: Returns active listings that may match the current user's wishlist listing.
+  operationId: listWishlistMatches
+  security:
+    - bearerJwt: []
+  parameters:
+    - name: itemUuid
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    '200':
+      description: Wishlist matches returned successfully.
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/WishlistMatchResponseList'
+    '401':
+      $ref: '../openapi.yaml#/components/responses/Unauthorized'
+    '403':
+      $ref: '../openapi.yaml#/components/responses/Forbidden'
+    '404':
+      $ref: '../openapi.yaml#/components/responses/NotFound'
+    '409':
+      $ref: '../openapi.yaml#/components/responses/Conflict'

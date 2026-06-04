@@ -1,0 +1,10 @@
+type: string
+description: Explainable reason shown with a recommended listing. No scores are exposed to users.
+enum:
+  - SAME_CATEGORY
+  - TITLE_MATCH
+  - DESCRIPTION_MATCH
+  - ENTRY_MATCH
+  - SAME_CITY
+  - SAME_AREA
+  - COMPATIBLE_TEMPLATE

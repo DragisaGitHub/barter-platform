@@ -154,6 +154,8 @@ paths:
     $ref: './paths/catalog-images.yaml#/itemImageByUuid'
   /catalog/items/{itemUuid}/images/{imageUuid}/primary:
     $ref: './paths/catalog-images.yaml#/itemImagePrimary'
+  /catalog/items/{itemUuid}/wishlist-matches:
+    $ref: './paths/wishlist-matches.yaml'
   /saved-searches:
     $ref: './paths/saved-searches.yaml#/savedSearches'
   /saved-searches/{savedSearchUuid}:
@@ -293,6 +295,12 @@ components:
       $ref: './components/schemas/catalog/ItemListingEntryRequest.yaml'
     ItemListingEntryResponse:
       $ref: './components/schemas/catalog/ItemListingEntryResponse.yaml'
+    WishlistMatchReason:
+      $ref: './components/schemas/catalog/WishlistMatchReason.yaml'
+    WishlistMatchResponse:
+      $ref: './components/schemas/catalog/WishlistMatchResponse.yaml'
+    WishlistMatchResponseList:
+      $ref: './components/schemas/catalog/WishlistMatchResponseList.yaml'
     RecommendationReason:
       $ref: './components/schemas/catalog/RecommendationReason.yaml'
     RecommendationItemResponse:
