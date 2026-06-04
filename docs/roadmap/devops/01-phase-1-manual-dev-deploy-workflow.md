@@ -12,7 +12,7 @@
 
 ## In scope for this phase
 
-- A future `workflow_dispatch` GitHub Actions workflow for DEV deployment.
+- The implemented `workflow_dispatch` GitHub Actions workflow at `.github/workflows/dev-deploy.yml` for DEV deployment.
 - Remote execution on the DEV server over SSH.
 - Running `git pull` or equivalent repo refresh on the DEV host before deploy.
 - Calling `deployment/scripts/deploy-dev.sh` on the server.
@@ -46,14 +46,43 @@
 - `deployment/env/dev.env.example`
 - `deployment/docs/DEV_DEPLOYMENT.md`
 
-## Required GitHub secrets or variables for later implementation
+## Required GitHub secrets and variables for implementation
 
-- `DEV_SSH_HOST`
-- `DEV_SSH_PORT`
-- `DEV_SSH_USER`
-- `DEV_SSH_PRIVATE_KEY`
-- `DEV_SSH_KNOWN_HOSTS` or equivalent host-fingerprint strategy
-- optional: `DEV_DEPLOY_PATH` if the server checkout path should stay configurable
+- Required:
+  - `DEV_SSH_HOST`
+  - `DEV_SSH_USER`
+  - `DEV_SSH_PRIVATE_KEY`
+  - `DEV_DEPLOY_PATH`
+- Optional:
+  - `DEV_SSH_PORT` (defaults to `22` when not set)
+  - `DEV_SSH_KNOWN_HOSTS` (recommended; if omitted, the workflow falls back to `ssh-keyscan` before connecting)
+
+Recommended GitHub classification:
+
+- repository or environment variable: `DEV_SSH_HOST`
+- repository or environment variable: `DEV_SSH_USER`
+- repository or environment variable: `DEV_DEPLOY_PATH`
+- optional repository or environment variable: `DEV_SSH_PORT`
+- repository or environment secret: `DEV_SSH_KNOWN_HOSTS`
+- environment secret: `DEV_SSH_PRIVATE_KEY`
+
+## Manual usage steps
+
+1. Confirm the `main` branch images have already been published and are available to the DEV server.
+2. In GitHub, open **Actions** and then select **DEV Deploy**.
+3. Choose the `main` branch workflow definition unless there is a specific reason to run the workflow file from another ref.
+4. Click **Run workflow**.
+5. The workflow connects to the DEV host over SSH and runs the following on the server from the configured checkout path:
+
+   ```bash
+   cd "$DEV_DEPLOY_PATH"
+   git fetch origin main
+   git reset --hard origin/main
+   chmod +x deployment/scripts/*.sh
+   ./deployment/scripts/deploy-dev.sh
+   ```
+
+6. Review the workflow logs for the triggering actor, target ref (`main`), and final success or failure state.
 
 ## Required server-side files and prerequisites
 

@@ -65,6 +65,21 @@
 - DEV SSH connection secrets
 - later production SSH connection secrets or equivalent deployment credentials
 
+## Phase 1 DEV deploy workflow configuration
+
+For `.github/workflows/dev-deploy.yml`, configure the following GitHub values for the `dev` environment or repository scope:
+
+- variables:
+  - `DEV_SSH_HOST`
+  - `DEV_SSH_USER`
+  - `DEV_DEPLOY_PATH`
+  - optional `DEV_SSH_PORT`
+- secrets:
+  - `DEV_SSH_PRIVATE_KEY`
+  - optional `DEV_SSH_KNOWN_HOSTS`
+
+`DEV_SSH_KNOWN_HOSTS` is strongly recommended so the workflow pins the expected server host key instead of learning it dynamically at run time.
+
 ## Server-side secret files
 
 - `deployment/env/dev.env`

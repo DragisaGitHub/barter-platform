@@ -1,0 +1,101 @@
+name: DEV Deploy
+
+on:
+  workflow_dispatch:
+
+run-name: DEV deploy by @${{ github.actor }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-dev:
+    name: Deploy DEV from main
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: dev
+    env:
+      DEPLOY_REF: main
+      DEV_SSH_HOST: ${{ vars.DEV_SSH_HOST || secrets.DEV_SSH_HOST }}
+      DEV_SSH_PORT: ${{ vars.DEV_SSH_PORT || secrets.DEV_SSH_PORT || '22' }}
+      DEV_SSH_USER: ${{ vars.DEV_SSH_USER || secrets.DEV_SSH_USER }}
+      DEV_DEPLOY_PATH: ${{ vars.DEV_DEPLOY_PATH || secrets.DEV_DEPLOY_PATH }}
+      DEV_SSH_KNOWN_HOSTS: ${{ secrets.DEV_SSH_KNOWN_HOSTS || vars.DEV_SSH_KNOWN_HOSTS }}
+
+    steps:
+      - name: Log deployment context
+        run: |
+          echo "Actor: ${GITHUB_ACTOR}"
+          echo "Workflow ref: ${GITHUB_REF}"
+          echo "Target deploy ref: ${DEPLOY_REF}"
+          echo "Run started at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Validate required DEV deployment configuration
+        env:
+          DEV_SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          missing=()
+
+          [[ -n "${DEV_SSH_HOST}" ]] || missing+=("DEV_SSH_HOST")
+          [[ -n "${DEV_SSH_USER}" ]] || missing+=("DEV_SSH_USER")
+          [[ -n "${DEV_SSH_PRIVATE_KEY}" ]] || missing+=("DEV_SSH_PRIVATE_KEY")
+          [[ -n "${DEV_DEPLOY_PATH}" ]] || missing+=("DEV_DEPLOY_PATH")
+
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Missing required DEV deployment configuration: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+
+      - name: Configure SSH host verification
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          touch ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          if [[ -n "${DEV_SSH_KNOWN_HOSTS}" ]]; then
+            printf '%s\n' "${DEV_SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+            echo "Using configured DEV_SSH_KNOWN_HOSTS entries."
+          else
+            ssh-keyscan -p "${DEV_SSH_PORT}" -H "${DEV_SSH_HOST}" >> ~/.ssh/known_hosts 2>/dev/null
+            echo "DEV_SSH_KNOWN_HOSTS not set; loaded the current host key with ssh-keyscan."
+          fi
+
+      - name: Deploy on DEV server
+        run: |
+          set -euo pipefail
+
+          printf -v DEPLOY_PATH_Q '%q' "${DEV_DEPLOY_PATH}"
+
+          ssh \
+            -p "${DEV_SSH_PORT}" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "${DEV_SSH_USER}@${DEV_SSH_HOST}" \
+            "export DEV_DEPLOY_PATH=${DEPLOY_PATH_Q}; bash -se" <<'EOF'
+          set -euo pipefail
+
+          cd "$DEV_DEPLOY_PATH"
+          git fetch origin main
+          git reset --hard origin/main
+          chmod +x deployment/scripts/*.sh
+          ./deployment/scripts/deploy-dev.sh
+          EOF
+
+      - name: Log completion
+        if: always()
+        run: |
+          echo "Run finished with status: ${{ job.status }}"
+          echo "Run completed at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
