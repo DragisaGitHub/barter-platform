@@ -38,6 +38,12 @@ public interface ItemMapper {
                 : com.barterplatform.api.model.ListingMode.valueOf(listingMode.name());
     }
 
+    default com.barterplatform.api.model.ListingTemplateType map(
+            com.barterplatform.domain.catalog.enums.ListingTemplateType listingTemplateType) {
+        return listingTemplateType == null ? null
+                : com.barterplatform.api.model.ListingTemplateType.valueOf(listingTemplateType.name());
+    }
+
     // ── ItemSummaryResponse ─────────────────────────────────────
 
     @Mapping(target = "categoryUuid", ignore = true)
@@ -47,7 +53,6 @@ public interface ItemMapper {
     @Mapping(target = "primaryImageUrl", ignore = true)
     @Mapping(target = "entryCount", ignore = true)
     @Mapping(target = "previewEntries", ignore = true)
-    @Mapping(target = "listingTemplateType", ignore = true)
     @Mapping(target = "templateMetadata", ignore = true)
     ItemSummaryResponse toSummaryResponse(ItemEntity entity);
 
@@ -94,7 +99,6 @@ public interface ItemMapper {
     @Mapping(target = "images", ignore = true)
     @Mapping(target = "entries", ignore = true)
     @Mapping(target = "moderationSummary", ignore = true)
-    @Mapping(target = "listingTemplateType", ignore = true)
     @Mapping(target = "templateMetadata", ignore = true)
     ItemDetailResponse toDetailResponse(ItemEntity entity);
 

@@ -2,12 +2,9 @@ package com.barterplatform.web.catalog.controller;
 
 import com.barterplatform.api.controller.CatalogApi;
 import com.barterplatform.api.model.*;
-import com.barterplatform.application.catalog.service.CatalogQueryService;
-import com.barterplatform.application.catalog.service.FavoriteItemService;
-import com.barterplatform.application.catalog.service.ItemCommandService;
-import com.barterplatform.application.catalog.service.ItemImageService;
-import com.barterplatform.application.catalog.service.RecommendationService;
+import com.barterplatform.application.catalog.service.*;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,6 +16,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+@RequiredArgsConstructor
 @RestController
 public class CatalogController implements CatalogApi {
 
@@ -27,18 +25,7 @@ public class CatalogController implements CatalogApi {
     private final ItemCommandService itemCommandService;
     private final ItemImageService itemImageService;
     private final RecommendationService recommendationService;
-
-    public CatalogController(CatalogQueryService catalogQueryService,
-                             FavoriteItemService favoriteItemService,
-                             ItemCommandService itemCommandService,
-                             ItemImageService itemImageService,
-                             RecommendationService recommendationService) {
-        this.catalogQueryService = catalogQueryService;
-        this.favoriteItemService = favoriteItemService;
-        this.itemCommandService = itemCommandService;
-        this.itemImageService = itemImageService;
-        this.recommendationService = recommendationService;
-    }
+    private final WishlistMatchService wishlistMatchService;
 
     // ── Public endpoints ─────────────────────────────────────────
 
@@ -82,6 +69,13 @@ public class CatalogController implements CatalogApi {
     public ResponseEntity<RecommendationPagedResponse> listRecommendations(Integer page, Integer size, String sort) {
         return ResponseEntity.ok(recommendationService.listRecommendations(
                 currentUserUuidOrNull(), page, size, sort));
+    }
+
+    @Override
+    public ResponseEntity<List<WishlistMatchResponse>> listWishlistMatches(UUID itemUuid) {
+        return ResponseEntity.ok(wishlistMatchService.listWishlistMatches(
+                currentUserUuid(),
+                itemUuid));
     }
 
     // ── Authenticated item endpoints ─────────────────────────────

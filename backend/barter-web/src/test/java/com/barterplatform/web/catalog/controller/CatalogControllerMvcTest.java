@@ -34,6 +34,7 @@ class CatalogControllerMvcTest {
     private ItemCommandService itemCommandService;
     private ItemImageService itemImageService;
     private RecommendationService recommendationService;
+    private WishlistMatchService wishlistMatchService;
 
     @BeforeEach
     void setUp() {
@@ -42,9 +43,10 @@ class CatalogControllerMvcTest {
         itemCommandService = mock(ItemCommandService.class);
         itemImageService = mock(ItemImageService.class);
         recommendationService = mock(RecommendationService.class);
+        wishlistMatchService = mock(WishlistMatchService.class);
         mockMvc = MockMvcBuilders
                 .standaloneSetup(new CatalogController(
-                        catalogQueryService, favoriteItemService, itemCommandService, itemImageService, recommendationService))
+                        catalogQueryService, favoriteItemService, itemCommandService, itemImageService, recommendationService, wishlistMatchService))
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
         SecurityContextHolder.clearContext();
