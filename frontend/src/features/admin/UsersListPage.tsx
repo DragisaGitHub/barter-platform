@@ -13,8 +13,10 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Search, ShieldCheck, Users } from "lucide-react";
 import { AdminPageShell, AdminSurface, AdminToolbar } from "./components/AdminPageShell";
+import { useTranslation } from "react-i18next";
 
 export function UsersListPage() {
+  const { t } = useTranslation("admin");
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
@@ -76,16 +78,16 @@ export function UsersListPage() {
   if (isLoading) {
     return (
       <AdminPageShell
-        title="Users"
-        description="Review account status, verification posture, and direct navigation into existing user detail screens."
+        title={t("users")}
+        description={t("usersPage.loadingDescription")}
         badges={
           <>
-            <Badge variant="primary">Access review</Badge>
-            <Badge>User directory</Badge>
+            <Badge variant="primary">{t("usersPage.badges.accessReview")}</Badge>
+            <Badge>{t("usersPage.badges.userDirectory")}</Badge>
           </>
         }
       >
-        <AdminSurface title="Loading users" description="Fetching the current page of user accounts.">
+        <AdminSurface title={t("usersPage.loadingTitle")} description={t("usersPage.loadingSurfaceDescription")}>
           <div className="space-y-3">
             {[...Array(6)].map((_, i) => (
               <Skeleton key={i} className="h-16 w-full" />
@@ -99,23 +101,23 @@ export function UsersListPage() {
   if (isError || !data) {
     return (
       <AdminPageShell
-        title="Users"
-        description="Review account status, verification posture, and direct navigation into existing user detail screens."
+        title={t("users")}
+        description={t("usersPage.loadingDescription")}
         badges={
           <>
-            <Badge variant="primary">Access review</Badge>
-            <Badge>User directory</Badge>
+            <Badge variant="primary">{t("usersPage.badges.accessReview")}</Badge>
+            <Badge>{t("usersPage.badges.userDirectory")}</Badge>
           </>
         }
       >
-        <AdminSurface title="Unable to load users" description="The current user directory request could not be completed.">
+        <AdminSurface title={t("usersPage.errorSurfaceTitle")} description={t("usersPage.errorSurfaceDescription")}>
           <EmptyState
             icon={<Users className="size-14" />}
-            title="User directory unavailable"
-            description="Try refreshing the list. Existing backend contracts and detail routes remain unchanged."
+            title={t("usersPage.errorEmptyTitle")}
+            description={t("usersPage.errorEmptyDescription")}
             action={
               <Button type="button" variant="outline" onClick={() => refetch()}>
-                Retry
+                {t("usersPage.retry")}
               </Button>
             }
           />
@@ -126,12 +128,12 @@ export function UsersListPage() {
 
   return (
     <AdminPageShell
-      title="Users"
-      description="Manage the existing user directory with safe search, current backend paging, and account-status visibility for moderation workflows."
+      title={t("users")}
+      description={t("usersPage.description")}
       badges={
         <>
-          <Badge variant="primary">Access review</Badge>
-          <Badge>{totalUsers} total users</Badge>
+          <Badge variant="primary">{t("usersPage.badges.accessReview")}</Badge>
+          <Badge>{t("usersPage.badges.totalUsers", { count: totalUsers })}</Badge>
         </>
       }
     >
@@ -142,34 +144,34 @@ export function UsersListPage() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search username, email, status, or verification state"
+              placeholder={t("usersPage.searchPlaceholder")}
               className="pl-9"
-              aria-label="Search users on the current page"
+              aria-label={t("usersPage.searchAriaLabel")}
             />
           </div>
         </div>
 
         <Button type="button" variant="outline" onClick={() => refetch()}>
-          Refresh
+          {t("refresh")}
         </Button>
       </AdminToolbar>
 
       <AdminSurface
-        title="User directory"
-        description="Search filters the currently loaded page while sorting and pagination continue to use the existing backend support."
+        title={t("usersPage.directoryTitle")}
+        description={t("usersPage.directoryDescription")}
         contentClassName="space-y-0"
       >
         {content.length === 0 ? (
           <EmptyState
             icon={<Users className="size-16" />}
-            title="No users found"
-            description="There are no users in the system yet."
+            title={t("usersPage.emptyTitle")}
+            description={t("usersPage.emptyDescription")}
           />
         ) : filteredUsers.length === 0 ? (
           <EmptyState
             icon={<Search className="size-14" />}
-            title="No users match this filter"
-            description="Try a different search term or move to another page to continue reviewing user accounts."
+            title={t("usersPage.emptyFilteredTitle")}
+            description={t("usersPage.emptyFilteredDescription")}
           />
         ) : (
           <>
@@ -177,7 +179,7 @@ export function UsersListPage() {
               columns={[
                 {
                   key: "username",
-                  label: "User",
+                  label: t("usersPage.columns.user"),
                   sortable: true,
                   render: (user: UserSummaryResponse) => (
                     <div>
@@ -188,41 +190,41 @@ export function UsersListPage() {
                 },
                 {
                   key: "status",
-                  label: "Status",
+                  label: t("usersPage.columns.status"),
                   sortable: true,
                   render: (user: UserSummaryResponse) => <StatusBadge status={user.status} />,
                 },
                 {
                   key: "emailVerified",
-                  label: "Security",
+                  label: t("usersPage.columns.security"),
                   sortable: false,
                   render: (user: UserSummaryResponse) => (
                     <div className="flex flex-wrap gap-2">
                       <Badge variant={user.emailVerified ? "success" : "warning"}>
-                        {user.emailVerified ? "Email verified" : "Email pending"}
+                        {user.emailVerified ? t("usersPage.emailVerified") : t("usersPage.emailPending")}
                       </Badge>
                       <Badge variant={user.mfaEnabled ? "primary" : "default"}>
-                        {user.mfaEnabled ? "MFA enabled" : "MFA off"}
+                        {user.mfaEnabled ? t("usersPage.mfaEnabled") : t("usersPage.mfaOff")}
                       </Badge>
                     </div>
                   ),
                 },
                 {
                   key: "lastLoginAt",
-                  label: "Last login",
+                  label: t("usersPage.columns.lastLogin"),
                   sortable: false,
                   render: (user: UserSummaryResponse) =>
-                    user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : "Never",
+                    user.lastLoginAt ? new Date(user.lastLoginAt).toLocaleString() : t("usersPage.never"),
                 },
                 {
                   key: "createdAt",
-                  label: "Created",
+                  label: t("created"),
                   sortable: true,
                   render: (user: UserSummaryResponse) => new Date(user.createdAt).toLocaleDateString(),
                 },
                 {
                   key: "actions",
-                  label: "Actions",
+                  label: t("usersPage.columns.actions"),
                   sortable: false,
                   render: (user: UserSummaryResponse) => (
                     <Button
@@ -235,7 +237,7 @@ export function UsersListPage() {
                       }}
                     >
                       <ShieldCheck className="size-4" />
-                      Open
+                      {t("usersPage.open")}
                     </Button>
                   ),
                 },
@@ -253,7 +255,9 @@ export function UsersListPage() {
               statusContent={
                 <>
                   <span className="rounded-full bg-slate-100 px-3 py-1 text-sm text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                    Sorting: {sort ? `${sort.field} (${sort.direction})` : "none"}
+                    {t("usersPage.sortingStatus", {
+                      sort: sort ? `${sort.field} (${sort.direction})` : t("usersPage.sortNone"),
+                    })}
                   </span>
                 </>
               }

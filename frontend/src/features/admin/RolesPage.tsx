@@ -9,8 +9,10 @@ import { Skeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { KeyRound, Search } from "lucide-react";
 import { AdminPageShell, AdminSurface, AdminToolbar } from "./components/AdminPageShell";
+import { useTranslation } from "react-i18next";
 
 export function RolesPage() {
+  const { t } = useTranslation("admin");
   const [search, setSearch] = useState("");
   const { data: roles, isLoading, isError, refetch } = useQuery({
     queryKey: ["roles"],
@@ -38,16 +40,16 @@ export function RolesPage() {
   if (isLoading) {
     return (
       <AdminPageShell
-        title="Roles"
-        description="Review the platform roles currently defined by the backend authorization model."
+        title={t("roles")}
+        description={t("rolesPage.loadingDescription")}
         badges={
           <>
-            <Badge variant="primary">Authorization</Badge>
-            <Badge>Role catalog</Badge>
+            <Badge variant="primary">{t("rolesPage.badges.authorization")}</Badge>
+            <Badge>{t("rolesPage.badges.roleCatalog")}</Badge>
           </>
         }
       >
-        <AdminSurface title="Loading roles" description="Fetching the current role catalog.">
+        <AdminSurface title={t("rolesPage.loadingTitle")} description={t("rolesPage.loadingSurfaceDescription")}>
           <div className="space-y-4">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-28 w-full" />
@@ -61,23 +63,23 @@ export function RolesPage() {
   if (isError || !roles) {
     return (
       <AdminPageShell
-        title="Roles"
-        description="Review the platform roles currently defined by the backend authorization model."
+        title={t("roles")}
+        description={t("rolesPage.loadingDescription")}
         badges={
           <>
-            <Badge variant="primary">Authorization</Badge>
-            <Badge>Role catalog</Badge>
+            <Badge variant="primary">{t("rolesPage.badges.authorization")}</Badge>
+            <Badge>{t("rolesPage.badges.roleCatalog")}</Badge>
           </>
         }
       >
-        <AdminSurface title="Unable to load roles" description="The current role catalog request failed.">
+        <AdminSurface title={t("rolesPage.errorSurfaceTitle")} description={t("rolesPage.errorSurfaceDescription")}>
           <EmptyState
             icon={<KeyRound className="size-16" />}
-            title="Roles unavailable"
-            description="Retry to load the role definitions from the existing backend endpoint."
+            title={t("rolesPage.errorEmptyTitle")}
+            description={t("rolesPage.errorEmptyDescription")}
             action={
               <Button type="button" variant="outline" onClick={() => refetch()}>
-                Retry
+                {t("rolesPage.retry")}
               </Button>
             }
           />
@@ -88,12 +90,12 @@ export function RolesPage() {
 
   return (
     <AdminPageShell
-      title="Roles"
-      description="Inspect role definitions and their descriptive scope without introducing unsupported editing or assignment flows."
+      title={t("roles")}
+      description={t("rolesPage.description")}
       badges={
         <>
-          <Badge variant="primary">Authorization</Badge>
-          <Badge>{roles.length} roles</Badge>
+          <Badge variant="primary">{t("rolesPage.badges.authorization")}</Badge>
+          <Badge>{t("rolesPage.badges.roles", { count: roles.length })}</Badge>
         </>
       }
     >
@@ -103,33 +105,33 @@ export function RolesPage() {
           <Input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search roles by name, code, or description"
+            placeholder={t("rolesPage.searchPlaceholder")}
             className="pl-9"
-            aria-label="Search roles"
+            aria-label={t("rolesPage.searchAriaLabel")}
           />
         </div>
 
         <div className="text-sm text-slate-600 dark:text-slate-400">
-          Showing {filteredRoles.length} of {roles.length} roles
+          {t("rolesPage.showingRoles", { shown: filteredRoles.length, total: roles.length })}
         </div>
       </AdminToolbar>
 
       <AdminSurface
-        title="Role definitions"
-        description="Roles are displayed from the current API response and filtered locally for fast admin review."
+        title={t("rolesPage.definitionsTitle")}
+        description={t("rolesPage.definitionsDescription")}
         contentClassName="space-y-4"
       >
         {roles.length === 0 ? (
           <EmptyState
             icon={<KeyRound className="size-16" />}
-            title="No roles found"
-            description="There are no roles configured in the system."
+            title={t("rolesPage.emptyTitle")}
+            description={t("rolesPage.emptyDescription")}
           />
         ) : filteredRoles.length === 0 ? (
           <EmptyState
             icon={<Search className="size-14" />}
-            title="No roles match this filter"
-            description="Try a different search term to review the available role definitions."
+            title={t("rolesPage.emptyFilteredTitle")}
+            description={t("rolesPage.emptyFilteredDescription")}
           />
         ) : (
           filteredRoles.map((role) => (
@@ -144,13 +146,13 @@ export function RolesPage() {
                     <Badge variant="primary">{role.code}</Badge>
                   </div>
                   <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                    {role.description || "No role description is currently provided by the backend contract."}
+                    {role.description || t("rolesPage.noDescription")}
                   </p>
                 </div>
 
                 <div className="grid gap-2 text-sm text-slate-600 dark:text-slate-400 md:text-right">
-                  <span>Created {new Date(role.createdAt).toLocaleDateString()}</span>
-                  <span>{role.updatedAt ? `Updated ${new Date(role.updatedAt).toLocaleDateString()}` : "No updates recorded"}</span>
+                  <span>{t("rolesPage.createdDate", { date: new Date(role.createdAt).toLocaleDateString() })}</span>
+                  <span>{role.updatedAt ? t("updatedAt", { date: new Date(role.updatedAt).toLocaleDateString() }) : t("noUpdatesRecorded")}</span>
                 </div>
               </div>
             </div>
