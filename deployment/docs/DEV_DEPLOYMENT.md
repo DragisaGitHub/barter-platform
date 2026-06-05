@@ -94,16 +94,16 @@ dragisahub1984/barter-frontend:main-<full-git-sha>
 
 ### Versioned release tags
 
-When a Git tag like `v1.0.0` is pushed, the workflow pushes immutable release tags:
+When a Git tag like `v1.0.0` is pushed, the workflow preserves the Git-ref-shaped tag and also publishes normalized immutable runtime tags:
 
 ```text
 dragisahub1984/barter-backend:v1.0.0
-dragisahub1984/barter-backend:latest-release
+dragisahub1984/barter-backend:1.0.0
 dragisahub1984/barter-frontend:v1.0.0
-dragisahub1984/barter-frontend:latest-release
+dragisahub1984/barter-frontend:1.0.0
 ```
 
-`latest-release` is a convenience pointer for the newest release build. Future production deployments should pin explicit immutable tags such as `v1.0.0`; production should not deploy `latest`.
+Production env files should pin the normalized immutable tags such as `1.0.0`; production should not deploy `latest`.
 
 ## Manual GitHub Actions DEV deploy workflow
 
@@ -397,10 +397,10 @@ docker push dragisahub1984/barter-frontend:latest
 For safer deployments, prefer immutable tags, for example:
 
 ```bash
-docker tag dragisahub1984/barter-backend:latest dragisahub1984/barter-backend:v1.0.0
-docker tag dragisahub1984/barter-frontend:latest dragisahub1984/barter-frontend:v1.0.0
-docker push dragisahub1984/barter-backend:v1.0.0
-docker push dragisahub1984/barter-frontend:v1.0.0
+docker tag dragisahub1984/barter-backend:latest dragisahub1984/barter-backend:1.0.0
+docker tag dragisahub1984/barter-frontend:latest dragisahub1984/barter-frontend:1.0.0
+docker push dragisahub1984/barter-backend:1.0.0
+docker push dragisahub1984/barter-frontend:1.0.0
 ```
 
 Then set these tags in `deployment/env/dev.env`.
@@ -438,8 +438,8 @@ FRONTEND_IMAGE=dragisahub1984/barter-frontend:latest
 For future production-style testing, pin explicit immutable versions in the env file instead:
 
 ```env
-BACKEND_IMAGE=dragisahub1984/barter-backend:v1.0.0
-FRONTEND_IMAGE=dragisahub1984/barter-frontend:v1.0.0
+BACKEND_IMAGE=dragisahub1984/barter-backend:1.0.0
+FRONTEND_IMAGE=dragisahub1984/barter-frontend:1.0.0
 ```
 
 Production should go one step further and prefer immutable repo digests when practical.
@@ -890,11 +890,11 @@ Current CI/CD scope is image publishing plus manual DEV deployment orchestration
 
 - build backend and frontend Docker images
 - tag images for DEV (`latest`, `main-<full-git-sha>`)
-- tag images for releases (`vX.Y.Z`, `latest-release`)
+- tag images for releases (`vX.Y.Z`, normalized `X.Y.Z`)
 - push images to Docker Hub
 - manually SSH to the DEV server and invoke `deployment/scripts/deploy-dev.sh`
 
 GitHub Actions still does **not** inline `docker compose up`, duplicate deploy shell logic, or deploy to production. Keep runtime environment secrets on the server, not in GitHub Actions and not in the repository.
 
-Recommended next step, when ready, is adding the separate backup-before-deploy and rollback workflows. Production should pin explicit version tags such as `v1.0.0`, never `latest`, and should use `deployment/env/prod.env.example` as the starting point for its runtime configuration.
+Recommended next step, when ready, is adding the separate backup-before-deploy and rollback workflows. Production should pin explicit version tags such as `1.0.0`, never `latest`, and should use `deployment/env/prod.env.example` as the starting point for its runtime configuration.
 
