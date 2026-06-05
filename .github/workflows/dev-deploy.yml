@@ -127,7 +127,7 @@ jobs:
           echo "CI is green for ${DEPLOY_REF} commit ${DEPLOY_SHA}; DEV Deploy may continue."
 
       - name: Start SSH agent
-        uses: webfactory/ssh-agent@v0.9.0
+        uses: webfactory/ssh-agent@v0.10.0
         with:
           ssh-private-key: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
 
