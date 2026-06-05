@@ -91,6 +91,8 @@ jobs:
           git fetch origin main
           git reset --hard origin/main
           chmod +x deployment/scripts/*.sh
+          ./deployment/scripts/backup-db.sh --force
+          echo "Backup completed successfully; continuing with DEV deployment."
           ./deployment/scripts/deploy-dev.sh
           EOF
 
