@@ -1,0 +1,87 @@
+name: DEV Rollback
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dev-rollback
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Roll back DEV
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: dev
+    env:
+      DEV_SSH_HOST: ${{ vars.DEV_SSH_HOST || secrets.DEV_SSH_HOST }}
+      DEV_SSH_USER: ${{ vars.DEV_SSH_USER || secrets.DEV_SSH_USER }}
+      DEV_SSH_PORT: ${{ vars.DEV_SSH_PORT || secrets.DEV_SSH_PORT || '22' }}
+      DEV_DEPLOY_PATH: ${{ vars.DEV_DEPLOY_PATH || secrets.DEV_DEPLOY_PATH }}
+    steps:
+      - name: Log rollback request
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Actor: ${{ github.actor }}"
+          echo "Workflow ref: ${{ github.ref }}"
+          echo "Started at: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+      - name: Validate DEV SSH configuration
+        shell: bash
+        env:
+          DEV_SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          [[ -n "${DEV_SSH_HOST}" ]] || { echo "Missing DEV_SSH_HOST"; exit 1; }
+          [[ -n "${DEV_SSH_USER}" ]] || { echo "Missing DEV_SSH_USER"; exit 1; }
+          [[ -n "${DEV_DEPLOY_PATH}" ]] || { echo "Missing DEV_DEPLOY_PATH"; exit 1; }
+          [[ -n "${DEV_SSH_PRIVATE_KEY}" ]] || { echo "Missing DEV_SSH_PRIVATE_KEY"; exit 1; }
+
+      - name: Configure SSH
+        shell: bash
+        env:
+          DEV_SSH_PRIVATE_KEY: ${{ secrets.DEV_SSH_PRIVATE_KEY }}
+          DEV_SSH_KNOWN_HOSTS: ${{ secrets.DEV_SSH_KNOWN_HOSTS || vars.DEV_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${DEV_SSH_PRIVATE_KEY}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+
+          if [[ -n "${DEV_SSH_KNOWN_HOSTS}" ]]; then
+            printf '%s\n' "${DEV_SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          else
+            ssh-keyscan -p "${DEV_SSH_PORT:-22}" -H "${DEV_SSH_HOST}" >> ~/.ssh/known_hosts
+          fi
+
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Run rollback on DEV server
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh \
+            -i ~/.ssh/id_ed25519 \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            -p "${DEV_SSH_PORT:-22}" \
+            "${DEV_SSH_USER}@${DEV_SSH_HOST}" bash -seuo pipefail <<EOF
+          cd "${DEV_DEPLOY_PATH}"
+          git fetch origin main
+          git reset --hard origin/main
+          chmod +x deployment/scripts/*.sh
+          ./deployment/scripts/rollback-dev.sh
+          EOF
+
+      - name: Log rollback completion
+        if: ${{ success() }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "DEV rollback completed successfully at $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+
