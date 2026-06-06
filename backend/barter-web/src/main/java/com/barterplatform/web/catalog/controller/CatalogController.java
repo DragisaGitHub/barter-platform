@@ -48,11 +48,10 @@ public class CatalogController implements CatalogApi {
     public ResponseEntity<ItemPagedResponse> searchItems(
             Integer page, Integer size, String sort,
             String q, UUID categoryUuid,
-            List<UUID> tagUuids, ItemStatus status,
+            List<UUID> tagUuids,
             ItemCondition condition, String location) {
         return ResponseEntity.ok(catalogQueryService.searchItems(
                 page, size, sort, q, categoryUuid, tagUuids,
-                mapStatusToDomain(status),
                 mapConditionToDomain(condition),
                 location));
     }

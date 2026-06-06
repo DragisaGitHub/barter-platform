@@ -1,47 +1,23 @@
 package com.barterplatform.application.catalog.service.impl;
 
-import com.barterplatform.api.model.CategoryResponse;
-import com.barterplatform.api.model.ItemDetailResponse;
-import com.barterplatform.api.model.ItemImageResponse;
-import com.barterplatform.api.model.ItemPagedResponse;
-import com.barterplatform.api.model.ItemSummaryResponse;
-import com.barterplatform.api.model.ListingTemplateMetadata;
-import com.barterplatform.api.model.OwnerListingModerationSummary;
-import com.barterplatform.api.model.PopularCategoryResponse;
-import com.barterplatform.api.model.TagResponse;
+import com.barterplatform.api.model.*;
 import com.barterplatform.application.catalog.mapper.CategoryMapper;
 import com.barterplatform.application.catalog.mapper.ItemImageMapper;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
 import com.barterplatform.application.catalog.mapper.TagMapper;
 import com.barterplatform.application.catalog.service.CatalogQueryService;
-import com.barterplatform.application.catalog.storage.FileStorageService;
 import com.barterplatform.application.common.pagination.PageRequestFactory;
 import com.barterplatform.application.common.pagination.PageResponseMapper;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
-import com.barterplatform.domain.catalog.entity.CategoryEntity;
-import com.barterplatform.domain.catalog.entity.ItemEntity;
-import com.barterplatform.domain.catalog.entity.ItemImageEntity;
-import com.barterplatform.domain.catalog.entity.ItemListingEntryEntity;
-import com.barterplatform.domain.catalog.entity.ItemTagEntity;
-import com.barterplatform.domain.catalog.entity.TagEntity;
+import com.barterplatform.domain.catalog.entity.*;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.catalog.moderation.ListingModerationActionEntity;
 import com.barterplatform.domain.identity.entity.UserEntity;
-import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
-import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
-import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
-import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
-import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
-import com.barterplatform.infrastructure.catalog.repository.ListingModerationActionRepository;
-import com.barterplatform.infrastructure.catalog.repository.PopularCategoryProjection;
-import com.barterplatform.infrastructure.catalog.repository.TagRepository;
+import com.barterplatform.infrastructure.catalog.repository.*;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
-
-import java.util.*;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
@@ -49,6 +25,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+@RequiredArgsConstructor
 @Service
 @Transactional(readOnly = true)
 public class CatalogQueryServiceImpl implements CatalogQueryService {
@@ -77,36 +58,6 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
 
-    public CatalogQueryServiceImpl(CategoryRepository categoryRepository,
-                                   TagRepository tagRepository,
-                                   ItemRepository itemRepository,
-                                   ItemTagRepository itemTagRepository,
-                                   UserRepository userRepository,
-                                   ItemImageRepository itemImageRepository,
-                                    ItemListingEntryRepository itemListingEntryRepository,
-                                   ListingModerationActionRepository listingModerationActionRepository,
-                                   CategoryMapper categoryMapper,
-                                   TagMapper tagMapper,
-                                   ItemMapper itemMapper,
-                                   ItemImageMapper itemImageMapper,
-                                   PageRequestFactory pageRequestFactory,
-                                   PageResponseMapper pageResponseMapper) {
-        this.categoryRepository = categoryRepository;
-        this.tagRepository = tagRepository;
-        this.itemRepository = itemRepository;
-        this.itemTagRepository = itemTagRepository;
-        this.userRepository = userRepository;
-        this.itemImageRepository = itemImageRepository;
-        this.itemListingEntryRepository = itemListingEntryRepository;
-        this.listingModerationActionRepository = listingModerationActionRepository;
-        this.categoryMapper = categoryMapper;
-        this.tagMapper = tagMapper;
-        this.itemMapper = itemMapper;
-        this.itemImageMapper = itemImageMapper;
-        this.pageRequestFactory = pageRequestFactory;
-        this.pageResponseMapper = pageResponseMapper;
-    }
-
     // ── Categories & Tags ────────────────────────────────────────
 
     @Override
@@ -131,11 +82,10 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
 
     // ── Public item search ───────────────────────────────────────
 
-    @Override
     public ItemPagedResponse searchItems(Integer page, Integer size, String sort,
                                          String q, UUID categoryUuid, List<UUID> tagUuids,
-                                          ItemStatus status, ItemCondition condition,
-                                          String location) {
+                                         ItemCondition condition,
+                                         String location) {
 
         PageRequestFactory.ResolvedPageRequest pageRequest = pageRequestFactory.create(
                 page, size, sort, DEFAULT_ITEM_SORT_FIELD, ALLOWED_ITEM_SORT_FIELDS);
@@ -166,7 +116,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         UserEntity owner = userRepository.findById(item.getOwnerId())
                 .orElseThrow(() -> notFound("Owner for item '%s' was not found.", itemUuid));
 
-        boolean ownerAccess = requesterUuid != null && owner.getUuid().equals(requesterUuid);
+        boolean ownerAccess = owner.getUuid().equals(requesterUuid);
         boolean elevatedAccess = isAdmin || ownerAccess;
         if (!elevatedAccess && item.getStatus() != ItemStatus.ACTIVE) {
             throw notFound("Item with uuid '%s' was not found.", itemUuid);
