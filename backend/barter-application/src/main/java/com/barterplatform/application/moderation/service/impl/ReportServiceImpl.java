@@ -158,8 +158,7 @@ public class ReportServiceImpl implements ReportService {
         if (isTerminalStatus(nextStatus) && resolutionNote == null) {
             throw badRequest("Resolution note is required when resolving or dismissing a report.");
         }
-
-        report.setAssignedModeratorUserId(actor.getId());
+        
         report.setStatus(nextStatus);
         if (nextStatus == ReportStatus.OPEN || nextStatus == ReportStatus.IN_REVIEW) {
             report.setResolutionNote(null);
