@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Clock3, ExternalLink, Flag, SearchCheck, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@/auth/AuthContext";
 import type {
   AdminListingDetailResponse,
   ReportReasonCode,
@@ -30,6 +31,7 @@ import {
   useAdminReport,
   useAdminReportQueueSummary,
   useAdminReports,
+  useUpdateAdminReportAssignment,
   useUpdateAdminReport,
 } from "./useAdminReports";
 import {
@@ -124,6 +126,7 @@ function SummaryMetricCard({ title, value, helper, toneClassName }: SummaryMetri
 
 export function AdminReportsPage() {
   const { t } = useTranslation(["admin", "reporting", "common"]);
+  const { user } = useAuth();
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
   const [sort] = useState("createdAt,desc");
@@ -151,6 +154,7 @@ export function AdminReportsPage() {
   const summaryQuery = useAdminReportQueueSummary();
   const reportsQuery = useAdminReports(params);
   const detailQuery = useAdminReport(selectedReportUuid, !!selectedReportUuid);
+  const updateAssignmentMutation = useUpdateAdminReportAssignment();
   const updateReportMutation = useUpdateAdminReport();
   const removeListingMutation = useRemoveAdminListing();
   const restoreListingMutation = useRestoreAdminListing();
@@ -167,14 +171,22 @@ export function AdminReportsPage() {
   const hasFilters = !!status || !!targetType || !!reasonCode;
   const staleThresholdHours = summaryQuery.data?.staleThresholdHours ?? 48;
   const currentStatusOptions = selectedReport ? allowedStatusOptions(selectedReport.status) : REPORT_STATUS_OPTIONS;
-  const canEditResolutionNote = isTerminalReportStatus(statusDraft);
+  const isClosedSelectedReport = !!selectedReport && isTerminalReportStatus(selectedReport.status);
+  const canEditResolutionNote = !isClosedSelectedReport && isTerminalReportStatus(statusDraft);
   const normalizedResolutionNote = normalizeNote(resolutionNoteDraft);
   const existingResolutionNote = normalizeNote(selectedReport?.resolutionNote ?? "");
   const hasPendingChanges =
     !!selectedReport &&
     (statusDraft !== selectedReport.status || (canEditResolutionNote && normalizedResolutionNote !== existingResolutionNote));
-  const canSaveStatusUpdate = hasPendingChanges && (!canEditResolutionNote || normalizedResolutionNote.length > 0);
+  const canSaveStatusUpdate =
+    !isClosedSelectedReport && hasPendingChanges && (!canEditResolutionNote || normalizedResolutionNote.length > 0);
   const selectedListing = listingQuery.data;
+  const currentUserUuid = user?.uuid;
+  const isAssignedToCurrentUser =
+    !!selectedReport?.assignedModerator && !!currentUserUuid && selectedReport.assignedModerator.uuid === currentUserUuid;
+  const canClaimSelectedReport =
+    !!selectedReport && !selectedReport.assignedModerator && !isTerminalReportStatus(selectedReport.status);
+  const canReleaseSelectedReport = !!selectedReport && isAssignedToCurrentUser && !isTerminalReportStatus(selectedReport.status);
 
   const reporterProfilePath = selectedReport ? routePaths.publicProfile(selectedReport.reporter.uuid) : undefined;
   const targetLink = useMemo(() => {
@@ -246,6 +258,26 @@ export function AdminReportsPage() {
       toast.success(t("admin:reportsPage.updateSuccess"));
     } catch (error) {
       toast.error(parseApiError(error) || t("admin:reportsPage.updateError"));
+    }
+  };
+
+  const updateAssignment = async (assigned: boolean) => {
+    if (!selectedReportUuid) {
+      return;
+    }
+
+    try {
+      await updateAssignmentMutation.mutateAsync({
+        reportUuid: selectedReportUuid,
+        data: { assigned },
+      });
+      toast.success(
+        assigned
+          ? t("admin:reportsPage.claimSuccess")
+          : t("admin:reportsPage.releaseSuccess"),
+      );
+    } catch (error) {
+      toast.error(parseApiError(error) || t("admin:reportsPage.assignmentError"));
     }
   };
 
@@ -426,6 +458,7 @@ export function AdminReportsPage() {
                       return (
                         <tr
                           key={report.uuid}
+                          aria-selected={isSelected}
                           className={isSelected ? "bg-indigo-50/70 dark:bg-indigo-950/20" : "hover:bg-slate-50 dark:hover:bg-slate-900/50"}
                         >
                           <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
@@ -475,8 +508,9 @@ export function AdminReportsPage() {
                               variant={isSelected ? "secondary" : "outline"}
                               size="sm"
                               onClick={() => setSelectedReportUuid(report.uuid)}
+                              disabled={isSelected}
                             >
-                              {t("admin:openDetail")}
+                              {isSelected ? t("admin:reportsPage.selectedReport") : t("admin:reportsPage.selectReport")}
                             </Button>
                           </td>
                         </tr>
@@ -588,6 +622,28 @@ export function AdminReportsPage() {
                         t("admin:reportsPage.unassigned")
                       )}
                     </div>
+                    {canClaimSelectedReport || canReleaseSelectedReport ? (
+                      <div className="mt-4">
+                        {canClaimSelectedReport ? (
+                          <Button
+                            size="sm"
+                            onClick={() => updateAssignment(true)}
+                            isLoading={updateAssignmentMutation.isPending}
+                          >
+                            {t("admin:reportsPage.claimReport")}
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => updateAssignment(false)}
+                            isLoading={updateAssignmentMutation.isPending}
+                          >
+                            {t("admin:reportsPage.releaseAssignment")}
+                          </Button>
+                        )}
+                      </div>
+                    ) : null}
                     <div className="mt-4">
                       <Link to={reporterProfilePath ?? routePaths.profile}>
                         <Button variant="outline" size="sm">
@@ -739,10 +795,18 @@ export function AdminReportsPage() {
                     {t("admin:reportsPage.statusUpdateTitle")}
                   </h3>
                   <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                    {t("admin:reportsPage.statusUpdateDescription")}
+                    {isClosedSelectedReport
+                      ? t("admin:reportsPage.statusUpdateClosedDescription")
+                      : t("admin:reportsPage.statusUpdateDescription")}
                   </p>
 
                   <div className="mt-5 space-y-4">
+                    {isClosedSelectedReport ? (
+                      <div className="rounded-xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-700 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
+                        {t("admin:reportsPage.closedMessage")}
+                      </div>
+                    ) : null}
+
                     <label className="block">
                       <span className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-200">
                         {t("admin:reportsPage.status")}
@@ -750,7 +814,11 @@ export function AdminReportsPage() {
                       <select
                         value={statusDraft}
                         onChange={(event) => setStatusDraft(event.target.value as ReportStatus)}
-                        disabled={updateReportMutation.isPending}
+                        disabled={
+                          isClosedSelectedReport ||
+                          updateReportMutation.isPending ||
+                          updateAssignmentMutation.isPending
+                        }
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100"
                       >
                         {currentStatusOptions.map((option) => (
@@ -773,19 +841,28 @@ export function AdminReportsPage() {
                       <textarea
                         value={resolutionNoteDraft}
                         onChange={(event) => setResolutionNoteDraft(event.target.value)}
-                        disabled={updateReportMutation.isPending || !canEditResolutionNote}
+                        disabled={
+                          isClosedSelectedReport ||
+                          updateReportMutation.isPending ||
+                          updateAssignmentMutation.isPending ||
+                          !canEditResolutionNote
+                        }
                         rows={6}
                         maxLength={2000}
                         className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:disabled:bg-slate-900"
                         placeholder={
-                          canEditResolutionNote
+                          isClosedSelectedReport
+                            ? t("admin:reportsPage.closedMessage")
+                            : canEditResolutionNote
                             ? t("admin:reportsPage.resolutionNotePlaceholder")
                             : t("admin:reportsPage.resolutionNoteLockedPlaceholder")
                         }
                       />
                       <div className="mt-2 flex items-center justify-between gap-3 text-xs text-slate-500 dark:text-slate-400">
                         <span>
-                          {canEditResolutionNote
+                          {isClosedSelectedReport
+                            ? t("admin:reportsPage.closedMessage")
+                            : canEditResolutionNote
                             ? t("admin:reportsPage.resolutionNoteRequiredHelper")
                             : t("admin:reportsPage.resolutionNoteHelper")}
                         </span>
@@ -797,7 +874,7 @@ export function AdminReportsPage() {
                       type="button"
                       onClick={saveStatusUpdate}
                       isLoading={updateReportMutation.isPending}
-                      disabled={!canSaveStatusUpdate}
+                      disabled={!canSaveStatusUpdate || updateAssignmentMutation.isPending}
                       className="w-full"
                     >
                       {t("admin:saveChanges")}

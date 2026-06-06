@@ -128,6 +128,7 @@ export type AdminOperationsDeploymentResponse = components["schemas"]["AdminOper
 // ─── Reporting Request DTOs ─────────────────────────────────────────────────
 
 export type CreateReportRequest = components["schemas"]["CreateReportRequest"];
+export type AdminAssignReportRequest = components["schemas"]["AdminAssignReportRequest"];
 export type AdminUpdateReportRequest = components["schemas"]["AdminUpdateReportRequest"];
 
 // ─── Trade Offer Enums ──────────────────────────────────────────────────────

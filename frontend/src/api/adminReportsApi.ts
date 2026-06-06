@@ -1,5 +1,6 @@
 import { apiClient } from "./axios";
 import type {
+  AdminAssignReportRequest,
   AdminReportQueueSummaryResponse,
   AdminUpdateReportRequest,
   ReportDetailResponse,
@@ -41,6 +42,17 @@ export async function updateAdminReport(
 ): Promise<ReportDetailResponse> {
   const response = await apiClient.patch<ReportDetailResponse>(
     `/admin/reports/${reportUuid}/status`,
+    data,
+  );
+  return response.data;
+}
+
+export async function updateAdminReportAssignment(
+  reportUuid: string,
+  data: AdminAssignReportRequest,
+): Promise<ReportDetailResponse> {
+  const response = await apiClient.patch<ReportDetailResponse>(
+    `/admin/reports/${reportUuid}/assignment`,
     data,
   );
   return response.data;

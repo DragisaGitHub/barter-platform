@@ -3,10 +3,12 @@ import {
   getAdminReportQueueSummary,
   getAdminReportByUuid,
   listAdminReports,
+  updateAdminReportAssignment,
   updateAdminReport,
   type ListAdminReportsParams,
 } from "@/api/adminReportsApi";
 import type {
+  AdminAssignReportRequest,
   AdminReportQueueSummaryResponse,
   AdminUpdateReportRequest,
   ReportDetailResponse,
@@ -55,6 +57,22 @@ export function useUpdateAdminReport() {
     { reportUuid: string; data: AdminUpdateReportRequest }
   >({
     mutationFn: ({ reportUuid, data }) => updateAdminReport(reportUuid, data),
+    onSuccess: (report) => {
+      queryClient.setQueryData(adminReportKeys.detail(report.uuid), report);
+      queryClient.invalidateQueries({ queryKey: adminReportKeys.all });
+    },
+  });
+}
+
+export function useUpdateAdminReportAssignment() {
+  const queryClient = useQueryClient();
+
+  return useMutation<
+    ReportDetailResponse,
+    unknown,
+    { reportUuid: string; data: AdminAssignReportRequest }
+  >({
+    mutationFn: ({ reportUuid, data }) => updateAdminReportAssignment(reportUuid, data),
     onSuccess: (report) => {
       queryClient.setQueryData(adminReportKeys.detail(report.uuid), report);
       queryClient.invalidateQueries({ queryKey: adminReportKeys.all });
