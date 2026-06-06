@@ -688,6 +688,23 @@ export interface paths {
         patch: operations["updateAdminReport"];
         trace?: never;
     };
+    "/admin/reports/{reportUuid}/assignment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Claim or release report assignment during moderation review */
+        patch: operations["updateAdminReportAssignment"];
+        trace?: never;
+    };
     "/admin/operations/overview": {
         parameters: {
             query?: never;
@@ -933,6 +950,26 @@ export interface paths {
         get?: never;
         /** Set an image as the primary image for an item */
         put: operations["setItemImageAsPrimary"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog/items/{itemUuid}/wishlist-matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List wishlist matches
+         * @description Returns active listings that may match the current user's wishlist listing.
+         */
+        get: operations["listWishlistMatches"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1766,6 +1803,18 @@ export interface components {
          * @description Explainable reason shown with a recommended listing. No scores are exposed to users.
          * @enum {string}
          */
+        WishlistMatchReason: "SAME_CATEGORY" | "TITLE_MATCH" | "DESCRIPTION_MATCH" | "ENTRY_MATCH" | "SAME_CITY" | "SAME_AREA" | "COMPATIBLE_TEMPLATE";
+        WishlistMatchResponse: {
+            item: components["schemas"]["ItemSummaryResponse"];
+            /** Format: int32 */
+            score: number;
+            reasons: components["schemas"]["WishlistMatchReason"][];
+        };
+        WishlistMatchResponseList: components["schemas"]["WishlistMatchResponse"][];
+        /**
+         * @description Explainable reason shown with a recommended listing. No scores are exposed to users.
+         * @enum {string}
+         */
         RecommendationReason: "BECAUSE_OF_INTERESTS" | "SIMILAR_TO_YOUR_LISTINGS" | "NEAR_PREFERRED_EXCHANGE_AREA" | "POPULAR_RECENTLY";
         RecommendationItemResponse: {
             item: components["schemas"]["ItemSummaryResponse"];
@@ -2335,6 +2384,9 @@ export interface components {
         AdminUpdateReportRequest: {
             status: components["schemas"]["ReportStatus"];
             resolutionNote?: string | null;
+        };
+        AdminAssignReportRequest: {
+            assigned: boolean;
         };
         AdminOperationsOverviewResponse: {
             system: components["schemas"]["AdminOperationsSystemResponse"];
@@ -3914,6 +3966,38 @@ export interface operations {
             409: components["responses"]["Conflict"];
         };
     };
+    updateAdminReportAssignment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Public report UUID. */
+                reportUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdminAssignReportRequest"];
+            };
+        };
+        responses: {
+            /** @description Report assignment updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportDetailResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
     getAdminOperationsOverview: {
         parameters: {
             query?: never;
@@ -4115,8 +4199,6 @@ export interface operations {
                 categoryUuid?: string;
                 /** @description Filter by one or more tag UUIDs. */
                 tagUuids?: string[];
-                /** @description Filter by item status. Public search defaults to ACTIVE only. */
-                status?: components["schemas"]["ItemStatus"];
                 /** @description Filter by item condition. */
                 condition?: components["schemas"]["ItemCondition"];
                 /** @description Case-insensitive text filter across approximate exchange city, area, and location labels. No GPS, maps, or distance calculations are used. */
@@ -4523,6 +4605,32 @@ export interface operations {
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+        };
+    };
+    listWishlistMatches: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Wishlist matches returned successfully. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WishlistMatchResponseList"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
         };
     };
     listSavedSearches: {
