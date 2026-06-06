@@ -40,7 +40,6 @@ public class TradeOfferMessageServiceImpl implements TradeOfferMessageService {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public List<TradeOfferMessageResponse> listMessages(UUID currentUserUuid, UUID tradeOfferUuid) {
         UserEntity currentUser = resolveUser(currentUserUuid);
         TradeOfferEntity tradeOffer = resolveTradeOffer(tradeOfferUuid);
