@@ -55,7 +55,7 @@ class ReportServiceImplTest {
     }
 
     @Test
-    void updateReportAssignsActingModeratorAndResolvesReport() {
+    void updateReportDoesNotReassignActingModeratorWhenResolvingReport() {
         UUID actorUuid = UUID.randomUUID();
         UUID reportUuid = UUID.randomUUID();
 
@@ -64,11 +64,12 @@ class ReportServiceImplTest {
         ReportEntity report = report(reportUuid, reporter.getId(), ReportTargetType.ITEM, ReportReasonCode.PROHIBITED_ITEM);
         report.setStatus(com.barterplatform.domain.moderation.report.ReportStatus.IN_REVIEW);
         report.setAssignedModeratorUserId(99L);
+        UserEntity assignedModerator = user(99L, UUID.randomUUID(), "moderator-one");
 
         when(userRepository.findByUuid(actorUuid)).thenReturn(Optional.of(actor));
         when(reportRepository.findByUuid(reportUuid)).thenReturn(Optional.of(report));
         when(reportRepository.save(any(ReportEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(userRepository.findAllById(anyIterable())).thenReturn(List.of(reporter, actor));
+        when(userRepository.findAllById(anyIterable())).thenReturn(List.of(reporter, assignedModerator));
         when(reportTargetResolver.resolveSummary(ReportTargetType.ITEM, report.getTargetUuid()))
                 .thenReturn(new ReportTargetResolver.TargetSummary("Unsafe item", "Listing by seller", "Flagged details"));
 
@@ -81,8 +82,9 @@ class ReportServiceImplTest {
 
         assertEquals(ReportStatus.RESOLVED, response.getStatus());
         assertEquals("Confirmed unsafe listing and completed follow-up.", response.getResolutionNote());
-        assertEquals(actorUuid, response.getAssignedModerator().getUuid());
-        assertEquals(actor.getId(), report.getAssignedModeratorUserId());
+        assert response.getAssignedModerator() != null;
+        assertEquals(assignedModerator.getUuid(), response.getAssignedModerator().getUuid());
+        assertEquals(assignedModerator.getId(), report.getAssignedModeratorUserId());
         assertNotNull(report.getResolvedAt());
     }
 
