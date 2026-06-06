@@ -112,7 +112,7 @@ class CatalogControllerMvcTest {
         ItemPagedResponse pagedResponse = new ItemPagedResponse()
                 .content(List.of(new ItemSummaryResponse().uuid(UUID.randomUUID()).title("Widget")))
                 .page(0).size(20).totalElements(1L).totalPages(1).first(true).last(true);
-        when(catalogQueryService.searchItems(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+        when(catalogQueryService.searchItems(any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(pagedResponse);
 
         mockMvc.perform(apiGet("/catalog/items")
@@ -123,7 +123,7 @@ class CatalogControllerMvcTest {
                 .andExpect(jsonPath("$.content[0].title").value("Widget"))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
-        verify(catalogQueryService).searchItems(eq(0), eq(20), any(), any(), any(), any(), any(), any(), eq("Belgrade"));
+        verify(catalogQueryService).searchItems(eq(0), eq(20), any(), any(), any(), any(), any(), eq("Belgrade"));
     }
 
     // ── Public: getItemByUuid ────────────────────────────────────

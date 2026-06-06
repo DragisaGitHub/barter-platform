@@ -380,7 +380,7 @@ class CatalogQueryServiceImplTest {
                     .thenReturn(expected);
 
             ItemPagedResponse result = service.searchItems(
-                    0, 20, null, null, null, null, null, null, null);
+                    0, 20, null, null, null, null, null, null);
 
             assertNotNull(result);
             assertEquals(0, result.getTotalElements());
@@ -406,7 +406,7 @@ class CatalogQueryServiceImplTest {
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
             ItemPagedResponse result = service.searchItems(
-                    0, 20, null, "test", catUuid, null, ItemStatus.ACTIVE, ItemCondition.NEW, null);
+                    0, 20, null, "test", catUuid, null, ItemCondition.NEW, null);
 
             assertNotNull(result);
             verify(categoryRepository).findByUuid(catUuid);
@@ -425,7 +425,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, null, null, null, null);
+            service.searchItems(0, 20, null, null, null, null, null, null);
 
             verify(tagRepository, never()).findByUuid(any());
         }
@@ -442,7 +442,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, List.of(), null, null, null);
+            service.searchItems(0, 20, null, null, null, List.of(), null, null);
 
             verify(tagRepository, never()).findByUuid(any());
         }
@@ -463,7 +463,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, List.of(tagUuid), null, null, null);
+            service.searchItems(0, 20, null, null, null, List.of(tagUuid), null, null);
 
             verify(tagRepository).findByUuid(tagUuid);
             verify(itemRepository).findAll(any(Specification.class), any(Pageable.class));
@@ -486,7 +486,7 @@ class CatalogQueryServiceImplTest {
 
             // Should not throw; unknown UUID is skipped
             ItemPagedResponse result = service.searchItems(
-                    0, 20, null, null, null, List.of(unknownUuid), null, null, null);
+                    0, 20, null, null, null, List.of(unknownUuid), null, null);
 
             assertNotNull(result);
             verify(tagRepository).findByUuid(unknownUuid);
@@ -504,7 +504,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, null, null, null, "belgrade");
+            service.searchItems(0, 20, null, null, null, null, null, "belgrade");
 
             verify(tagRepository, never()).findByUuid(any());
             verify(itemRepository).findAll(any(Specification.class), any(Pageable.class));

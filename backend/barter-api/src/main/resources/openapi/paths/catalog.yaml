@@ -93,12 +93,6 @@ items:
             type: string
             format: uuid
         explode: true
-      - name: status
-        in: query
-        required: false
-        description: Filter by item status. Public search defaults to ACTIVE only.
-        schema:
-          $ref: '../components/schemas/catalog/ItemStatus.yaml'
       - name: condition
         in: query
         required: false
