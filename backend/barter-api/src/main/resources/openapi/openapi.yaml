@@ -126,6 +126,8 @@ paths:
     $ref: './paths/admin-reports.yaml#/reportByUuid'
   /admin/reports/{reportUuid}/status:
     $ref: './paths/admin-reports.yaml#/reportUpdate'
+  /admin/reports/{reportUuid}/assignment:
+    $ref: './paths/admin-reports.yaml#/reportAssignmentUpdate'
   /admin/operations/overview:
     $ref: './paths/admin-operations.yaml#/overview'
   /catalog/tags:
@@ -447,6 +449,8 @@ components:
       $ref: './components/schemas/report/CreateReportRequest.yaml'
     AdminUpdateReportRequest:
       $ref: './components/schemas/report/AdminUpdateReportRequest.yaml'
+    AdminAssignReportRequest:
+      $ref: './components/schemas/report/AdminAssignReportRequest.yaml'
     ReportHistoryEventType:
       $ref: './components/schemas/report/ReportHistoryEventType.yaml'
     ReportHistoryEntryResponse:

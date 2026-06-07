@@ -170,6 +170,62 @@ public class ReportServiceImpl implements ReportService {
         return toReportDetailResponse(saved);
     }
 
+    @Override
+    public ReportDetailResponse updateReportAssignment(
+            UUID actorUserUuid,
+            boolean actorIsAdmin,
+            UUID reportUuid,
+            AdminAssignReportRequest request) {
+        UserEntity actor = resolveUser(actorUserUuid);
+        ReportEntity report = resolveReport(reportUuid);
+        if (request == null || request.getAssigned() == null) {
+            throw badRequest("Assigned flag is required.");
+        }
+
+        validateAssignmentChangeAllowed(report.getStatus());
+
+        Long actorUserId = actor.getId();
+        Long currentAssignedModeratorUserId = report.getAssignedModeratorUserId();
+
+        if (Boolean.TRUE.equals(request.getAssigned())) {
+            if (currentAssignedModeratorUserId == null) {
+                report.setAssignedModeratorUserId(actorUserId);
+                ReportEntity saved = reportRepository.save(report);
+                writeAssignmentChangedHistory(
+                        saved,
+                        actor,
+                        ReportHistoryEventType.ASSIGNED,
+                        null,
+                        actorUserId);
+                return toReportDetailResponse(saved);
+            }
+
+            if (Objects.equals(currentAssignedModeratorUserId, actorUserId)) {
+                return toReportDetailResponse(report);
+            }
+
+            throw conflict("Report is already assigned to another moderator.");
+        }
+
+        if (currentAssignedModeratorUserId == null) {
+            return toReportDetailResponse(report);
+        }
+
+        if (!Objects.equals(currentAssignedModeratorUserId, actorUserId) && !actorIsAdmin) {
+            throw forbidden("Only administrators can release a report assigned to another moderator.");
+        }
+
+        report.setAssignedModeratorUserId(null);
+        ReportEntity saved = reportRepository.save(report);
+        writeAssignmentChangedHistory(
+                saved,
+                actor,
+                ReportHistoryEventType.UNASSIGNED,
+                currentAssignedModeratorUserId,
+                null);
+        return toReportDetailResponse(saved);
+    }
+
     private ReportDetailResponse toReportDetailResponse(ReportEntity report) {
         Map<Long, UserEntity> usersById = loadUsersById(List.of(report));
         List<ReportHistoryEntryEntity> historyEntries =
@@ -209,6 +265,22 @@ public class ReportServiceImpl implements ReportService {
         historyEntry.setActorUserId(actor.getId());
         historyEntry.setEventType(ReportHistoryEventType.RESOLUTION_NOTE_CHANGED);
         historyEntry.setNote(note);
+
+        reportHistoryEntryRepository.save(historyEntry);
+    }
+
+    private void writeAssignmentChangedHistory(
+            ReportEntity report,
+            UserEntity actor,
+            ReportHistoryEventType eventType,
+            Long previousAssignedModeratorUserId,
+            Long newAssignedModeratorUserId) {
+        ReportHistoryEntryEntity historyEntry = new ReportHistoryEntryEntity();
+        historyEntry.setReportId(report.getId());
+        historyEntry.setActorUserId(actor.getId());
+        historyEntry.setEventType(eventType);
+        historyEntry.setPreviousAssignedModeratorUserId(previousAssignedModeratorUserId);
+        historyEntry.setNewAssignedModeratorUserId(newAssignedModeratorUserId);
 
         reportHistoryEntryRepository.save(historyEntry);
     }
@@ -289,6 +361,12 @@ public class ReportServiceImpl implements ReportService {
         return status == ReportStatus.RESOLVED || status == ReportStatus.DISMISSED;
     }
 
+    private void validateAssignmentChangeAllowed(ReportStatus status) {
+        if (isTerminalStatus(status)) {
+            throw conflict("Report assignment change is not allowed for terminal reports.");
+        }
+    }
+
     private String normalize(String value) {
         if (value == null) {
             return null;
@@ -325,6 +403,10 @@ public class ReportServiceImpl implements ReportService {
 
     private ApiException badRequest(String message) {
         return new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.BAD_REQUEST, message);
+    }
+
+    private ApiException forbidden(String message) {
+        return new ApiException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN, message);
     }
 
     private ApiException conflict(String message) {

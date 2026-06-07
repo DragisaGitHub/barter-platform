@@ -701,7 +701,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Claim or release report assignment during moderation review */
+        /** Assign or release report ownership during moderation review */
         patch: operations["updateAdminReportAssignment"];
         trace?: never;
     };
@@ -2343,6 +2343,7 @@ export interface components {
             assignedModerator?: components["schemas"]["ReportUserSummaryResponse"] | null;
             resolutionNote?: string | null;
             targetSummary: components["schemas"]["ReportTargetSummaryResponse"];
+            history?: components["schemas"]["ReportHistoryEntryResponse"][];
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -2387,6 +2388,21 @@ export interface components {
         };
         AdminAssignReportRequest: {
             assigned: boolean;
+        };
+        /** @enum {string} */
+        ReportHistoryEventType: "REPORT_CREATED" | "ASSIGNED" | "UNASSIGNED" | "STATUS_CHANGED" | "RESOLUTION_NOTE_CHANGED";
+        ReportHistoryEntryResponse: {
+            /** Format: uuid */
+            uuid: string;
+            eventType: components["schemas"]["ReportHistoryEventType"];
+            actor?: components["schemas"]["ReportUserSummaryResponse"];
+            previousStatus?: components["schemas"]["ReportStatus"];
+            newStatus?: components["schemas"]["ReportStatus"];
+            previousAssignedModerator?: components["schemas"]["ReportUserSummaryResponse"];
+            newAssignedModerator?: components["schemas"]["ReportUserSummaryResponse"];
+            note?: string;
+            /** Format: date-time */
+            createdAt: string;
         };
         AdminOperationsOverviewResponse: {
             system: components["schemas"]["AdminOperationsSystemResponse"];

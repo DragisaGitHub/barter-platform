@@ -2,6 +2,7 @@ package com.barterplatform.application.moderation.service.impl;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyIterable;
@@ -238,6 +239,186 @@ class ReportServiceImplTest {
         assertEquals(assignedModerator.getUuid(), response.getAssignedModerator().getUuid());
         assertEquals(assignedModerator.getId(), report.getAssignedModeratorUserId());
         assertNotNull(report.getResolvedAt());
+    }
+
+    @Test
+    void claimUnassignedReportWritesAssignedHistoryEntry() {
+        UUID actorUuid = UUID.randomUUID();
+        UUID reportUuid = UUID.randomUUID();
+
+        UserEntity actor = user(10L, actorUuid, "moderator");
+        UserEntity reporter = user(20L, UUID.randomUUID(), "reporter");
+        ReportEntity report = report(reportUuid, reporter.getId(), ReportTargetType.ITEM, ReportReasonCode.PROHIBITED_ITEM);
+
+        when(userRepository.findByUuid(actorUuid)).thenReturn(Optional.of(actor));
+        when(reportRepository.findByUuid(reportUuid)).thenReturn(Optional.of(report));
+        when(reportRepository.save(any(ReportEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.findAllById(anyIterable())).thenReturn(List.of(reporter, actor));
+        when(reportTargetResolver.resolveSummary(ReportTargetType.ITEM, report.getTargetUuid()))
+                .thenReturn(new ReportTargetResolver.TargetSummary("Unsafe item", "Listing", "Preview"));
+
+        ReportDetailResponse response = service.updateReportAssignment(
+                actorUuid,
+                false,
+                reportUuid,
+                new AdminAssignReportRequest().assigned(true));
+
+        ArgumentCaptor<ReportHistoryEntryEntity> captor = ArgumentCaptor.forClass(ReportHistoryEntryEntity.class);
+
+        verify(reportHistoryEntryRepository).save(captor.capture());
+
+        ReportHistoryEntryEntity historyEntry = captor.getValue();
+        assertEquals(com.barterplatform.domain.moderation.report.enums.ReportHistoryEventType.ASSIGNED, historyEntry.getEventType());
+        assertNull(historyEntry.getPreviousAssignedModeratorUserId());
+        assertEquals(actor.getId(), historyEntry.getNewAssignedModeratorUserId());
+        assertEquals(actor.getId(), report.getAssignedModeratorUserId());
+        assertNotNull(response.getAssignedModerator());
+        assertEquals(actor.getUuid(), response.getAssignedModerator().getUuid());
+    }
+
+    @Test
+    void claimAlreadyAssignedToSameUserIsIdempotentAndWritesNoNewHistory() {
+        UUID actorUuid = UUID.randomUUID();
+        UUID reportUuid = UUID.randomUUID();
+
+        UserEntity actor = user(10L, actorUuid, "moderator");
+        UserEntity reporter = user(20L, UUID.randomUUID(), "reporter");
+        ReportEntity report = report(reportUuid, reporter.getId(), ReportTargetType.ITEM, ReportReasonCode.PROHIBITED_ITEM);
+        report.setAssignedModeratorUserId(actor.getId());
+
+        when(userRepository.findByUuid(actorUuid)).thenReturn(Optional.of(actor));
+        when(reportRepository.findByUuid(reportUuid)).thenReturn(Optional.of(report));
+        when(userRepository.findAllById(anyIterable())).thenReturn(List.of(reporter, actor));
+        when(reportTargetResolver.resolveSummary(ReportTargetType.ITEM, report.getTargetUuid()))
+                .thenReturn(new ReportTargetResolver.TargetSummary("Unsafe item", "Listing", "Preview"));
+
+        ReportDetailResponse response = service.updateReportAssignment(
+                actorUuid,
+                false,
+                reportUuid,
+                new AdminAssignReportRequest().assigned(true));
+
+        verify(reportRepository, never()).save(any(ReportEntity.class));
+        verify(reportHistoryEntryRepository, never()).save(any(ReportHistoryEntryEntity.class));
+        assertNotNull(response.getAssignedModerator());
+        assertEquals(actor.getUuid(), response.getAssignedModerator().getUuid());
+    }
+
+    @Test
+    void claimReportAssignedToAnotherUserFails() {
+        UUID actorUuid = UUID.randomUUID();
+        UUID reportUuid = UUID.randomUUID();
+
+        UserEntity actor = user(10L, actorUuid, "moderator-two");
+        ReportEntity report = report(reportUuid, 20L, ReportTargetType.ITEM, ReportReasonCode.PROHIBITED_ITEM);
+        report.setAssignedModeratorUserId(99L);
+
+        when(userRepository.findByUuid(actorUuid)).thenReturn(Optional.of(actor));
+        when(reportRepository.findByUuid(reportUuid)).thenReturn(Optional.of(report));
+
+        ApiException exception = assertThrows(
+                ApiException.class,
+                () -> service.updateReportAssignment(
+                        actorUuid,
+                        false,
+                        reportUuid,
+                        new AdminAssignReportRequest().assigned(true)));
+
+        assertEquals(409, exception.getStatus().value());
+        verify(reportRepository, never()).save(any(ReportEntity.class));
+        verify(reportHistoryEntryRepository, never()).save(any(ReportHistoryEntryEntity.class));
+    }
+
+    @Test
+    void releaseOwnAssignmentWritesUnassignedHistoryEntry() {
+        UUID actorUuid = UUID.randomUUID();
+        UUID reportUuid = UUID.randomUUID();
+
+        UserEntity actor = user(10L, actorUuid, "moderator");
+        UserEntity reporter = user(20L, UUID.randomUUID(), "reporter");
+        ReportEntity report = report(reportUuid, reporter.getId(), ReportTargetType.ITEM, ReportReasonCode.PROHIBITED_ITEM);
+        report.setAssignedModeratorUserId(actor.getId());
+
+        when(userRepository.findByUuid(actorUuid)).thenReturn(Optional.of(actor));
+        when(reportRepository.findByUuid(reportUuid)).thenReturn(Optional.of(report));
+        when(reportRepository.save(any(ReportEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.findAllById(anyIterable())).thenReturn(List.of(reporter));
+        when(reportTargetResolver.resolveSummary(ReportTargetType.ITEM, report.getTargetUuid()))
+                .thenReturn(new ReportTargetResolver.TargetSummary("Unsafe item", "Listing", "Preview"));
+
+        ReportDetailResponse response = service.updateReportAssignment(
+                actorUuid,
+                false,
+                reportUuid,
+                new AdminAssignReportRequest().assigned(false));
+
+        ArgumentCaptor<ReportHistoryEntryEntity> captor = ArgumentCaptor.forClass(ReportHistoryEntryEntity.class);
+
+        verify(reportHistoryEntryRepository).save(captor.capture());
+
+        ReportHistoryEntryEntity historyEntry = captor.getValue();
+        assertEquals(com.barterplatform.domain.moderation.report.enums.ReportHistoryEventType.UNASSIGNED, historyEntry.getEventType());
+        assertEquals(actor.getId(), historyEntry.getPreviousAssignedModeratorUserId());
+        assertNull(historyEntry.getNewAssignedModeratorUserId());
+        assertNull(report.getAssignedModeratorUserId());
+        assertNull(response.getAssignedModerator());
+    }
+
+    @Test
+    void releaseAlreadyUnassignedIsIdempotentAndWritesNoNewHistory() {
+        UUID actorUuid = UUID.randomUUID();
+        UUID reportUuid = UUID.randomUUID();
+
+        UserEntity actor = user(10L, actorUuid, "moderator");
+        UserEntity reporter = user(20L, UUID.randomUUID(), "reporter");
+        ReportEntity report = report(reportUuid, reporter.getId(), ReportTargetType.ITEM, ReportReasonCode.PROHIBITED_ITEM);
+
+        when(userRepository.findByUuid(actorUuid)).thenReturn(Optional.of(actor));
+        when(reportRepository.findByUuid(reportUuid)).thenReturn(Optional.of(report));
+        when(userRepository.findAllById(anyIterable())).thenReturn(List.of(reporter));
+        when(reportTargetResolver.resolveSummary(ReportTargetType.ITEM, report.getTargetUuid()))
+                .thenReturn(new ReportTargetResolver.TargetSummary("Unsafe item", "Listing", "Preview"));
+
+        ReportDetailResponse response = service.updateReportAssignment(
+                actorUuid,
+                false,
+                reportUuid,
+                new AdminAssignReportRequest().assigned(false));
+
+        verify(reportRepository, never()).save(any(ReportEntity.class));
+        verify(reportHistoryEntryRepository, never()).save(any(ReportHistoryEntryEntity.class));
+        assertNull(response.getAssignedModerator());
+    }
+
+    @Test
+    void assignmentChangesRejectedForResolvedAndDismissedReports() {
+        UUID actorUuid = UUID.randomUUID();
+        UserEntity actor = user(10L, actorUuid, "moderator");
+
+        when(userRepository.findByUuid(actorUuid)).thenReturn(Optional.of(actor));
+
+        for (com.barterplatform.domain.moderation.report.enums.ReportStatus status : List.of(
+                com.barterplatform.domain.moderation.report.enums.ReportStatus.RESOLVED,
+                com.barterplatform.domain.moderation.report.enums.ReportStatus.DISMISSED)) {
+            UUID reportUuid = UUID.randomUUID();
+            ReportEntity report = report(reportUuid, 20L, ReportTargetType.USER, ReportReasonCode.HARASSMENT);
+            report.setStatus(status);
+
+            when(reportRepository.findByUuid(reportUuid)).thenReturn(Optional.of(report));
+
+            ApiException exception = assertThrows(
+                    ApiException.class,
+                    () -> service.updateReportAssignment(
+                            actorUuid,
+                            false,
+                            reportUuid,
+                            new AdminAssignReportRequest().assigned(true)));
+
+            assertEquals(409, exception.getStatus().value());
+        }
+
+        verify(reportRepository, never()).save(any(ReportEntity.class));
+        verify(reportHistoryEntryRepository, never()).save(any(ReportHistoryEntryEntity.class));
     }
 
     @Test

@@ -40,6 +40,13 @@
     "resolved": "Resolved",
     "dismissed": "Dismissed"
   },
+  "historyEvents": {
+    "reportCreated": "Report created",
+    "assigned": "Assigned",
+    "unassigned": "Unassigned",
+    "statusChanged": "Status changed",
+    "resolutionNoteChanged": "Resolution note changed"
+  },
   "details": "Report details",
   "preview": "Target preview",
   "assignedModerator": "Assigned moderator",

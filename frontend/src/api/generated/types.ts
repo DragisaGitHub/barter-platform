@@ -104,11 +104,13 @@ export type ListingModerationSourceType = components["schemas"]["ListingModerati
 export type ReportReasonCode = components["schemas"]["ReportReasonCode"];
 export type ReportStatus = components["schemas"]["ReportStatus"];
 export type ReportTargetType = components["schemas"]["ReportTargetType"];
+export type ReportHistoryEventType = components["schemas"]["ReportHistoryEventType"];
 
 // ─── Reporting Response DTOs ────────────────────────────────────────────────
 
 export type ReportUserSummaryResponse = components["schemas"]["ReportUserSummaryResponse"];
 export type ReportTargetSummaryResponse = components["schemas"]["ReportTargetSummaryResponse"];
+export type ReportHistoryEntryResponse = components["schemas"]["ReportHistoryEntryResponse"];
 export type ReportSummaryResponse = components["schemas"]["ReportSummaryResponse"];
 export type ReportDetailResponse = components["schemas"]["ReportDetailResponse"];
 export type ReportPagedResponse = components["schemas"]["ReportPagedResponse"];
@@ -128,8 +130,8 @@ export type AdminOperationsDeploymentResponse = components["schemas"]["AdminOper
 // ─── Reporting Request DTOs ─────────────────────────────────────────────────
 
 export type CreateReportRequest = components["schemas"]["CreateReportRequest"];
-export type AdminAssignReportRequest = components["schemas"]["AdminAssignReportRequest"];
 export type AdminUpdateReportRequest = components["schemas"]["AdminUpdateReportRequest"];
+export type AdminAssignReportRequest = components["schemas"]["AdminAssignReportRequest"];
 
 // ─── Trade Offer Enums ──────────────────────────────────────────────────────
 
