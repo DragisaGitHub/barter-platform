@@ -37,6 +37,10 @@ properties:
     nullable: true
   targetSummary:
     $ref: '../../../openapi.yaml#/components/schemas/ReportTargetSummaryResponse'
+  history:
+    type: array
+    items:
+      $ref: './ReportHistoryEntryResponse.yaml'
   createdAt:
     type: string
     format: date-time

@@ -1,9 +1,9 @@
 package com.barterplatform.application.moderation.service.impl;
 
-import com.barterplatform.domain.moderation.report.ReportEntity;
-import com.barterplatform.domain.moderation.report.ReportReasonCode;
-import com.barterplatform.domain.moderation.report.ReportStatus;
-import com.barterplatform.domain.moderation.report.ReportTargetType;
+import com.barterplatform.domain.moderation.report.entity.ReportEntity;
+import com.barterplatform.domain.moderation.report.enums.ReportReasonCode;
+import com.barterplatform.domain.moderation.report.enums.ReportStatus;
+import com.barterplatform.domain.moderation.report.enums.ReportTargetType;
 import org.springframework.data.jpa.domain.Specification;
 
 final class ReportSpecifications {

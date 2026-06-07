@@ -1,0 +1,27 @@
+type: object
+required:
+  - uuid
+  - eventType
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  eventType:
+    $ref: './ReportHistoryEventType.yaml'
+  actor:
+    $ref: './ReportUserSummaryResponse.yaml'
+  previousStatus:
+    $ref: './ReportStatus.yaml'
+  newStatus:
+    $ref: './ReportStatus.yaml'
+  previousAssignedModerator:
+    $ref: './ReportUserSummaryResponse.yaml'
+  newAssignedModerator:
+    $ref: './ReportUserSummaryResponse.yaml'
+  note:
+    type: string
+    maxLength: 2000
+  createdAt:
+    type: string
+    format: date-time

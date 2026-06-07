@@ -1,4 +1,4 @@
-package com.barterplatform.domain.moderation.report;
+package com.barterplatform.domain.moderation.report.enums;
 
 public enum ReportStatus {
     OPEN,

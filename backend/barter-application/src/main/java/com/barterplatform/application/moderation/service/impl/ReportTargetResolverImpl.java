@@ -7,7 +7,7 @@ import com.barterplatform.domain.catalog.entity.ItemEntity;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.identity.enums.UserStatus;
-import com.barterplatform.domain.moderation.report.ReportTargetType;
+import com.barterplatform.domain.moderation.report.enums.ReportTargetType;
 import com.barterplatform.domain.reputation.entity.TradeReviewEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferMessageEntity;

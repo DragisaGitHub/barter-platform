@@ -9,10 +9,16 @@ import com.barterplatform.application.moderation.service.ReportTargetResolver;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.identity.entity.UserEntity;
-import com.barterplatform.domain.moderation.report.ReportEntity;
-import com.barterplatform.domain.moderation.report.ReportStatus;
+import com.barterplatform.domain.moderation.report.entity.ReportEntity;
+import com.barterplatform.domain.moderation.report.entity.ReportHistoryEntryEntity;
+import com.barterplatform.domain.moderation.report.enums.ReportStatus;
+import com.barterplatform.domain.moderation.report.enums.ReportReasonCode;
+import com.barterplatform.domain.moderation.report.enums.ReportTargetType;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
+import com.barterplatform.infrastructure.moderation.repository.ReportHistoryEntryRepository;
 import com.barterplatform.infrastructure.moderation.repository.ReportRepository;
+import com.barterplatform.domain.moderation.report.enums.ReportHistoryEventType;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -24,6 +30,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+@RequiredArgsConstructor
 @Service
 @Transactional
 public class ReportServiceImpl implements ReportService {
@@ -36,31 +43,17 @@ public class ReportServiceImpl implements ReportService {
             ReportStatus.IN_REVIEW);
 
     private final ReportRepository reportRepository;
+    private final ReportHistoryEntryRepository reportHistoryEntryRepository;
     private final UserRepository userRepository;
     private final ReportTargetResolver reportTargetResolver;
     private final ReportMapper reportMapper;
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
 
-    public ReportServiceImpl(
-            ReportRepository reportRepository,
-            UserRepository userRepository,
-            ReportTargetResolver reportTargetResolver,
-            ReportMapper reportMapper,
-            PageRequestFactory pageRequestFactory,
-            PageResponseMapper pageResponseMapper) {
-        this.reportRepository = reportRepository;
-        this.userRepository = userRepository;
-        this.reportTargetResolver = reportTargetResolver;
-        this.reportMapper = reportMapper;
-        this.pageRequestFactory = pageRequestFactory;
-        this.pageResponseMapper = pageResponseMapper;
-    }
-
     @Override
     public MessageResponse createReport(UUID reporterUserUuid, CreateReportRequest request) {
         UserEntity reporter = resolveUser(reporterUserUuid);
-        com.barterplatform.domain.moderation.report.ReportTargetType targetType = reportMapper.map(request.getTargetType());
+        ReportTargetType targetType = reportMapper.map(request.getTargetType());
         reportTargetResolver.validateForCreate(targetType, request.getTargetUuid(), reporter);
 
         if (reportRepository.existsByReporterUserIdAndTargetTypeAndTargetUuidAndStatusIn(
@@ -78,7 +71,8 @@ public class ReportServiceImpl implements ReportService {
         report.setReasonCode(reportMapper.map(request.getReasonCode()));
         report.setDetails(normalize(request.getDetails()));
         report.setStatus(ReportStatus.OPEN);
-        reportRepository.save(report);
+        ReportEntity saved = reportRepository.save(report);
+        writeReportCreatedHistory(saved, reporter);
 
         return new MessageResponse().message("Report submitted successfully.");
     }
@@ -134,11 +128,16 @@ public class ReportServiceImpl implements ReportService {
     public ReportDetailResponse getReport(UUID reportUuid) {
         ReportEntity report = resolveReport(reportUuid);
         Map<Long, UserEntity> usersById = loadUsersById(List.of(report));
+        List<ReportHistoryEntryEntity> historyEntries =
+                reportHistoryEntryRepository.findByReportIdOrderByCreatedAtDescIdDesc(report.getId());
+        Map<Long, UserEntity> historyUsersById = loadHistoryUsersById(historyEntries);
         return reportMapper.toDetailResponse(
                 report,
                 resolveRequiredUser(usersById, report.getReporterUserId()),
                 resolveOptionalUser(usersById, report.getAssignedModeratorUserId()),
-                reportTargetResolver.resolveSummary(report.getTargetType(), report.getTargetUuid()));
+                reportTargetResolver.resolveSummary(report.getTargetType(), report.getTargetUuid()),
+                historyEntries,
+                historyUsersById);
     }
 
     @Override
@@ -152,6 +151,7 @@ public class ReportServiceImpl implements ReportService {
         ReportStatus nextStatus = reportMapper.map(request.getStatus());
         ReportStatus currentStatus = report.getStatus();
         String resolutionNote = normalize(request.getResolutionNote());
+        String currentResolutionNote = normalize(report.getResolutionNote());
 
         validateTransition(currentStatus, nextStatus);
 
@@ -171,18 +171,63 @@ public class ReportServiceImpl implements ReportService {
         }
 
         ReportEntity saved = reportRepository.save(report);
+        if (currentStatus != nextStatus) {
+            writeStatusChangedHistory(saved, actor, currentStatus, nextStatus);
+        }
+        if (!Objects.equals(currentResolutionNote, saved.getResolutionNote())) {
+            writeResolutionNoteChangedHistory(saved, actor, saved.getResolutionNote());
+        }
         Map<Long, UserEntity> usersById = loadUsersById(List.of(saved));
         return reportMapper.toDetailResponse(
                 saved,
                 resolveRequiredUser(usersById, saved.getReporterUserId()),
                 resolveOptionalUser(usersById, saved.getAssignedModeratorUserId()),
-                reportTargetResolver.resolveSummary(saved.getTargetType(), saved.getTargetUuid()));
+                reportTargetResolver.resolveSummary(saved.getTargetType(), saved.getTargetUuid()),
+                List.of(),
+                Map.of());
+    }
+
+    private void writeStatusChangedHistory(
+            ReportEntity report,
+            UserEntity actor,
+            ReportStatus previousStatus,
+            ReportStatus newStatus) {
+        ReportHistoryEntryEntity historyEntry = new ReportHistoryEntryEntity();
+        historyEntry.setReportId(report.getId());
+        historyEntry.setActorUserId(actor.getId());
+        historyEntry.setEventType(ReportHistoryEventType.STATUS_CHANGED);
+        historyEntry.setPreviousStatus(previousStatus);
+        historyEntry.setNewStatus(newStatus);
+
+        reportHistoryEntryRepository.save(historyEntry);
+    }
+
+    private void writeResolutionNoteChangedHistory(
+            ReportEntity report,
+            UserEntity actor,
+            String note) {
+        ReportHistoryEntryEntity historyEntry = new ReportHistoryEntryEntity();
+        historyEntry.setReportId(report.getId());
+        historyEntry.setActorUserId(actor.getId());
+        historyEntry.setEventType(ReportHistoryEventType.RESOLUTION_NOTE_CHANGED);
+        historyEntry.setNote(note);
+
+        reportHistoryEntryRepository.save(historyEntry);
+    }
+
+    private void writeReportCreatedHistory(ReportEntity report, UserEntity reporter) {
+        ReportHistoryEntryEntity historyEntry = new ReportHistoryEntryEntity();
+        historyEntry.setReportId(report.getId());
+        historyEntry.setActorUserId(reporter.getId());
+        historyEntry.setEventType(ReportHistoryEventType.REPORT_CREATED);
+
+        reportHistoryEntryRepository.save(historyEntry);
     }
 
     private Specification<ReportEntity> buildSpecification(
             ReportStatus status,
-            com.barterplatform.domain.moderation.report.ReportTargetType targetType,
-            com.barterplatform.domain.moderation.report.ReportReasonCode reasonCode) {
+            ReportTargetType targetType,
+            ReportReasonCode reasonCode) {
         List<Specification<ReportEntity>> specifications = new ArrayList<>();
         if (status != null) {
             specifications.add(ReportSpecifications.statusEquals(status));
@@ -206,6 +251,21 @@ public class ReportServiceImpl implements ReportService {
                 ? Map.of()
                 : userRepository.findAllById(userIds).stream()
                         .collect(Collectors.toMap(UserEntity::getId, Function.identity()));
+    }
+
+    private Map<Long, UserEntity> loadHistoryUsersById(List<ReportHistoryEntryEntity> historyEntries) {
+        Set<Long> userIds = historyEntries.stream()
+                .flatMap(entry -> java.util.stream.Stream.of(
+                        entry.getActorUserId(),
+                        entry.getPreviousAssignedModeratorUserId(),
+                        entry.getNewAssignedModeratorUserId()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        return userIds.isEmpty()
+                ? Map.of()
+                : userRepository.findAllById(userIds).stream()
+                .collect(Collectors.toMap(UserEntity::getId, Function.identity()));
     }
 
     private void validateTransition(ReportStatus currentStatus, ReportStatus nextStatus) {

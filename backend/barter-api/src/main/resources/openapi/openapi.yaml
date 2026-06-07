@@ -447,6 +447,10 @@ components:
       $ref: './components/schemas/report/CreateReportRequest.yaml'
     AdminUpdateReportRequest:
       $ref: './components/schemas/report/AdminUpdateReportRequest.yaml'
+    ReportHistoryEventType:
+      $ref: './components/schemas/report/ReportHistoryEventType.yaml'
+    ReportHistoryEntryResponse:
+      $ref: './components/schemas/report/ReportHistoryEntryResponse.yaml'
     AdminOperationsOverviewResponse:
       $ref: './components/schemas/admin/AdminOperationsOverviewResponse.yaml'
     AdminOperationsSystemResponse:

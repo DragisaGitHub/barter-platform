@@ -6,7 +6,7 @@ import static org.mockito.Mockito.when;
 
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.enums.UserStatus;
-import com.barterplatform.domain.moderation.report.ReportStatus;
+import com.barterplatform.domain.moderation.report.enums.ReportStatus;
 import com.barterplatform.domain.reputation.enums.TradeReviewRating;
 import com.barterplatform.domain.trade.enums.TradeOfferStatus;
 import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
