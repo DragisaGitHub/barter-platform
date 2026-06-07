@@ -141,13 +141,11 @@ export function MarketplacePage() {
 
 
   const filteredItems = useMemo(() => {
-    const activeItems = loadedItems.filter((item) => item.status === "ACTIVE");
-
     if (!user) {
-      return activeItems;
+      return loadedItems;
     }
 
-    return activeItems.filter((item) => item.ownerUuid !== user.uuid);
+    return loadedItems.filter((item) => item.ownerUuid !== user.uuid);
   }, [loadedItems, user]);
 
   const favoriteItemUuids = useMemo(() => {

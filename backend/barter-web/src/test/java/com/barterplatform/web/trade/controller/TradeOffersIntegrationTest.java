@@ -196,11 +196,10 @@ class TradeOffersIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("ARCHIVED"));
 
-        // ── 10. Archived items disappear from public ACTIVE search ─
+        // ── 10. Archived items disappear from public search ───────
         mockMvc.perform(apiGet("/catalog/items")
                         .queryParam("page", "0")
-                        .queryParam("size", "20")
-                        .queryParam("status", "ACTIVE"))
+                        .queryParam("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
 

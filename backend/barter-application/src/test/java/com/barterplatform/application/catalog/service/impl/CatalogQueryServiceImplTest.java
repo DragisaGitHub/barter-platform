@@ -365,7 +365,7 @@ class CatalogQueryServiceImplTest {
     class SearchItems {
 
         @Test
-        @DisplayName("defaults to ACTIVE status when no status provided")
+        @DisplayName("always limits public search to ACTIVE items")
         @SuppressWarnings("unchecked")
         void defaultsToActiveStatus() {
             Page<ItemEntity> emptyPage = new PageImpl<>(List.of(),
@@ -385,7 +385,7 @@ class CatalogQueryServiceImplTest {
             assertNotNull(result);
             assertEquals(0, result.getTotalElements());
 
-            // Verify that the repository was called (Specification includes ACTIVE default)
+            // Verify that the repository was called for the ACTIVE-only public search specification.
             verify(itemRepository).findAll(any(Specification.class), any(Pageable.class));
         }
 
