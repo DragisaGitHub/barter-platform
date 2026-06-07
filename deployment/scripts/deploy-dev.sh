@@ -189,7 +189,7 @@ fi
 
 echo
 echo "Starting Barter Platform DEV stack..."
-run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --remove-orphans
+run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --force-recreate --remove-orphans
 
 echo
 wait_for_service_health backend "${HEALTH_TIMEOUT_SECONDS}"
