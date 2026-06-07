@@ -179,9 +179,9 @@ jobs:
 
           git reset --hard "$DEPLOY_SHA"
           chmod +x deployment/scripts/*.sh
-          ./deployment/scripts/backup-db.sh --force
+          bash ./deployment/scripts/backup-db.sh --force < /dev/null
           echo "Backup completed successfully; continuing with DEV deployment."
-          ./deployment/scripts/deploy-dev.sh
+          bash ./deployment/scripts/deploy-dev.sh < /dev/null
           EOF
 
       - name: Log completion
