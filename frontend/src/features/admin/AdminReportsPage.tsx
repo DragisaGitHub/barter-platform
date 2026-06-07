@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock3, ExternalLink, Flag, SearchCheck, ShieldAlert } from "lucide-react";
+import { ArrowRight, Clock3, ExternalLink, Flag, SearchCheck, ShieldAlert, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/auth/AuthContext";
 import type {
   AdminListingDetailResponse,
+  ReportHistoryEntryResponse,
+  ReportHistoryEventType,
   ReportReasonCode,
   ReportStatus,
   ReportTargetType,
@@ -90,6 +92,50 @@ function reportAgeLabel(createdAt?: string | null) {
   return `${ageHours}h`;
 }
 
+function reportHistoryEventTranslationKey(eventType: ReportHistoryEventType) {
+  switch (eventType) {
+    case "REPORT_CREATED":
+      return "historyEvents.reportCreated";
+    case "ASSIGNED":
+      return "historyEvents.assigned";
+    case "UNASSIGNED":
+      return "historyEvents.unassigned";
+    case "STATUS_CHANGED":
+      return "historyEvents.statusChanged";
+    case "RESOLUTION_NOTE_CHANGED":
+      return "historyEvents.resolutionNoteChanged";
+  }
+}
+
+function reportHistoryEventBadgeVariant(
+  eventType: ReportHistoryEventType,
+): "default" | "primary" | "success" | "warning" | "danger" | "secondary" {
+  switch (eventType) {
+    case "REPORT_CREATED":
+      return "secondary";
+    case "ASSIGNED":
+      return "success";
+    case "UNASSIGNED":
+      return "default";
+    case "STATUS_CHANGED":
+      return "primary";
+    case "RESOLUTION_NOTE_CHANGED":
+      return "warning";
+  }
+}
+
+function sortReportHistoryEntries(entries: ReportHistoryEntryResponse[]) {
+  return [...entries].sort((left, right) => {
+    const timestampDiff = new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime();
+
+    if (timestampDiff !== 0) {
+      return timestampDiff;
+    }
+
+    return right.uuid.localeCompare(left.uuid);
+  });
+}
+
 function isStaleOpenReport(createdAt: string | null | undefined, staleThresholdHours: number, status: ReportStatus) {
   if (!createdAt || status !== "OPEN") {
     return false;
@@ -161,7 +207,7 @@ export function AdminReportsPage() {
 
   const selectedReport = detailQuery.data;
   const selectedReportIsItem = selectedReport?.targetType === "ITEM";
-  const listingQuery = useAdminListing(selectedReportIsItem ? selectedReport.targetUuid : "", !!selectedReportIsItem);
+  const listingQuery = useAdminListing(selectedReportIsItem ? selectedReport.targetUuid : "", selectedReportIsItem);
 
   const data = reportsQuery.data;
   const reports = data?.content ?? [];
@@ -181,6 +227,9 @@ export function AdminReportsPage() {
   const canSaveStatusUpdate =
     !isClosedSelectedReport && hasPendingChanges && (!canEditResolutionNote || normalizedResolutionNote.length > 0);
   const selectedListing = listingQuery.data;
+  const reportHistory: ReportHistoryEntryResponse[] = selectedReport?.history
+    ? sortReportHistoryEntries(selectedReport.history)
+    : [];
   const currentUserUuid = user?.uuid;
   const isAssignedToCurrentUser =
     !!selectedReport?.assignedModerator && !!currentUserUuid && selectedReport.assignedModerator.uuid === currentUserUuid;
@@ -727,6 +776,109 @@ export function AdminReportsPage() {
                     </p>
                   </div>
                 ) : null}
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-950/40">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+                        {t("admin:reportsPage.historyTitle")}
+                      </h3>
+                      <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                        {t("admin:reportsPage.historyDescription")}
+                      </p>
+                    </div>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {t("admin:reportsPage.historyCount", { count: reportHistory.length })}
+                    </span>
+                  </div>
+
+                  {detailQuery.isFetching ? (
+                    <div className="mt-4 flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+                      <Spinner size="sm" />
+                      <span>{t("admin:reportsPage.historyLoading")}</span>
+                    </div>
+                  ) : null}
+
+                  {reportHistory.length === 0 ? (
+                    <div className="mt-5 rounded-xl border border-dashed border-slate-300 px-4 py-5 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+                      {t("admin:reportsPage.historyEmpty")}
+                    </div>
+                  ) : (
+                    <div className="mt-5 space-y-4">
+                      {reportHistory.map((entry, index) => {
+                        const historyNote = normalizeNote(entry.note ?? "");
+                        const hasStatusTransition = !!entry.previousStatus || !!entry.newStatus;
+
+                        return (
+                          <div key={entry.uuid} className="relative pl-6">
+                            {index < reportHistory.length - 1 ? (
+                              <div className="absolute -bottom-5 left-1.75 top-8 w-px bg-slate-200 dark:bg-slate-700" />
+                            ) : null}
+
+                            <div className="absolute left-0 top-1 size-4 rounded-full border-2 border-white bg-indigo-500 dark:border-slate-950" />
+
+                            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/60">
+                              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                                <div className="space-y-3">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <Badge variant={reportHistoryEventBadgeVariant(entry.eventType)}>
+                                      {t(`reporting:${reportHistoryEventTranslationKey(entry.eventType)}`)}
+                                    </Badge>
+                                  </div>
+
+                                  <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                                    <UserRound className="size-4 text-slate-400" />
+                                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                                      {entry.actor?.username ?? t("admin:reportsPage.historyUnknownActor")}
+                                    </span>
+                                  </div>
+
+                                  {hasStatusTransition ? (
+                                    <div>
+                                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                                        {t("admin:reportsPage.historyStatusTransition")}
+                                      </p>
+                                      <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+                                        {entry.previousStatus ? (
+                                          <Badge variant={reportStatusBadgeVariant(entry.previousStatus)}>
+                                            {t(`reporting:${reportStatusTranslationKey(entry.previousStatus)}`)}
+                                          </Badge>
+                                        ) : null}
+                                        {entry.previousStatus && entry.newStatus ? (
+                                          <ArrowRight className="size-3 text-slate-400" />
+                                        ) : null}
+                                        {entry.newStatus ? (
+                                          <Badge variant={reportStatusBadgeVariant(entry.newStatus)}>
+                                            {t(`reporting:${reportStatusTranslationKey(entry.newStatus)}`)}
+                                          </Badge>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  ) : null}
+
+                                  {historyNote ? (
+                                    <div>
+                                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 dark:text-slate-400">
+                                        {t("reporting:resolutionNote")}
+                                      </p>
+                                      <p className="mt-1 whitespace-pre-line text-sm leading-6 text-slate-700 dark:text-slate-200">
+                                        {historyNote}
+                                      </p>
+                                    </div>
+                                  ) : null}
+                                </div>
+
+                                <div className="text-xs text-slate-500 dark:text-slate-400">
+                                  {formatDateTime(entry.createdAt)}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="space-y-6">

@@ -1,6 +1,9 @@
-package com.barterplatform.domain.moderation.report;
+package com.barterplatform.domain.moderation.report.entity;
 
 import com.barterplatform.common.persistence.AuditableEntity;
+import com.barterplatform.domain.moderation.report.enums.ReportReasonCode;
+import com.barterplatform.domain.moderation.report.enums.ReportStatus;
+import com.barterplatform.domain.moderation.report.enums.ReportTargetType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;

@@ -132,3 +132,43 @@ reportUpdate:
       '409':
         $ref: '../components/responses/Conflict.yaml'
 
+reportAssignmentUpdate:
+  patch:
+    tags:
+      - AdminReports
+    operationId: updateAdminReportAssignment
+    summary: Assign or release report ownership during moderation review
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: reportUuid
+        in: path
+        required: true
+        description: Public report UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../components/schemas/report/AdminAssignReportRequest.yaml'
+    responses:
+      '200':
+        description: Report assignment updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ReportDetailResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+

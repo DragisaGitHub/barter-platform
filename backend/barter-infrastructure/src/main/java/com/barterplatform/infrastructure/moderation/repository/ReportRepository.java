@@ -1,8 +1,8 @@
 package com.barterplatform.infrastructure.moderation.repository;
 
-import com.barterplatform.domain.moderation.report.ReportEntity;
-import com.barterplatform.domain.moderation.report.ReportStatus;
-import com.barterplatform.domain.moderation.report.ReportTargetType;
+import com.barterplatform.domain.moderation.report.entity.ReportEntity;
+import com.barterplatform.domain.moderation.report.enums.ReportStatus;
+import com.barterplatform.domain.moderation.report.enums.ReportTargetType;
 import java.time.OffsetDateTime;
 import java.util.Collection;
 import java.util.Optional;

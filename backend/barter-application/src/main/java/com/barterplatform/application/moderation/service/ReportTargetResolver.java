@@ -1,7 +1,7 @@
 package com.barterplatform.application.moderation.service;
 
 import com.barterplatform.domain.identity.entity.UserEntity;
-import com.barterplatform.domain.moderation.report.ReportTargetType;
+import com.barterplatform.domain.moderation.report.enums.ReportTargetType;
 import java.util.UUID;
 
 public interface ReportTargetResolver {

@@ -1,6 +1,7 @@
 package com.barterplatform.web.admin.controller;
 
 import com.barterplatform.api.controller.AdminReportsApi;
+import com.barterplatform.api.model.AdminAssignReportRequest;
 import com.barterplatform.api.model.AdminReportQueueSummaryResponse;
 import com.barterplatform.api.model.AdminUpdateReportRequest;
 import com.barterplatform.api.model.ReportDetailResponse;
@@ -55,12 +56,30 @@ public class AdminReportsController implements AdminReportsApi {
         return ResponseEntity.ok(reportService.updateReport(currentUserUuid(), reportUuid, adminUpdateReportRequest));
     }
 
+    public ResponseEntity<ReportDetailResponse> updateAdminReportAssignment(
+            UUID reportUuid,
+            AdminAssignReportRequest adminAssignReportRequest) {
+        return ResponseEntity.ok(reportService.updateReportAssignment(
+                currentUserUuid(),
+                currentUserIsAdmin(),
+                reportUuid,
+                adminAssignReportRequest));
+    }
+
     private UUID currentUserUuid() {
         AuthenticatedUser principal = (AuthenticatedUser) Objects.requireNonNull(Objects.requireNonNull(SecurityContextHolder
                         .getContext()
                         .getAuthentication())
                 .getPrincipal());
         return principal.getUserUuid();
+    }
+
+    private boolean currentUserIsAdmin() {
+        AuthenticatedUser principal = (AuthenticatedUser) Objects.requireNonNull(Objects.requireNonNull(SecurityContextHolder
+                        .getContext()
+                        .getAuthentication())
+                .getPrincipal());
+        return principal.getRoles().contains("ADMIN");
     }
 }
 

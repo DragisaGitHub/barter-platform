@@ -123,6 +123,34 @@ class AdminReportsControllerMvcTest {
                 .resolutionNote("Handled by moderator.")));
     }
 
+    @Test
+    void shouldUpdateAdminReportAssignment() throws Exception {
+        UUID reportUuid = UUID.randomUUID();
+        when(reportService.updateReportAssignment(
+                eq(MODERATOR_UUID),
+                eq(false),
+                eq(reportUuid),
+                eq(new com.barterplatform.api.model.AdminAssignReportRequest().assigned(true))))
+                .thenReturn(reportDetail(reportUuid));
+
+        mockMvc.perform(apiPatch("/admin/reports/" + reportUuid + "/assignment")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "assigned": true
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.uuid").value(reportUuid.toString()))
+                .andExpect(jsonPath("$.status").value("OPEN"));
+
+        verify(reportService).updateReportAssignment(
+                eq(MODERATOR_UUID),
+                eq(false),
+                eq(reportUuid),
+                eq(new com.barterplatform.api.model.AdminAssignReportRequest().assigned(true)));
+    }
+
     private ReportDetailResponse reportDetail(UUID reportUuid) {
         return new ReportDetailResponse()
                 .uuid(reportUuid)

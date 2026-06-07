@@ -40,6 +40,13 @@
     "resolved": "Rešeno",
     "dismissed": "Odbačeno"
   },
+  "historyEvents": {
+    "reportCreated": "Prijava kreirana",
+    "assigned": "Dodeljeno",
+    "unassigned": "Dodela uklonjena",
+    "statusChanged": "Status promenjen",
+    "resolutionNoteChanged": "Napomena o rešenju promenjena"
+  },
   "details": "Detalji prijave",
   "preview": "Pregled cilja",
   "assignedModerator": "Dodeljeni moderator",
