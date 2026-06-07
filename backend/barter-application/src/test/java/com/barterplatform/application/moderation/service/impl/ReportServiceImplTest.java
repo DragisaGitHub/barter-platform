@@ -154,6 +154,59 @@ class ReportServiceImplTest {
     }
 
     @Test
+    void updateReportWritesResolutionNoteChangedHistoryEntry() {
+        UUID actorUuid = UUID.randomUUID();
+        UUID reportUuid = UUID.randomUUID();
+
+        UserEntity actor = user(10L, actorUuid, "moderator");
+        UserEntity reporter = user(20L, UUID.randomUUID(), "reporter");
+
+        ReportEntity report = report(
+                reportUuid,
+                reporter.getId(),
+                ReportTargetType.ITEM,
+                ReportReasonCode.PROHIBITED_ITEM);
+
+        report.setStatus(com.barterplatform.domain.moderation.report.enums.ReportStatus.IN_REVIEW);
+
+        when(userRepository.findByUuid(actorUuid)).thenReturn(Optional.of(actor));
+        when(reportRepository.findByUuid(reportUuid)).thenReturn(Optional.of(report));
+        when(reportRepository.save(any(ReportEntity.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.findAllById(anyIterable()))
+                .thenReturn(List.of(reporter));
+        when(reportTargetResolver.resolveSummary(
+                ReportTargetType.ITEM,
+                report.getTargetUuid()))
+                .thenReturn(new ReportTargetResolver.TargetSummary(
+                        "Unsafe item",
+                        "Listing",
+                        "Preview"));
+
+        service.updateReport(
+                actorUuid,
+                reportUuid,
+                new AdminUpdateReportRequest()
+                        .status(ReportStatus.RESOLVED)
+                        .resolutionNote("Resolved with moderator note."));
+
+        ArgumentCaptor<ReportHistoryEntryEntity> captor =
+                ArgumentCaptor.forClass(ReportHistoryEntryEntity.class);
+
+        verify(reportHistoryEntryRepository, org.mockito.Mockito.times(2)).save(captor.capture());
+
+        ReportHistoryEntryEntity noteHistoryEntry = captor.getAllValues().stream()
+                .filter(entry -> entry.getEventType()
+                        == com.barterplatform.domain.moderation.report.enums.ReportHistoryEventType.RESOLUTION_NOTE_CHANGED)
+                .findFirst()
+                .orElseThrow();
+
+        assertEquals("Resolved with moderator note.", noteHistoryEntry.getNote());
+        assertEquals(actor.getId(), noteHistoryEntry.getActorUserId());
+        assertEquals(report.getId(), noteHistoryEntry.getReportId());
+    }
+
+    @Test
     void updateReportDoesNotReassignActingModeratorWhenResolvingReport() {
         UUID actorUuid = UUID.randomUUID();
         UUID reportUuid = UUID.randomUUID();

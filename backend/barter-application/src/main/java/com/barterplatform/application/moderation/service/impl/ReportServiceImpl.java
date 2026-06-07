@@ -127,17 +127,7 @@ public class ReportServiceImpl implements ReportService {
     @Transactional(readOnly = true)
     public ReportDetailResponse getReport(UUID reportUuid) {
         ReportEntity report = resolveReport(reportUuid);
-        Map<Long, UserEntity> usersById = loadUsersById(List.of(report));
-        List<ReportHistoryEntryEntity> historyEntries =
-                reportHistoryEntryRepository.findByReportIdOrderByCreatedAtDescIdDesc(report.getId());
-        Map<Long, UserEntity> historyUsersById = loadHistoryUsersById(historyEntries);
-        return reportMapper.toDetailResponse(
-                report,
-                resolveRequiredUser(usersById, report.getReporterUserId()),
-                resolveOptionalUser(usersById, report.getAssignedModeratorUserId()),
-                reportTargetResolver.resolveSummary(report.getTargetType(), report.getTargetUuid()),
-                historyEntries,
-                historyUsersById);
+        return toReportDetailResponse(report);
     }
 
     @Override
@@ -177,14 +167,22 @@ public class ReportServiceImpl implements ReportService {
         if (!Objects.equals(currentResolutionNote, saved.getResolutionNote())) {
             writeResolutionNoteChangedHistory(saved, actor, saved.getResolutionNote());
         }
-        Map<Long, UserEntity> usersById = loadUsersById(List.of(saved));
+        return toReportDetailResponse(saved);
+    }
+
+    private ReportDetailResponse toReportDetailResponse(ReportEntity report) {
+        Map<Long, UserEntity> usersById = loadUsersById(List.of(report));
+        List<ReportHistoryEntryEntity> historyEntries =
+                reportHistoryEntryRepository.findByReportIdOrderByCreatedAtDescIdDesc(report.getId());
+        Map<Long, UserEntity> historyUsersById = loadHistoryUsersById(historyEntries);
+
         return reportMapper.toDetailResponse(
-                saved,
-                resolveRequiredUser(usersById, saved.getReporterUserId()),
-                resolveOptionalUser(usersById, saved.getAssignedModeratorUserId()),
-                reportTargetResolver.resolveSummary(saved.getTargetType(), saved.getTargetUuid()),
-                List.of(),
-                Map.of());
+                report,
+                resolveRequiredUser(usersById, report.getReporterUserId()),
+                resolveOptionalUser(usersById, report.getAssignedModeratorUserId()),
+                reportTargetResolver.resolveSummary(report.getTargetType(), report.getTargetUuid()),
+                historyEntries,
+                historyUsersById);
     }
 
     private void writeStatusChangedHistory(
