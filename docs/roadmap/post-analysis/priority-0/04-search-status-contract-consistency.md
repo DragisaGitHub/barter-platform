@@ -42,13 +42,13 @@ The public catalog search contract advertises a `status` filter, but the backend
 
 1. **The public OpenAPI contract overstates status support.**
    - `paths/catalog.yaml` exposes a public `status` query parameter using the full `ItemStatus` enum.
-   - The description says “Public search defaults to ACTIVE only”, but the parameter remains publicly available.
+   - The description says, “Public search defaults to ACTIVE only”, but the parameter remains publicly available.
 
 2. **The backend ignores the incoming search status.**
    - `CatalogController.searchItems(...)` accepts `status` and passes it into `CatalogQueryService.searchItems(...)`.
    - `CatalogQueryServiceImpl.searchItems(...)` receives that parameter, but `buildSearchSpecification(...)` hardcodes `ItemStatus.ACTIVE` and never uses the incoming `status` argument.
 
-3. **The frontend generated types allow more than the public marketplace actually supports.**
+3. **The frontend-generated types allow more than the public marketplace actually supports.**
    - `frontend/src/api/generated/types.ts` inherits the full `ItemStatus` enum from OpenAPI.
    - `MarketplacePage.tsx` has no public status selector and still performs its own `ACTIVE` filtering, so frontend behavior and generated contract are already drifting.
 
@@ -64,7 +64,7 @@ The public catalog search contract advertises a `status` filter, but the backend
 
 ## Intentionally deferred
 
-- There is no evidence that public users should browse `DRAFT`, `ARCHIVED`, or `REMOVED` items. Until that product decision changes, the safe direction is likely to narrow the contract rather than broaden public behavior.
+- There is no evidence that public users should browse `DRAFT`, `ARCHIVED`, or `REMOVED` items. Until that product decision change, the safe direction is likely to narrow the contract rather than broaden public behavior.
 
 ## Implementation-ready backlog
 
@@ -78,13 +78,13 @@ The public catalog search contract advertises a `status` filter, but the backend
 
 ### Frontend
 
-4. Align `catalogApi` usage and generated types with the final public contract.
-5. Remove any remaining client-side assumptions that are compensating for a misleading API contract.
+1. Align `catalogApi` usage and generated types with the final public contract.
+2. Remove any remaining client-side assumptions that are compensating for a misleading API contract.
 
 ## Dependencies and follow-on impact
 
 - This is the prerequisite for `priority-1/03-search-and-filters-2-0-completion.md`.
-- It also reduces risk for later frontend test coverage around search/filter URLs.
+- It also reduces the risk for later frontend test coverage around search/filter URLs.
 
 ## Exit criteria
 

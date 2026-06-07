@@ -23,7 +23,6 @@ export interface SearchItemsParams {
   q?: string;
   categoryUuid?: string;
   tagUuids?: string[];
-  status?: ItemStatus;
   condition?: ItemCondition;
   location?: string;
 }

@@ -431,8 +431,7 @@ class ItemImagesIntegrationTest {
         String itemUuid = extractField(result, "uuid");
 
         // No image yet: primaryImageUrl should be null
-        mockMvc.perform(apiGet("/catalog/items")
-                        .queryParam("status", "ACTIVE"))
+        mockMvc.perform(apiGet("/catalog/items"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].primaryImageUrl").doesNotExist());
 
@@ -444,8 +443,7 @@ class ItemImagesIntegrationTest {
                 .andExpect(status().isCreated());
 
         // Now primaryImageUrl should be present
-        mockMvc.perform(apiGet("/catalog/items")
-                        .queryParam("status", "ACTIVE"))
+        mockMvc.perform(apiGet("/catalog/items"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].primaryImageUrl").isNotEmpty());
     }

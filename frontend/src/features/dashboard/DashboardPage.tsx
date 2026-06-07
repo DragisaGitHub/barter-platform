@@ -114,13 +114,12 @@ export function DashboardPage() {
     sort: "createdAt,desc",
   });
 
-  // Recent marketplace items — fetch only ACTIVE items from server, request extra to
+  // Recent marketplace items — public search is ACTIVE-only, so request extra to
   // allow client-side filtering of the current user's own items.
   const { data: marketplaceData, isLoading: marketplaceLoading } = useSearchItems({
     page: 0,
     size: 20,
     sort: "createdAt,desc",
-    status: "ACTIVE",
   });
 
   // Filter marketplace to exclude current user's own items

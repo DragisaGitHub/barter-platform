@@ -281,8 +281,7 @@ class CatalogIntegrationTest {
         // ── 4. Search – item appears in public ACTIVE search ─────
         mockMvc.perform(apiGet("/catalog/items")
                         .queryParam("page", "0")
-                        .queryParam("size", "20")
-                        .queryParam("status", "ACTIVE"))
+                        .queryParam("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
                 .andExpect(jsonPath("$.content[0].uuid").value(itemUuid))
@@ -331,11 +330,10 @@ class CatalogIntegrationTest {
         assertThat(archivedItem.getStatus())
                 .isEqualTo(com.barterplatform.domain.catalog.enums.ItemStatus.ARCHIVED);
 
-        // ── 8. Archived item NOT in public ACTIVE search ─────────
+        // ── 8. Archived item is not visible in public search ─────
         mockMvc.perform(apiGet("/catalog/items")
                         .queryParam("page", "0")
-                        .queryParam("size", "20")
-                        .queryParam("status", "ACTIVE"))
+                        .queryParam("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(0));
 
@@ -419,12 +417,14 @@ class CatalogIntegrationTest {
                 .andExpect(jsonPath("$.content[0].title").value("Archive Widget"))
                 .andExpect(jsonPath("$.content[0].status").value("ARCHIVED"));
 
-        // Public search status=ACTIVE → only active item, never archived
+        // Public search is ACTIVE-only even without a status parameter
         mockMvc.perform(apiGet("/catalog/items")
-                        .queryParam("status", "ACTIVE"))
+                        .queryParam("page", "0")
+                        .queryParam("size", "20"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(1))
-                .andExpect(jsonPath("$.content[0].title").value("Active Widget"));
+                .andExpect(jsonPath("$.content[0].title").value("Active Widget"))
+                .andExpect(jsonPath("$.content[0].status").value("ACTIVE"));
     }
 
     // ══════════════════════════════════════════════════════════════
