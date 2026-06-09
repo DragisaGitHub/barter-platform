@@ -9,6 +9,7 @@ import {
   Search,
   Edit3,
   RefreshCw,
+  X,
   Layers3,
   BadgeCheck,
   FolderArchive,
@@ -184,9 +185,15 @@ export function MyItemsPage() {
 
   const resetFilters = () => {
     setSearchInput("");
+    setDebouncedSearch("");
     setConditionFilter("");
     setCategoryFilter("");
     setParams((prev) => ({ ...prev, page: 0, status: undefined }));
+  };
+
+  const clearSearch = () => {
+    setSearchInput("");
+    setDebouncedSearch("");
   };
 
   const handleArchive = () => {
@@ -342,8 +349,26 @@ export function MyItemsPage() {
                 placeholder={t("catalog:myItems.filters.searchPlaceholder")}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                className="w-full rounded-2xl border border-slate-300 bg-white py-2.5 pl-10 pr-4 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20"
+                onKeyDown={(event) => {
+                  if (event.key === "Escape" && searchInput) {
+                    event.preventDefault();
+                    clearSearch();
+                  }
+                }}
+                className="w-full rounded-2xl border border-slate-300 bg-white py-2.5 pl-10 pr-10 text-sm text-slate-900 placeholder:text-slate-400 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-900/60 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/20"
               />
+
+              {searchInput ? (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                  aria-label={t("common:clearSearch")}
+                  title={t("common:clearSearch")}
+                >
+                  <X className="size-4" />
+                </button>
+              ) : null}
             </div>
 
             <select

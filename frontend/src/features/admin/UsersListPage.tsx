@@ -11,12 +11,12 @@ import { Input } from "../../components/ui/Input";
 import { StatusBadge } from "../../components/ui/StatusBadge";
 import { Skeleton } from "../../components/ui/Skeleton";
 import { EmptyState } from "../../components/ui/EmptyState";
-import { Search, ShieldCheck, Users } from "lucide-react";
+import { Search, ShieldCheck, Users, X } from "lucide-react";
 import { AdminPageShell, AdminSurface, AdminToolbar } from "./components/AdminPageShell";
 import { useTranslation } from "react-i18next";
 
 export function UsersListPage() {
-  const { t } = useTranslation("admin");
+  const { t } = useTranslation(["admin", "common"]);
   const navigate = useNavigate();
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState("");
@@ -51,6 +51,10 @@ export function UsersListPage() {
 
   const handleRowClick = (user: UserSummaryResponse) => {
     navigate(`/admin/users/${user.uuid}`);
+  };
+
+  const clearSearch = () => {
+    setSearch("");
   };
 
   const content = data?.content ?? [];
@@ -144,16 +148,30 @@ export function UsersListPage() {
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape" && search) {
+                  event.preventDefault();
+                  clearSearch();
+                }
+              }}
               placeholder={t("usersPage.searchPlaceholder")}
-              className="pl-9"
+              className="pl-9 pr-10"
               aria-label={t("usersPage.searchAriaLabel")}
             />
+
+            {search ? (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                aria-label={t("common:clearSearch")}
+                title={t("common:clearSearch")}
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
           </div>
         </div>
-
-        <Button type="button" variant="outline" onClick={() => refetch()}>
-          {t("refresh")}
-        </Button>
       </AdminToolbar>
 
       <AdminSurface
