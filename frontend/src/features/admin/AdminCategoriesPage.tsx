@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { AxiosError } from "axios";
-import { Archive, FolderTree, Pencil, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { Archive, FolderTree, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import type { ErrorResponse, AdminCategoryResponse, CreateCategoryRequest, UpdateCategoryRequest } from "@/api/generated/types.ts";
 import { DataTable } from "@/components/data/DataTable";
@@ -244,6 +244,12 @@ export function AdminCategoriesPage() {
     setFormErrors({});
   };
 
+  const clearSearch = () => {
+    setSearchInput("");
+    setQuery("");
+    setPage(0);
+  };
+
   const handleSort = (field: string) => {
     const nextField = field as SortField;
     setPage(0);
@@ -362,10 +368,28 @@ export function AdminCategoriesPage() {
               <Input
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape" && searchInput) {
+                    event.preventDefault();
+                    clearSearch();
+                  }
+                }}
                 placeholder={t("admin:categoriesPage.searchPlaceholder")}
-                className="pl-9"
+                className="pl-9 pr-10"
                 aria-label="Search categories"
               />
+
+              {searchInput ? (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:hover:bg-slate-700 dark:hover:text-slate-200"
+                  aria-label={t("common:clearSearch")}
+                  title={t("common:clearSearch")}
+                >
+                  <X className="size-4" />
+                </button>
+              ) : null}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -400,13 +424,6 @@ export function AdminCategoriesPage() {
                 </select>
               </label>
             </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button type="button" variant="outline" onClick={() => categoriesQuery.refetch()}>
-              <RefreshCw className="size-4" />
-              {t("admin:refresh")}
-            </Button>
           </div>
         </AdminToolbar>
 

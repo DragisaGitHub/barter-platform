@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, LogIn, Search, Sparkles, UserPlus } from "lucide-react";
+import { ArrowLeft, ArrowRight, LogIn, Search, Sparkles, UserPlus, X } from "lucide-react";
 import type { CategoryResponse } from "@/api/generated/types";
 import { routePaths, buildPathWithQuery } from "@/routes/routePaths";
 import { useAuth } from "@/auth/AuthContext";
@@ -46,6 +46,10 @@ export function MarketplaceCategoriesPage() {
   }, [orderedCategories, searchInput]);
 
   const visibleCategoriesLabel = t("catalog:categoriesPage.matchingCategories", { count: filteredCategories.length });
+
+  const clearSearch = () => {
+    setSearchInput("");
+  };
 
   return (
     <div className="marketplace-page min-h-screen text-slate-900">
@@ -134,9 +138,27 @@ export function MarketplaceCategoriesPage() {
               type="search"
               value={searchInput}
               onChange={(event) => setSearchInput(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Escape" && searchInput) {
+                  event.preventDefault();
+                  clearSearch();
+                }
+              }}
               placeholder={t("catalog:categoriesPage.searchPlaceholder")}
-              className="marketplace-search-input h-12 w-full pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:bg-white"
+              className="marketplace-search-input h-12 w-full pl-12 pr-12 text-sm text-slate-900 outline-none transition focus:bg-white"
             />
+
+            {searchInput ? (
+              <button
+                type="button"
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                aria-label={t("common:clearSearch")}
+                title={t("common:clearSearch")}
+              >
+                <X className="size-4" />
+              </button>
+            ) : null}
           </div>
         </section>
 

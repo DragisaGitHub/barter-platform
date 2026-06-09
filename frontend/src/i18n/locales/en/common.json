@@ -16,6 +16,7 @@
   "edit": "Edit",
   "actions": "Actions",
   "search": "Search",
+  "clearSearch": "Clear search",
   "signUp": "Sign up",
   "welcomeUser": "Welcome, {{username}}",
   "optionalParenthesized": "(optional)",

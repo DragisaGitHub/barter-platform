@@ -12,6 +12,7 @@ import {
   Sparkles,
   User,
   UserPlus,
+  X,
 } from "lucide-react";
 import type { SearchItemsParams } from "@/api/catalogApi";
 import type {
@@ -208,6 +209,16 @@ export function MarketplacePage() {
     updateMarketplaceSearchParams({ ...params, page: 0, q: nextQuery || undefined }, setSearchParams);
   };
 
+  const clearSearch = () => {
+    setSearchInput("");
+    resetResults();
+    setParams((previous) => {
+      const nextParams = { ...previous, page: 0, q: undefined };
+      updateMarketplaceSearchParams(nextParams, setSearchParams);
+      return nextParams;
+    });
+  };
+
   const selectCategory = (categoryUuid: string) => {
     const nextCategoryUuid = categoryUuid || undefined;
 
@@ -399,8 +410,26 @@ export function MarketplacePage() {
                 placeholder={t("catalog:searchPlaceholder")}
                 value={searchInput}
                 onChange={(event) => setSearchInput(event.target.value)}
-                className="marketplace-search-input h-11 w-full pl-12 pr-4 text-sm text-slate-900 outline-none transition focus:bg-white"
+                onKeyDown={(event) => {
+                  if (event.key === "Escape" && searchInput) {
+                    event.preventDefault();
+                    clearSearch();
+                  }
+                }}
+                className="marketplace-search-input h-11 w-full pl-12 pr-12 text-sm text-slate-900 outline-none transition focus:bg-white"
               />
+
+              {searchInput ? (
+                <button
+                  type="button"
+                  onClick={clearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                  aria-label={t("common:clearSearch")}
+                  title={t("common:clearSearch")}
+                >
+                  <X className="size-4" />
+                </button>
+              ) : null}
             </div>
             <button type="submit" className="sr-only">
               {t("common:search")}

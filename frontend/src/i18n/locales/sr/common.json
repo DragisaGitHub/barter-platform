@@ -16,6 +16,7 @@
   "edit": "Uredi",
   "actions": "Akcije",
   "search": "Pretraga",
+  "clearSearch": "Očisti pretragu",
   "signUp": "Registruj se",
   "welcomeUser": "Dobrodošli, {{username}}",
   "optionalParenthesized": "(opciono)",
