@@ -37,6 +37,7 @@ import {
 } from "./useCatalog";
 import { SavedSearchesPanel } from "./SavedSearchesPanel";
 import { RecommendationsSection } from "./RecommendationsSection";
+import { MarketplaceUserMenu } from "./MarketplaceUserMenu";
 import { useCreateSavedSearch } from "./useSavedSearches";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -387,11 +388,7 @@ export function MarketplacePage() {
               <span className="text-xl font-semibold text-slate-900">{t("common:appName")}</span>
             </Link>
 
-            {isAuthenticated ? (
-              <div className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-700 xl:hidden">
-                {user?.username}
-              </div>
-            ) : null}
+            {isAuthenticated ? <MarketplaceUserMenu username={user?.username} compact align="start" className="xl:hidden" /> : null}
           </div>
 
           <form onSubmit={handleSearch} className="flex-1 xl:max-w-2xl">
@@ -430,17 +427,7 @@ export function MarketplacePage() {
 
             <div className="flex flex-wrap items-center gap-2">
               {isAuthenticated ? (
-                <>
-                  <div className="hidden rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-medium text-violet-700 xl:block">
-                    {t("common:welcomeUser", { username: user?.username })}
-                  </div>
-                  <Link
-                    to={routePaths.dashboard}
-                    className="inline-flex h-10 items-center justify-center rounded-lg border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:border-violet-200 hover:text-violet-600"
-                  >
-                    {t("common:dashboard")}
-                  </Link>
-                </>
+                <MarketplaceUserMenu username={user?.username} className="hidden xl:inline-flex" />
               ) : (
                 <>
                   <Link
