@@ -7,9 +7,7 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 class LocalFileStorageServiceTest {
 
@@ -24,11 +22,19 @@ class LocalFileStorageServiceTest {
 
         service.store(storageKey, new ByteArrayInputStream(content), content.length, "image/jpeg");
 
+        FileStorageService.StoredFileMetadata metadata = service.getMetadata(storageKey);
+        assertEquals("image/jpeg", metadata.contentType());
+        assertEquals(content.length, metadata.contentLength());
+        assertTrue(metadata.etag() != null && !metadata.etag().isBlank());
+        assertNotNull(metadata.lastModified());
+
         FileStorageService.StoredFile stored = service.load(storageKey);
         assertArrayEquals(content, stored.content());
         assertEquals("image/jpeg", stored.contentType());
+        assertEquals(metadata.etag(), stored.etag());
 
         service.delete(storageKey);
+        assertThrows(NoSuchFileException.class, () -> service.getMetadata(storageKey));
         assertThrows(NoSuchFileException.class, () -> service.load(storageKey));
     }
 }

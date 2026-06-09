@@ -6,14 +6,17 @@ import ch.qos.logback.core.read.ListAppender;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.core.util.BinaryData;
+import com.azure.storage.blob.models.BlobHttpHeaders;
 import com.azure.storage.blob.models.BlobProperties;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.barterplatform.application.catalog.storage.FileStorageService;
 import com.barterplatform.common.exception.ApiException;
 import java.io.ByteArrayInputStream;
 import java.nio.file.NoSuchFileException;
+import java.time.OffsetDateTime;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.LoggerFactory;
@@ -54,13 +57,16 @@ class AzureBlobStorageServiceTest {
         AzureBlobStorageService service = service();
         byte[] content = "blob-data".getBytes();
         String storageKey = "items/demo/test.jpg";
+        ArgumentCaptor<BlobHttpHeaders> headersCaptor = ArgumentCaptor.forClass(BlobHttpHeaders.class);
 
         when(blobContainerClient.getBlobClient(storageKey)).thenReturn(blobClient);
 
         service.store(storageKey, new ByteArrayInputStream(content), content.length, "image/jpeg");
 
         verify(blobClient).upload(any(ByteArrayInputStream.class), eq((long) content.length), eq(false));
-        verify(blobClient).setHttpHeaders(any());
+        verify(blobClient).setHttpHeaders(headersCaptor.capture());
+        assertEquals("image/jpeg", headersCaptor.getValue().getContentType());
+        assertEquals("public, max-age=31536000, immutable", headersCaptor.getValue().getCacheControl());
     }
 
     @Test
@@ -76,30 +82,59 @@ class AzureBlobStorageServiceTest {
     }
 
     @Test
+    void getMetadataReturnsBlobProperties() throws Exception {
+        AzureBlobStorageService service = service();
+        String storageKey = "items/demo/test.jpg";
+        OffsetDateTime lastModified = OffsetDateTime.now();
+
+        when(blobContainerClient.getBlobClient(storageKey)).thenReturn(blobClient);
+        when(blobClient.getProperties()).thenReturn(blobProperties);
+        when(blobProperties.getContentType()).thenReturn("image/jpeg");
+        when(blobProperties.getBlobSize()).thenReturn(9L);
+        when(blobProperties.getETag()).thenReturn("\"etag-1\"");
+        when(blobProperties.getLastModified()).thenReturn(lastModified);
+
+        FileStorageService.StoredFileMetadata metadata = service.getMetadata(storageKey);
+
+        assertEquals("image/jpeg", metadata.contentType());
+        assertEquals(9L, metadata.contentLength());
+        assertEquals("\"etag-1\"", metadata.etag());
+        assertEquals(lastModified.toInstant(), metadata.lastModified());
+    }
+
+    @Test
     void loadReturnsBlobBytesAndContentType() throws Exception {
         AzureBlobStorageService service = service();
         String storageKey = "items/demo/test.jpg";
         byte[] content = "blob-data".getBytes();
+        OffsetDateTime lastModified = OffsetDateTime.now();
 
         when(blobContainerClient.getBlobClient(storageKey)).thenReturn(blobClient);
-        when(blobClient.exists()).thenReturn(true);
-        when(blobClient.downloadContent()).thenReturn(BinaryData.fromBytes(content));
         when(blobClient.getProperties()).thenReturn(blobProperties);
+        when(blobClient.downloadContent()).thenReturn(BinaryData.fromBytes(content));
         when(blobProperties.getContentType()).thenReturn("image/jpeg");
+        when(blobProperties.getETag()).thenReturn("\"etag-1\"");
+        when(blobProperties.getLastModified()).thenReturn(lastModified);
 
         FileStorageService.StoredFile stored = service.load(storageKey);
 
         assertArrayEquals(content, stored.content());
         assertEquals("image/jpeg", stored.contentType());
+        assertEquals("\"etag-1\"", stored.etag());
+        assertEquals(lastModified.toInstant(), stored.lastModified());
     }
 
     @Test
     void loadThrowsWhenBlobDoesNotExist() {
         AzureBlobStorageService service = service();
         String storageKey = "items/demo/missing.jpg";
+        BlobStorageException missing = mock(BlobStorageException.class);
 
         when(blobContainerClient.getBlobClient(storageKey)).thenReturn(blobClient);
-        when(blobClient.exists()).thenReturn(false);
+        when(blobClient.getProperties()).thenThrow(missing);
+        when(missing.getStatusCode()).thenReturn(404);
+        when(missing.getErrorCode()).thenReturn(null);
+        when(missing.getMessage()).thenReturn("missing");
 
         assertThrows(NoSuchFileException.class, () -> service.load(storageKey));
         verify(blobClient, never()).downloadContent();

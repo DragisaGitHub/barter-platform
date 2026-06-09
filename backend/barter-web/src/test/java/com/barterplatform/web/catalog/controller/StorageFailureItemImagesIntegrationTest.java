@@ -219,6 +219,11 @@ class StorageFailureItemImagesIntegrationTest {
                 }
 
                 @Override
+                public StoredFileMetadata getMetadata(String storageKey) throws IOException {
+                    throw new NoSuchFileException(storageKey);
+                }
+
+                @Override
                 public StoredFile load(String storageKey) throws IOException {
                     throw new NoSuchFileException(storageKey);
                 }

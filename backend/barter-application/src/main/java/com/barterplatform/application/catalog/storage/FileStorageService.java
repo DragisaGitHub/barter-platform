@@ -3,6 +3,7 @@ package com.barterplatform.application.catalog.storage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
+import java.time.Instant;
 
 /**
  * Abstraction for file storage. Implementations can be local filesystem,
@@ -41,6 +42,16 @@ public interface FileStorageService {
     String resolveUrl(String storageKey);
 
     /**
+     * Load file metadata without downloading the full payload.
+     *
+     * @param storageKey relative path/key for the file
+     * @return stored file metadata for cache validation and response headers
+     * @throws NoSuchFileException if the file does not exist
+     * @throws IOException if the read fails
+     */
+    StoredFileMetadata getMetadata(String storageKey) throws IOException;
+
+    /**
      * Load file contents for backend streaming.
      *
      * @param storageKey relative path/key for the file
@@ -50,9 +61,16 @@ public interface FileStorageService {
      */
     StoredFile load(String storageKey) throws IOException;
 
-    record StoredFile(byte[] content, String contentType) {
+    record StoredFileMetadata(String contentType, long contentLength, String etag, Instant lastModified) {
+    }
+
+    record StoredFile(byte[] content, String contentType, String etag, Instant lastModified) {
         public long contentLength() {
             return content.length;
+        }
+
+        public StoredFileMetadata metadata() {
+            return new StoredFileMetadata(contentType, contentLength(), etag, lastModified);
         }
     }
 }

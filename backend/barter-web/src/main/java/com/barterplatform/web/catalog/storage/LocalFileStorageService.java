@@ -8,6 +8,8 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import org.springframework.context.annotation.Profile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,18 +62,16 @@ public class LocalFileStorageService implements FileStorageService {
     }
 
     @Override
+    public StoredFileMetadata getMetadata(String storageKey) throws IOException {
+        Path target = resolveExisting(storageKey);
+        return readMetadata(target, storageKey);
+    }
+
+    @Override
     public StoredFile load(String storageKey) throws IOException {
-        Path target = resolve(storageKey);
-        if (!Files.exists(target) || !Files.isRegularFile(target)) {
-            throw new NoSuchFileException(storageKey);
-        }
-
-        String contentType = Files.probeContentType(target);
-        if (contentType == null || contentType.isBlank()) {
-            contentType = fallbackContentType(storageKey);
-        }
-
-        return new StoredFile(Files.readAllBytes(target), contentType);
+        Path target = resolveExisting(storageKey);
+        StoredFileMetadata metadata = readMetadata(target, storageKey);
+        return new StoredFile(Files.readAllBytes(target), metadata.contentType(), metadata.etag(), metadata.lastModified());
     }
 
     // ── private helpers ──────────────────────────────────────────
@@ -82,6 +82,27 @@ public class LocalFileStorageService implements FileStorageService {
             throw new IOException("Storage key attempts directory traversal: " + storageKey);
         }
         return destination;
+    }
+
+    private Path resolveExisting(String storageKey) throws IOException {
+        Path target = resolve(storageKey);
+        if (!Files.exists(target) || !Files.isRegularFile(target)) {
+            throw new NoSuchFileException(storageKey);
+        }
+        return target;
+    }
+
+    private StoredFileMetadata readMetadata(Path target, String storageKey) throws IOException {
+        String contentType = Files.probeContentType(target);
+        if (contentType == null || contentType.isBlank()) {
+            contentType = fallbackContentType(storageKey);
+        }
+
+        long contentLength = Files.size(target);
+        FileTime lastModifiedTime = Files.getLastModifiedTime(target);
+        Instant lastModified = lastModifiedTime.toInstant();
+        String etag = "W/\"%s-%s\"".formatted(Long.toHexString(contentLength), Long.toHexString(lastModifiedTime.toMillis()));
+        return new StoredFileMetadata(contentType, contentLength, etag, lastModified);
     }
 
     private String fallbackContentType(String storageKey) {
