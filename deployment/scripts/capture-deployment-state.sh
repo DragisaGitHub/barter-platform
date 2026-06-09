@@ -15,7 +15,7 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") [--state-dir <dir>] [--state-file <file>] [--dry-run]
 
-Captures the current backend/frontend container image state so the operator can roll
+Captures the current backend/frontend/landing container image state so the operator can roll
 back to the exact previously running images before a new deployment.
 
 Options:
@@ -183,7 +183,7 @@ LATEST_STATE_FILE="$(dirname "${STATE_FILE}")/latest.env"
 if [[ "${DRY_RUN}" == "true" ]]; then
   echo "Using compose file: ${COMPOSE_FILE}"
   echo "Using env file:     ${ENV_FILE}"
-  echo "[dry-run] Would inspect the currently running 'backend' and 'frontend' containers via docker compose + docker inspect."
+  echo "[dry-run] Would inspect the currently running 'backend', 'frontend', and 'landing' containers via docker compose + docker inspect."
   echo "[dry-run] Would write deployment state to: ${STATE_FILE}"
   echo "[dry-run] Would refresh latest state file: ${LATEST_STATE_FILE}"
   exit 0
@@ -216,8 +216,14 @@ if append_service_state frontend FRONTEND "${TEMP_STATE_FILE}"; then
   captured_count=$((captured_count + 1))
 fi
 
+echo >> "${TEMP_STATE_FILE}"
+
+if append_service_state landing LANDING "${TEMP_STATE_FILE}"; then
+  captured_count=$((captured_count + 1))
+fi
+
 if (( captured_count == 0 )); then
-  echo "No existing backend/frontend containers were found. Nothing was written."
+  echo "No existing backend/frontend/landing containers were found. Nothing was written."
   exit 0
 fi
 

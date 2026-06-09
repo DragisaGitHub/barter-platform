@@ -2,6 +2,19 @@ name: DEV Deploy
 
 on:
   workflow_dispatch:
+    inputs:
+      backend_image:
+        description: Optional backend image override (tag or digest). Leave empty to use deployment/env/dev.env on the server.
+        required: false
+        type: string
+      frontend_image:
+        description: Optional frontend image override (tag or digest). Leave empty to use deployment/env/dev.env on the server.
+        required: false
+        type: string
+      landing_image:
+        description: Optional landing image override (tag or digest). Leave empty to use deployment/env/dev.env on the server.
+        required: false
+        type: string
 
 run-name: DEV deploy by @${{ github.actor }}
 
@@ -26,6 +39,9 @@ jobs:
       DEV_SSH_USER: ${{ vars.DEV_SSH_USER || secrets.DEV_SSH_USER }}
       DEV_DEPLOY_PATH: ${{ vars.DEV_DEPLOY_PATH || secrets.DEV_DEPLOY_PATH }}
       DEV_SSH_KNOWN_HOSTS: ${{ secrets.DEV_SSH_KNOWN_HOSTS || vars.DEV_SSH_KNOWN_HOSTS }}
+      BACKEND_IMAGE: ${{ inputs.backend_image || '' }}
+      FRONTEND_IMAGE: ${{ inputs.frontend_image || '' }}
+      LANDING_IMAGE: ${{ inputs.landing_image || '' }}
 
     steps:
       - name: Log deployment context
@@ -155,17 +171,35 @@ jobs:
 
           printf -v DEPLOY_PATH_Q '%q' "${DEV_DEPLOY_PATH}"
           printf -v DEPLOY_SHA_Q '%q' "${DEPLOY_SHA}"
+          printf -v BACKEND_IMAGE_Q '%q' "${BACKEND_IMAGE}"
+          printf -v FRONTEND_IMAGE_Q '%q' "${FRONTEND_IMAGE}"
+          printf -v LANDING_IMAGE_Q '%q' "${LANDING_IMAGE}"
 
           ssh \
             -p "${DEV_SSH_PORT}" \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "${DEV_SSH_USER}@${DEV_SSH_HOST}" \
-            "export DEV_DEPLOY_PATH=${DEPLOY_PATH_Q}; export DEPLOY_SHA=${DEPLOY_SHA_Q}; bash -se" <<'EOF'
+            "export DEV_DEPLOY_PATH=${DEPLOY_PATH_Q}; export DEPLOY_SHA=${DEPLOY_SHA_Q}; export BACKEND_IMAGE=${BACKEND_IMAGE_Q}; export FRONTEND_IMAGE=${FRONTEND_IMAGE_Q}; export LANDING_IMAGE=${LANDING_IMAGE_Q}; bash -se" <<'EOF'
           set -euo pipefail
 
           cd "$DEV_DEPLOY_PATH"
           git fetch origin main
+
+          if [[ -n "${BACKEND_IMAGE}" ]]; then
+            export BACKEND_IMAGE
+            echo "Using BACKEND_IMAGE override: ${BACKEND_IMAGE}"
+          fi
+
+          if [[ -n "${FRONTEND_IMAGE}" ]]; then
+            export FRONTEND_IMAGE
+            echo "Using FRONTEND_IMAGE override: ${FRONTEND_IMAGE}"
+          fi
+
+          if [[ -n "${LANDING_IMAGE}" ]]; then
+            export LANDING_IMAGE
+            echo "Using LANDING_IMAGE override: ${LANDING_IMAGE}"
+          fi
 
           if ! git rev-parse --verify "${DEPLOY_SHA}^{commit}" >/dev/null 2>&1; then
             echo "Resolved deployment commit ${DEPLOY_SHA} is not available on the DEV server after fetching origin/main." >&2
