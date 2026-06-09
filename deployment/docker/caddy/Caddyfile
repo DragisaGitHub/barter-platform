@@ -11,6 +11,20 @@
 # Only Caddy publishes ports on the VM. The frontend and backend remain
 # reachable only over the internal Compose network.
 
+https://zameni.rs, https://www.zameni.rs {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+	}
+
+	handle {
+		reverse_proxy landing:80
+	}
+}
+
 # Caddy automatically manages ACME HTTP-01 challenges on port 80 and redirects
 # normal HTTP requests to HTTPS for this hostname.
 https://{$CADDY_DOMAIN:barter-platform-dev.duckdns.org } {
