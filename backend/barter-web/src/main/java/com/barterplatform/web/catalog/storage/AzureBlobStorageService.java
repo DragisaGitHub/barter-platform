@@ -4,6 +4,7 @@ import com.azure.core.exception.AzureException;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.models.BlobHttpHeaders;
+import com.azure.storage.blob.models.BlobProperties;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.barterplatform.application.catalog.storage.FileStorageService;
 import com.barterplatform.common.exception.ApiException;
@@ -12,11 +13,12 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.NoSuchFileException;
+import java.time.Instant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -28,6 +30,7 @@ public class AzureBlobStorageService implements FileStorageService {
     private static final String STORAGE_UNAVAILABLE_MESSAGE =
             "Image storage is currently unavailable. Please try again later.";
     private static final String NOT_AVAILABLE = "n/a";
+    private static final String IMMUTABLE_IMAGE_CACHE_CONTROL = "public, max-age=31536000, immutable";
 
     private final BlobContainerClient blobContainerClient;
     private final String containerName;
@@ -46,7 +49,9 @@ public class AzureBlobStorageService implements FileStorageService {
             byte[] content = inputStream.readAllBytes();
             BlobClient blobClient = blobContainerClient.getBlobClient(storageKey);
             blobClient.upload(new ByteArrayInputStream(content), content.length, false);
-            blobClient.setHttpHeaders(new BlobHttpHeaders().setContentType(contentType));
+            blobClient.setHttpHeaders(new BlobHttpHeaders()
+                    .setContentType(contentType)
+                    .setCacheControl(IMMUTABLE_IMAGE_CACHE_CONTROL));
             logSuccess("store", storageKey, (long) content.length, contentType, startedAt);
         } catch (BlobStorageException e) {
             logFailure("store", storageKey, contentLength, contentType, startedAt, e, e.getStatusCode(), valueOrDefault(e.getErrorCode()));
@@ -88,44 +93,47 @@ public class AzureBlobStorageService implements FileStorageService {
     }
 
     @Override
+    public StoredFileMetadata getMetadata(String storageKey) throws IOException {
+        long startedAt = System.nanoTime();
+        try {
+            BlobProperties properties = readBlobProperties(storageKey);
+            String contentType = normalizeContentType(properties.getContentType());
+            long contentLength = properties.getBlobSize();
+            String etag = properties.getETag();
+            Instant lastModified = properties.getLastModified() != null ? properties.getLastModified().toInstant() : null;
+            logSuccess("metadata", storageKey, contentLength, contentType, startedAt);
+            return new StoredFileMetadata(contentType, contentLength, etag, lastModified);
+        } catch (BlobStorageException e) {
+            if (e.getStatusCode() == 404) {
+                logNotFound("metadata", storageKey, startedAt, e);
+                throw new NoSuchFileException(storageKey);
+            }
+            logFailure("metadata", storageKey, null, null, startedAt, e, e.getStatusCode(), valueOrDefault(e.getErrorCode()));
+            throw storageUnavailable(e);
+        } catch (AzureException e) {
+            logFailure("metadata", storageKey, null, null, startedAt, e, null, null);
+            throw storageUnavailable(e);
+        } catch (RuntimeException e) {
+            logFailure("metadata", storageKey, null, null, startedAt, e, null, null);
+            throw storageUnavailable(e);
+        }
+    }
+
+    @Override
     public StoredFile load(String storageKey) throws IOException {
         long startedAt = System.nanoTime();
         try {
             BlobClient blobClient = blobContainerClient.getBlobClient(storageKey);
-            if (!blobClient.exists()) {
-                log.info(
-                        "Azure blob operation completed. operation={} containerName={} storageKey={} contentLength={} contentType={} elapsedMs={} result={}",
-                        "load",
-                        containerName,
-                        storageKey,
-                        NOT_AVAILABLE,
-                        NOT_AVAILABLE,
-                        elapsedMillis(startedAt),
-                        "not_found");
-                throw new NoSuchFileException(storageKey);
-            }
-
+            BlobProperties properties = readBlobProperties(storageKey);
             byte[] content = blobClient.downloadContent().toBytes();
-            String contentType = blobClient.getProperties().getContentType();
-            if (contentType == null || contentType.isBlank()) {
-                contentType = "application/octet-stream";
-            }
+            String contentType = normalizeContentType(properties.getContentType());
+            String etag = properties.getETag();
+            Instant lastModified = properties.getLastModified() != null ? properties.getLastModified().toInstant() : null;
             logSuccess("load", storageKey, (long) content.length, contentType, startedAt);
-            return new StoredFile(content, contentType);
+            return new StoredFile(content, contentType, etag, lastModified);
         } catch (BlobStorageException e) {
             if (e.getStatusCode() == 404) {
-                log.info(
-                        "Azure blob operation completed. operation={} containerName={} storageKey={} contentLength={} contentType={} elapsedMs={} result={} statusCode={} errorCode={} message={}",
-                        "load",
-                        containerName,
-                        storageKey,
-                        NOT_AVAILABLE,
-                        NOT_AVAILABLE,
-                        elapsedMillis(startedAt),
-                        "not_found",
-                        e.getStatusCode(),
-                        valueOrDefault(e.getErrorCode()),
-                        sanitizeMessage(rootCauseMessage(e)));
+                logNotFound("load", storageKey, startedAt, e);
                 throw new NoSuchFileException(storageKey);
             }
             logFailure("load", storageKey, null, null, startedAt, e, e.getStatusCode(), valueOrDefault(e.getErrorCode()));
@@ -137,6 +145,32 @@ public class AzureBlobStorageService implements FileStorageService {
             logFailure("load", storageKey, null, null, startedAt, e, null, null);
             throw storageUnavailable(e);
         }
+    }
+
+    private BlobProperties readBlobProperties(String storageKey) {
+        return blobContainerClient.getBlobClient(storageKey).getProperties();
+    }
+
+    private String normalizeContentType(String contentType) {
+        if (contentType == null || contentType.isBlank()) {
+            return "application/octet-stream";
+        }
+        return contentType;
+    }
+
+    private void logNotFound(String operation, String storageKey, long startedAt, BlobStorageException e) {
+        log.info(
+                "Azure blob operation completed. operation={} containerName={} storageKey={} contentLength={} contentType={} elapsedMs={} result={} statusCode={} errorCode={} message={}",
+                operation,
+                containerName,
+                storageKey,
+                NOT_AVAILABLE,
+                NOT_AVAILABLE,
+                elapsedMillis(startedAt),
+                "not_found",
+                e.getStatusCode(),
+                valueOrDefault(e.getErrorCode()),
+                sanitizeMessage(rootCauseMessage(e)));
     }
 
     private void logSuccess(String operation, String storageKey, Long contentLength, String contentType, long startedAt) {
