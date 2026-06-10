@@ -41,11 +41,11 @@ function formatMessageTime(value?: string) {
     return isSameDay
         ? date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
         : date.toLocaleString([], {
-              month: "short",
-              day: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-          });
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+        });
 }
 
 function getInitials(name?: string) {
@@ -53,12 +53,14 @@ function getInitials(name?: string) {
         return "?";
     }
 
-    return name
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase() ?? "")
-        .join("") || "?";
+    return (
+        name
+            .split(/\s+/)
+            .filter(Boolean)
+            .slice(0, 2)
+            .map((part) => part[0]?.toUpperCase() ?? "")
+            .join("") || "?"
+    );
 }
 
 function buildMessageIdentity(
@@ -76,9 +78,9 @@ function buildMessageIdentity(
 }
 
 export function TradeOfferMessagesPanel({
-    tradeOfferUuid,
-    status,
-}: TradeOfferMessagesPanelProps) {
+                                            tradeOfferUuid,
+                                            status,
+                                        }: TradeOfferMessagesPanelProps) {
     const { t } = useTranslation("trade");
     const { user } = useAuth();
     const [content, setContent] = useState("");
@@ -98,6 +100,7 @@ export function TradeOfferMessagesPanel({
         isLoading,
         isError,
         isFetching,
+        dataUpdatedAt,
     } = useTradeOfferMessages(tradeOfferUuid);
 
     const sendMessage = useSendTradeOfferMessage(tradeOfferUuid, {
@@ -187,7 +190,9 @@ export function TradeOfferMessagesPanel({
                 scrollToBottom("smooth");
             } else {
                 setShowNewMessages(true);
-                setQueuedMessageCount((currentCount) => currentCount + newMessagesDelta);
+                setQueuedMessageCount(
+                    (currentCount) => currentCount + newMessagesDelta,
+                );
             }
         }
 
@@ -247,12 +252,25 @@ export function TradeOfferMessagesPanel({
     };
 
     const messageCount = messages.length;
-    const pollIndicatorLabel = isFetching ? t("messages.syncingUpdates") : t("messages.pollingEvery15s");
+    const hasLoadedMessagesOnce = dataUpdatedAt > 0;
+    const hasPollingErrorAfterLoad = hasLoadedMessagesOnce && isError;
+    const lastSyncedLabel = hasLoadedMessagesOnce
+        ? t("messages.lastSynced", {
+            time: formatMessageTime(new Date(dataUpdatedAt).toISOString()),
+        })
+        : null;
+
+    const pollIndicatorLabel = hasPollingErrorAfterLoad
+        ? t("messages.syncIssue")
+        : isFetching
+            ? t("messages.syncingUpdates")
+            : lastSyncedLabel ?? t("messages.pollingEvery15s");
+
     const counterClassName = isInvalidLength
         ? "text-red-500 dark:text-red-400"
         : isNearLimit
-          ? "text-amber-600 dark:text-amber-400"
-          : "text-slate-500 dark:text-slate-400";
+            ? "text-amber-600 dark:text-amber-400"
+            : "text-slate-500 dark:text-slate-400";
 
     return (
         <Card className="mt-6 overflow-hidden border-slate-200/80 bg-white/95 p-0 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/95">
@@ -269,7 +287,9 @@ export function TradeOfferMessagesPanel({
                                         {t("messages.title")}
                                     </h2>
                                     <Badge variant={isWritable ? "success" : "default"}>
-                                        {isWritable ? t("messages.open") : t("messages.readOnly")}
+                                        {isWritable
+                                            ? t("messages.open")
+                                            : t("messages.readOnly")}
                                     </Badge>
                                 </div>
                                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
@@ -278,22 +298,32 @@ export function TradeOfferMessagesPanel({
                             </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                            <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
-                                <Radio
-                                    className={cn(
-                                        "size-3.5",
-                                        isFetching
-                                            ? "animate-pulse text-emerald-500"
-                                            : "text-slate-400 dark:text-slate-500",
-                                    )}
-                                />
-                                <span>{pollIndicatorLabel}</span>
+                        <div className="flex flex-col gap-2 sm:items-end">
+                            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                                <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
+                                    <Radio
+                                        className={cn(
+                                            "size-3.5",
+                                            hasPollingErrorAfterLoad
+                                                ? "text-amber-500"
+                                                : isFetching
+                                                    ? "animate-pulse text-emerald-500"
+                                                    : "text-slate-400 dark:text-slate-500",
+                                        )}
+                                    />
+                                    <span>{pollIndicatorLabel}</span>
+                                </div>
+
+                                <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
+                                    {t("messages.count", { count: messageCount })}
+                                </div>
                             </div>
 
-                            <div className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-300">
-                                {t("messages.count", { count: messageCount })}
-                            </div>
+                            {hasPollingErrorAfterLoad && (
+                                <p className="max-w-sm text-xs text-amber-600 dark:text-amber-400 sm:text-right">
+                                    {t("messages.syncIssueDescription")}
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -312,7 +342,7 @@ export function TradeOfferMessagesPanel({
                         <div className="flex justify-center py-12">
                             <Spinner />
                         </div>
-                    ) : isError ? (
+                    ) : isError && !hasLoadedMessagesOnce ? (
                         <EmptyState
                             title={t("messages.loadErrorTitle")}
                             description={t("messages.loadErrorDescription")}
@@ -327,11 +357,12 @@ export function TradeOfferMessagesPanel({
                     ) : (
                         <div className="space-y-2.5">
                             {messages.map((message) => {
-                                const { isMine, displayName, initials } = buildMessageIdentity(
-                                    message,
-                                    user?.uuid,
+                                const { isMine, displayName, initials } =
+                                    buildMessageIdentity(
+                                        message,
+                                        user?.uuid,
                                         t("you"),
-                                );
+                                    );
 
                                 return (
                                     <div
@@ -360,17 +391,17 @@ export function TradeOfferMessagesPanel({
                                                 )}
                                             >
                                                 <span>{displayName}</span>
-                                                 {!isMine ? (
-                                                     <ReportTrigger
-                                                         targetType="MESSAGE"
-                                                         targetUuid={message.uuid}
-                                                         contextLabel={message.content}
-                                                         variant="ghost"
-                                                         size="sm"
-                                                         className="h-auto px-1.5 py-0.5 text-[11px] text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
-                                                         ariaLabel={t("reporting:actions.report")}
-                                                     />
-                                                 ) : null}
+                                                {!isMine ? (
+                                                    <ReportTrigger
+                                                        targetType="MESSAGE"
+                                                        targetUuid={message.uuid}
+                                                        contextLabel={message.content}
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-auto px-1.5 py-0.5 text-[11px] text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
+                                                        ariaLabel={t("reporting:actions.report")}
+                                                    />
+                                                ) : null}
                                                 {message.isOptimistic && (
                                                     <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[10px] font-semibold text-indigo-600 dark:bg-indigo-950/50 dark:text-indigo-300">
                                                         {t("messages.sending")}
@@ -385,7 +416,7 @@ export function TradeOfferMessagesPanel({
                                                         ? "border-indigo-500/70 bg-indigo-600 text-white shadow-indigo-950/10 hover:border-indigo-400 hover:bg-indigo-600/95"
                                                         : "border-slate-200 bg-white text-slate-900 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-slate-600 dark:hover:bg-slate-800/90",
                                                     message.isOptimistic &&
-                                                        "opacity-90 ring-1 ring-indigo-200/80 dark:ring-indigo-900/70",
+                                                    "opacity-90 ring-1 ring-indigo-200/80 dark:ring-indigo-900/70",
                                                 )}
                                             >
                                                 <p className="whitespace-pre-wrap wrap-anywhere">
@@ -427,7 +458,9 @@ export function TradeOfferMessagesPanel({
                             className="pointer-events-auto rounded-full border border-indigo-200 bg-white/95 px-4 shadow-lg shadow-slate-900/5 backdrop-blur hover:bg-white dark:border-indigo-900/60 dark:bg-slate-900/95 dark:hover:bg-slate-900"
                             onClick={() => scrollToBottom("smooth")}
                         >
-                            {t("messages.newMessages", { count: queuedMessageCount })}
+                            {t("messages.newMessages", {
+                                count: queuedMessageCount,
+                            })}
                         </Button>
                     </div>
                 )}
@@ -444,7 +477,7 @@ export function TradeOfferMessagesPanel({
                         className={cn(
                             "overflow-hidden rounded-2xl border border-slate-200 bg-slate-50 shadow-sm transition-colors dark:border-slate-700 dark:bg-slate-950/40",
                             isWritable &&
-                                "focus-within:border-indigo-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 dark:focus-within:border-indigo-500 dark:focus-within:bg-slate-900",
+                            "focus-within:border-indigo-400 focus-within:bg-white focus-within:ring-4 focus-within:ring-indigo-500/10 dark:focus-within:border-indigo-500 dark:focus-within:bg-slate-900",
                         )}
                     >
                         <textarea
@@ -497,13 +530,15 @@ export function TradeOfferMessagesPanel({
                             className="min-h-11 rounded-xl px-4 py-2.5"
                         >
                             <Send className="size-4" />
-                             {sendMessage.isPending ? t("messages.sending") : t("messages.sendMessage")}
+                            {sendMessage.isPending
+                                ? t("messages.sending")
+                                : t("messages.sendMessage")}
                         </Button>
                     </div>
 
                     {!isWritable && (
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                             {t("messages.closedReadOnly")}
+                            {t("messages.closedReadOnly")}
                         </p>
                     )}
                 </form>
