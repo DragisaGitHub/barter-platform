@@ -150,6 +150,8 @@
     "placeholderClosed": "This conversation is closed. Messages remain visible for reference.",
     "safetyHelper": "Keep communication inside Barter Platform for safer trading.",
     "sendMessage": "Send message",
+    "sendError": "Message could not be sent. Your message was kept, please try again.",
+    "retrySend": "Retry",
     "closedReadOnly": "This trade offer is closed, so the conversation is read-only."
   },
   "reviews": {
