@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.barterplatform.api.model.SendTradeOfferMessageRequest;
 import com.barterplatform.api.model.TradeOfferMessageResponse;
+import com.barterplatform.application.notification.service.NotificationService;
 import com.barterplatform.application.trade.mapper.TradeOfferMessageMapper;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.domain.identity.entity.UserEntity;
@@ -35,6 +36,7 @@ class TradeOfferMessageServiceImplTest {
     @Mock private TradeOfferMessageRepository tradeOfferMessageRepository;
     @Mock private UserRepository userRepository;
     @Mock private TradeOfferMessageMapper tradeOfferMessageMapper;
+    @Mock private NotificationService notificationService;
 
     private TradeOfferMessageServiceImpl service;
 
@@ -44,7 +46,8 @@ class TradeOfferMessageServiceImplTest {
                 tradeOfferRepository,
                 tradeOfferMessageRepository,
                 userRepository,
-                tradeOfferMessageMapper);
+                tradeOfferMessageMapper,
+                notificationService);
     }
 
     private UserEntity user(Long id, UUID uuid, String username) {
