@@ -4,6 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.barterplatform.api.model.SendTradeOfferMessageRequest;
@@ -12,6 +16,7 @@ import com.barterplatform.application.notification.service.NotificationService;
 import com.barterplatform.application.trade.mapper.TradeOfferMessageMapper;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.domain.identity.entity.UserEntity;
+import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.domain.trade.entity.TradeOfferEntity;
 import com.barterplatform.domain.trade.entity.TradeOfferMessageEntity;
 import com.barterplatform.domain.trade.enums.TradeOfferMode;
@@ -101,6 +106,16 @@ class TradeOfferMessageServiceImplTest {
 
         assertNotNull(response);
         assertEquals("Ready to meet tomorrow", response.getContent());
+        verify(notificationService).createNotification(
+                eq(2L),
+                eq(NotificationType.TRADE_MESSAGE_RECEIVED),
+                argThat(metadata -> metadata != null
+                        && "alice".equals(metadata.get("actorUsername"))
+                        && offerUuid.toString().equals(metadata.get("tradeOfferUuid"))),
+                isNull(),
+                isNull(),
+                eq(offerUuid),
+                eq("TRADE_OFFER"));
     }
 
     @Test

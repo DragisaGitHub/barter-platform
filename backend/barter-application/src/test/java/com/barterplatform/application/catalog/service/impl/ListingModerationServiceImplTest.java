@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -87,8 +89,11 @@ class ListingModerationServiceImplTest {
         verify(notificationService).createNotification(
                 eq(30L),
                 eq(NotificationType.LISTING_REMOVED),
-                any(String.class),
-                eq("Listing removed for policy review"),
+                argThat(metadata -> metadata != null
+                        && "Listing".equals(metadata.get("listingTitle"))
+                        && "Listing removed for policy review".equals(metadata.get("userMessage"))),
+                isNull(),
+                isNull(),
                 eq(listingUuid),
                 eq("ITEM"));
 
@@ -126,8 +131,11 @@ class ListingModerationServiceImplTest {
         verify(notificationService).createNotification(
                 eq(30L),
                 eq(NotificationType.LISTING_RESTORED),
-                any(String.class),
-                eq("Listing restored"),
+                argThat(metadata -> metadata != null
+                        && "Listing".equals(metadata.get("listingTitle"))
+                        && "Listing restored".equals(metadata.get("userMessage"))),
+                isNull(),
+                isNull(),
                 eq(listingUuid),
                 eq("ITEM"));
         verify(tradeOfferInvalidationService, never()).invalidatePendingOffersForListing(any());
@@ -146,7 +154,7 @@ class ListingModerationServiceImplTest {
         ApiException exception = assertThrows(ApiException.class, () -> service.restoreListing(adminUuid, listingUuid, request));
 
         assertEquals(409, exception.getStatus().value());
-        verify(notificationService, never()).createNotification(any(), any(), any(), any(), any(), any());
+        verify(notificationService, never()).createNotification(any(), any(), any(), any(), any(), any(), any());
     }
 
     private UserEntity admin(UUID uuid) {

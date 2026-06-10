@@ -23,11 +23,77 @@
   "notificationType.TRADE_OFFER_ACCEPTED": "Trade offer accepted",
   "notificationType.TRADE_OFFER_COMPLETION_CONFIRMED": "Trade completion confirmed",
   "notificationType.TRADE_OFFER_COMPLETED": "Trade completed",
+  "notificationType.TRADE_MESSAGE_RECEIVED": "Trade message received",
   "notificationType.TRADE_REVIEW_RECEIVED": "Trade review received",
   "notificationType.TRADE_OFFER_REJECTED": "Trade offer rejected",
   "notificationType.TRADE_OFFER_CANCELLED": "Trade offer cancelled",
   "notificationType.LISTING_REMOVED": "Listing removed",
   "notificationType.LISTING_RESTORED": "Listing restored",
+  "render": {
+    "TRADE_OFFER_RECEIVED": {
+      "title": "New trade offer from {{actorUsername}}",
+      "titleFallback": "New trade offer",
+      "message": "{{actorUsername}} wants \"{{itemTitle}}\".",
+      "messageWithSingleItem": "{{actorUsername}} wants \"{{itemTitle}}\" and offered \"{{offeredItemTitle}}\".",
+      "messageWithMultipleItems_one": "{{actorUsername}} wants \"{{itemTitle}}\" and offered {{count}} item.",
+      "messageWithMultipleItems_other": "{{actorUsername}} wants \"{{itemTitle}}\" and offered {{count}} items.",
+      "messageFallback": "You received a new trade offer."
+    },
+    "TRADE_OFFER_ACCEPTED": {
+      "title": "{{actorUsername}} accepted your trade offer",
+      "titleFallback": "Trade offer accepted",
+      "message": "{{actorUsername}} accepted your offer for \"{{itemTitle}}\".",
+      "messageFallback": "Your trade offer was accepted."
+    },
+    "TRADE_OFFER_COMPLETION_CONFIRMED": {
+      "title": "{{actorUsername}} confirmed trade completion",
+      "titleFallback": "Trade completion confirmed",
+      "message": "{{actorUsername}} confirmed completion for the trade involving \"{{itemTitle}}\". Confirm once your side of the exchange is complete.",
+      "messageFallback": "The other participant confirmed their side of the trade."
+    },
+    "TRADE_OFFER_COMPLETED": {
+      "title": "Trade completed with {{counterpartyUsername}}",
+      "titleFallback": "Trade completed",
+      "message": "Your trade with {{counterpartyUsername}} for \"{{itemTitle}}\" has been marked completed.",
+      "messageFallback": "Your trade has been marked completed."
+    },
+    "TRADE_OFFER_REJECTED": {
+      "title": "{{actorUsername}} rejected your trade offer",
+      "titleFallback": "Trade offer rejected",
+      "message": "{{actorUsername}} rejected your trade offer.",
+      "messageFallback": "Your trade offer was rejected."
+    },
+    "TRADE_OFFER_CANCELLED": {
+      "title": "{{actorUsername}} cancelled their trade offer",
+      "titleFallback": "Trade offer cancelled",
+      "message": "{{actorUsername}} cancelled their trade offer.",
+      "messageFallback": "A trade offer was cancelled."
+    },
+    "TRADE_MESSAGE_RECEIVED": {
+      "title": "New message from {{actorUsername}}",
+      "titleFallback": "New trade message",
+      "message": "{{actorUsername}} sent you a new message about a trade offer.",
+      "messageWithItem": "{{actorUsername}} sent you a new message about \"{{itemTitle}}\".",
+      "messageFallback": "You received a new trade message."
+    },
+    "TRADE_REVIEW_RECEIVED": {
+      "title": "{{actorUsername}} reviewed your completed trade",
+      "titleFallback": "Trade review received",
+      "message": "{{actorUsername}} left a review for your completed trade.",
+      "messageWithItem": "{{actorUsername}} left a review for your completed trade involving \"{{itemTitle}}\".",
+      "messageFallback": "You received a new trade review."
+    },
+    "LISTING_REMOVED": {
+      "title": "Your listing was removed",
+      "message": "Your listing \"{{listingTitle}}\" was removed by an administrator.",
+      "messageFallback": "An administrator removed one of your listings."
+    },
+    "LISTING_RESTORED": {
+      "title": "Your listing was restored",
+      "message": "Your listing \"{{listingTitle}}\" was restored by an administrator.",
+      "messageFallback": "An administrator restored one of your listings."
+    }
+  },
   "markReadError": "Failed to mark the notification as read.",
   "markAllReadError": "Failed to mark all notifications as read."
 }

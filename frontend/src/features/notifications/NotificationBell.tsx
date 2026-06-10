@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck, Clock3, BadgeCheck, MessageSquareHeart } from "lucide-react";
+import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck, Clock3, BadgeCheck, MessageCircle, MessageSquareHeart } from "lucide-react";
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from "./useNotifications";
 import { formatNotificationTime, getNotificationColor, getNotificationTargetPath } from "./notificationHelpers";
+import { renderNotificationText } from "./renderNotificationText";
 import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/utils";
 import type { NotificationResponse, NotificationType } from "@/api/generated/types.ts";
@@ -22,6 +23,8 @@ function NotificationIcon({ type, className }: { type: NotificationType; classNa
       return <Clock3 className={iconClass} />;
     case "TRADE_OFFER_COMPLETED":
       return <BadgeCheck className={iconClass} />;
+    case "TRADE_MESSAGE_RECEIVED":
+      return <MessageCircle className={iconClass} />;
     case "TRADE_REVIEW_RECEIVED":
       return <MessageSquareHeart className={iconClass} />;
     case "TRADE_OFFER_REJECTED":
@@ -39,11 +42,15 @@ function NotificationIcon({ type, className }: { type: NotificationType; classNa
 
 function NotificationRow({
   notification,
+  renderedTitle,
+  renderedMessage,
   onClickNotification,
   unreadLabel,
   currentLanguage,
 }: {
   notification: NotificationResponse;
+  renderedTitle: string;
+  renderedMessage: string | null;
   onClickNotification: (notification: NotificationResponse) => void;
   unreadLabel: string;
   currentLanguage: string;
@@ -78,7 +85,7 @@ function NotificationRow({
                 : "font-semibold text-slate-900 dark:text-slate-50"
             )}
           >
-            {notification.title}
+            {renderedTitle}
           </p>
           {!notification.isRead && (
             <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
@@ -87,20 +94,15 @@ function NotificationRow({
             </span>
           )}
         </div>
-        {notification.message && (
+        {renderedMessage && (
           <p className="mt-1 line-clamp-2 text-xs text-slate-500 dark:text-slate-400">
-            {notification.message}
+            {renderedMessage}
           </p>
         )}
         <p className="mt-2 text-xs text-slate-400 dark:text-slate-500">
           {formatNotificationTime(notification.createdAt, currentLanguage)}
         </p>
       </div>
-      {!notification.isRead && (
-        <div className="mt-2 shrink-0">
-          <span className="block size-2.5 rounded-full bg-indigo-500 shadow-[0_0_0_4px] shadow-indigo-500/15" />
-        </div>
-      )}
     </button>
   );
 }
@@ -168,7 +170,7 @@ export function NotificationBell() {
         {unreadCount > 0 && (
           <>
             <span className="absolute right-2 top-2 size-2 rounded-full bg-indigo-500 ring-4 ring-white dark:ring-slate-800" />
-            <span className="absolute -right-1 -top-1 flex min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white dark:ring-slate-800">
+            <span className="absolute -right-1 -top-1 flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold leading-none text-white shadow-sm ring-2 ring-white dark:ring-slate-800">
             {unreadCount > 99 ? "99+" : unreadCount}
             </span>
           </>
@@ -176,7 +178,7 @@ export function NotificationBell() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 z-50 mt-3 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-950/10 dark:border-slate-700 dark:bg-slate-800 sm:w-[26rem]">
+        <div className="absolute right-0 z-50 mt-3 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-950/10 dark:border-slate-700 dark:bg-slate-800 sm:w-104">
           {/* Header */}
           <div className="border-b border-slate-200 px-4 py-4 dark:border-slate-700">
             <div className="flex items-start justify-between gap-3">
@@ -210,7 +212,7 @@ export function NotificationBell() {
           </div>
 
           {/* Content */}
-          <div className="max-h-[26rem] overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/60">
+          <div className="max-h-104 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-700/60">
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Spinner size="sm" />
@@ -228,15 +230,21 @@ export function NotificationBell() {
                 </p>
               </div>
             ) : (
-              notifications.map((notification) => (
-                <NotificationRow
-                  key={notification.uuid}
-                  notification={notification}
-                  onClickNotification={handleNotificationClick}
-                  unreadLabel={t("notifications:unread")}
-                  currentLanguage={i18n.language}
-                />
-              ))
+              notifications.map((notification) => {
+                const renderedNotification = renderNotificationText(notification, t);
+
+                return (
+                  <NotificationRow
+                    key={notification.uuid}
+                    notification={notification}
+                    renderedTitle={renderedNotification.title}
+                    renderedMessage={renderedNotification.message}
+                    onClickNotification={handleNotificationClick}
+                    unreadLabel={t("notifications:unread")}
+                    currentLanguage={i18n.language}
+                  />
+                );
+              })
             )}
           </div>
 

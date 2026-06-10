@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck, Clock3, BadgeCheck, MessageSquareHeart } from "lucide-react";
+import { Bell, Inbox, CheckCircle, XCircle, Ban, CheckCheck, ShieldAlert, ShieldCheck, Clock3, BadgeCheck, MessageCircle, MessageSquareHeart } from "lucide-react";
 import { useNotifications, useUnreadNotificationCount, useMarkNotificationAsRead, useMarkAllNotificationsAsRead } from "./useNotifications";
 import { formatNotificationTime, getNotificationColor, getNotificationTargetPath } from "./notificationHelpers";
+import { renderNotificationText } from "./renderNotificationText";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -26,6 +27,8 @@ function NotificationIcon({ type }: { type: NotificationType }) {
       return <Clock3 className={iconClass} />;
     case "TRADE_OFFER_COMPLETED":
       return <BadgeCheck className={iconClass} />;
+    case "TRADE_MESSAGE_RECEIVED":
+      return <MessageCircle className={iconClass} />;
     case "TRADE_REVIEW_RECEIVED":
       return <MessageSquareHeart className={iconClass} />;
     case "TRADE_OFFER_REJECTED":
@@ -139,67 +142,71 @@ export function NotificationsPage() {
             </div>
 
             <div className="divide-y divide-slate-200 dark:divide-slate-700">
-              {notifications.map((notification) => (
-                <button
-                  key={notification.uuid}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={cn(
-                    "flex w-full items-start gap-4 border-l-2 px-4 py-4 text-left transition-colors focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-700/60 sm:px-6",
-                    notification.isRead
-                      ? "border-l-transparent bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/50"
-                      : "border-l-indigo-500 bg-indigo-50/80 hover:bg-indigo-50 dark:bg-indigo-950/25 dark:hover:bg-indigo-950/35"
-                  )}
-                >
-                  <div
+              {notifications.map((notification) => {
+                const renderedNotification = renderNotificationText(notification, t);
+
+                return (
+                  <button
+                    key={notification.uuid}
+                    onClick={() => handleNotificationClick(notification)}
                     className={cn(
-                      "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border",
+                      "flex w-full items-start gap-4 border-l-2 px-4 py-4 text-left transition-colors focus:outline-none focus-visible:bg-slate-50 dark:focus-visible:bg-slate-700/60 sm:px-6",
                       notification.isRead
-                        ? "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/60"
-                        : "border-indigo-100 bg-white shadow-sm dark:border-indigo-900/60 dark:bg-slate-800"
+                        ? "border-l-transparent bg-white hover:bg-slate-50 dark:bg-slate-800 dark:hover:bg-slate-700/50"
+                        : "border-l-indigo-500 bg-indigo-50/80 hover:bg-indigo-50 dark:bg-indigo-950/25 dark:hover:bg-indigo-950/35"
                     )}
                   >
-                    <NotificationIcon type={notification.type} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p
-                        className={cn(
-                          "text-sm",
-                          notification.isRead
-                            ? "text-slate-700 dark:text-slate-300"
-                            : "font-semibold text-slate-900 dark:text-slate-100"
-                        )}
-                      >
-                        {notification.title}
-                      </p>
-
-                      {!notification.isRead && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600/10 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
-                          <span className="size-1.5 rounded-full bg-indigo-500" />
-                          {t("unread")}
-                        </span>
+                    <div
+                      className={cn(
+                        "mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-xl border",
+                        notification.isRead
+                          ? "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-700/60"
+                          : "border-indigo-100 bg-white shadow-sm dark:border-indigo-900/60 dark:bg-slate-800"
                       )}
+                    >
+                      <NotificationIcon type={notification.type} />
                     </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p
+                          className={cn(
+                            "text-sm",
+                            notification.isRead
+                              ? "text-slate-700 dark:text-slate-300"
+                              : "font-semibold text-slate-900 dark:text-slate-100"
+                          )}
+                        >
+                          {renderedNotification.title}
+                        </p>
 
-                    {notification.message && (
-                      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                        {notification.message}
-                      </p>
+                        {!notification.isRead && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-indigo-600/10 px-2 py-0.5 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
+                            <span className="size-1.5 rounded-full bg-indigo-500" />
+                            {t("unread")}
+                          </span>
+                        )}
+                      </div>
+
+                      {renderedNotification.message && (
+                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                          {renderedNotification.message}
+                        </p>
+                      )}
+
+                      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
+                        <span>{formatNotificationTime(notification.createdAt, i18n.language)}</span>
+                        <span className="text-slate-300 dark:text-slate-600">•</span>
+                        <span>{t("openDetails")}</span>
+                      </div>
+                    </div>
+                    {!notification.isRead && (
+                      <div className="shrink-0 mt-2">
+                        <span className="block size-2.5 rounded-full bg-indigo-500 shadow-[0_0_0_4px] shadow-indigo-500/15" />
+                      </div>
                     )}
-
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-slate-400 dark:text-slate-500">
-                      <span>{formatNotificationTime(notification.createdAt, i18n.language)}</span>
-                      <span className="text-slate-300 dark:text-slate-600">•</span>
-                      <span>{t("openDetails")}</span>
-                    </div>
-                  </div>
-                  {!notification.isRead && (
-                    <div className="shrink-0 mt-2">
-                      <span className="block size-2.5 rounded-full bg-indigo-500 shadow-[0_0_0_4px] shadow-indigo-500/15" />
-                    </div>
-                  )}
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
 
             {totalPages > 1 && (

@@ -7,7 +7,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -230,7 +232,7 @@ class TradeOfferServiceImplTest {
             // Verify receiver was notified
             verify(notificationService).createNotification(
                     eq(2L), eq(NotificationType.TRADE_OFFER_RECEIVED),
-                    any(String.class), any(String.class),
+                    anyMap(), isNull(), isNull(),
                     any(UUID.class), eq("TRADE_OFFER"));
         }
 
@@ -529,13 +531,13 @@ class TradeOfferServiceImplTest {
             // Verify sender was notified ACCEPTED
             verify(notificationService).createNotification(
                     eq(1L), eq(NotificationType.TRADE_OFFER_ACCEPTED),
-                    any(String.class), any(String.class),
+                    anyMap(), isNull(), isNull(),
                     any(UUID.class), eq("TRADE_OFFER"));
 
             // Verify competing offer sender was NOT notified (auto-reject without notification)
             verify(notificationService, never()).createNotification(
                     eq(3L), any(NotificationType.class),
-                    any(), any(), any(), any());
+                    anyMap(), any(), any(), any(), any());
         }
 
         @Test
@@ -589,7 +591,7 @@ class TradeOfferServiceImplTest {
 
             verify(notificationService).createNotification(
                     eq(2L), eq(NotificationType.TRADE_OFFER_COMPLETION_CONFIRMED),
-                    any(String.class), any(String.class), eq(offerUuid), eq("TRADE_OFFER"));
+                    anyMap(), isNull(), isNull(), eq(offerUuid), eq("TRADE_OFFER"));
         }
 
         @Test
@@ -619,7 +621,7 @@ class TradeOfferServiceImplTest {
 
             verify(notificationService).createNotification(
                     eq(1L), eq(NotificationType.TRADE_OFFER_COMPLETION_CONFIRMED),
-                    any(String.class), any(String.class), eq(offerUuid), eq("TRADE_OFFER"));
+                    anyMap(), isNull(), isNull(), eq(offerUuid), eq("TRADE_OFFER"));
         }
 
         @Test
@@ -650,7 +652,7 @@ class TradeOfferServiceImplTest {
 
             verify(notificationService, times(2)).createNotification(
                     any(Long.class), eq(NotificationType.TRADE_OFFER_COMPLETED),
-                    any(String.class), any(String.class), eq(offerUuid), eq("TRADE_OFFER"));
+                    anyMap(), isNull(), isNull(), eq(offerUuid), eq("TRADE_OFFER"));
         }
 
         @Test
@@ -754,7 +756,7 @@ class TradeOfferServiceImplTest {
             // Verify sender was notified REJECTED
             verify(notificationService).createNotification(
                     eq(1L), eq(NotificationType.TRADE_OFFER_REJECTED),
-                    any(String.class), any(String.class),
+                    anyMap(), isNull(), isNull(),
                     any(UUID.class), eq("TRADE_OFFER"));
         }
 
@@ -816,7 +818,7 @@ class TradeOfferServiceImplTest {
             // Verify receiver was notified CANCELLED
             verify(notificationService).createNotification(
                     eq(2L), eq(NotificationType.TRADE_OFFER_CANCELLED),
-                    any(String.class), any(String.class),
+                    anyMap(), isNull(), isNull(),
                     any(UUID.class), eq("TRADE_OFFER"));
         }
 

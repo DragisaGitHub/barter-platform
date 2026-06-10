@@ -2495,13 +2495,16 @@ export interface components {
             positivePercentage?: number | null;
         };
         /** @enum {string} */
-        NotificationType: "TRADE_OFFER_RECEIVED" | "TRADE_OFFER_ACCEPTED" | "TRADE_OFFER_COMPLETION_CONFIRMED" | "TRADE_OFFER_COMPLETED" | "TRADE_OFFER_REJECTED" | "TRADE_OFFER_CANCELLED" | "TRADE_REVIEW_RECEIVED" | "LISTING_REMOVED" | "LISTING_RESTORED";
+        NotificationType: "TRADE_OFFER_RECEIVED" | "TRADE_OFFER_ACCEPTED" | "TRADE_OFFER_COMPLETION_CONFIRMED" | "TRADE_OFFER_COMPLETED" | "TRADE_OFFER_REJECTED" | "TRADE_OFFER_CANCELLED" | "TRADE_REVIEW_RECEIVED" | "LISTING_REMOVED" | "LISTING_RESTORED" | "TRADE_MESSAGE_RECEIVED";
         NotificationResponse: {
             /** Format: uuid */
             uuid: string;
             type: components["schemas"]["NotificationType"];
             title: string;
             message?: string | null;
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
             /** Format: uuid */
             referenceUuid?: string | null;
             referenceType?: string | null;

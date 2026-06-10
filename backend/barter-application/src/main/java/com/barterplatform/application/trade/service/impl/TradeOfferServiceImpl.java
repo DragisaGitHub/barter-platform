@@ -1,5 +1,7 @@
 package com.barterplatform.application.trade.service.impl;
 
+import static com.barterplatform.application.notification.support.NotificationMetadataUtils.metadataOf;
+
 import com.barterplatform.api.model.CreateTradeOfferRequest;
 import com.barterplatform.api.model.ItemListingEntryResponse;
 import com.barterplatform.api.model.TradeOfferPagedResponse;
@@ -165,15 +167,18 @@ public class TradeOfferServiceImpl implements TradeOfferService {
 
         tradeOfferRepository.save(saved);
 
-        // Notify the receiver that a new trade offer was received
-        String senderItemSummary = senderItems.isEmpty()
-                ? ""
-                : " for \"" + senderItems.getFirst().getTitle() + "\"";
         notificationService.createNotification(
                 receiver.getId(),
                 NotificationType.TRADE_OFFER_RECEIVED,
-                "New trade offer from " + sender.getUsername(),
-                sender.getUsername() + " wants \"" + receiverItem.getTitle() + "\"" + senderItemSummary + ".",
+                metadataOf(
+                        "actorUsername", sender.getUsername(),
+                        "counterpartyUsername", receiver.getUsername(),
+                        "itemTitle", receiverItem.getTitle(),
+                        "offeredItemTitle", senderItems.isEmpty() ? null : senderItems.getFirst().getTitle(),
+                        "offeredItemCount", senderItems.size(),
+                        "tradeOfferUuid", saved.getUuid()),
+                null,
+                null,
                 saved.getUuid(),
                 "TRADE_OFFER");
 
@@ -309,8 +314,13 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         notificationService.createNotification(
                 sender.getId(),
                 NotificationType.TRADE_OFFER_ACCEPTED,
-                user.getUsername() + " accepted your trade offer",
-                user.getUsername() + " accepted your offer for \"" + receiverItem.getTitle() + "\".",
+                metadataOf(
+                        "actorUsername", user.getUsername(),
+                        "counterpartyUsername", sender.getUsername(),
+                        "itemTitle", receiverItem.getTitle(),
+                        "tradeOfferUuid", saved.getUuid()),
+                null,
+                null,
                 saved.getUuid(),
                 "TRADE_OFFER");
 
@@ -355,9 +365,13 @@ public class TradeOfferServiceImpl implements TradeOfferService {
             notificationService.createNotification(
                     counterparty.getId(),
                     NotificationType.TRADE_OFFER_COMPLETION_CONFIRMED,
-                    user.getUsername() + " confirmed trade completion",
-                    user.getUsername() + " confirmed completion for the trade involving \""
-                            + receiverItem.getTitle() + "\". Confirm once your side of the exchange is complete.",
+                    metadataOf(
+                            "actorUsername", user.getUsername(),
+                            "counterpartyUsername", counterparty.getUsername(),
+                            "itemTitle", receiverItem.getTitle(),
+                            "tradeOfferUuid", saved.getUuid()),
+                    null,
+                    null,
                     saved.getUuid(),
                     "TRADE_OFFER");
         }
@@ -391,8 +405,12 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         notificationService.createNotification(
                 sender.getId(),
                 NotificationType.TRADE_OFFER_REJECTED,
-                user.getUsername() + " rejected your trade offer",
-                user.getUsername() + " rejected your trade offer.",
+                metadataOf(
+                        "actorUsername", user.getUsername(),
+                        "counterpartyUsername", sender.getUsername(),
+                        "tradeOfferUuid", saved.getUuid()),
+                null,
+                null,
                 saved.getUuid(),
                 "TRADE_OFFER");
 
@@ -425,8 +443,12 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         notificationService.createNotification(
                 receiver.getId(),
                 NotificationType.TRADE_OFFER_CANCELLED,
-                user.getUsername() + " cancelled their trade offer",
-                user.getUsername() + " cancelled their trade offer.",
+                metadataOf(
+                        "actorUsername", user.getUsername(),
+                        "counterpartyUsername", receiver.getUsername(),
+                        "tradeOfferUuid", saved.getUuid()),
+                null,
+                null,
                 saved.getUuid(),
                 "TRADE_OFFER");
 
@@ -735,18 +757,24 @@ public class TradeOfferServiceImpl implements TradeOfferService {
         notificationService.createNotification(
                 sender.getId(),
                 NotificationType.TRADE_OFFER_COMPLETED,
-                "Trade completed with " + receiver.getUsername(),
-                "Your trade with " + receiver.getUsername() + " for \"" + receiverItem.getTitle()
-                        + "\" has been marked completed.",
+                metadataOf(
+                        "counterpartyUsername", receiver.getUsername(),
+                        "itemTitle", receiverItem.getTitle(),
+                        "tradeOfferUuid", offer.getUuid()),
+                null,
+                null,
                 offer.getUuid(),
                 "TRADE_OFFER");
 
         notificationService.createNotification(
                 receiver.getId(),
                 NotificationType.TRADE_OFFER_COMPLETED,
-                "Trade completed with " + sender.getUsername(),
-                "Your trade with " + sender.getUsername() + " for \"" + receiverItem.getTitle()
-                        + "\" has been marked completed.",
+                metadataOf(
+                        "counterpartyUsername", sender.getUsername(),
+                        "itemTitle", receiverItem.getTitle(),
+                        "tradeOfferUuid", offer.getUuid()),
+                null,
+                null,
                 offer.getUuid(),
                 "TRADE_OFFER");
     }

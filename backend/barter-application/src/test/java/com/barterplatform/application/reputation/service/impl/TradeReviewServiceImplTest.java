@@ -5,7 +5,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -87,6 +89,7 @@ class TradeReviewServiceImplTest {
         when(tradeOfferRepository.findByUuid(tradeOfferUuid)).thenReturn(Optional.of(offer));
         when(tradeReviewRepository.existsByTradeOfferIdAndReviewerUserId(10L, 1L)).thenReturn(false);
         when(userRepository.findById(2L)).thenReturn(Optional.of(reviewed));
+        when(itemRepository.findById(22L)).thenReturn(Optional.of(item(22L, "Vintage camera")));
         when(tradeReviewRepository.save(any(TradeReviewEntity.class))).thenAnswer(invocation -> {
             TradeReviewEntity entity = invocation.getArgument(0);
             entity.setId(100L);
@@ -109,8 +112,11 @@ class TradeReviewServiceImplTest {
         verify(notificationService).createNotification(
                 eq(2L),
                 eq(NotificationType.TRADE_REVIEW_RECEIVED),
-                any(String.class),
-                any(String.class),
+                argThat(metadata -> metadata != null
+                        && "alice".equals(metadata.get("actorUsername"))
+                        && tradeOfferUuid.toString().equals(metadata.get("tradeOfferUuid"))),
+                isNull(),
+                isNull(),
                 eq(tradeOfferUuid),
                 eq("TRADE_OFFER"));
     }
@@ -130,6 +136,7 @@ class TradeReviewServiceImplTest {
         when(tradeOfferRepository.findByUuid(tradeOfferUuid)).thenReturn(Optional.of(offer));
         when(tradeReviewRepository.existsByTradeOfferIdAndReviewerUserId(10L, 1L)).thenReturn(false);
         when(userRepository.findById(2L)).thenReturn(Optional.of(reviewed));
+        when(itemRepository.findById(22L)).thenReturn(Optional.of(item(22L, "Vintage camera")));
         when(tradeReviewRepository.save(any(TradeReviewEntity.class))).thenAnswer(invocation -> {
             TradeReviewEntity entity = invocation.getArgument(0);
             emulateJpaPrePersist(entity);

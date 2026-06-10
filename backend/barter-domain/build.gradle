@@ -5,6 +5,8 @@ plugins {
 dependencies {
     api project(':barter-common')
 
+    compileOnly 'org.hibernate.orm:hibernate-core'
+
     compileOnly 'org.projectlombok:lombok:1.18.36'
     annotationProcessor 'org.projectlombok:lombok:1.18.36'
 }

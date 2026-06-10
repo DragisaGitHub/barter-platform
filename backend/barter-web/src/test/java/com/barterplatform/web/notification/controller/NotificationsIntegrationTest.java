@@ -1,6 +1,8 @@
 package com.barterplatform.web.notification.controller;
 
 import com.barterplatform.BarterApplication;
+import com.barterplatform.domain.notification.entity.NotificationEntity;
+import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemTagRepository;
 import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
@@ -8,6 +10,7 @@ import com.barterplatform.infrastructure.identity.repository.RefreshTokenReposit
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRoleRepository;
 import com.barterplatform.infrastructure.notification.repository.NotificationRepository;
+import com.barterplatform.infrastructure.trade.repository.TradeOfferMessageRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferItemRepository;
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -75,6 +78,7 @@ class NotificationsIntegrationTest {
     @Autowired private ItemRepository itemRepository;
     @Autowired private ItemTagRepository itemTagRepository;
     @Autowired private TradeOfferRepository tradeOfferRepository;
+    @Autowired private TradeOfferMessageRepository tradeOfferMessageRepository;
     @Autowired private TradeOfferItemRepository tradeOfferItemRepository;
     @Autowired private NotificationRepository notificationRepository;
 
@@ -83,6 +87,7 @@ class NotificationsIntegrationTest {
         SecurityContextHolder.clearContext();
         // Delete notifications before users (FK constraint)
         notificationRepository.deleteAllInBatch();
+        tradeOfferMessageRepository.deleteAllInBatch();
         tradeOfferItemRepository.deleteAllInBatch();
         tradeOfferRepository.deleteAllInBatch();
         itemTagRepository.deleteAllInBatch();
@@ -394,6 +399,74 @@ class NotificationsIntegrationTest {
                         .header("Authorization", "Bearer " + aliceToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    void tradeMessageNotificationReturnsMetadata() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        String bobToken = registerActivateAndLogin("bob", "bob@test.com", "P@ssword456");
+
+        String aliceItemUuid = createActiveItem(aliceToken, "Alice's Book");
+        String bobItemUuid = createActiveItem(bobToken, "Bob's Gadget");
+
+        MvcResult offerResult = mockMvc.perform(apiPost("/trade-offers")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "receiverItemUuid": "%s",
+                                  "senderItemUuids": ["%s"],
+                                  "mode": "ITEM_EXCHANGE"
+                                }
+                                """.formatted(aliceItemUuid, bobItemUuid)))
+                .andExpect(status().isCreated())
+                .andReturn();
+
+        String offerUuid = extractField(offerResult);
+
+        mockMvc.perform(apiPost("/trade-offers/" + offerUuid + "/messages")
+                        .header("Authorization", "Bearer " + bobToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "content": "Can we meet tomorrow?"
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(apiGet("/notifications")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].type").value("TRADE_MESSAGE_RECEIVED"))
+                .andExpect(jsonPath("$.content[0].metadata.actorUsername").value("bob"))
+                .andExpect(jsonPath("$.content[0].metadata.tradeOfferUuid").value(offerUuid))
+                .andExpect(jsonPath("$.content[0].title").value("TRADE_MESSAGE_RECEIVED"))
+                .andExpect(jsonPath("$.content[0].message").doesNotExist());
+    }
+
+    @Test
+    void legacyNotificationWithoutMetadataStillReturnsStoredTitleAndMessage() throws Exception {
+        String aliceToken = registerActivateAndLogin("alice", "alice@test.com", "P@ssword123");
+        Long aliceUserId = userRepository.findByEmail("alice@test.com").orElseThrow().getId();
+
+        NotificationEntity notification = new NotificationEntity();
+        notification.setRecipientUserId(aliceUserId);
+        notification.setType(NotificationType.LISTING_REMOVED);
+        notification.setTitle("Legacy notification title");
+        notification.setMessage("Legacy notification body");
+        notificationRepository.save(notification);
+
+        MvcResult listResult = mockMvc.perform(apiGet("/notifications")
+                        .header("Authorization", "Bearer " + aliceToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content[0].title").value("Legacy notification title"))
+                .andExpect(jsonPath("$.content[0].message").value("Legacy notification body"))
+                .andReturn();
+
+        JsonNode listJson = objectMapper.readTree(listResult.getResponse().getContentAsString());
+        JsonNode firstNotification = listJson.get("content").get(0);
+        org.junit.jupiter.api.Assertions.assertTrue(
+                !firstNotification.has("metadata") || firstNotification.get("metadata").isNull());
     }
 
     // ══════════════════════════════════════════════════════════════

@@ -17,6 +17,10 @@ properties:
   message:
     type: string
     nullable: true
+  metadata:
+    type: object
+    additionalProperties: true
+    nullable: true
   referenceUuid:
     type: string
     format: uuid

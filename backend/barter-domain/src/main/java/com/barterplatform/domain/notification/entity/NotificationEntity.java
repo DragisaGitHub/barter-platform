@@ -8,9 +8,12 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
+import java.util.Map;
 import java.util.UUID;
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Getter
 @Setter
@@ -30,6 +33,10 @@ public class NotificationEntity extends AuditableEntity {
 
     @Column(name = "message", columnDefinition = "TEXT")
     private String message;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    private Map<String, Object> metadata;
 
     @Column(name = "reference_uuid")
     private UUID referenceUuid;
