@@ -150,6 +150,8 @@
     "placeholderClosed": "Ovaj razgovor je zatvoren. Poruke ostaju vidljive za referencu.",
     "safetyHelper": "Radi bezbednije razmene, zadrži komunikaciju unutar Barter Platform.",
     "sendMessage": "Pošalji poruku",
+    "sendError": "Slanje poruke nije uspelo. Tvoja poruka je sačuvana, pokušaj ponovo.",
+    "retrySend": "Pokušaj ponovo",
     "closedReadOnly": "Ova ponuda za razmenu je zatvorena, pa je razgovor samo za čitanje."
   },
   "reviews": {

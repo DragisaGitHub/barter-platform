@@ -82,6 +82,8 @@ export function TradeOfferMessagesPanel({
     const { t } = useTranslation("trade");
     const { user } = useAuth();
     const [content, setContent] = useState("");
+    const [sendError, setSendError] = useState(false);
+    const [failedContent, setFailedContent] = useState("");
     const [showNewMessages, setShowNewMessages] = useState(false);
     const [queuedMessageCount, setQueuedMessageCount] = useState(0);
     const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -203,8 +205,30 @@ export function TradeOfferMessagesPanel({
         try {
             await sendMessage.mutateAsync({ content: normalizedContent });
             setContent("");
+            setFailedContent("");
+            setSendError(false);
         } catch {
             shouldScrollOnNextMessageRef.current = false;
+            setFailedContent(normalizedContent);
+            setSendError(true);
+        }
+    };
+
+    const retryFailedMessage = async () => {
+        if (!failedContent || sendMessage.isPending || !isWritable) {
+            return;
+        }
+
+        shouldScrollOnNextMessageRef.current = true;
+
+        try {
+            await sendMessage.mutateAsync({ content: failedContent });
+            setContent("");
+            setFailedContent("");
+            setSendError(false);
+        } catch {
+            shouldScrollOnNextMessageRef.current = false;
+            setSendError(true);
         }
     };
 
@@ -294,7 +318,7 @@ export function TradeOfferMessagesPanel({
                             description={t("messages.loadErrorDescription")}
                         />
                     ) : messages.length === 0 ? (
-                        <div className="flex min-h-[260px] items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/80 px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-900/40">
+                        <div className="flex min-h-65 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white/80 px-6 py-10 text-center dark:border-slate-700 dark:bg-slate-900/40">
                             <EmptyState
                                 title={t("messages.emptyTitle")}
                                 description={t("messages.emptyDescription")}
@@ -364,7 +388,7 @@ export function TradeOfferMessagesPanel({
                                                         "opacity-90 ring-1 ring-indigo-200/80 dark:ring-indigo-900/70",
                                                 )}
                                             >
-                                                <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
+                                                <p className="whitespace-pre-wrap wrap-anywhere">
                                                     {message.content}
                                                 </p>
 
@@ -435,9 +459,26 @@ export function TradeOfferMessagesPanel({
                                     ? t("messages.placeholderOpen")
                                     : t("messages.placeholderClosed")
                             }
-                            className="block min-h-[96px] w-full resize-none border-0 bg-transparent px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:text-slate-400"
+                            className="block min-h-24 w-full resize-none border-0 bg-transparent px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none disabled:cursor-not-allowed disabled:text-slate-500 dark:text-slate-100 dark:placeholder:text-slate-500 dark:disabled:text-slate-400"
                         />
                     </div>
+
+                    {sendError && (
+                        <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-300">
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                                <span>{t("messages.sendError")}</span>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="secondary"
+                                    disabled={sendMessage.isPending || !isWritable}
+                                    onClick={retryFailedMessage}
+                                >
+                                    {t("messages.retrySend")}
+                                </Button>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
                         <div className="space-y-1">
