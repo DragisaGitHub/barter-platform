@@ -1,5 +1,7 @@
 package com.barterplatform.application.catalog.service.impl;
 
+import static com.barterplatform.application.notification.support.NotificationMetadataUtils.metadataOf;
+
 import com.barterplatform.api.model.AdminListingDetailResponse;
 import com.barterplatform.api.model.AdminRemoveListingRequest;
 import com.barterplatform.api.model.AdminRestoreListingRequest;
@@ -70,10 +72,14 @@ public class ListingModerationServiceImpl implements ListingModerationService {
         notificationService.createNotification(
                 item.getOwnerId(),
                 NotificationType.LISTING_REMOVED,
-                "Your listing was removed",
-                request.getUserMessage() != null && !request.getUserMessage().isBlank()
-                        ? request.getUserMessage()
-                        : "Your listing \"" + item.getTitle() + "\" was removed by an administrator.",
+                metadataOf(
+                        "listingTitle", item.getTitle(),
+                        "moderatorUsername", admin.getUsername(),
+                        "moderationReasonCode", request.getReasonCode() == null ? null : request.getReasonCode().name(),
+                        "userMessage", request.getUserMessage(),
+                        "listingUuid", item.getUuid()),
+                null,
+                null,
                 item.getUuid(),
                 "ITEM");
 
@@ -99,10 +105,14 @@ public class ListingModerationServiceImpl implements ListingModerationService {
         notificationService.createNotification(
                 item.getOwnerId(),
                 NotificationType.LISTING_RESTORED,
-                "Your listing was restored",
-                request.getUserMessage() != null && !request.getUserMessage().isBlank()
-                        ? request.getUserMessage()
-                        : "Your listing \"" + item.getTitle() + "\" was restored by an administrator.",
+                metadataOf(
+                        "listingTitle", item.getTitle(),
+                        "moderatorUsername", admin.getUsername(),
+                        "moderationReasonCode", request.getReasonCode() == null ? null : request.getReasonCode().name(),
+                        "userMessage", request.getUserMessage(),
+                        "listingUuid", item.getUuid()),
+                null,
+                null,
                 item.getUuid(),
                 "ITEM");
 

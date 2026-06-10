@@ -4,6 +4,7 @@ import com.barterplatform.api.model.NotificationPagedResponse;
 import com.barterplatform.api.model.NotificationResponse;
 import com.barterplatform.api.model.NotificationUnreadCountResponse;
 import com.barterplatform.domain.notification.enums.NotificationType;
+import java.util.Map;
 import java.util.UUID;
 
 public interface NotificationService {
@@ -14,14 +15,22 @@ public interface NotificationService {
      *
      * @param recipientUserId internal user ID of the recipient
      * @param type            notification type
-     * @param title           short human-readable title
-     * @param message         body text (may be null)
+     * @param metadata        structured language-neutral rendering data for the frontend
+     * @param title           legacy fallback title for pre-rendered notifications
+     * @param message         legacy fallback body text (may be null)
      * @param referenceUuid   UUID of the referenced entity (e.g. trade offer UUID)
      * @param referenceType   discriminator for the referenced entity (e.g. "TRADE_OFFER")
      */
     void createNotification(Long recipientUserId, NotificationType type,
+                            Map<String, Object> metadata,
                             String title, String message,
                             UUID referenceUuid, String referenceType);
+
+    default void createNotification(Long recipientUserId, NotificationType type,
+                                    String title, String message,
+                                    UUID referenceUuid, String referenceType) {
+        createNotification(recipientUserId, type, null, title, message, referenceUuid, referenceType);
+    }
 
     /**
      * List notifications for the current user, newest first by default.

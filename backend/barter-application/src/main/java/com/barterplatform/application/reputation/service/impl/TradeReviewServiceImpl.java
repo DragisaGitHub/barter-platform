@@ -1,5 +1,7 @@
 package com.barterplatform.application.reputation.service.impl;
 
+import static com.barterplatform.application.notification.support.NotificationMetadataUtils.metadataOf;
+
 import com.barterplatform.api.model.CreateTradeReviewRequest;
 import com.barterplatform.api.model.TradeReviewResponse;
 import com.barterplatform.api.model.UserTradeReviewPagedResponse;
@@ -136,6 +138,8 @@ public class TradeReviewServiceImpl implements TradeReviewService {
 
         UserEntity reviewedUser = userRepository.findById(reviewedUserId)
                 .orElseThrow(() -> notFound("Reviewed user was not found."));
+        ItemEntity receiverItem = itemRepository.findById(tradeOffer.getReceiverItemId())
+                .orElse(null);
 
         TradeReviewEntity saved = tradeReviewRepository.save(TradeReviewEntity.create(
                 tradeOffer.getId(),
@@ -148,8 +152,14 @@ public class TradeReviewServiceImpl implements TradeReviewService {
         notificationService.createNotification(
                 reviewedUser.getId(),
                 NotificationType.TRADE_REVIEW_RECEIVED,
-                reviewer.getUsername() + " reviewed your completed trade",
-                reviewer.getUsername() + " left a review for your completed trade.",
+                metadataOf(
+                        "actorUsername", reviewer.getUsername(),
+                        "counterpartyUsername", reviewedUser.getUsername(),
+                        "itemTitle", receiverItem == null ? null : receiverItem.getTitle(),
+                        "tradeOfferUuid", tradeOffer.getUuid(),
+                        "reviewUuid", saved.getUuid()),
+                null,
+                null,
                 tradeOffer.getUuid(),
                 "TRADE_OFFER");
 

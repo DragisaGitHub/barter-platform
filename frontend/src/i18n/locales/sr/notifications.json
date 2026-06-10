@@ -23,11 +23,77 @@
   "notificationType.TRADE_OFFER_ACCEPTED": "Ponuda prihvaćena",
   "notificationType.TRADE_OFFER_COMPLETION_CONFIRMED": "Potvrđen završetak razmene",
   "notificationType.TRADE_OFFER_COMPLETED": "Razmena završena",
+  "notificationType.TRADE_MESSAGE_RECEIVED": "Primljena poruka o razmeni",
   "notificationType.TRADE_REVIEW_RECEIVED": "Primljena recenzija",
   "notificationType.TRADE_OFFER_REJECTED": "Ponuda odbijena",
   "notificationType.TRADE_OFFER_CANCELLED": "Ponuda otkazana",
   "notificationType.LISTING_REMOVED": "Oglas uklonjen",
   "notificationType.LISTING_RESTORED": "Oglas vraćen",
+  "render": {
+    "TRADE_OFFER_RECEIVED": {
+      "title": "Nova ponuda od korisnika {{actorUsername}}",
+      "titleFallback": "Nova ponuda za razmenu",
+      "message": "Korisnik {{actorUsername}} želi \"{{itemTitle}}\".",
+      "messageWithSingleItem": "Korisnik {{actorUsername}} želi \"{{itemTitle}}\" i nudi \"{{offeredItemTitle}}\".",
+      "messageWithMultipleItems_one": "Korisnik {{actorUsername}} želi \"{{itemTitle}}\" i nudi {{count}} predmet.",
+      "messageWithMultipleItems_other": "Korisnik {{actorUsername}} želi \"{{itemTitle}}\" i nudi {{count}} predmeta.",
+      "messageFallback": "Primio/la si novu ponudu za razmenu."
+    },
+    "TRADE_OFFER_ACCEPTED": {
+      "title": "Korisnik {{actorUsername}} je prihvatio tvoju ponudu",
+      "titleFallback": "Ponuda za razmenu je prihvaćena",
+      "message": "Korisnik {{actorUsername}} je prihvatio tvoju ponudu za \"{{itemTitle}}\".",
+      "messageFallback": "Tvoja ponuda za razmenu je prihvaćena."
+    },
+    "TRADE_OFFER_COMPLETION_CONFIRMED": {
+      "title": "Korisnik {{actorUsername}} je potvrdio završetak razmene",
+      "titleFallback": "Potvrđen je završetak razmene",
+      "message": "Korisnik {{actorUsername}} je potvrdio završetak razmene za \"{{itemTitle}}\". Potvrdi i ti kada završiš svoj deo razmene.",
+      "messageFallback": "Druga strana je potvrdila svoj deo razmene."
+    },
+    "TRADE_OFFER_COMPLETED": {
+      "title": "Razmena je završena sa korisnikom {{counterpartyUsername}}",
+      "titleFallback": "Razmena je završena",
+      "message": "Tvoja razmena sa korisnikom {{counterpartyUsername}} za \"{{itemTitle}}\" je označena kao završena.",
+      "messageFallback": "Tvoja razmena je označena kao završena."
+    },
+    "TRADE_OFFER_REJECTED": {
+      "title": "Korisnik {{actorUsername}} je odbio tvoju ponudu",
+      "titleFallback": "Ponuda za razmenu je odbijena",
+      "message": "Korisnik {{actorUsername}} je odbio tvoju ponudu za razmenu.",
+      "messageFallback": "Tvoja ponuda za razmenu je odbijena."
+    },
+    "TRADE_OFFER_CANCELLED": {
+      "title": "Korisnik {{actorUsername}} je otkazao svoju ponudu",
+      "titleFallback": "Ponuda za razmenu je otkazana",
+      "message": "Korisnik {{actorUsername}} je otkazao svoju ponudu za razmenu.",
+      "messageFallback": "Jedna ponuda za razmenu je otkazana."
+    },
+    "TRADE_MESSAGE_RECEIVED": {
+      "title": "Nova poruka od korisnika {{actorUsername}}",
+      "titleFallback": "Nova poruka o razmeni",
+      "message": "Korisnik {{actorUsername}} ti je poslao novu poruku u vezi sa ponudom za razmenu.",
+      "messageWithItem": "Korisnik {{actorUsername}} ti je poslao novu poruku u vezi sa oglasom \"{{itemTitle}}\".",
+      "messageFallback": "Primio/la si novu poruku o razmeni."
+    },
+    "TRADE_REVIEW_RECEIVED": {
+      "title": "Korisnik {{actorUsername}} je ocenio tvoju završenu razmenu",
+      "titleFallback": "Primljena je recenzija razmene",
+      "message": "Korisnik {{actorUsername}} je ostavio recenziju za tvoju završenu razmenu.",
+      "messageWithItem": "Korisnik {{actorUsername}} je ostavio recenziju za tvoju završenu razmenu koja uključuje \"{{itemTitle}}\".",
+      "messageFallback": "Primio/la si novu recenziju razmene."
+    },
+    "LISTING_REMOVED": {
+      "title": "Tvoj oglas je uklonjen",
+      "message": "Tvoj oglas \"{{listingTitle}}\" je uklonio administrator.",
+      "messageFallback": "Administrator je uklonio jedan od tvojih oglasa."
+    },
+    "LISTING_RESTORED": {
+      "title": "Tvoj oglas je vraćen",
+      "message": "Tvoj oglas \"{{listingTitle}}\" je administrator vratio.",
+      "messageFallback": "Administrator je vratio jedan od tvojih oglasa."
+    }
+  },
   "markReadError": "Označavanje obaveštenja kao pročitanog nije uspelo.",
   "markAllReadError": "Označavanje svih obaveštenja nije uspelo."
 }

@@ -1,5 +1,7 @@
 package com.barterplatform.application.trade.service.impl;
 
+import static com.barterplatform.application.notification.support.NotificationMetadataUtils.metadataOf;
+
 import com.barterplatform.api.model.SendTradeOfferMessageRequest;
 import com.barterplatform.api.model.TradeOfferMessageResponse;
 import com.barterplatform.application.notification.service.NotificationService;
@@ -92,8 +94,12 @@ public class TradeOfferMessageServiceImpl implements TradeOfferMessageService {
         notificationService.createNotification(
                 recipient.getId(),
                 NotificationType.TRADE_MESSAGE_RECEIVED,
-                "New message from " + currentUser.getUsername(),
-                currentUser.getUsername() + " sent you a new message about a trade offer.",
+                metadataOf(
+                        "actorUsername", currentUser.getUsername(),
+                        "counterpartyUsername", recipient.getUsername(),
+                        "tradeOfferUuid", tradeOffer.getUuid()),
+                null,
+                null,
                 tradeOffer.getUuid(),
                 "TRADE_OFFER");
 

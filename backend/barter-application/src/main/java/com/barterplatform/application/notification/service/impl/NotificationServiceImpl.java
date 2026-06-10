@@ -14,13 +14,16 @@ import com.barterplatform.domain.notification.entity.NotificationEntity;
 import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import com.barterplatform.infrastructure.notification.repository.NotificationRepository;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 @Service
 @Transactional
@@ -51,13 +54,15 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void createNotification(Long recipientUserId, NotificationType type,
+                                   Map<String, Object> metadata,
                                    String title, String message,
                                    UUID referenceUuid, String referenceType) {
         NotificationEntity notification = new NotificationEntity();
         notification.setRecipientUserId(recipientUserId);
         notification.setType(type);
-        notification.setTitle(title);
-        notification.setMessage(message);
+        notification.setMetadata(normalizeMetadata(metadata));
+        notification.setTitle(StringUtils.hasText(title) ? title : type.name());
+        notification.setMessage(StringUtils.hasText(message) ? message : null);
         notification.setReferenceUuid(referenceUuid);
         notification.setReferenceType(referenceType);
         notificationRepository.save(notification);
@@ -129,6 +134,13 @@ public class NotificationServiceImpl implements NotificationService {
                         HttpStatus.NOT_FOUND,
                         ErrorCode.NOT_FOUND,
                         "User with uuid '%s' was not found.".formatted(userUuid)));
+    }
+
+    private Map<String, Object> normalizeMetadata(Map<String, Object> metadata) {
+        if (metadata == null || metadata.isEmpty()) {
+            return null;
+        }
+        return new LinkedHashMap<>(metadata);
     }
 }
 
