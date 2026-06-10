@@ -2,6 +2,8 @@ package com.barterplatform.application.trade.service.impl;
 
 import com.barterplatform.api.model.SendTradeOfferMessageRequest;
 import com.barterplatform.api.model.TradeOfferMessageResponse;
+import com.barterplatform.application.notification.service.NotificationService;
+import com.barterplatform.domain.notification.enums.NotificationType;
 import com.barterplatform.application.trade.mapper.TradeOfferMessageMapper;
 import com.barterplatform.application.trade.service.TradeOfferMessageService;
 import com.barterplatform.common.exception.ApiException;
@@ -15,10 +17,13 @@ import com.barterplatform.infrastructure.trade.repository.TradeOfferMessageRepos
 import com.barterplatform.infrastructure.trade.repository.TradeOfferRepository;
 import java.util.List;
 import java.util.UUID;
+
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@RequiredArgsConstructor
 @Service
 @Transactional
 public class TradeOfferMessageServiceImpl implements TradeOfferMessageService {
@@ -27,17 +32,7 @@ public class TradeOfferMessageServiceImpl implements TradeOfferMessageService {
     private final TradeOfferMessageRepository tradeOfferMessageRepository;
     private final UserRepository userRepository;
     private final TradeOfferMessageMapper tradeOfferMessageMapper;
-
-    public TradeOfferMessageServiceImpl(
-            TradeOfferRepository tradeOfferRepository,
-            TradeOfferMessageRepository tradeOfferMessageRepository,
-            UserRepository userRepository,
-            TradeOfferMessageMapper tradeOfferMessageMapper) {
-        this.tradeOfferRepository = tradeOfferRepository;
-        this.tradeOfferMessageRepository = tradeOfferMessageRepository;
-        this.userRepository = userRepository;
-        this.tradeOfferMessageMapper = tradeOfferMessageMapper;
-    }
+    private final NotificationService notificationService;
 
     @Override
     public List<TradeOfferMessageResponse> listMessages(UUID currentUserUuid, UUID tradeOfferUuid) {
@@ -93,6 +88,14 @@ public class TradeOfferMessageServiceImpl implements TradeOfferMessageService {
         message.setContent(content);
 
         TradeOfferMessageEntity saved = tradeOfferMessageRepository.save(message);
+
+        notificationService.createNotification(
+                recipient.getId(),
+                NotificationType.TRADE_MESSAGE_RECEIVED,
+                "New message from " + currentUser.getUsername(),
+                currentUser.getUsername() + " sent you a new message about a trade offer.",
+                tradeOffer.getUuid(),
+                "TRADE_OFFER");
 
         return tradeOfferMessageMapper.toResponse(
                 saved,
