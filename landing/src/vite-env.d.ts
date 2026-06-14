@@ -8,10 +8,3 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
-
-// Extend Window for gtag / dataLayer
-interface Window {
-  dataLayer: unknown[];
-  gtag: (...args: unknown[]) => void;
-}
-
