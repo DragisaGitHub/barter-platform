@@ -1,5 +1,6 @@
 import { ArrowRight, Bug, Lightbulb, MessageCircle } from "lucide-react";
 import { DEMO_URL } from "@/config/demo";
+import { trackCtaClick } from "@/lib/analytics";
 
 const betaPerks = [
   {
@@ -86,6 +87,7 @@ export function BetaSection() {
             href={DEMO_URL}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackCtaClick('beta_section_udji_beta')}
             className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl font-semibold text-base transition-all duration-150 hover:opacity-95 active:scale-95"
             style={{
               background: "white",
