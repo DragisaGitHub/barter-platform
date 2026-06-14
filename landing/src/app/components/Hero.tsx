@@ -1,5 +1,6 @@
 import { ArrowRight, ChevronDown, Tag, RefreshCw, MessageCircle, Check } from "lucide-react";
 import { DEMO_URL } from "@/config/demo";
+import { trackCtaClick } from "@/lib/analytics";
 
 const sampleItems = [
   { emoji: "🎸", name: "Električna gitara", category: "Muzika", user: "marko_ns" },
@@ -173,6 +174,7 @@ export function Hero() {
                 href={DEMO_URL}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => trackCtaClick('hero_isprobaj_beta')}
                 className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white transition-all duration-150 hover:opacity-90 active:scale-95"
                 style={{ background: "var(--primary)", boxShadow: "0 4px 14px rgba(26,127,90,0.3)" }}
               >

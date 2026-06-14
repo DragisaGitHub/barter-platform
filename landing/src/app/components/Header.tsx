@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
 import { DEMO_URL } from "@/config/demo";
+import { trackCtaClick } from "@/lib/analytics";
 
 const navLinks = [
   { label: "Kako funkcioniše", href: "#kako-funkcionise" },
@@ -59,6 +60,7 @@ export function Header() {
             href={DEMO_URL}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={() => trackCtaClick('header_isprobaj_beta')}
             className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-white transition-all duration-150 hover:opacity-90 active:scale-95"
             style={{ background: "var(--primary)" }}
           >
@@ -101,7 +103,7 @@ export function Header() {
             rel="noopener noreferrer"
             className="block w-full text-center px-4 py-2.5 rounded-xl text-sm text-white"
             style={{ background: "var(--primary)" }}
-            onClick={() => setOpen(false)}
+            onClick={() => { trackCtaClick('header_mobile_isprobaj_beta'); setOpen(false); }}
           >
             Isprobaj javnu beta
           </a>

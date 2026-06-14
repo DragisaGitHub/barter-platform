@@ -3,6 +3,9 @@
 FROM node:22-alpine AS build
 WORKDIR /app
 
+ARG VITE_GA_MEASUREMENT_ID
+ENV VITE_GA_MEASUREMENT_ID=$VITE_GA_MEASUREMENT_ID
+
 RUN corepack enable && corepack prepare yarn@1.22.22 --activate
 
 COPY landing/package.json landing/yarn.lock ./
