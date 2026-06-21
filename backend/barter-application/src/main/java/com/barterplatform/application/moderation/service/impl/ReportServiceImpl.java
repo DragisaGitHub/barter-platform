@@ -85,7 +85,10 @@ public class ReportServiceImpl implements ReportService {
             String sort,
             com.barterplatform.api.model.ReportStatus status,
             com.barterplatform.api.model.ReportTargetType targetType,
-            com.barterplatform.api.model.ReportReasonCode reasonCode) {
+            com.barterplatform.api.model.ReportReasonCode reasonCode,
+            UUID assignedModeratorUuid,
+            Boolean unassignedOnly,
+            Boolean staleOnly) {
         PageRequestFactory.ResolvedPageRequest pageRequest = pageRequestFactory.create(
                 page,
                 size,
@@ -93,10 +96,15 @@ public class ReportServiceImpl implements ReportService {
                 DEFAULT_SORT_FIELD,
                 ALLOWED_SORT_FIELDS);
 
+        Long assignedModeratorUserId = resolveModeratorUserId(assignedModeratorUuid);
+
         Specification<ReportEntity> specification = buildSpecification(
                 reportMapper.map(status),
                 reportMapper.map(targetType),
-                reportMapper.map(reasonCode));
+                reportMapper.map(reasonCode),
+                assignedModeratorUserId,
+                unassignedOnly,
+                staleOnly);
 
         Page<ReportEntity> reportPage = reportRepository.findAll(specification, pageRequest.pageable());
         Map<Long, UserEntity> usersById = loadUsersById(reportPage.getContent());
@@ -297,7 +305,10 @@ public class ReportServiceImpl implements ReportService {
     private Specification<ReportEntity> buildSpecification(
             ReportStatus status,
             ReportTargetType targetType,
-            ReportReasonCode reasonCode) {
+            ReportReasonCode reasonCode,
+            Long assignedModeratorUserId,
+            Boolean unassignedOnly,
+            Boolean staleOnly) {
         List<Specification<ReportEntity>> specifications = new ArrayList<>();
         if (status != null) {
             specifications.add(ReportSpecifications.statusEquals(status));
@@ -308,7 +319,26 @@ public class ReportServiceImpl implements ReportService {
         if (reasonCode != null) {
             specifications.add(ReportSpecifications.reasonCodeEquals(reasonCode));
         }
+        if (assignedModeratorUserId != null) {
+            specifications.add(ReportSpecifications.assignedToModerator(assignedModeratorUserId));
+        }
+        if (Boolean.TRUE.equals(unassignedOnly)) {
+            specifications.add(ReportSpecifications.unassigned());
+        }
+        if (Boolean.TRUE.equals(staleOnly)) {
+            OffsetDateTime staleBefore = OffsetDateTime.now().minusHours(STALE_OPEN_THRESHOLD_HOURS);
+            specifications.add(ReportSpecifications.staleBefore(staleBefore));
+        }
         return specifications.isEmpty() ? Specification.unrestricted() : Specification.allOf(specifications);
+    }
+
+    private Long resolveModeratorUserId(UUID moderatorUuid) {
+        if (moderatorUuid == null) {
+            return null;
+        }
+        return userRepository.findByUuid(moderatorUuid)
+                .map(UserEntity::getId)
+                .orElse(null);
     }
 
     private Map<Long, UserEntity> loadUsersById(List<ReportEntity> reports) {

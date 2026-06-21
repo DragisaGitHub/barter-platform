@@ -4,6 +4,7 @@ import com.barterplatform.domain.moderation.report.entity.ReportEntity;
 import com.barterplatform.domain.moderation.report.enums.ReportReasonCode;
 import com.barterplatform.domain.moderation.report.enums.ReportStatus;
 import com.barterplatform.domain.moderation.report.enums.ReportTargetType;
+import java.time.OffsetDateTime;
 import org.springframework.data.jpa.domain.Specification;
 
 final class ReportSpecifications {
@@ -21,6 +22,20 @@ final class ReportSpecifications {
 
     static Specification<ReportEntity> reasonCodeEquals(ReportReasonCode reasonCode) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("reasonCode"), reasonCode);
+    }
+
+    static Specification<ReportEntity> assignedToModerator(Long moderatorUserId) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("assignedModeratorUserId"), moderatorUserId);
+    }
+
+    static Specification<ReportEntity> unassigned() {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.isNull(root.get("assignedModeratorUserId"));
+    }
+
+    static Specification<ReportEntity> staleBefore(OffsetDateTime threshold) {
+        return (root, query, criteriaBuilder) -> criteriaBuilder.and(
+                criteriaBuilder.equal(root.get("status"), ReportStatus.OPEN),
+                criteriaBuilder.lessThan(root.get("createdAt"), threshold));
     }
 }
 

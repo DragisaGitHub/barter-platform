@@ -22,7 +22,10 @@ public interface ReportService {
             String sort,
             ReportStatus status,
             ReportTargetType targetType,
-            ReportReasonCode reasonCode);
+            ReportReasonCode reasonCode,
+            UUID assignedModeratorUuid,
+            Boolean unassignedOnly,
+            Boolean staleOnly);
 
     AdminReportQueueSummaryResponse getQueueSummary();
 
