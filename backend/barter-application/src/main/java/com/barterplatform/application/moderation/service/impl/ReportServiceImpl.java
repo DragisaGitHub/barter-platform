@@ -338,7 +338,7 @@ public class ReportServiceImpl implements ReportService {
         }
         return userRepository.findByUuid(moderatorUuid)
                 .map(UserEntity::getId)
-                .orElse(null);
+                .orElseThrow(() -> badRequest("Moderator with uuid '%s' was not found.".formatted(moderatorUuid)));
     }
 
     private Map<Long, UserEntity> loadUsersById(List<ReportEntity> reports) {
