@@ -17,6 +17,9 @@ export interface ListAdminReportsParams {
   status?: ReportStatus;
   targetType?: ReportTargetType;
   reasonCode?: ReportReasonCode;
+  assignedModeratorUuid?: string;
+  unassignedOnly?: boolean;
+  staleOnly?: boolean;
 }
 
 export async function getAdminReportQueueSummary(): Promise<AdminReportQueueSummaryResponse> {
