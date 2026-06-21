@@ -13,4 +13,6 @@ public interface TradeOfferMessageService {
             UUID currentUserUuid,
             UUID tradeOfferUuid,
             SendTradeOfferMessageRequest request);
+
+    long getUnreadMessageCount(UUID currentUserUuid);
 }

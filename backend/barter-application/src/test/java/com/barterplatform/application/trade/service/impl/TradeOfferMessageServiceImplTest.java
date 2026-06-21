@@ -136,5 +136,51 @@ class TradeOfferMessageServiceImplTest {
         assertEquals(409, ex.getStatus().value());
         assertEquals("Messages can only be sent while the trade offer is pending or awaiting completion.", ex.getMessage());
     }
+
+    // ── getUnreadMessageCount tests ──────────────────────────────
+
+    @Test
+    @DisplayName("no unread messages returns 0")
+    void unreadCountReturnsZeroWhenNoUnreadMessages() {
+        UUID userUuid = UUID.randomUUID();
+        UserEntity currentUser = user(1L, userUuid, "alice");
+
+        when(userRepository.findByUuid(userUuid)).thenReturn(Optional.of(currentUser));
+        when(tradeOfferMessageRepository.countByRecipientUserIdAndReadFalse(1L)).thenReturn(0L);
+
+        long count = service.getUnreadMessageCount(userUuid);
+
+        assertEquals(0, count);
+    }
+
+    @Test
+    @DisplayName("multiple unread messages return correct count")
+    void unreadCountReturnsCorrectCount() {
+        UUID userUuid = UUID.randomUUID();
+        UserEntity currentUser = user(1L, userUuid, "alice");
+
+        when(userRepository.findByUuid(userUuid)).thenReturn(Optional.of(currentUser));
+        when(tradeOfferMessageRepository.countByRecipientUserIdAndReadFalse(1L)).thenReturn(5L);
+
+        long count = service.getUnreadMessageCount(userUuid);
+
+        assertEquals(5, count);
+    }
+
+    @Test
+    @DisplayName("sent unread messages are not counted - only recipient messages count")
+    void unreadCountOnlyCountsRecipientMessages() {
+        UUID userUuid = UUID.randomUUID();
+        UserEntity currentUser = user(1L, userUuid, "alice");
+
+        when(userRepository.findByUuid(userUuid)).thenReturn(Optional.of(currentUser));
+        // Repository only counts messages where recipientUserId matches, not sender
+        when(tradeOfferMessageRepository.countByRecipientUserIdAndReadFalse(1L)).thenReturn(3L);
+
+        long count = service.getUnreadMessageCount(userUuid);
+
+        assertEquals(3, count);
+        verify(tradeOfferMessageRepository).countByRecipientUserIdAndReadFalse(1L);
+    }
 }
 

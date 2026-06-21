@@ -110,6 +110,13 @@ public class TradeOfferMessageServiceImpl implements TradeOfferMessageService {
                 recipient);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public long getUnreadMessageCount(UUID currentUserUuid) {
+        UserEntity currentUser = resolveUser(currentUserUuid);
+        return tradeOfferMessageRepository.countByRecipientUserIdAndReadFalse(currentUser.getId());
+    }
+
     // ── Private helpers ──────────────────────────────────────────
 
     private UserEntity resolveUser(UUID userUuid) {

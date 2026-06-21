@@ -184,6 +184,8 @@ paths:
     $ref: './paths/trade-offers.yaml#/reviews'
   /reviews:
     $ref: './paths/reviews.yaml#/list'
+  /trade-offers/messages/unread-count:
+    $ref: './paths/trade-offer-messages-unread-count.yaml'
   /trade-offers/{tradeOfferUuid}/messages:
     $ref: './paths/trade-offer-messages.yaml'
   /notifications:
@@ -409,6 +411,8 @@ components:
       $ref: './components/schemas/trade/TradeOfferPagedResponse.yaml'
     TradeOfferMessageResponse:
       $ref: './components/schemas/trade/TradeOfferMessageResponse.yaml'
+    TradeOfferMessageUnreadCountResponse:
+      $ref: './components/schemas/trade/TradeOfferMessageUnreadCountResponse.yaml'
     TradeReviewRating:
       $ref: './components/schemas/reputation/TradeReviewRating.yaml'
     TradeReviewNegativeReason:

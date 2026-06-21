@@ -339,6 +339,42 @@ class TradeOffersControllerMvcTest {
         verify(tradeOfferMessageService).sendMessage(eq(USER_UUID), eq(offerUuid), any(SendTradeOfferMessageRequest.class));
     }
 
+    // ── getUnreadTradeOfferMessageCount ─────────────────────────────
+
+    @Test
+    void getUnreadMessageCountUnauthenticatedShouldFail() throws Exception {
+        mockMvc.perform(apiGet("/trade-offers/messages/unread-count"))
+                .andExpect(status().is5xxServerError());
+
+        verifyNoInteractions(tradeOfferMessageService);
+    }
+
+    @Test
+    void getUnreadMessageCountReturnsZero() throws Exception {
+        setAuthenticatedUser();
+
+        when(tradeOfferMessageService.getUnreadMessageCount(USER_UUID)).thenReturn(0L);
+
+        mockMvc.perform(apiGet("/trade-offers/messages/unread-count"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(0));
+
+        verify(tradeOfferMessageService).getUnreadMessageCount(USER_UUID);
+    }
+
+    @Test
+    void getUnreadMessageCountReturnsCorrectCount() throws Exception {
+        setAuthenticatedUser();
+
+        when(tradeOfferMessageService.getUnreadMessageCount(USER_UUID)).thenReturn(7L);
+
+        mockMvc.perform(apiGet("/trade-offers/messages/unread-count"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(7));
+
+        verify(tradeOfferMessageService).getUnreadMessageCount(USER_UUID);
+    }
+
     // ── Helpers ──────────────────────────────────────────────────
 
     private void setAuthenticatedUser() {

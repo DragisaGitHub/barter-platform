@@ -1,0 +1,17 @@
+get:
+  tags:
+    - TradeOffers
+  operationId: getUnreadTradeOfferMessageCount
+  summary: Get unread trade message count for the authenticated user
+  security:
+    - bearerJwt: []
+  responses:
+    '200':
+      description: Unread message count returned successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/TradeOfferMessageUnreadCountResponse'
+    '401':
+      $ref: '../components/responses/Unauthorized.yaml'
+
