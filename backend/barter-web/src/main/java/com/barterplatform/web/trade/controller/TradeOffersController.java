@@ -117,6 +117,14 @@ public class TradeOffersController implements TradeOffersApi {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @Override
+    public ResponseEntity<TradeOfferMessageUnreadCountResponse> getUnreadTradeOfferMessageCount() {
+        UUID currentUserUuid = currentUserUuid();
+        long count = tradeOfferMessageService.getUnreadMessageCount(currentUserUuid);
+        TradeOfferMessageUnreadCountResponse response = new TradeOfferMessageUnreadCountResponse().count(count);
+        return ResponseEntity.ok(response);
+    }
+
     // ── Private helpers ──────────────────────────────────────────
 
     private UUID currentUserUuid() {
