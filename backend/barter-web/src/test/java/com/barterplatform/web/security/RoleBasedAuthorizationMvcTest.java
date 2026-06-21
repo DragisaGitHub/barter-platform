@@ -274,7 +274,7 @@ class RoleBasedAuthorizationMvcTest {
         @Bean
         ReportService reportService() {
             ReportService service = mock(ReportService.class);
-            when(service.listReports(any(), any(), any(), any(), any(), any())).thenReturn(
+            when(service.listReports(any(), any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(
                     new ReportPagedResponse()
                             .content(List.of())
                             .page(0).size(20).totalElements(0L).totalPages(0)

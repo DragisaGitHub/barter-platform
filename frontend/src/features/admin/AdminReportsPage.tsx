@@ -179,6 +179,9 @@ export function AdminReportsPage() {
   const [status, setStatus] = useState<ReportStatus | "">("");
   const [targetType, setTargetType] = useState<ReportTargetType | "">("");
   const [reasonCode, setReasonCode] = useState<ReportReasonCode | "">("");
+  const [assignedModeratorUuid, setAssignedModeratorUuid] = useState("");
+  const [unassignedOnly, setUnassignedOnly] = useState(false);
+  const [staleOnly, setStaleOnly] = useState(false);
   const [selectedReportUuid, setSelectedReportUuid] = useState<string>("");
   const [statusDraft, setStatusDraft] = useState<ReportStatus>("OPEN");
   const [resolutionNoteDraft, setResolutionNoteDraft] = useState("");
@@ -193,8 +196,11 @@ export function AdminReportsPage() {
       status: status || undefined,
       targetType: targetType || undefined,
       reasonCode: reasonCode || undefined,
+      assignedModeratorUuid: assignedModeratorUuid || undefined,
+      unassignedOnly: unassignedOnly || undefined,
+      staleOnly: staleOnly || undefined,
     }),
-    [page, pageSize, sort, status, targetType, reasonCode],
+    [page, pageSize, sort, status, targetType, reasonCode, assignedModeratorUuid, unassignedOnly, staleOnly],
   );
 
   const summaryQuery = useAdminReportQueueSummary();
@@ -214,7 +220,7 @@ export function AdminReportsPage() {
   const totalReports = data?.totalElements ?? 0;
   const rangeStart = totalReports === 0 ? 0 : page * pageSize + 1;
   const rangeEnd = totalReports === 0 ? 0 : rangeStart + reports.length - 1;
-  const hasFilters = !!status || !!targetType || !!reasonCode;
+  const hasFilters = !!status || !!targetType || !!reasonCode || !!assignedModeratorUuid || unassignedOnly || staleOnly;
   const staleThresholdHours = summaryQuery.data?.staleThresholdHours ?? 48;
   const currentStatusOptions = selectedReport ? allowedStatusOptions(selectedReport.status) : REPORT_STATUS_OPTIONS;
   const isClosedSelectedReport = !!selectedReport && isTerminalReportStatus(selectedReport.status);
@@ -256,7 +262,7 @@ export function AdminReportsPage() {
 
   useEffect(() => {
     setPage(0);
-  }, [status, targetType, reasonCode]);
+  }, [status, targetType, reasonCode, assignedModeratorUuid, unassignedOnly, staleOnly]);
 
   useEffect(() => {
     if (reports.length === 0) {
@@ -286,6 +292,9 @@ export function AdminReportsPage() {
     setStatus("");
     setTargetType("");
     setReasonCode("");
+    setAssignedModeratorUuid("");
+    setUnassignedOnly(false);
+    setStaleOnly(false);
     setPage(0);
   };
 
@@ -386,6 +395,40 @@ export function AdminReportsPage() {
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <input
+                type="text"
+                value={assignedModeratorUuid}
+                onChange={(event) => setAssignedModeratorUuid(event.target.value.trim())}
+                placeholder={t("admin:reportsPage.assignedModeratorPlaceholder", "Moderator UUID")}
+                className="w-64 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+                disabled={unassignedOnly}
+              />
+
+              <label className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={unassignedOnly}
+                  onChange={(event) => {
+                    setUnassignedOnly(event.target.checked);
+                    if (event.target.checked) setAssignedModeratorUuid("");
+                  }}
+                  className="rounded border-slate-300"
+                />
+                {t("admin:reportsPage.unassignedOnly", "Unassigned only")}
+              </label>
+
+              <label className="flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-700 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={staleOnly}
+                  onChange={(event) => setStaleOnly(event.target.checked)}
+                  className="rounded border-slate-300"
+                />
+                {t("admin:reportsPage.staleOnly", "Stale only")}
+              </label>
             </div>
 
             <div className="flex flex-col gap-3 md:flex-row md:items-center">

@@ -48,6 +48,25 @@ reports:
         description: Filter reports by report reason.
         schema:
           $ref: '../components/schemas/report/ReportReasonCode.yaml'
+      - name: assignedModeratorUuid
+        in: query
+        required: false
+        description: Filter reports assigned to a specific moderator by their UUID.
+        schema:
+          type: string
+          format: uuid
+      - name: unassignedOnly
+        in: query
+        required: false
+        description: When true, return only reports with no assigned moderator.
+        schema:
+          type: boolean
+      - name: staleOnly
+        in: query
+        required: false
+        description: When true, return only stale reports (OPEN status, older than the stale threshold).
+        schema:
+          type: boolean
     responses:
       '200':
         description: Reports returned successfully

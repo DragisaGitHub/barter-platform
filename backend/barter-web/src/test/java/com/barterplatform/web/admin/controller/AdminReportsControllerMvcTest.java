@@ -69,7 +69,7 @@ class AdminReportsControllerMvcTest {
 
     @Test
     void shouldListAdminReportsWithReasonFilter() throws Exception {
-        when(reportService.listReports(0, 20, "createdAt,desc", ReportStatus.OPEN, ReportTargetType.ITEM, ReportReasonCode.SPAM_SCAM))
+        when(reportService.listReports(0, 20, "createdAt,desc", ReportStatus.OPEN, ReportTargetType.ITEM, ReportReasonCode.SPAM_SCAM, null, null, null))
                 .thenReturn(new ReportPagedResponse().content(List.of()).page(0).size(20).totalElements(0L).totalPages(0).first(true).last(true).sort("createdAt,desc"));
 
         mockMvc.perform(apiGet("/admin/reports")
@@ -82,7 +82,26 @@ class AdminReportsControllerMvcTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page").value(0));
 
-        verify(reportService).listReports(0, 20, "createdAt,desc", ReportStatus.OPEN, ReportTargetType.ITEM, ReportReasonCode.SPAM_SCAM);
+        verify(reportService).listReports(0, 20, "createdAt,desc", ReportStatus.OPEN, ReportTargetType.ITEM, ReportReasonCode.SPAM_SCAM, null, null, null);
+    }
+
+    @Test
+    void shouldPassAssignmentFiltersToService() throws Exception {
+        UUID moderatorFilterUuid = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        when(reportService.listReports(0, 20, "createdAt,desc", null, null, null, moderatorFilterUuid, true, true))
+                .thenReturn(new ReportPagedResponse().content(List.of()).page(0).size(20).totalElements(0L).totalPages(0).first(true).last(true).sort("createdAt,desc"));
+
+        mockMvc.perform(apiGet("/admin/reports")
+                        .queryParam("page", "0")
+                        .queryParam("size", "20")
+                        .queryParam("sort", "createdAt,desc")
+                        .queryParam("assignedModeratorUuid", moderatorFilterUuid.toString())
+                        .queryParam("unassignedOnly", "true")
+                        .queryParam("staleOnly", "true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page").value(0));
+
+        verify(reportService).listReports(0, 20, "createdAt,desc", null, null, null, moderatorFilterUuid, true, true);
     }
 
     @Test

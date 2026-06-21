@@ -40,8 +40,13 @@ public class AdminReportsController implements AdminReportsApi {
             String sort,
             ReportStatus status,
             ReportTargetType targetType,
-            ReportReasonCode reasonCode) {
-        return ResponseEntity.ok(reportService.listReports(page, size, sort, status, targetType, reasonCode));
+            ReportReasonCode reasonCode,
+            UUID assignedModeratorUuid,
+            Boolean unassignedOnly,
+            Boolean staleOnly) {
+        return ResponseEntity.ok(reportService.listReports(
+                page, size, sort, status, targetType, reasonCode,
+                assignedModeratorUuid, unassignedOnly, staleOnly));
     }
 
     @Override
