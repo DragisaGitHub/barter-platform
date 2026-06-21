@@ -43,5 +43,6 @@
   "moderationQueue": "Moderatorski red",
   "adminControlShort": "Admin panel",
   "platformManagement": "Upravljanje platformom",
-  "notifications": "Obaveštenja"
+  "notifications": "Obaveštenja",
+  "tradeMessages": "Poruke"
 }

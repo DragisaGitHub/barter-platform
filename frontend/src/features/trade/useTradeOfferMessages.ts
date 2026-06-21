@@ -2,18 +2,30 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
     listTradeOfferMessages,
     sendTradeOfferMessage,
+    getUnreadTradeMessageCount,
 } from "@/api/tradeOfferMessagesApi";
 import type {
     SendTradeOfferMessageRequest,
     TradeOfferMessageResponse,
 } from "@/api/generated/types";
+import type { TradeMessageUnreadCountResponse } from "@/api/tradeOfferMessagesApi";
 
 export const tradeOfferMessageKeys = {
     all: ["trade-offer-messages"] as const,
+    unreadCount: ["trade-offer-messages", "unread-count"] as const,
 
     byOffer: (tradeOfferUuid: string) =>
         [...tradeOfferMessageKeys.all, tradeOfferUuid] as const,
 };
+
+export function useUnreadTradeMessageCount() {
+    return useQuery<TradeMessageUnreadCountResponse>({
+        queryKey: tradeOfferMessageKeys.unreadCount,
+        queryFn: () => getUnreadTradeMessageCount(),
+        refetchInterval: 30_000,
+        staleTime: 15_000,
+    });
+}
 
 export type TradeOfferMessageListItem = TradeOfferMessageResponse & {
     isOptimistic?: boolean;

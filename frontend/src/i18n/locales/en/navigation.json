@@ -43,5 +43,6 @@
   "moderationQueue": "Moderation queue",
   "adminControlShort": "Admin panel",
   "platformManagement": "Platform management",
-  "notifications": "Notifications"
+  "notifications": "Notifications",
+  "tradeMessages": "Messages"
 }

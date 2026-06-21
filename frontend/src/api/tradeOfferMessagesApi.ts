@@ -4,6 +4,17 @@ import type {
     SendTradeOfferMessageRequest,
 } from "./generated/types";
 
+export interface TradeMessageUnreadCountResponse {
+    count: number;
+}
+
+export async function getUnreadTradeMessageCount(): Promise<TradeMessageUnreadCountResponse> {
+    const response = await apiClient.get<TradeMessageUnreadCountResponse>(
+        "/trade-offers/messages/unread-count",
+    );
+    return response.data;
+}
+
 export async function listTradeOfferMessages(
     tradeOfferUuid: string,
 ): Promise<TradeOfferMessageResponse[]> {

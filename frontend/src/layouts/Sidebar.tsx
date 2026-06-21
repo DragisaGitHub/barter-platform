@@ -12,8 +12,10 @@ import {
   User,
   Star,
   X,
+  MessageCircle,
 } from "lucide-react";
 import { usePendingIncomingCount, usePendingSentCount } from "../features/trade/useTradeOffers";
+import { useUnreadTradeMessageCount } from "../features/trade/useTradeOfferMessages";
 import { routePaths } from "@/routes/routePaths";
 import { cn } from "@/utils";
 import { useAuth } from "@/auth/AuthContext";
@@ -24,6 +26,7 @@ interface SidebarProps {
 }
 
 interface NavItem {
+  id: string;
   to: string;
   icon: typeof LayoutDashboard;
   label: string;
@@ -33,7 +36,7 @@ interface NavItem {
 function NavBadge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-indigo-500 text-white text-xs font-semibold leading-none">
+    <span className="ml-auto flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-indigo-500 text-white text-xs font-semibold leading-none">
       {count > 99 ? "99+" : count}
     </span>
   );
@@ -44,23 +47,26 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { hasRole } = useAuth();
   const { data: incomingData } = usePendingIncomingCount();
   const { data: sentData } = usePendingSentCount();
+  const { data: unreadMessagesData } = useUnreadTradeMessageCount();
   const pendingIncoming = incomingData?.totalElements ?? 0;
   const pendingSent = sentData?.totalElements ?? 0;
+  const unreadMessages = unreadMessagesData?.count ?? 0;
   const isStaff = hasRole("ADMIN") || hasRole("MODERATOR");
 
   const navItems: NavItem[] = [
-    { to: "/dashboard", icon: LayoutDashboard, label: t("navigation:dashboard") },
-    { to: "/marketplace", icon: Store, label: t("navigation:marketplaceLabel") },
-    { to: "/favorites", icon: Heart, label: t("navigation:favorites") },
-    { to: routePaths.savedSearches, icon: Search, label: t("navigation:savedSearches") },
-    { to: "/my-items", icon: List, label: t("navigation:myItems") },
-    { to: "/offers/incoming", icon: Inbox, label: t("navigation:incomingOffers"), badge: pendingIncoming },
-    { to: "/offers/sent", icon: Send, label: t("navigation:sentOffers"), badge: pendingSent },
-    { to: routePaths.reviews, icon: Star, label: t("navigation:reviews") },
+    { id: "dashboard", to: "/dashboard", icon: LayoutDashboard, label: t("navigation:dashboard") },
+    { id: "marketplace", to: "/marketplace", icon: Store, label: t("navigation:marketplaceLabel") },
+    { id: "favorites", to: "/favorites", icon: Heart, label: t("navigation:favorites") },
+    { id: "saved-searches", to: routePaths.savedSearches, icon: Search, label: t("navigation:savedSearches") },
+    { id: "my-items", to: "/my-items", icon: List, label: t("navigation:myItems") },
+    { id: "offers-incoming", to: "/offers/incoming", icon: Inbox, label: t("navigation:incomingOffers"), badge: pendingIncoming },
+    { id: "offers-sent", to: "/offers/sent", icon: Send, label: t("navigation:sentOffers"), badge: pendingSent },
+    { id: "trade-messages", to: "/offers/incoming", icon: MessageCircle, label: t("navigation:tradeMessages"), badge: unreadMessages },
+    { id: "reviews", to: routePaths.reviews, icon: Star, label: t("navigation:reviews") },
     ...(isStaff
-      ? [{ to: routePaths.admin.reports, icon: Shield, label: t("navigation:moderationQueue") }]
+      ? [{ id: "admin-reports", to: routePaths.admin.reports, icon: Shield, label: t("navigation:moderationQueue") }]
       : []),
-    { to: "/profile", icon: User, label: t("navigation:profile") },
+    { id: "profile", to: "/profile", icon: User, label: t("navigation:profile") },
   ];
 
 
@@ -97,7 +103,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           <nav className="flex-1 space-y-1 overflow-y-auto p-3">
             {navItems.map((item) => (
               <NavLink
-                key={item.to}
+                key={item.id}
                 to={item.to}
                 onClick={onClose}
                 className={({ isActive }) =>
