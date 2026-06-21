@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   ArrowRightLeft,
   CalendarDays,
+  Heart,
   MapPin,
   ZoomIn,
   Package,
@@ -11,7 +12,7 @@ import {
   Tag,
   User,
 } from "lucide-react";
-import { useItemDetail } from "./useCatalog";
+import { useItemDetail, useFavoriteItems, useFavoriteItem, useUnfavoriteItem } from "./useCatalog";
 import { ItemStatusBadge, ItemConditionBadge } from "./ItemBadges";
 import { OwnerModerationPanel } from "./OwnerModerationPanel";
 import { Badge } from "../../components/ui/Badge";
@@ -24,8 +25,9 @@ import { ReportTrigger } from "@/features/reports/ReportTrigger";
 import { useAuth } from "../../auth/AuthContext";
 import { routePaths } from "@/routes/routePaths.ts";
 import type { ItemDetailResponse, ItemImageResponse } from "@/api/generated/types.ts";
-import { cn } from "@/utils";
+import { cn, parseApiError } from "@/utils";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { inferListingTemplateType } from "./listingTemplates";
 
 function ImageSection({ images }: { images: ItemImageResponse[] }) {
@@ -151,6 +153,38 @@ export function ItemDetailPage() {
   const { user, isAuthenticated } = useAuth();
   const [showOfferModal, setShowOfferModal] = useState(false);
   const { t, i18n } = useTranslation(["catalog", "common"]);
+
+  // ─── Favorites logic ─────────────────────────────────────────────────────
+  const favoriteListParams = useMemo(() => ({ page: 0, size: 100 }), []);
+  const { data: favoriteItemsData } = useFavoriteItems(favoriteListParams, isAuthenticated);
+  const favoriteItemMutation = useFavoriteItem();
+  const unfavoriteItemMutation = useUnfavoriteItem();
+  const [favoriteOverride, setFavoriteOverride] = useState<boolean | null>(null);
+  const [isFavoritePending, setIsFavoritePending] = useState(false);
+
+  const isFavorite = useMemo(() => {
+    if (favoriteOverride !== null) return favoriteOverride;
+    if (!favoriteItemsData?.content || !uuid) return false;
+    return favoriteItemsData.content.some((fav) => fav.uuid === uuid);
+  }, [favoriteItemsData?.content, uuid, favoriteOverride]);
+
+  const canFavorite = isAuthenticated && !isOwnerCheck(user?.uuid, item?.ownerUuid);
+
+  const handleToggleFavorite = () => {
+    if (!uuid) return;
+    const mutation = isFavorite ? unfavoriteItemMutation : favoriteItemMutation;
+    setIsFavoritePending(true);
+    setFavoriteOverride(!isFavorite);
+    mutation.mutate(uuid, {
+      onError: (error) => {
+        setFavoriteOverride(isFavorite); // revert
+        toast.error(parseApiError(error));
+      },
+      onSettled: () => {
+        setIsFavoritePending(false);
+      },
+    });
+  };
 
   if (isLoading) {
     return (
@@ -360,6 +394,24 @@ export function ItemDetailPage() {
                 />
               ) : null}
 
+              {canFavorite ? (
+                <button
+                  type="button"
+                  onClick={handleToggleFavorite}
+                  disabled={isFavoritePending}
+                  className={cn(
+                    "mt-3 inline-flex h-10 w-full items-center justify-center gap-2 rounded-lg border text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60",
+                    isFavorite
+                      ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600"
+                  )}
+                  aria-label={isFavorite ? t("catalog:removeFromFavorites") : t("catalog:addToFavorites")}
+                >
+                  <Heart className={cn("size-4", isFavorite && "fill-current")} />
+                  {isFavorite ? t("catalog:removeFromFavorites") : t("catalog:addToFavorites")}
+                </button>
+              ) : null}
+
               {showGuestTradeCta ? (
                 <div className="mt-4 space-y-2.5">
                   <Link to={registerRedirectUrl} className="block">
@@ -482,6 +534,10 @@ function formatApproximateExchangeLocation(item: {
 }) {
   const locality = [item.exchangeArea, item.exchangeCity].filter(Boolean).join(", ");
   return [locality, item.exchangeLocation].filter(Boolean).join(" · ");
+}
+
+function isOwnerCheck(userUuid: string | undefined, ownerUuid: string | undefined): boolean {
+  return !!userUuid && !!ownerUuid && userUuid === ownerUuid;
 }
 
 function buildTemplateDetails(
