@@ -10,25 +10,16 @@ export function LegalSection({ ns, sectionKey }: LegalSectionProps) {
 
   const prefix = `${ns}.sections.${sectionKey}`;
   const heading = t(`${prefix}.heading`);
-  const body = t(`${prefix}.body`, { defaultValue: "" });
-  const contact = t(`${prefix}.contact`, { defaultValue: "" });
 
-  // Check if items array exists by trying to access the first item
-  const firstItem = t(`${prefix}.items.0`, { defaultValue: "" });
-  const hasItems = firstItem !== "";
+  // Use a sentinel to detect missing keys (returnEmptyString:false makes defaultValue:"" unreliable)
+  const MISSING = "__MISSING__";
+  const body = t(`${prefix}.body`, { defaultValue: MISSING }) === MISSING ? "" : t(`${prefix}.body`);
+  const contact = t(`${prefix}.contact`, { defaultValue: MISSING }) === MISSING ? "" : t(`${prefix}.contact`);
 
-  // Collect all items
-  const items: string[] = [];
-  if (hasItems) {
-    let idx = 0;
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const item = t(`${prefix}.items.${idx}`, { defaultValue: "" });
-      if (!item) break;
-      items.push(item);
-      idx++;
-    }
-  }
+  // Retrieve items array using returnObjects to avoid infinite loop
+  // (returnEmptyString:false causes t(missingKey, {defaultValue:""}) to return the key string)
+  const rawItems = t(`${prefix}.items`, { returnObjects: true, defaultValue: [] as unknown as string });
+  const items: string[] = Array.isArray(rawItems) ? rawItems : [];
 
   return (
     <section>
