@@ -56,6 +56,13 @@ export const routePaths = {
   notifications: "/notifications",
   profile: "/profile",
   publicProfile: (uuid: string) => `/users/${uuid}`,
+  legal: {
+    terms: "/terms",
+    privacy: "/privacy",
+    communityGuidelines: "/community-guidelines",
+    prohibitedItems: "/prohibited-items",
+    safetyTips: "/safety-tips",
+  },
   admin: {
     dashboard: "/admin",
     users: "/admin/users",

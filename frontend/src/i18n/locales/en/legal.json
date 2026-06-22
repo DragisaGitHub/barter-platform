@@ -1,0 +1,264 @@
+{
+  "nav": {
+    "termsOfService": "Terms of Service",
+    "privacyPolicy": "Privacy Policy",
+    "communityGuidelines": "Community Guidelines",
+    "prohibitedItems": "Prohibited Items",
+    "safetyTips": "Safety Tips"
+  },
+  "footer": {
+    "ariaLabel": "Legal and safety links"
+  },
+  "lastUpdated": "Last updated: {{date}}",
+  "betaNotice": "This platform is currently in beta. These terms may be updated as the platform evolves.",
+  "termsOfService": {
+    "title": "Terms of Service",
+    "sections": {
+      "about": {
+        "heading": "About Zameni.rs",
+        "body": "Zameni.rs is a community platform that connects users who want to exchange items through barter. We provide the tools to list items, discover offers, communicate, and arrange exchanges. We do not participate in the exchanges themselves."
+      },
+      "acceptance": {
+        "heading": "Acceptance of Terms",
+        "body": "By creating an account or using Zameni.rs, you agree to these terms. If you do not agree, please do not use the platform."
+      },
+      "eligibility": {
+        "heading": "Eligibility",
+        "body": "You must be at least 18 years old to use Zameni.rs. By registering, you confirm that you meet this requirement."
+      },
+      "accounts": {
+        "heading": "Your Account",
+        "body": "You are responsible for keeping your account credentials secure. Do not share your login with others. You are responsible for all activity under your account."
+      },
+      "userResponsibilities": {
+        "heading": "User Responsibilities",
+        "items": [
+          "You are responsible for the accuracy of your listings.",
+          "You are responsible for your communication with other users.",
+          "You are responsible for any agreements and exchanges you arrange.",
+          "You must not post prohibited items or misleading content.",
+          "You must treat other users with respect."
+        ]
+      },
+      "platformRole": {
+        "heading": "Platform Role and Limitations",
+        "body": "Zameni.rs connects users but does not guarantee item quality, user behavior, or successful exchanges. We are not a party to any exchange agreement between users. All exchanges happen at the users' own risk."
+      },
+      "content": {
+        "heading": "Content and Listings",
+        "body": "You retain ownership of content you post. By posting, you grant Zameni.rs a license to display your content on the platform. We may remove content that violates these terms or community guidelines."
+      },
+      "termination": {
+        "heading": "Account Suspension",
+        "body": "We may suspend or remove accounts that violate these terms, post prohibited items, or engage in harmful behavior. You may delete your account at any time."
+      },
+      "changes": {
+        "heading": "Changes to Terms",
+        "body": "We may update these terms as the platform develops. We will notify registered users of significant changes."
+      }
+    }
+  },
+  "privacyPolicy": {
+    "title": "Privacy Policy",
+    "sections": {
+      "intro": {
+        "heading": "What This Policy Covers",
+        "body": "This policy explains what data Zameni.rs collects, how we use it, and your rights regarding your personal information."
+      },
+      "dataCollected": {
+        "heading": "Data We Collect",
+        "items": [
+          "Account data: email address, username, password (hashed).",
+          "Profile data: display name, location (city), profile picture.",
+          "Listings: item titles, descriptions, categories, condition, images.",
+          "Messages: conversations between users about trade offers.",
+          "Trade offers: offer details, status, and history.",
+          "Reviews: ratings and comments left after completed exchanges.",
+          "Reports: content reports and moderation submissions.",
+          "Notifications: system and trade-related notifications.",
+          "Technical logs: IP addresses, browser type, timestamps, and error logs for security and debugging."
+        ]
+      },
+      "howWeUse": {
+        "heading": "How We Use Your Data",
+        "items": [
+          "To provide and operate the platform.",
+          "To display your listings and profile to other users.",
+          "To facilitate communication and trade offers.",
+          "To send notifications about your account and trades.",
+          "To detect abuse, enforce rules, and maintain platform security.",
+          "To improve the platform based on aggregated usage patterns."
+        ]
+      },
+      "sharing": {
+        "heading": "Data Sharing",
+        "body": "We do not sell your personal data. Your public profile and listings are visible to other users. We may share data with service providers who help operate the platform (hosting, email delivery) or when required by law."
+      },
+      "retention": {
+        "heading": "Data Retention",
+        "body": "We keep your data while your account is active. If you delete your account, we remove your personal data within a reasonable period. Some data may be retained for legal or security purposes."
+      },
+      "rights": {
+        "heading": "Your Rights",
+        "items": [
+          "Access the personal data we hold about you.",
+          "Request correction of inaccurate data.",
+          "Request deletion of your account and data.",
+          "Export your data in a standard format."
+        ],
+        "contact": "To exercise these rights, contact us through the platform."
+      },
+      "cookies": {
+        "heading": "Cookies and Local Storage",
+        "body": "We use essential cookies and local storage to keep you logged in and remember your preferences. We do not use third-party advertising trackers."
+      }
+    }
+  },
+  "communityGuidelines": {
+    "title": "Community Guidelines",
+    "sections": {
+      "intro": {
+        "heading": "Our Community",
+        "body": "Zameni.rs is a community built on trust and fair exchange. These guidelines help keep the platform safe and useful for everyone."
+      },
+      "respectful": {
+        "heading": "Be Respectful",
+        "items": [
+          "Treat other users the way you would like to be treated.",
+          "Do not use offensive, threatening, or discriminatory language.",
+          "Be patient — not everyone responds immediately.",
+          "Respect other people's decisions if they decline your offer."
+        ]
+      },
+      "honest": {
+        "heading": "Be Honest",
+        "items": [
+          "Describe your items accurately including their condition.",
+          "Use real photos of the actual items you are offering.",
+          "Do not misrepresent what you have or what you want.",
+          "If an item has defects, mention them clearly."
+        ]
+      },
+      "safe": {
+        "heading": "Stay Safe",
+        "items": [
+          "Meet in public places for exchanges.",
+          "Keep communication on the platform whenever possible.",
+          "Do not share personal details (home address, financial info) in messages.",
+          "Report users who pressure you or make you uncomfortable."
+        ]
+      },
+      "prohibited": {
+        "heading": "Prohibited Behavior",
+        "items": [
+          "Posting prohibited items (see Prohibited Items page).",
+          "Creating fake accounts or impersonating others.",
+          "Spamming, scamming, or misleading other users.",
+          "Harassing or threatening other users.",
+          "Attempting to circumvent platform rules or moderation."
+        ]
+      },
+      "reporting": {
+        "heading": "Reporting Issues",
+        "body": "If you encounter suspicious content, inappropriate behavior, or policy violations, use the report function. All reports are reviewed by our moderation team."
+      },
+      "enforcement": {
+        "heading": "Enforcement",
+        "body": "Violations may result in content removal, warnings, temporary suspension, or permanent account removal depending on severity. Repeated violations lead to escalating consequences."
+      }
+    }
+  },
+  "prohibitedItems": {
+    "title": "Prohibited Items",
+    "sections": {
+      "intro": {
+        "heading": "Items Not Allowed on Zameni.rs",
+        "body": "The following categories of items may not be listed on the platform. Listings that violate these rules will be removed and may result in account suspension."
+      },
+      "categories": {
+        "heading": "Prohibited Categories",
+        "items": [
+          "Weapons and ammunition: firearms, knives designed as weapons, explosives, and weapon accessories.",
+          "Illegal goods: any items whose sale or possession is illegal under applicable law.",
+          "Stolen property: items that do not legally belong to the person listing them.",
+          "Drugs and controlled substances: illegal drugs, drug paraphernalia, and precursors.",
+          "Prescription medicines: medication that requires a prescription.",
+          "Alcohol: alcoholic beverages of any kind.",
+          "Tobacco and nicotine products: cigarettes, vaping devices, e-liquids, and related products.",
+          "Adult and explicit content: pornographic material or sexually explicit items.",
+          "Counterfeit goods: fake branded items, replicas sold as genuine, or pirated media.",
+          "Dangerous chemicals: hazardous materials, poisons, or flammable substances.",
+          "Live animals: any living creatures.",
+          "Personal documents: IDs, passports, licenses, or other identity documents.",
+          "Digital piracy: illegally copied software, media, or content."
+        ]
+      },
+      "reporting": {
+        "heading": "Reporting Prohibited Listings",
+        "body": "If you see a listing that appears to contain prohibited items, please report it using the report button. Our moderation team will review and take action."
+      },
+      "consequences": {
+        "heading": "Consequences",
+        "body": "Posting prohibited items may result in immediate listing removal, account suspension, or permanent ban. Serious violations may be reported to relevant authorities."
+      }
+    }
+  },
+  "safetyTips": {
+    "title": "Safety Tips",
+    "sections": {
+      "intro": {
+        "heading": "Staying Safe on Zameni.rs",
+        "body": "While Zameni.rs strives to maintain a trustworthy community, your personal safety is important. Follow these tips when arranging and completing exchanges."
+      },
+      "meeting": {
+        "heading": "Meeting in Person",
+        "items": [
+          "Always meet in a public, well-lit location (cafes, shopping centers, busy parks).",
+          "Avoid meeting at your home or the other person's home.",
+          "Tell someone you trust where you are going and when.",
+          "Consider bringing a friend, especially for high-value items.",
+          "Meet during daytime hours when possible."
+        ]
+      },
+      "checking": {
+        "heading": "Checking Items Before Exchange",
+        "items": [
+          "Inspect the item carefully before agreeing to complete the exchange.",
+          "Compare the item to the listing photos and description.",
+          "Test electronics or mechanical items if possible.",
+          "Do not feel pressured to complete an exchange if the item does not match the listing.",
+          "Take your time — a legitimate trader will not rush you."
+        ]
+      },
+      "payments": {
+        "heading": "Avoiding Advance Payments",
+        "items": [
+          "Zameni.rs is a barter platform — no money should be required.",
+          "Do not send money or gift cards to other users.",
+          "Be suspicious of anyone who asks for payment before meeting.",
+          "Do not share bank account or credit card details.",
+          "If someone insists on a cash component, proceed with caution."
+        ]
+      },
+      "reporting": {
+        "heading": "Reporting Suspicious Behavior",
+        "items": [
+          "Report users who ask for money or personal financial information.",
+          "Report listings that seem too good to be true.",
+          "Report anyone who threatens or pressures you.",
+          "Report profiles that appear fake or impersonating someone else.",
+          "If you feel you are in danger, contact local authorities first."
+        ]
+      },
+      "communication": {
+        "heading": "Communication Tips",
+        "items": [
+          "Keep conversations on the platform so there is a record.",
+          "Do not share your phone number or social media until you trust the other person.",
+          "Be wary of users who insist on moving communication off-platform immediately.",
+          "Save screenshots of important agreements."
+        ]
+      }
+    }
+  }
+}

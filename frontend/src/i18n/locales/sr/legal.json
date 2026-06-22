@@ -1,0 +1,264 @@
+{
+  "nav": {
+    "termsOfService": "Uslovi korišćenja",
+    "privacyPolicy": "Politika privatnosti",
+    "communityGuidelines": "Pravila zajednice",
+    "prohibitedItems": "Zabranjeni predmeti",
+    "safetyTips": "Saveti za bezbednost"
+  },
+  "footer": {
+    "ariaLabel": "Pravni linkovi i bezbednost"
+  },
+  "lastUpdated": "Poslednje ažurirano: {{date}}",
+  "betaNotice": "Ova platforma je trenutno u beta fazi. Uslovi mogu biti ažurirani kako se platforma razvija.",
+  "termsOfService": {
+    "title": "Uslovi korišćenja",
+    "sections": {
+      "about": {
+        "heading": "O platformi Zameni.rs",
+        "body": "Zameni.rs je platforma zajednice koja povezuje korisnike koji žele da razmenjuju predmete putem trampe. Obezbeđujemo alate za postavljanje oglasa, pretraživanje ponuda, komunikaciju i dogovaranje razmena. Ne učestvujemo u samim razmenama."
+      },
+      "acceptance": {
+        "heading": "Prihvatanje uslova",
+        "body": "Kreiranjem naloga ili korišćenjem platforme Zameni.rs, prihvatate ove uslove. Ako se ne slažete, molimo vas da ne koristite platformu."
+      },
+      "eligibility": {
+        "heading": "Podobnost",
+        "body": "Morate imati najmanje 18 godina da biste koristili Zameni.rs. Registracijom potvrđujete da ispunjavate ovaj uslov."
+      },
+      "accounts": {
+        "heading": "Vaš nalog",
+        "body": "Odgovorni ste za čuvanje pristupnih podataka vašeg naloga. Ne delite vaše podatke za prijavu sa drugima. Odgovorni ste za sve aktivnosti na vašem nalogu."
+      },
+      "userResponsibilities": {
+        "heading": "Odgovornosti korisnika",
+        "items": [
+          "Odgovorni ste za tačnost vaših oglasa.",
+          "Odgovorni ste za vašu komunikaciju sa drugim korisnicima.",
+          "Odgovorni ste za sve dogovore i razmene koje organizujete.",
+          "Ne smete postavljati zabranjene predmete niti obmanjući sadržaj.",
+          "Morate se odnositi prema drugim korisnicima sa poštovanjem."
+        ]
+      },
+      "platformRole": {
+        "heading": "Uloga platforme i ograničenja",
+        "body": "Zameni.rs povezuje korisnike, ali ne garantuje kvalitet predmeta, ponašanje korisnika niti uspešne razmene. Nismo strana u bilo kom dogovoru o razmeni između korisnika. Sve razmene se odvijaju na sopstveni rizik korisnika."
+      },
+      "content": {
+        "heading": "Sadržaj i oglasi",
+        "body": "Zadržavate vlasništvo nad sadržajem koji postavljate. Postavljanjem dajete platformi Zameni.rs licencu za prikaz vašeg sadržaja na platformi. Možemo ukloniti sadržaj koji krši ove uslove ili pravila zajednice."
+      },
+      "termination": {
+        "heading": "Suspenzija naloga",
+        "body": "Možemo suspendovati ili ukloniti naloge koji krše ove uslove, postavljaju zabranjene predmete ili se ponašaju na štetan način. Možete obrisati vaš nalog u bilo kom trenutku."
+      },
+      "changes": {
+        "heading": "Promene uslova",
+        "body": "Možemo ažurirati ove uslove kako se platforma razvija. Obavestićemo registrovane korisnike o značajnim promenama."
+      }
+    }
+  },
+  "privacyPolicy": {
+    "title": "Politika privatnosti",
+    "sections": {
+      "intro": {
+        "heading": "Šta pokriva ova politika",
+        "body": "Ova politika objašnjava koje podatke Zameni.rs prikuplja, kako ih koristimo i vaša prava u vezi sa ličnim podacima."
+      },
+      "dataCollected": {
+        "heading": "Podaci koje prikupljamo",
+        "items": [
+          "Podaci o nalogu: email adresa, korisničko ime, lozinka (heširana).",
+          "Podaci o profilu: ime za prikaz, lokacija (grad), profilna slika.",
+          "Oglasi: naslovi predmeta, opisi, kategorije, stanje, slike.",
+          "Poruke: razgovori između korisnika o ponudama za razmenu.",
+          "Ponude za razmenu: detalji ponuda, status i istorija.",
+          "Recenzije: ocene i komentari nakon završenih razmena.",
+          "Prijave: prijave sadržaja i moderacijski podnesci.",
+          "Obaveštenja: sistemska i obaveštenja vezana za razmene.",
+          "Tehnički zapisi: IP adrese, tip pretraživača, vremenski žigovi i zapisi grešaka za bezbednost i otklanjanje problema."
+        ]
+      },
+      "howWeUse": {
+        "heading": "Kako koristimo vaše podatke",
+        "items": [
+          "Za pružanje i rad platforme.",
+          "Za prikaz vaših oglasa i profila drugim korisnicima.",
+          "Za omogućavanje komunikacije i ponuda za razmenu.",
+          "Za slanje obaveštenja o vašem nalogu i razmenama.",
+          "Za otkrivanje zloupotreba, sprovođenje pravila i održavanje bezbednosti platforme.",
+          "Za unapređenje platforme na osnovu agregiranih obrazaca korišćenja."
+        ]
+      },
+      "sharing": {
+        "heading": "Deljenje podataka",
+        "body": "Ne prodajemo vaše lične podatke. Vaš javni profil i oglasi su vidljivi drugim korisnicima. Možemo deliti podatke sa pružaocima usluga koji pomažu u radu platforme (hosting, dostava emailova) ili kada to zakon zahteva."
+      },
+      "retention": {
+        "heading": "Čuvanje podataka",
+        "body": "Čuvamo vaše podatke dok je vaš nalog aktivan. Ako obrišete nalog, uklanjamo vaše lične podatke u razumnom roku. Neki podaci mogu biti zadržani iz pravnih ili bezbednosnih razloga."
+      },
+      "rights": {
+        "heading": "Vaša prava",
+        "items": [
+          "Pristup ličnim podacima koje čuvamo o vama.",
+          "Zahtev za ispravku netačnih podataka.",
+          "Zahtev za brisanje vašeg naloga i podataka.",
+          "Izvoz vaših podataka u standardnom formatu."
+        ],
+        "contact": "Da biste ostvarili ova prava, kontaktirajte nas putem platforme."
+      },
+      "cookies": {
+        "heading": "Kolačići i lokalno skladištenje",
+        "body": "Koristimo neophodne kolačiće i lokalno skladištenje da vas držimo prijavljenim i pamtimo vaše preference. Ne koristimo reklamne pratioce trećih strana."
+      }
+    }
+  },
+  "communityGuidelines": {
+    "title": "Pravila zajednice",
+    "sections": {
+      "intro": {
+        "heading": "Naša zajednica",
+        "body": "Zameni.rs je zajednica izgrađena na poverenju i fer razmeni. Ove smernice pomažu da platforma ostane bezbedna i korisna za sve."
+      },
+      "respectful": {
+        "heading": "Budite pošteni",
+        "items": [
+          "Odnosite se prema drugim korisnicima onako kako biste želeli da se prema vama odnose.",
+          "Ne koristite uvredljiv, preteći ili diskriminatorski jezik.",
+          "Budite strpljivi — ne odgovaraju svi odmah.",
+          "Poštujte odluke drugih ljudi ako odbiju vašu ponudu."
+        ]
+      },
+      "honest": {
+        "heading": "Budite iskreni",
+        "items": [
+          "Opišite predmete tačno, uključujući njihovo stanje.",
+          "Koristite prave fotografije stvarnih predmeta koje nudite.",
+          "Ne lažno predstavljajte šta imate ili šta želite.",
+          "Ako predmet ima nedostatke, jasno ih navedite."
+        ]
+      },
+      "safe": {
+        "heading": "Budite bezbedni",
+        "items": [
+          "Sastajte se na javnim mestima za razmene.",
+          "Držite komunikaciju na platformi kad god je moguće.",
+          "Ne delite lične podatke (kućnu adresu, finansijske informacije) u porukama.",
+          "Prijavite korisnike koji vas pritiskaju ili vam stvaraju nelagodu."
+        ]
+      },
+      "prohibited": {
+        "heading": "Zabranjeno ponašanje",
+        "items": [
+          "Postavljanje zabranjenih predmeta (pogledajte stranicu Zabranjeni predmeti).",
+          "Kreiranje lažnih naloga ili lažno predstavljanje.",
+          "Spamovanje, prevare ili obmanjivanje drugih korisnika.",
+          "Uznemiravanje ili pretnje drugim korisnicima.",
+          "Pokušaj zaobilaženja pravila platforme ili moderacije."
+        ]
+      },
+      "reporting": {
+        "heading": "Prijavljivanje problema",
+        "body": "Ako naiđete na sumnjiv sadržaj, neprimereno ponašanje ili kršenje pravila, koristite funkciju za prijavu. Sve prijave pregleda naš tim za moderaciju."
+      },
+      "enforcement": {
+        "heading": "Sprovođenje pravila",
+        "body": "Kršenja mogu rezultirati uklanjanjem sadržaja, upozorenjima, privremenom suspenzijom ili trajnim uklanjanjem naloga u zavisnosti od ozbiljnosti. Ponovljena kršenja dovode do eskalacije posledica."
+      }
+    }
+  },
+  "prohibitedItems": {
+    "title": "Zabranjeni predmeti",
+    "sections": {
+      "intro": {
+        "heading": "Predmeti koji nisu dozvoljeni na Zameni.rs",
+        "body": "Sledeće kategorije predmeta ne smeju biti postavljene na platformi. Oglasi koji krše ova pravila biće uklonjeni i mogu rezultirati suspenzijom naloga."
+      },
+      "categories": {
+        "heading": "Zabranjene kategorije",
+        "items": [
+          "Oružje i municija: vatreno oružje, noževi namenjeni kao oružje, eksplozivi i pribor za oružje.",
+          "Nelegalna roba: bilo koji predmeti čija je prodaja ili posedovanje ilegalna po važećem zakonu.",
+          "Ukradena imovina: predmeti koji zakonski ne pripadaju osobi koja ih postavlja.",
+          "Droge i kontrolisane supstance: ilegalne droge, pribor za drogu i prekursori.",
+          "Lekovi na recept: lekovi koji zahtevaju recept.",
+          "Alkohol: alkoholna pića bilo koje vrste.",
+          "Duvan i nikotinski proizvodi: cigarete, vejp uređaji, e-tečnosti i srodni proizvodi.",
+          "Sadržaj za odrasle i eksplicitan sadržaj: pornografski materijal ili seksualno eksplicitni predmeti.",
+          "Falsifikovana roba: lažni brendirani predmeti, replike koje se prodaju kao originali ili piratski mediji.",
+          "Opasne hemikalije: opasni materijali, otrovi ili zapaljive supstance.",
+          "Žive životinje: bilo koja živa bića.",
+          "Lični dokumenti: lične karte, pasoši, dozvole ili drugi identifikacioni dokumenti.",
+          "Digitalna piraterija: ilegalno kopirani softver, mediji ili sadržaj."
+        ]
+      },
+      "reporting": {
+        "heading": "Prijavljivanje zabranjenih oglasa",
+        "body": "Ako vidite oglas koji izgleda da sadrži zabranjene predmete, prijavite ga koristeći dugme za prijavu. Naš tim za moderaciju će pregledati i preduzeti mere."
+      },
+      "consequences": {
+        "heading": "Posledice",
+        "body": "Postavljanje zabranjenih predmeta može rezultirati momentalnim uklanjanjem oglasa, suspenzijom naloga ili trajnom zabranom. Ozbiljna kršenja mogu biti prijavljena nadležnim organima."
+      }
+    }
+  },
+  "safetyTips": {
+    "title": "Saveti za bezbednost",
+    "sections": {
+      "intro": {
+        "heading": "Ostanite bezbedni na Zameni.rs",
+        "body": "Dok se Zameni.rs trudi da održi pouzdanu zajednicu, vaša lična bezbednost je važna. Pratite ove savete kada organizujete i obavljate razmene."
+      },
+      "meeting": {
+        "heading": "Sastanak uživo",
+        "items": [
+          "Uvek se sastajte na javnom, dobro osvetljenom mestu (kafići, tržni centri, prometni parkovi).",
+          "Izbegavajte sastanke kod vaše kuće ili kuće druge osobe.",
+          "Recite nekome kome verujete gde idete i kada.",
+          "Razmislite o tome da povedete prijatelja, posebno za vrednije predmete.",
+          "Sastajte se tokom dnevnih sati kad god je moguće."
+        ]
+      },
+      "checking": {
+        "heading": "Provera predmeta pre razmene",
+        "items": [
+          "Pažljivo pregledajte predmet pre nego što pristanete na razmenu.",
+          "Uporedite predmet sa fotografijama i opisom iz oglasa.",
+          "Testirajte elektroniku ili mehaničke predmete ako je moguće.",
+          "Nemojte se osećati pritisnuto da završite razmenu ako predmet ne odgovara oglasu.",
+          "Uzmite vremena — legitimni trgovac vas neće žuriti."
+        ]
+      },
+      "payments": {
+        "heading": "Izbegavanje unapred plaćanja",
+        "items": [
+          "Zameni.rs je platforma za trampu — novac ne bi trebalo da bude potreban.",
+          "Ne šaljite novac ili poklon kartice drugim korisnicima.",
+          "Budite sumnjičavi prema bilo kome ko traži uplatu pre sastanka.",
+          "Ne delite podatke bankovnog računa ili kreditne kartice.",
+          "Ako neko insistira na novčanoj komponenti, postupajte sa oprezom."
+        ]
+      },
+      "reporting": {
+        "heading": "Prijavljivanje sumnjivog ponašanja",
+        "items": [
+          "Prijavite korisnike koji traže novac ili lične finansijske podatke.",
+          "Prijavite oglase koji deluju previše dobro da bi bili istiniti.",
+          "Prijavite svakoga ko vam preti ili vas pritiska.",
+          "Prijavite profile koji deluju lažno ili se lažno predstavljaju.",
+          "Ako osećate da ste u opasnosti, prvo kontaktirajte lokalne vlasti."
+        ]
+      },
+      "communication": {
+        "heading": "Saveti za komunikaciju",
+        "items": [
+          "Držite razgovore na platformi da biste imali zapis.",
+          "Ne delite broj telefona ili društvene mreže dok ne steknete poverenje.",
+          "Budite oprezni sa korisnicima koji insistiraju da se komunikacija odmah premesti sa platforme.",
+          "Sačuvajte snimke ekrana važnih dogovora."
+        ]
+      }
+    }
+  }
+}
