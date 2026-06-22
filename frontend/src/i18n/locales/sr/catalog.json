@@ -409,8 +409,12 @@
     "criteria": {
       "query": "Upit: {{query}}",
       "category": "Filter kategorije",
+      "categoryNamed": "Kategorija: {{name}}",
+      "categoryFallback": "Nepoznata kategorija",
       "tags": "{{count}} tag",
       "tags_plural": "{{count}} tagova",
+      "tagsNamed": "Tagovi: {{names}}",
+      "tagFallback": "Nepoznat tag",
       "condition": "Stanje: {{condition}}",
       "location": "Lokacija: {{location}}",
       "catalogFilters": "Marketplace filteri"
