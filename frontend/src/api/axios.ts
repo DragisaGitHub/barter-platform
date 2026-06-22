@@ -1,6 +1,8 @@
 import axios from "axios";
+import * as Sentry from "@sentry/react";
 import type { TokenResponse } from "./generated/types";
 import { tokenService } from "../auth/token.service";
+import { isSentryEnabled } from "../lib/sentry";
 
 const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
@@ -102,3 +104,57 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// --- Sentry observability interceptor ---
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (isSentryEnabled() && axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const method = error.config?.method?.toUpperCase() ?? "UNKNOWN";
+      const url = error.config?.url ?? "unknown";
+      const requestId =
+        error.response?.headers?.["x-request-id"] ??
+        error.response?.headers?.["x-correlation-id"];
+      const backendCode = error.response?.data?.code;
+      const backendMessage = error.response?.data?.message;
+
+      // Only report unexpected server errors (5xx) to Sentry
+      if (status && status >= 500) {
+        Sentry.captureException(error, {
+          tags: {
+            "api.status": status,
+            "api.method": method,
+            ...(requestId ? { "api.requestId": requestId } : {}),
+          },
+          contexts: {
+            api: {
+              url,
+              method,
+              status,
+              ...(requestId ? { requestId } : {}),
+              ...(backendCode ? { errorCode: backendCode } : {}),
+              ...(backendMessage ? { errorMessage: backendMessage } : {}),
+            },
+          },
+        });
+      }
+
+      // Add breadcrumb for all API errors (safe metadata only)
+      Sentry.addBreadcrumb({
+        category: "api.error",
+        level: status && status >= 500 ? "error" : "warning",
+        data: {
+          method,
+          url,
+          status,
+          ...(requestId ? { requestId } : {}),
+          ...(backendCode ? { errorCode: backendCode } : {}),
+        },
+      });
+    }
+
+    return Promise.reject(error);
+  }
+);
+
