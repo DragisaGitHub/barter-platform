@@ -46,6 +46,11 @@ import { NotFoundPage } from "../features/error/NotFoundPage";
 import { RouteErrorPage } from "../features/error/ErrorPage";
 import { LandingPage } from "../features/landing/LandingPage";
 import { BetaFeedbackPage } from "../features/feedback/BetaFeedbackPage";
+import { TermsOfServicePage } from "../features/legal/TermsOfServicePage";
+import { PrivacyPolicyPage } from "../features/legal/PrivacyPolicyPage";
+import { CommunityGuidelinesPage } from "../features/legal/CommunityGuidelinesPage";
+import { ProhibitedItemsPage } from "../features/legal/ProhibitedItemsPage";
+import { SafetyTipsPage } from "../features/legal/SafetyTipsPage";
 import { routePaths } from "./routePaths";
 
 function AdminAwareHomePage() {
@@ -166,6 +171,26 @@ export const router = createBrowserRouter([
       {
         path: "/users/:uuid",
         element: <PublicProfilePage />,
+      },
+      {
+        path: routePaths.legal.terms,
+        element: <TermsOfServicePage />,
+      },
+      {
+        path: routePaths.legal.privacy,
+        element: <PrivacyPolicyPage />,
+      },
+      {
+        path: routePaths.legal.communityGuidelines,
+        element: <CommunityGuidelinesPage />,
+      },
+      {
+        path: routePaths.legal.prohibitedItems,
+        element: <ProhibitedItemsPage />,
+      },
+      {
+        path: routePaths.legal.safetyTips,
+        element: <SafetyTipsPage />,
       },
     ],
   },
