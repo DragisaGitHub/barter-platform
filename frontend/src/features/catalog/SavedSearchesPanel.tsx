@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { Search, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import type { SavedSearchCriteria, SavedSearchResponse } from "@/api/generated/types";
+import type { CategoryResponse, SavedSearchCriteria, SavedSearchResponse, TagResponse } from "@/api/generated/types";
 import { parseApiError } from "@/utils";
 import { Button } from "../../components/ui/Button";
 import { EmptyState } from "../../components/ui/EmptyState";
 import { Spinner } from "../../components/ui/Spinner";
+import { useCategories, useTags } from "./useCatalog";
 import { useDeleteSavedSearch, useSavedSearches } from "./useSavedSearches";
 
 interface SavedSearchesPanelProps {
@@ -18,6 +19,8 @@ export function SavedSearchesPanel({ compact = false, onApply }: SavedSearchesPa
   const { t } = useTranslation(["catalog", "common"]);
   const params = useMemo(() => ({ page: 0, size: compact ? 5 : 20, sort: "updatedAt,desc" }), [compact]);
   const { data, isLoading, isError } = useSavedSearches(params);
+  const { data: categories } = useCategories();
+  const { data: tags } = useTags();
   const deleteMutation = useDeleteSavedSearch();
   const [pendingDeleteUuid, setPendingDeleteUuid] = useState<string | null>(null);
 
@@ -68,7 +71,7 @@ export function SavedSearchesPanel({ compact = false, onApply }: SavedSearchesPa
             <div className="min-w-0">
               <h3 className="truncate text-sm font-semibold text-slate-900">{savedSearch.name}</h3>
               <p className="mt-1 line-clamp-2 text-xs leading-5 text-slate-500">
-                {formatCriteria(savedSearch.criteria, t)}
+                {formatCriteria(savedSearch.criteria, t, categories, tags)}
               </p>
             </div>
             <button
@@ -98,7 +101,9 @@ export function SavedSearchesPanel({ compact = false, onApply }: SavedSearchesPa
 
 function formatCriteria(
   criteria: SavedSearchCriteria,
-  t: (key: string, options?: Record<string, unknown>) => string
+  t: (key: string, options?: Record<string, unknown>) => string,
+  categories?: CategoryResponse[],
+  tags?: TagResponse[],
 ) {
   const parts: string[] = [];
 
@@ -106,10 +111,18 @@ function formatCriteria(
     parts.push(t("catalog:savedSearches.criteria.query", { query: criteria.q }));
   }
   if (criteria.categoryUuid) {
-    parts.push(t("catalog:savedSearches.criteria.category"));
+    const categoryName = categories?.find((c) => c.uuid === criteria.categoryUuid)?.name;
+    parts.push(
+      t("catalog:savedSearches.criteria.categoryNamed", {
+        name: categoryName ?? t("catalog:savedSearches.criteria.categoryFallback"),
+      })
+    );
   }
   if (criteria.tagUuids?.length) {
-    parts.push(t("catalog:savedSearches.criteria.tags", { count: criteria.tagUuids.length }));
+    const resolvedNames = criteria.tagUuids.map(
+      (uuid) => tags?.find((tag) => tag.uuid === uuid)?.name ?? t("catalog:savedSearches.criteria.tagFallback")
+    );
+    parts.push(t("catalog:savedSearches.criteria.tagsNamed", { names: resolvedNames.join(", ") }));
   }
   if (criteria.condition) {
     parts.push(t("catalog:savedSearches.criteria.condition", { condition: t(conditionTranslationKey(criteria.condition)) }));

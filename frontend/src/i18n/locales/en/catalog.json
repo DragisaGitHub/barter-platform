@@ -399,8 +399,12 @@
     "criteria": {
       "query": "Query: {{query}}",
       "category": "Category filter",
+      "categoryNamed": "Category: {{name}}",
+      "categoryFallback": "Unknown category",
       "tags": "{{count}} tag",
       "tags_plural": "{{count}} tags",
+      "tagsNamed": "Tags: {{names}}",
+      "tagFallback": "Unknown tag",
       "condition": "Condition: {{condition}}",
       "location": "Location: {{location}}",
       "catalogFilters": "Catalog filters"
