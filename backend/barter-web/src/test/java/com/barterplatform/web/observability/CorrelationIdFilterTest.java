@@ -61,5 +61,28 @@ class CorrelationIdFilterTest {
         filter.doFilterInternal(request, response, (req, res) ->
                 assertThat(response.getHeader(CorrelationIdFilter.CORRELATION_ID_HEADER)).isEqualTo("proxy-request-5678"));
     }
+
+    @Test
+    void shouldSetBothResponseHeadersWhenCorrelationIdHeaderIsProvided() throws ServletException, IOException {
+        request.addHeader(CorrelationIdFilter.CORRELATION_ID_HEADER, "client-request-abcd");
+
+        filter.doFilterInternal(request, response, (req, res) -> {
+            assertThat(response.getHeader(CorrelationIdFilter.CORRELATION_ID_HEADER)).isEqualTo("client-request-abcd");
+            assertThat(response.getHeader(CorrelationIdFilter.REQUEST_ID_HEADER)).isEqualTo("client-request-abcd");
+        });
+    }
+
+    @Test
+    void shouldAcceptRequestIdAloneAndEchoBothResponseHeaders() throws ServletException, IOException {
+        request.addHeader(CorrelationIdFilter.REQUEST_ID_HEADER, "proxy-request-5678");
+
+        filter.doFilterInternal(request, response, (req, res) -> {
+            assertThat(response.getHeader(CorrelationIdFilter.CORRELATION_ID_HEADER)).isEqualTo("proxy-request-5678");
+            assertThat(response.getHeader(CorrelationIdFilter.REQUEST_ID_HEADER)).isEqualTo("proxy-request-5678");
+        });
+
+        assertThat(response.getHeader(CorrelationIdFilter.CORRELATION_ID_HEADER)).isEqualTo("proxy-request-5678");
+        assertThat(response.getHeader(CorrelationIdFilter.REQUEST_ID_HEADER)).isEqualTo("proxy-request-5678");
+    }
 }
 
