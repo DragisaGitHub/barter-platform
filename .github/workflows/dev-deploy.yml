@@ -166,6 +166,7 @@ jobs:
       - name: Deploy on DEV server
         env:
           DEPLOY_SHA: ${{ steps.target-commit.outputs.sha }}
+          SENTRY_DSN_BACKEND: ${{ secrets.SENTRY_DSN_BACKEND_DEV }}
         run: |
           set -euo pipefail
 
@@ -174,13 +175,14 @@ jobs:
           printf -v BACKEND_IMAGE_Q '%q' "${BACKEND_IMAGE}"
           printf -v FRONTEND_IMAGE_Q '%q' "${FRONTEND_IMAGE}"
           printf -v LANDING_IMAGE_Q '%q' "${LANDING_IMAGE}"
+          printf -v SENTRY_DSN_BACKEND_Q '%q' "${SENTRY_DSN_BACKEND}"
 
           ssh \
             -p "${DEV_SSH_PORT}" \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "${DEV_SSH_USER}@${DEV_SSH_HOST}" \
-            "export DEV_DEPLOY_PATH=${DEPLOY_PATH_Q}; export DEPLOY_SHA=${DEPLOY_SHA_Q}; export BACKEND_IMAGE=${BACKEND_IMAGE_Q}; export FRONTEND_IMAGE=${FRONTEND_IMAGE_Q}; export LANDING_IMAGE=${LANDING_IMAGE_Q}; bash -se" <<'EOF'
+            "export DEV_DEPLOY_PATH=${DEPLOY_PATH_Q}; export DEPLOY_SHA=${DEPLOY_SHA_Q}; export BACKEND_IMAGE=${BACKEND_IMAGE_Q}; export FRONTEND_IMAGE=${FRONTEND_IMAGE_Q}; export LANDING_IMAGE=${LANDING_IMAGE_Q}; export SENTRY_DSN_BACKEND=${SENTRY_DSN_BACKEND_Q}; bash -se" <<'EOF'
           set -euo pipefail
 
           cd "$DEV_DEPLOY_PATH"
