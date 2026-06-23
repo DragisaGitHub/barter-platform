@@ -29,3 +29,6 @@ barter:
       connection-string: ${AZURE_STORAGE_CONNECTION_STRING_DEV:${AZURE_STORAGE_CONNECTION_STRING:}}
       container-name: ${AZURE_STORAGE_CONTAINER_DEV:${AZURE_STORAGE_CONTAINER:}}
 
+sentry:
+  environment: dev
+
