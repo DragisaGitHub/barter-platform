@@ -1,108 +1,35 @@
 # API First Strategy
 
-## Goal
+## Principles
 
-The backend will follow an API-first development approach using OpenAPI.
+OpenAPI is the source of truth for REST endpoints, request/response models, and generated DTO classes and API interfaces.
 
-The OpenAPI specification is the source of truth for REST endpoints, request models, response models, validation rules, generated DTO classes, generated API interfaces and Swagger documentation.
+Controllers must not define request or response models manually. Generated DTOs are used only at the API boundary. Domain entities are kept separate from generated DTOs. Mapping between DTOs and domain models is handled by MapStruct.
 
-## Main Principle
+## Module Responsibilities
 
-Controllers must not define request or response models manually.
+**barter-api** — OpenAPI YAML files, generated DTOs, generated API interfaces.
 
-API contracts are defined in OpenAPI YAML files first.
+**barter-domain** — domain entities, enums, business state models, domain rules.
 
-Generated DTOs are used only at the web/API boundary.
+**barter-application** — application services, use cases, MapStruct mappers, transaction boundaries.
 
-Domain entities are kept separate from generated DTOs.
+**barter-infrastructure** — repositories, persistence configuration, external integrations, file storage.
 
-Mapping between generated DTOs and domain/entity models is handled by MapStruct.
-
-## Benefits
-
-- Consistent API contract
-- Reduced manual DTO errors
-- Easier frontend integration
-- Automatic Swagger documentation
-- Generated controller interfaces
-- Clear separation between API and domain model
-- Safer refactoring
-
-## Backend Module Responsibility
-
-### barter-api
-
-Responsible for OpenAPI YAML files, generated DTO classes and generated API interfaces.
-
-### barter-domain
-
-Responsible for domain entities, domain enums, business state models and core domain rules.
-
-### barter-application
-
-Responsible for application services, use cases, MapStruct mappers and transaction boundaries.
-
-### barter-infrastructure
-
-Responsible for database repositories, persistence configuration, external integrations and file storage integrations.
-
-### barter-web
-
-Responsible for REST controllers, implementation of generated API interfaces, Spring Security configuration and exception handling.
-
-## OpenAPI Structure
-
-Recommended structure:
-
-    barter-api/
-      src/main/resources/openapi/
-        openapi.yaml
-        paths/
-          auth.yaml
-          users.yaml
-          items.yaml
-          wishlists.yaml
-          trades.yaml
-          messages.yaml
-        components/
-          schemas/
-          requests/
-          responses/
-          parameters/
-          security/
+**barter-web** — REST controllers implementing generated API interfaces, Spring Security, exception handling.
 
 ## Mapping Rule
 
-Generated DTOs must never be used as JPA entities.
-
-JPA entities must never be exposed directly through REST endpoints.
-
-Allowed flow:
-
-    Controller -> Generated DTO -> Mapper -> Domain/Application Model -> Entity
+    Controller -> Generated DTO -> Mapper -> Domain Model -> Entity
     Entity -> Mapper -> Generated DTO -> Controller Response
 
-## Controller Rule
-
-Controllers implement generated API interfaces.
-
-Example:
+Controllers implement generated interfaces:
 
     UserController implements UsersApi
     ItemController implements ItemsApi
 
-## Validation Rule
-
-Validation should be declared as much as possible in OpenAPI schemas.
-
-Backend services still perform business validation.
-
 ## Versioning
 
-The initial API version is:
+Current API version: `/api/v1`
 
-    /api/v1
-
-Future versions should be introduced explicitly:
-
-    /api/v2
+New versions are introduced explicitly as `/api/v2`, etc.
