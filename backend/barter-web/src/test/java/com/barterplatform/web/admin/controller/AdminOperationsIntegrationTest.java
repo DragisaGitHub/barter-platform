@@ -114,6 +114,34 @@ class AdminOperationsIntegrationTest {
         userRepository.deleteAllInBatch();
     }
 
+    // ── /admin/system/sentry-test ────────────────────────────────────────────
+
+    @Test
+    void adminCanTriggerBackendSentryTest() throws Exception {
+        String adminToken = registerActivateLoginAndAssignAdmin();
+
+        mockMvc.perform(apiSentryTest().header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value("INTERNAL_ERROR"))
+                .andExpect(jsonPath("$.status").value(500));
+    }
+
+    @Test
+    void regularUserCannotTriggerBackendSentryTest() throws Exception {
+        String userToken = registerActivateAndLogin();
+
+        mockMvc.perform(apiSentryTest().header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedUserCannotTriggerBackendSentryTest() throws Exception {
+        mockMvc.perform(apiSentryTest())
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ── /admin/operations/overview ───────────────────────────────────────────
+
     @Test
     void adminCanAccessOperationalOverview() throws Exception {
         String adminToken = registerActivateLoginAndAssignAdmin();
@@ -207,6 +235,13 @@ class AdminOperationsIntegrationTest {
         return get("/api/v1/admin/operations/overview")
                 .contextPath("/api/v1")
                 .servletPath("/admin/operations/overview")
+                .accept(MediaType.APPLICATION_JSON);
+    }
+
+    private MockHttpServletRequestBuilder apiSentryTest() {
+        return post("/api/v1/admin/system/sentry-test")
+                .contextPath("/api/v1")
+                .servletPath("/admin/system/sentry-test")
                 .accept(MediaType.APPLICATION_JSON);
     }
 }

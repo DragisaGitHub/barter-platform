@@ -542,5 +542,15 @@
     "metadataSent": "Metadata sent with event",
     "capturedAtSend": "captured at send",
     "privacyNote": "No email, JWT, session data, or private user information is included in this event."
+  },
+  "backendSentryDiagnostics": {
+    "title": "Backend Sentry Diagnostics",
+    "description": "Trigger a deliberate backend exception to verify that server-side Sentry error tracking is active and capturing correctly.",
+    "endpointLabel": "Diagnostic endpoint",
+    "sendTestEvent": "Send backend Sentry test event",
+    "successTitle": "Backend test event triggered",
+    "successDescription": "Check your Sentry project for an event titled 'Manual backend Sentry diagnostics test'.",
+    "errorDescription": "The request failed unexpectedly. Verify that you are signed in as an admin and that the backend is reachable.",
+    "privacyNote": "No PII, JWT, cookies, or session data is included. The backend throws a diagnostic RuntimeException that is captured by GlobalExceptionHandler and forwarded to Sentry."
   }
 }
