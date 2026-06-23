@@ -7,8 +7,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.UUID;
 import java.util.regex.Pattern;
+
+import org.jspecify.annotations.NonNull;
 import org.slf4j.MDC;
-import org.springframework.lang.NonNull;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 public class CorrelationIdFilter extends OncePerRequestFilter {
@@ -21,9 +22,9 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
     private static final Pattern SAFE_HEADER_VALUE = Pattern.compile("^[A-Za-z0-9._-]{8,128}$");
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request,
-                                    @NonNull HttpServletResponse response,
-                                    @NonNull FilterChain filterChain) throws ServletException, IOException {
+    protected void doFilterInternal(@NonNull HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
         String correlationId = resolveCorrelationId(request);
 
         request.setAttribute(CORRELATION_ID_REQUEST_ATTRIBUTE, correlationId);

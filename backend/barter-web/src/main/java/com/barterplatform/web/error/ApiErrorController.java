@@ -2,12 +2,14 @@ package com.barterplatform.web.error;
 
 import com.barterplatform.api.model.ErrorResponse;
 import com.barterplatform.common.exception.ErrorCode;
+import com.barterplatform.web.observability.CorrelationIdFilter;
 import jakarta.servlet.RequestDispatcher;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
 
+import org.slf4j.MDC;
 import org.springframework.boot.webmvc.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,9 +40,26 @@ public class ApiErrorController implements ErrorController {
                 .path(resolvePath(request))
                 .fieldErrors(new ArrayList<>());
 
+        String requestId = resolveRequestId(request);
+        if (requestId != null) {
+            errorResponse.requestId(requestId);
+        }
+
         return ResponseEntity.status(status)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(errorResponse);
+    }
+
+    private String resolveRequestId(HttpServletRequest request) {
+        Object attr = request.getAttribute(CorrelationIdFilter.CORRELATION_ID_REQUEST_ATTRIBUTE);
+        if (attr instanceof String value && !value.isBlank()) {
+            return value;
+        }
+        String mdcValue = MDC.get(CorrelationIdFilter.CORRELATION_ID_MDC_KEY);
+        if (mdcValue != null && !mdcValue.isBlank()) {
+            return mdcValue;
+        }
+        return null;
     }
 
     private HttpStatus resolveStatus(Object statusCodeAttribute) {
