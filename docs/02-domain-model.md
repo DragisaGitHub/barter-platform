@@ -2,7 +2,7 @@
 
 ## Core Domains
 
-The platform is divided into several core domains.
+The platform is divided into the following core domains.
 
 ---
 
@@ -21,12 +21,6 @@ Core entities:
 - UserContactMethod
 - Role
 - Permission
-
-Future-ready authentication capabilities:
-- username/email and password authentication
-- OAuth2 external login providers
-- multi-factor authentication using authenticator applications
-- recovery codes
 
 ---
 
@@ -50,21 +44,7 @@ Core entities:
 
 ---
 
-# Wishlist & Matching
-
-Responsible for:
-- user wishes
-- desired items
-- automatic matching
-
-Core entities:
-- Wishlist
-- WishlistEntry
-- MatchCandidate
-
----
-
-# Trade
+# Trades
 
 Responsible for:
 - trade offers
@@ -84,7 +64,6 @@ Core entities:
 Responsible for:
 - conversations
 - messages
-- read receipts
 - attachments
 
 Core entities:
@@ -92,42 +71,10 @@ Core entities:
 - ConversationParticipant
 - Message
 - MessageAttachment
-- MessageReadReceipt
 
 ---
 
-# Reputation & Trust
-
-Responsible for:
-- ratings
-- reviews
-- user trust
-- reports
-
-Core entities:
-- Rating
-- Review
-- Report
-- ModerationAction
-
----
-
-# Monetization
-
-Responsible for:
-- advertisements
-- promoted listings
-- premium profiles
-
-Core entities:
-- PromotionPlan
-- ItemPromotion
-- AdCampaign
-- AdPlacement
-
----
-
-# Notification
+# Notifications
 
 Responsible for:
 - system notifications
@@ -140,13 +87,17 @@ Core entities:
 
 ---
 
-# Audit & History
+# Reviews & Reports
 
 Responsible for:
-- auditing
-- history tracking
-- traceability
+- ratings
+- reviews
+- user trust
+- reports
+- moderation
 
 Core entities:
-- AuditLog
-- EntityChangeHistory
+- Rating
+- Review
+- Report
+- ModerationAction
