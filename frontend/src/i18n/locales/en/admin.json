@@ -528,5 +528,19 @@
     "system": "System",
     "moderatorAction": "moderator action",
     "ownerMessage": "Owner message"
+  },
+  "sentryDiagnostics": {
+    "title": "Sentry Diagnostics",
+    "description": "Manually send a test event to Sentry to verify that error tracking is active and correctly configured.",
+    "statusActive": "Active",
+    "statusDisabled": "Disabled",
+    "sendTestEvent": "Send test event",
+    "successTitle": "Test event sent",
+    "successDescription": "Check your Sentry project for the incoming event.",
+    "disabledTitle": "Sentry is not active",
+    "disabledDescription": "VITE_SENTRY_DSN is not configured. Sentry event tracking is disabled in this environment.",
+    "metadataSent": "Metadata sent with event",
+    "capturedAtSend": "captured at send",
+    "privacyNote": "No email, JWT, session data, or private user information is included in this event."
   }
 }

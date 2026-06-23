@@ -5,6 +5,7 @@ import type { PingResponse } from "@/api/generated/types.ts";
 import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { AdminPageShell, AdminSurface } from "./components/AdminPageShell";
+import { SentryDiagnosticsSection } from "./components/SentryDiagnosticsSection";
 import { useTranslation } from "react-i18next";
 
 export function SystemPage() {
@@ -119,6 +120,8 @@ export function SystemPage() {
           </div>
         </div>
       </AdminSurface>
+
+      <SentryDiagnosticsSection />
     </AdminPageShell>
   );
 }

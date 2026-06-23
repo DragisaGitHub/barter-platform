@@ -528,5 +528,19 @@
     "system": "Sistem",
     "moderatorAction": "moderatorska akcija",
     "ownerMessage": "Poruka vlasniku"
+  },
+  "sentryDiagnostics": {
+    "title": "Sentry Dijagnostika",
+    "description": "Ručno pošaljite test događaj u Sentry kako biste proverili da je praćenje grešaka aktivno i ispravno konfigurisano.",
+    "statusActive": "Aktivno",
+    "statusDisabled": "Onemogućeno",
+    "sendTestEvent": "Pošalji test događaj",
+    "successTitle": "Test događaj poslat",
+    "successDescription": "Proverite Sentry projekat za dolazni događaj.",
+    "disabledTitle": "Sentry nije aktivan",
+    "disabledDescription": "VITE_SENTRY_DSN nije konfigurisan. Praćenje Sentry događaja je onemogućeno u ovom okruženju.",
+    "metadataSent": "Metapodaci poslati uz događaj",
+    "capturedAtSend": "zabeleženo pri slanju",
+    "privacyNote": "Nijedan e-mail, JWT, podaci sesije niti privatni korisnički podaci nisu uključeni u ovaj događaj."
   }
 }
