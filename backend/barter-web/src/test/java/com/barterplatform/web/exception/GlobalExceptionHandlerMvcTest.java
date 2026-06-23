@@ -2,6 +2,7 @@ package com.barterplatform.web.exception;
 
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
+import com.barterplatform.web.observability.CorrelationIdFilter;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.mock;
@@ -137,6 +138,21 @@ class GlobalExceptionHandlerMvcTest {
                 .andExpect(jsonPath("$.message").value("Authentication failed."))
                 .andExpect(jsonPath("$.path").value("/test-exceptions/authentication"))
                 .andExpect(jsonPath("$.fieldErrors", empty()));
+    }
+
+    @Test
+    void shouldIncludeRequestIdWhenCorrelationIdAttributeIsPresent() throws Exception {
+        mockMvc.perform(get("/test-exceptions/api")
+                        .requestAttr(CorrelationIdFilter.CORRELATION_ID_REQUEST_ATTRIBUTE, "test-correlation-id-abc"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.requestId").value("test-correlation-id-abc"));
+    }
+
+    @Test
+    void shouldOmitRequestIdWhenCorrelationIdAttributeIsAbsent() throws Exception {
+        mockMvc.perform(get("/test-exceptions/api"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.requestId").doesNotExist());
     }
 
     @RestController

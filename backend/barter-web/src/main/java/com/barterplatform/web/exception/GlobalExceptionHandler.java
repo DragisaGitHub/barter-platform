@@ -6,6 +6,7 @@ import com.barterplatform.api.model.ErrorResponse;
 import com.barterplatform.api.model.FieldErrorResponse;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
+import com.barterplatform.web.observability.CorrelationIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.OffsetDateTime;
@@ -214,7 +215,20 @@ public class GlobalExceptionHandler {
                 .path(request.getRequestURI())
                 .fieldErrors(new ArrayList<>(fieldErrors));
 
+        String requestId = resolveRequestId(request);
+        if (requestId != null) {
+            errorResponse.requestId(requestId);
+        }
+
         return ResponseEntity.status(status).body(errorResponse);
+    }
+
+    private String resolveRequestId(HttpServletRequest request) {
+        Object attr = request.getAttribute(CorrelationIdFilter.CORRELATION_ID_REQUEST_ATTRIBUTE);
+        if (attr instanceof String value && !value.isBlank()) {
+            return value;
+        }
+        return null;
     }
 
     private String sanitizeMessage(String message, String fallback) {

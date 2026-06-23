@@ -7,12 +7,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.barterplatform.web.observability.CorrelationIdFilter;
 import jakarta.servlet.RequestDispatcher;
 import java.util.stream.Stream;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.api.Test;
+import org.slf4j.MDC;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -59,6 +61,39 @@ class ApiErrorControllerMvcTest {
                 .andExpect(jsonPath("$.path").value("/error"))
                 .andExpect(jsonPath("$.message", not(org.hamcrest.Matchers.containsString("SQL"))))
                 .andExpect(jsonPath("$.fieldErrors", empty()));
+    }
+
+    @Test
+    void shouldIncludeRequestIdFromCorrelationIdAttribute() throws Exception {
+        mockMvc.perform(get("/error")
+                        .requestAttr(RequestDispatcher.ERROR_STATUS_CODE, 404)
+                        .requestAttr(RequestDispatcher.ERROR_REQUEST_URI, "/api/v1/missing")
+                        .requestAttr(CorrelationIdFilter.CORRELATION_ID_REQUEST_ATTRIBUTE, "req-id-12345678"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.requestId").value("req-id-12345678"));
+    }
+
+    @Test
+    void shouldFallbackToMdcCorrelationIdWhenAttributeIsAbsent() throws Exception {
+        MDC.put(CorrelationIdFilter.CORRELATION_ID_MDC_KEY, "mdc-id-12345678");
+        try {
+            mockMvc.perform(get("/error")
+                            .requestAttr(RequestDispatcher.ERROR_STATUS_CODE, 404)
+                            .requestAttr(RequestDispatcher.ERROR_REQUEST_URI, "/api/v1/missing"))
+                    .andExpect(status().isNotFound())
+                    .andExpect(jsonPath("$.requestId").value("mdc-id-12345678"));
+        } finally {
+            MDC.remove(CorrelationIdFilter.CORRELATION_ID_MDC_KEY);
+        }
+    }
+
+    @Test
+    void shouldOmitRequestIdWhenNeitherAttributeNorMdcIsPresent() throws Exception {
+        mockMvc.perform(get("/error")
+                        .requestAttr(RequestDispatcher.ERROR_STATUS_CODE, 404)
+                        .requestAttr(RequestDispatcher.ERROR_REQUEST_URI, "/api/v1/missing"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.requestId").doesNotExist());
     }
 
     private static Stream<Arguments> errorMappings() {

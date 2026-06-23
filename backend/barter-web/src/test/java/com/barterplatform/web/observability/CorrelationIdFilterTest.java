@@ -39,6 +39,7 @@ class CorrelationIdFilterTest {
         });
 
         String correlationId = response.getHeader(CorrelationIdFilter.CORRELATION_ID_HEADER);
+        assert correlationId != null;
         assertThat(UUID.fromString(correlationId)).isNotNull();
         assertThat(org.slf4j.MDC.get(CorrelationIdFilter.CORRELATION_ID_MDC_KEY)).isNull();
     }
