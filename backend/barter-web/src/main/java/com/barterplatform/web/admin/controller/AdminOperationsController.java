@@ -21,5 +21,18 @@ public class AdminOperationsController implements AdminOperationsApi {
     public ResponseEntity<AdminOperationsOverviewResponse> getAdminOperationsOverview() {
         return ResponseEntity.ok(adminOperationsOverviewService.getOverview());
     }
+
+    /**
+     * POST /admin/system/sentry-test
+     *
+     * Deliberately throws a RuntimeException so the global exception handler
+     * captures and forwards it to Sentry. Used by admins to verify that
+     * backend error tracking is active and correctly configured.
+     * Always results in HTTP 500 — that is the intended outcome.
+     */
+    @Override
+    public ResponseEntity<Void> triggerAdminSystemSentryTest() {
+        throw new RuntimeException("Manual backend Sentry diagnostics test");
+    }
 }
 

@@ -542,5 +542,15 @@
     "metadataSent": "Metapodaci poslati uz događaj",
     "capturedAtSend": "zabeleženo pri slanju",
     "privacyNote": "Nijedan e-mail, JWT, podaci sesije niti privatni korisnički podaci nisu uključeni u ovaj događaj."
+  },
+  "backendSentryDiagnostics": {
+    "title": "Backend Sentry Dijagnostika",
+    "description": "Pokrenite namjernu backend grešku kako biste proverili da praćenje grešaka na strani servera radi i ispravno hvata izuzetke.",
+    "endpointLabel": "Dijagnostički endpoint",
+    "sendTestEvent": "Pošalji backend Sentry test događaj",
+    "successTitle": "Backend test događaj pokrenut",
+    "successDescription": "Proverite Sentry projekat za događaj pod nazivom 'Manual backend Sentry diagnostics test'.",
+    "errorDescription": "Zahtev je neočekivano neuspešan. Proverite da li ste prijavljeni kao admin i da li je backend dostupan.",
+    "privacyNote": "Nisu uključeni PII, JWT, kolačići niti podaci sesije. Backend baca dijagnostički RuntimeException koji hvata GlobalExceptionHandler i prosleđuje ga Sentry-u."
   }
 }

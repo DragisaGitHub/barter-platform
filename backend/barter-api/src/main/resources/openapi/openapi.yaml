@@ -130,6 +130,8 @@ paths:
     $ref: './paths/admin-reports.yaml#/reportAssignmentUpdate'
   /admin/operations/overview:
     $ref: './paths/admin-operations.yaml#/overview'
+  /admin/system/sentry-test:
+    $ref: './paths/admin-operations.yaml#/sentryTest'
   /catalog/tags:
     $ref: './paths/catalog.yaml#/tags'
   /admin/tags:

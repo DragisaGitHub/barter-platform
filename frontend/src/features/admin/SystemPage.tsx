@@ -6,6 +6,7 @@ import { Button } from "../../components/ui/Button";
 import { Badge } from "../../components/ui/Badge";
 import { AdminPageShell, AdminSurface } from "./components/AdminPageShell";
 import { SentryDiagnosticsSection } from "./components/SentryDiagnosticsSection";
+import { BackendSentryDiagnosticsSection } from "./components/BackendSentryDiagnosticsSection";
 import { useTranslation } from "react-i18next";
 
 export function SystemPage() {
@@ -122,6 +123,8 @@ export function SystemPage() {
       </AdminSurface>
 
       <SentryDiagnosticsSection />
+
+      <BackendSentryDiagnosticsSection />
     </AdminPageShell>
   );
 }

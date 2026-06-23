@@ -19,3 +19,28 @@ overview:
       '403':
         $ref: '../components/responses/Forbidden.yaml'
 
+sentryTest:
+  post:
+    tags:
+      - AdminOperations
+    operationId: triggerAdminSystemSentryTest
+    summary: Trigger a backend Sentry diagnostics test event
+    description: >
+      Deliberately throws a RuntimeException to verify that backend Sentry error
+      tracking is active and capturing exceptions correctly. Always returns HTTP 500
+      by design — this is the intended and expected outcome. Admin-only diagnostic
+      operation; safe to use in all environments.
+    security:
+      - bearerJwt: []
+    responses:
+      '500':
+        description: Sentry test event triggered — this 500 response is intentional and expected
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/ErrorResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
