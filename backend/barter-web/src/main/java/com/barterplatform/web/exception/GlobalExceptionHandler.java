@@ -7,6 +7,7 @@ import com.barterplatform.api.model.FieldErrorResponse;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.web.observability.CorrelationIdFilter;
+import io.sentry.Sentry;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import java.time.OffsetDateTime;
@@ -190,6 +191,10 @@ public class GlobalExceptionHandler {
             HttpServletRequest request) {
 
         log.error("Unhandled exception while processing {} {}", request.getMethod(), request.getRequestURI(), ex);
+        // Manually capture 5xx events: the Sentry SentryExceptionResolver never fires here because
+        // GlobalExceptionHandler fully resolves the exception before the resolver chain reaches it.
+        // Sentry.captureException is a no-op when SENTRY_DSN_BACKEND is empty.
+        Sentry.captureException(ex);
 
         return buildResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,

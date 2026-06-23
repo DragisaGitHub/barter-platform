@@ -33,3 +33,6 @@ barter:
       connection-string: ${AZURE_STORAGE_CONNECTION_STRING_PROD:${AZURE_STORAGE_CONNECTION_STRING:}}
       container-name: ${AZURE_STORAGE_CONTAINER_PROD:${AZURE_STORAGE_CONTAINER:}}
 
+sentry:
+  environment: prod
+

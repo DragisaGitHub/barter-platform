@@ -140,5 +140,11 @@ barter:
     max-images-per-item: ${BARTER_STORAGE_MAX_IMAGES_PER_ITEM:6}
     max-image-size-bytes: ${BARTER_STORAGE_MAX_IMAGE_SIZE_BYTES:10485760}
 
+sentry:
+  # Leave empty to disable Sentry (no-op). Set SENTRY_DSN_BACKEND to enable error tracking.
+  dsn: ${SENTRY_DSN_BACKEND:}
+  send-default-pii: false
+  traces-sample-rate: 0
+
 
 
