@@ -9,12 +9,14 @@ development deployments on **zameni.rs**.
 
 | Document | Purpose |
 |----------|---------|
+| [FIRST_DEPLOYMENT.md](FIRST_DEPLOYMENT.md) | **Start here** for the very first production deployment (empty server) |
 | [production-runbook.md](production-runbook.md) | First-time setup, daily operations, and tag-based release flow |
 | [SERVER_HARDENING.md](SERVER_HARDENING.md) | OS-level hardening guide for the production Ubuntu server |
 | [GITHUB_SECRETS.md](GITHUB_SECRETS.md) | Every GitHub Actions secret required for CI/CD — what each is, where to find it |
 | [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) | Step-by-step operator checklist before and after every production deployment |
 | [ROLLBACK_CHECKLIST.md](ROLLBACK_CHECKLIST.md) | When and how to roll back, including database migration considerations |
 | [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) | Recovery procedures for VM failure, Docker failure, DB restore, DNS issues |
+| [V1_READINESS_REPORT.md](V1_READINESS_REPORT.md) | Deployment readiness audit report for v1.0.0 |
 
 ## Development Documents
 

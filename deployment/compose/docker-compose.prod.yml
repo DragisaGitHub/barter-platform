@@ -78,7 +78,11 @@ services:
       SENTRY_DSN_BACKEND: ${SENTRY_DSN_BACKEND:-}
       AZURE_STORAGE_CONNECTION_STRING_PROD: ${AZURE_STORAGE_CONNECTION_STRING_PROD:?Azure Storage connection is required}
       AZURE_STORAGE_CONTAINER_PROD: ${AZURE_STORAGE_CONTAINER_PROD:-item-images-prod}
-      # Bootstrap admin — set once, then remove from env after first login.
+      # Bootstrap admin — set ALL FOUR vars for the very first deployment only.
+      # After first login, remove BARTER_BOOTSTRAP_ADMIN_ENABLED (or set to false)
+      # and recreate the backend container. The admin account persists in the database.
+      BARTER_BOOTSTRAP_ADMIN_ENABLED: ${BARTER_BOOTSTRAP_ADMIN_ENABLED:-false}
+      BARTER_BOOTSTRAP_ADMIN_USERNAME: ${BARTER_BOOTSTRAP_ADMIN_USERNAME:-}
       BARTER_BOOTSTRAP_ADMIN_EMAIL: ${BARTER_BOOTSTRAP_ADMIN_EMAIL:-}
       BARTER_BOOTSTRAP_ADMIN_PASSWORD: ${BARTER_BOOTSTRAP_ADMIN_PASSWORD:-}
     expose:
