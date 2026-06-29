@@ -1,0 +1,147 @@
+name: PROD Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: |
+          Immutable release tag to deploy (e.g. v1.0.0 or 1.0.0).
+          Must be a semver tag. "latest", "main", "dev" etc. are rejected.
+        required: true
+        type: string
+
+run-name: PROD deploy ${{ inputs.image_tag }} by @${{ github.actor }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-prod:
+    name: Deploy PROD tag ${{ inputs.image_tag }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+    env:
+      PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+      PROD_SSH_PORT: ${{ secrets.PROD_SSH_PORT || '22' }}
+      PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+      PROD_DEPLOY_PATH: ${{ secrets.PROD_DEPLOY_PATH }}
+
+    steps:
+      - name: Log deployment context
+        run: |
+          echo "Actor:     ${GITHUB_ACTOR}"
+          echo "Image tag: ${{ inputs.image_tag }}"
+          echo "Workflow:  ${GITHUB_REF}"
+          echo "Started:   $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Validate image tag
+        env:
+          IMAGE_TAG: ${{ inputs.image_tag }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${IMAGE_TAG}" ]]; then
+            echo "::error::Image tag must not be empty."
+            exit 1
+          fi
+
+          # Reject unsafe/mutable tags
+          case "${IMAGE_TAG}" in
+            latest|main|master|dev|develop|staging|edge|nightly)
+              echo "::error::Tag '${IMAGE_TAG}' is not allowed for production. Use an immutable semver tag (e.g. v1.0.0 or 1.0.0)."
+              exit 1
+              ;;
+          esac
+
+          # Must match semver: v1.0.0 or 1.0.0 (with optional v prefix)
+          if ! [[ "${IMAGE_TAG}" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Tag '${IMAGE_TAG}' is not a valid semver tag. Expected format: v1.0.0 or 1.0.0."
+            exit 1
+          fi
+
+          # Normalize: strip leading 'v' for Docker image tag
+          # The Docker publish workflow produces both v1.0.0 and 1.0.0 tags.
+          # We use the normalized (no v-prefix) form to match semver pattern={{version}}.
+          NORMALIZED_TAG="${IMAGE_TAG#v}"
+          echo "NORMALIZED_TAG=${NORMALIZED_TAG}" >> "${GITHUB_ENV}"
+          echo "Input tag: ${IMAGE_TAG}"
+          echo "Normalized Docker image tag: ${NORMALIZED_TAG}"
+
+      - name: Validate required PROD deployment secrets
+        env:
+          PROD_SSH_PRIVATE_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+
+          missing=()
+
+          [[ -n "${PROD_SSH_HOST}" ]]        || missing+=("PROD_SSH_HOST")
+          [[ -n "${PROD_SSH_USER}" ]]        || missing+=("PROD_SSH_USER")
+          [[ -n "${PROD_SSH_PRIVATE_KEY}" ]] || missing+=("PROD_SSH_PRIVATE_KEY")
+          [[ -n "${PROD_DEPLOY_PATH}" ]]     || missing+=("PROD_DEPLOY_PATH")
+
+          if (( ${#missing[@]} > 0 )); then
+            printf '::error::Missing required PROD deployment secrets: %s\n' "${missing[*]}"
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.10.0
+        with:
+          ssh-private-key: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+
+      - name: Configure SSH host verification
+        env:
+          PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          touch ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+          if [[ -n "${PROD_SSH_KNOWN_HOSTS:-}" ]]; then
+            printf '%s\n' "${PROD_SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+            echo "Using configured PROD_SSH_KNOWN_HOSTS entries."
+          else
+            ssh-keyscan -p "${PROD_SSH_PORT}" -H "${PROD_SSH_HOST}" >> ~/.ssh/known_hosts 2>/dev/null
+            echo "PROD_SSH_KNOWN_HOSTS not set; loaded the current host key with ssh-keyscan."
+          fi
+
+      - name: Copy deploy script to production server
+        run: |
+          set -euo pipefail
+          scp \
+            -P "${PROD_SSH_PORT}" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            deployment/scripts/deploy-prod.sh \
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}:${PROD_DEPLOY_PATH}/deployment/scripts/deploy-prod.sh"
+
+      - name: Deploy on PROD server
+        run: |
+          set -euo pipefail
+
+          printf -v DEPLOY_PATH_Q '%q' "${PROD_DEPLOY_PATH}"
+          printf -v NORMALIZED_TAG_Q '%q' "${NORMALIZED_TAG}"
+
+          ssh \
+            -p "${PROD_SSH_PORT}" \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=yes \
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}" \
+            "cd ${DEPLOY_PATH_Q} && chmod +x deployment/scripts/deploy-prod.sh && bash deployment/scripts/deploy-prod.sh ${NORMALIZED_TAG_Q}"
+
+      - name: Log completion
+        if: always()
+        run: |
+          echo "Run finished with status: ${{ job.status }}"
+          echo "Run completed at: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
