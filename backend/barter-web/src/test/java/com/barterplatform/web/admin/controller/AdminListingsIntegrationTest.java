@@ -54,7 +54,8 @@ import tools.jackson.databind.ObjectMapper;
                 "spring.jpa.hibernate.ddl-auto=validate",
                 "spring.flyway.enabled=true",
                 "spring.flyway.locations=classpath:db/migration",
-                "barter.jwt.secret=integration-test-secret-key-at-least-32-bytes!!"
+                "barter.jwt.secret=integration-test-secret-key-at-least-32-bytes!!",
+                "barter.seed.demo-content=true"
         }
 )
 @AutoConfigureMockMvc

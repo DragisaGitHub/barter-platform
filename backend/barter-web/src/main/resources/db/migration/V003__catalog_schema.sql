@@ -80,26 +80,10 @@ CREATE INDEX IF NOT EXISTS idx_item_tags_item_id ON item_tags (item_id);
 CREATE INDEX IF NOT EXISTS idx_item_tags_tag_id ON item_tags (tag_id);
 
 -- =============================================
--- Seed: default categories
+-- NOTE: Default categories and tags are NOT seeded via Flyway.
+-- They are inserted by DemoContentSeeder (Java) only when
+-- barter.seed.demo-content=true (disabled by default).
+-- Production starts with an empty catalog; admins create
+-- categories and tags manually after launch.
 -- =============================================
-INSERT INTO categories (uuid, name, slug, sort_order, created_at)
-VALUES
-    ('c0a80101-0001-4000-8000-000000000001', 'Toys',        'toys',        1, CURRENT_TIMESTAMP),
-    ('c0a80101-0002-4000-8000-000000000002', 'Books',       'books',       2, CURRENT_TIMESTAMP),
-    ('c0a80101-0003-4000-8000-000000000003', 'Electronics', 'electronics', 3, CURRENT_TIMESTAMP),
-    ('c0a80101-0004-4000-8000-000000000004', 'Clothes',     'clothes',     4, CURRENT_TIMESTAMP),
-    ('c0a80101-0005-4000-8000-000000000005', 'Home',        'home',        5, CURRENT_TIMESTAMP),
-    ('c0a80101-0006-4000-8000-000000000006', 'Sports',      'sports',      6, CURRENT_TIMESTAMP);
-
--- =============================================
--- Seed: default tags
--- =============================================
-INSERT INTO tags (uuid, name, slug, created_at)
-VALUES
-    ('d0a80101-0001-4000-8000-000000000001', 'Kids',       'kids',       CURRENT_TIMESTAMP),
-    ('d0a80101-0002-4000-8000-000000000002', 'Collectible','collectible', CURRENT_TIMESTAMP),
-    ('d0a80101-0003-4000-8000-000000000003', 'Vintage',    'vintage',    CURRENT_TIMESTAMP),
-    ('d0a80101-0004-4000-8000-000000000004', 'New',        'new',        CURRENT_TIMESTAMP),
-    ('d0a80101-0005-4000-8000-000000000005', 'Used',       'used',       CURRENT_TIMESTAMP),
-    ('d0a80101-0006-4000-8000-000000000006', 'Handmade',   'handmade',   CURRENT_TIMESTAMP);
 

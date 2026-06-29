@@ -24,6 +24,8 @@ springdoc:
 barter:
   email-verification:
     enabled: true
+  seed:
+    demo-content: false
   security:
     allowed-origins: ${BARTER_SECURITY_ALLOWED_ORIGINS:${FRONTEND_ORIGIN:}}
     swagger-enabled: false

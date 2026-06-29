@@ -130,6 +130,8 @@ barter:
       username: ${BARTER_BOOTSTRAP_ADMIN_USERNAME:}
       email: ${BARTER_BOOTSTRAP_ADMIN_EMAIL:}
       password: ${BARTER_BOOTSTRAP_ADMIN_PASSWORD:}
+  seed:
+    demo-content: ${BARTER_SEED_DEMO_CONTENT:false}
   storage:
     type: ${BARTER_STORAGE_TYPE:local}
     local:

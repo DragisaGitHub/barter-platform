@@ -52,7 +52,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 "spring.flyway.enabled=true",
                 "spring.flyway.locations=classpath:db/migration",
                 "barter.jwt.secret=integration-test-secret-key-at-least-32-bytes!!",
-                "barter.storage.local.base-path=${java.io.tmpdir}/barter-test-uploads"
+                "barter.storage.local.base-path=${java.io.tmpdir}/barter-test-uploads",
+                "barter.seed.demo-content=true"
         }
 )
 @AutoConfigureMockMvc
