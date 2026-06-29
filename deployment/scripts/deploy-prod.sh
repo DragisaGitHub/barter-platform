@@ -8,6 +8,13 @@
 # "dev", "develop", "master" are rejected. The script updates BACKEND_IMAGE,
 # FRONTEND_IMAGE, and LANDING_IMAGE in env/prod.env, pulls the images, and
 # recreates the production stack. Health checks are performed after deploy.
+#
+# ⚠️  PRE-DEPLOYMENT CHECKLIST:
+#   1. Ensure a recent managed-PostgreSQL backup exists (Azure automated backup
+#      or a manual pg_dump) BEFORE deploying — especially for schema changes.
+#   2. Confirm the target images are published and pass CI.
+#   3. Note the CURRENT tag printed below — it is your rollback target if this
+#      deployment fails.
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -69,6 +76,14 @@ validate_prerequisites() {
   fi
 }
 
+# ─── Capture Currently Deployed Tag ───────────────────────────────────────
+
+read_current_tag() {
+  # Reads the tag portion of BACKEND_IMAGE from prod.env (e.g. "1.0.0").
+  # Returns empty string if the line is absent or has no colon.
+  grep -E '^BACKEND_IMAGE=' "${ENV_FILE}" 2>/dev/null | tail -n1 | cut -d: -f2 || true
+}
+
 # ─── Update Image Tags in prod.env ─────────────────────────────────────────
 
 update_env_images() {
@@ -124,8 +139,11 @@ IMAGE_TAG="${1:-}"
 validate_tag "${IMAGE_TAG}"
 validate_prerequisites
 
+PREVIOUS_TAG="$(read_current_tag)"
+
 log "Production deployment started"
 echo "Tag:              ${IMAGE_TAG}"
+echo "Previous tag:     ${PREVIOUS_TAG:-unknown}  ← use this if rollback is needed"
 echo "Compose file:     ${COMPOSE_FILE}"
 echo "Env file:         ${ENV_FILE}"
 echo "Started at (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -145,6 +163,7 @@ run_health_checks
 
 log "Production deployment completed successfully"
 echo "Tag deployed:      ${IMAGE_TAG}"
+echo "Previous tag:      ${PREVIOUS_TAG:-unknown}  ← rollback target if needed"
 echo "Backend image:     ${BACKEND_REPO}:${IMAGE_TAG}"
 echo "Frontend image:    ${FRONTEND_REPO}:${IMAGE_TAG}"
 echo "Landing image:     ${LANDING_REPO}:${IMAGE_TAG}"
@@ -154,3 +173,8 @@ echo "Verify manually:"
 echo "  curl -s https://zameni.rs/health"
 echo "  curl -s https://app.zameni.rs/health"
 echo "  curl -s https://app.zameni.rs/api/v1/actuator/health/readiness"
+echo
+if [[ -n "${PREVIOUS_TAG}" && "${PREVIOUS_TAG}" != "${IMAGE_TAG}" ]]; then
+  echo "To roll back to the previous release:"
+  echo "  bash deployment/scripts/rollback-prod.sh ${PREVIOUS_TAG}"
+fi

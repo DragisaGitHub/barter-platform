@@ -245,11 +245,29 @@ docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env restar
 
 ### Deploy a New Release
 
+Use `deploy-prod.sh` — it validates the tag, updates `prod.env`, pulls images, recreates the
+stack, and runs health checks. It also prints the previous tag so you have a rollback reference.
+
 ```bash
+cd /opt/barter-platform
+bash deployment/scripts/deploy-prod.sh 1.1.0
+```
+
+> ⚠️ **Before deploying**: confirm a recent managed-PostgreSQL backup exists (Azure automated
+> backup or a manual `pg_dump`) — especially for releases that include schema migrations.
+
+<details>
+<summary>Manual equivalent (advanced / emergency use only)</summary>
+
+```bash
+cd /opt/barter-platform/deployment
+
 # Update image tag(s) in prod.env, then:
 docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env pull
-docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env up -d
+docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env up -d --force-recreate
 ```
+
+</details>
 
 ### Check Logs
 
@@ -286,7 +304,22 @@ docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env ps
 
 Rollback = revert to a known-good image tag.
 
+Use `rollback-prod.sh` — it validates the tag, prints the currently deployed tag, warns about
+database migration risks, and runs the same health checks as a forward deploy.
+
 ```bash
+cd /opt/barter-platform
+bash deployment/scripts/rollback-prod.sh 1.0.0
+```
+
+If the database has irreversible migrations in the new version, you must also restore the database from backup before rolling back.
+
+<details>
+<summary>Manual equivalent (advanced / emergency use only)</summary>
+
+```bash
+cd /opt/barter-platform/deployment
+
 # 1. Edit prod.env — set the previous working image tag:
 #    BACKEND_IMAGE=dragisahub1984/barter-backend:0.9.0
 
@@ -300,7 +333,7 @@ docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env up -d 
 curl -s https://app.zameni.rs/api/v1/actuator/health/readiness
 ```
 
-If the database has irreversible migrations in the new version, you must also restore the database from backup before rolling back.
+</details>
 
 ---
 
@@ -320,8 +353,12 @@ The `.gitignore` should already exclude `deployment/env/prod.env` and `deploymen
 ## Remaining TODOs (Future Phases)
 
 - [x] CI/CD pipeline to automate image tag bump + deploy via SSH (PROD Deploy workflow)
+- [ ] **Managed-PostgreSQL backup strategy** — `backup-db.sh` uses `docker compose exec` and
+      targets a local postgres container; it cannot run against Azure Database for PostgreSQL as-is.
+      Options: rely on Azure's built-in automated backups, add a scheduled `pg_dump` job that
+      connects directly to the managed endpoint, or use `pgbackup` / Azure Data Factory.
+      Until this is in place, verify Azure automated backup retention in the Azure Portal.
 - [ ] Uptime monitoring (e.g., UptimeRobot, Azure Monitor)
 - [ ] Log aggregation (e.g., Grafana Loki, Azure Log Analytics)
-- [ ] Database backup automation script for managed PostgreSQL
 - [ ] Rate limiting at Caddy layer
 - [ ] WAF / DDoS protection (Cloudflare or Azure Front Door)
