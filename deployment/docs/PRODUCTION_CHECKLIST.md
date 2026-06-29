@@ -136,11 +136,21 @@ Complete this section at least 30 minutes before every deployment.
   grep "^JWT_SECRET" /opt/barter-platform/deployment/env/prod.env | wc -c
   # Expected: > 50 characters
   ```
-- [ ] **Bootstrap admin variables are commented out** (only needed on first deployment):
-  ```bash
-  grep "^BARTER_BOOTSTRAP_ADMIN" /opt/barter-platform/deployment/env/prod.env \
-    && echo "WARNING: bootstrap vars are active" || echo "OK — bootstrap vars not set"
-  ```
+- [ ] **Bootstrap admin variables** — check depends on deployment type:
+  - **First deployment**: all four vars must be active and non-empty:
+    ```bash
+    grep "^BARTER_BOOTSTRAP_ADMIN" /opt/barter-platform/deployment/env/prod.env
+    # Expected 4 lines:
+    #   BARTER_BOOTSTRAP_ADMIN_ENABLED=true
+    #   BARTER_BOOTSTRAP_ADMIN_USERNAME=<username>
+    #   BARTER_BOOTSTRAP_ADMIN_EMAIL=<email>
+    #   BARTER_BOOTSTRAP_ADMIN_PASSWORD=<password>
+    ```
+  - **Subsequent deployments**: all four vars must be absent or commented out:
+    ```bash
+    grep "^BARTER_BOOTSTRAP_ADMIN" /opt/barter-platform/deployment/env/prod.env \
+      && echo "WARNING: bootstrap vars are active" || echo "OK — bootstrap vars not set"
+    ```
 
 ---
 
