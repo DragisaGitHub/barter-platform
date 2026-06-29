@@ -1,6 +1,7 @@
 package com.barterplatform;
 
 import com.barterplatform.web.bootstrap.AdminBootstrapProperties;
+import com.barterplatform.web.bootstrap.DemoContentSeedProperties;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.persistence.autoconfigure.EntityScan;
@@ -27,7 +28,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
         "com.barterplatform.infrastructure.reputation.repository",
         "com.barterplatform.infrastructure.notification.repository"
 })
-@EnableConfigurationProperties(AdminBootstrapProperties.class)
+@EnableConfigurationProperties({AdminBootstrapProperties.class, DemoContentSeedProperties.class})
 public class BarterApplication {
 
     public static void main(String[] args) {

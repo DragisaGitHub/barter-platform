@@ -113,6 +113,18 @@ curl -s https://zameni.rs/health
 docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env up -d --force-recreate backend
 ```
 
+### Post-Launch: Creating Catalog Content
+
+A fresh production database starts with **no categories, tags, or listings**.
+The admin must create all marketplace taxonomy manually via the Admin API:
+
+1. **Create categories** — `POST /api/v1/admin/categories`
+2. **Create tags** — `POST /api/v1/admin/tags`
+3. Once categories exist, users can create item listings.
+
+This is by design. Demo/business content is never seeded in production
+(`BARTER_SEED_DEMO_CONTENT=false` is the default and must remain so).
+
 ---
 
 ## Ongoing Operations

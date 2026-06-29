@@ -35,6 +35,8 @@ barter:
     secret: ${JWT_SECRET:local-dev-only-jwt-secret-32-plus-chars-for-barter-platform}
   mail:
     from: noreply@barter-platform.local
+  seed:
+    demo-content: true
   security:
     allowed-origins:
       - http://localhost:5173
