@@ -73,6 +73,8 @@ services:
       BARTER_SECURITY_CORS_MAX_AGE: ${BARTER_SECURITY_CORS_MAX_AGE:-1h}
       BARTER_SWAGGER_ENABLED: "false"
       BARTER_EMAIL_VERIFICATION_ENABLED: "true"
+      # Safety hard-lock: never seed demo content in production regardless of prod.env.
+      BARTER_SEED_DEMO_CONTENT: "false"
       SENTRY_DSN_BACKEND: ${SENTRY_DSN_BACKEND:-}
       AZURE_STORAGE_CONNECTION_STRING_PROD: ${AZURE_STORAGE_CONNECTION_STRING_PROD:?Azure Storage connection is required}
       AZURE_STORAGE_CONTAINER_PROD: ${AZURE_STORAGE_CONTAINER_PROD:-item-images-prod}

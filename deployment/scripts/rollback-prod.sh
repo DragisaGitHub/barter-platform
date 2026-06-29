@@ -64,12 +64,20 @@ validate_prerequisites() {
   fi
 
   if [[ ! -f "${ENV_FILE}" ]]; then
-    fail "Missing env file: ${ENV_FILE}."
+    fail "Missing env file: ${ENV_FILE}. Create it from ${DEPLOYMENT_DIR}/env/prod.env.example."
   fi
 
   if ! command -v docker >/dev/null 2>&1; then
     fail "Docker is not installed or not on PATH."
   fi
+}
+
+# ─── Capture Currently Deployed Tag ───────────────────────────────────────
+
+read_current_tag() {
+  # Reads the tag portion of BACKEND_IMAGE from prod.env (e.g. "1.1.0").
+  # Returns empty string if the line is absent or has no colon.
+  grep -E '^BACKEND_IMAGE=' "${ENV_FILE}" 2>/dev/null | tail -n1 | cut -d: -f2 || true
 }
 
 # ─── Update Image Tags in prod.env ─────────────────────────────────────────
@@ -126,8 +134,11 @@ ROLLBACK_TAG="${1:-}"
 validate_tag "${ROLLBACK_TAG}"
 validate_prerequisites
 
+CURRENT_TAG="$(read_current_tag)"
+
 log "Production ROLLBACK started"
 echo "Rolling back to tag: ${ROLLBACK_TAG}"
+echo "Current tag:         ${CURRENT_TAG:-unknown}  ← currently deployed version"
 echo "Compose file:        ${COMPOSE_FILE}"
 echo "Env file:            ${ENV_FILE}"
 echo "Started at (UTC):    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -155,6 +166,7 @@ run_health_checks
 
 log "Production ROLLBACK completed successfully"
 echo "Rolled back to tag:  ${ROLLBACK_TAG}"
+echo "Previous tag was:    ${CURRENT_TAG:-unknown}"
 echo "Backend image:       ${BACKEND_REPO}:${ROLLBACK_TAG}"
 echo "Frontend image:      ${FRONTEND_REPO}:${ROLLBACK_TAG}"
 echo "Landing image:       ${LANDING_REPO}:${ROLLBACK_TAG}"
