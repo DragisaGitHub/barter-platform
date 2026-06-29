@@ -145,6 +145,7 @@ SURVEY_SSH_ALLOW_USERS="(not set)"
 SURVEY_DEPLOY_USER_EXISTS="false"
 SURVEY_DOCKER_INSTALLED="false"
 SURVEY_SHARED_SERVER="false"       # true if any co-tenant workload detected
+SURVEY_SSH_SERVICE="ssh"           # ssh.service (Ubuntu 24.04) or sshd.service (Ubuntu 22.04)
 
 _detect_os() {
   if [[ -f /etc/os-release ]]; then
@@ -219,12 +220,23 @@ _detect_deploy_user() {
   id "${DEPLOY_USER}" &>/dev/null && SURVEY_DEPLOY_USER_EXISTS="true" || true
 }
 
+_detect_ssh_service() {
+  # Ubuntu 24.04 ships the daemon as ssh.service; Ubuntu 22.04 uses sshd.service.
+  if systemctl list-units --type=service --no-pager 2>/dev/null \
+       | grep -qE '^\s*sshd\.service'; then
+    SURVEY_SSH_SERVICE="sshd"
+  else
+    SURVEY_SSH_SERVICE="ssh"
+  fi
+}
+
 survey_server() {
   _detect_os
   _detect_k3s
   _detect_docker_workloads
   _detect_open_ports
   _detect_ufw
+  _detect_ssh_service
   _detect_sshd
   _detect_deploy_user
 }
@@ -344,8 +356,15 @@ print_plan() {
     warn "           Will require typing YES"
   else
     plan "UFW          Additive mode — existing rules PRESERVED (no --reset-firewall)"
-    [[ "${SURVEY_PORT_5432_PUBLIC}" == "true" ]] && \
-      ok  "UFW          Port 5432 rule will be preserved (bitcoin-postgres/Fabric safe)"
+    if [[ "${SURVEY_PORT_5432_PUBLIC}" == "true" ]]; then
+      if [[ "${SURVEY_UFW_ACTIVE}" == "true" ]] && \
+         echo "${SURVEY_UFW_RULES}" | grep -q "5432"; then
+        ok   "UFW          Port 5432 rule exists — will be preserved (bitcoin-postgres/Fabric safe)"
+      else
+        warn "UFW          Port 5432 has no UFW rule — will add ufw allow 5432/tcp"
+        warn "             (TEMP: bitcoin-postgres/Fabric — remove after Fabric migration)"
+      fi
+    fi
     plan "UFW          Add rules:"
     plan "               + ${SSH_PORT}/tcp (SSH)"
     plan "               + 80/tcp  (HTTP — Caddy ACME+redirect)"
@@ -502,20 +521,20 @@ EOF
   if sshd -t 2>/dev/null; then
     ok "SSH config syntax is valid"
   else
-    warn "SSH config validation FAILED — NOT restarting sshd."
-    warn "Fix errors in ${_SSHD_CONF}, then: systemctl restart sshd"
+    warn "SSH config validation FAILED — NOT restarting ${SURVEY_SSH_SERVICE}."
+    warn "Fix errors in ${_SSHD_CONF}, then: systemctl restart ${SURVEY_SSH_SERVICE}"
     return
   fi
 
   echo
-  warn "About to restart sshd.  Keep a SECOND SSH session open as a fallback."
+  warn "About to restart ${SURVEY_SSH_SERVICE}.  Keep a SECOND SSH session open as a fallback."
   warn "Cloud provider emergency console is your recovery path if locked out."
-  read -rp "  Restart sshd now? [y/N] " _RESTART_REPLY
+  read -rp "  Restart ${SURVEY_SSH_SERVICE} now? [y/N] " _RESTART_REPLY
   if [[ "${_RESTART_REPLY,,}" == "y" ]]; then
-    systemctl restart sshd
-    ok "sshd restarted"
+    systemctl restart "${SURVEY_SSH_SERVICE}"
+    ok "${SURVEY_SSH_SERVICE} restarted"
   else
-    warn "Skipped — run 'systemctl restart sshd' manually when ready"
+    warn "Skipped — run 'systemctl restart ${SURVEY_SSH_SERVICE}' manually when ready"
   fi
 }
 
@@ -546,8 +565,6 @@ configure_ufw() {
     fi
   else
     log "Additive mode: existing UFW rules are PRESERVED"
-    [[ "${SURVEY_PORT_5432_PUBLIC}" == "true" ]] && \
-      ok "Port 5432 rule kept — bitcoin-postgres / Fabric access maintained"
   fi
 
   # ── Set defaults and add Barter rules ────────────────────────────────────
@@ -558,6 +575,16 @@ configure_ufw() {
   ufw allow 80/tcp            comment "HTTP Caddy ACME+redirect"
   ufw allow 443/tcp           comment "HTTPS"
   ufw allow 443/udp           comment "HTTP/3 QUIC"
+
+  # ── Preserve 5432 for bitcoin-postgres/Fabric on shared server ───────────
+  # When UFW was previously inactive there is no pre-existing 5432 rule.
+  # Enabling UFW with "deny incoming" default would silently block Fabric.
+  # Detect this and add the rule explicitly so nothing breaks.
+  if [[ "${SURVEY_PORT_5432_PUBLIC}" == "true" && "${RESET_FIREWALL}" != "true" ]]; then
+    ufw allow 5432/tcp comment "TEMP: bitcoin-postgres/Fabric — remove after Fabric migration"
+    warn "Added 5432/tcp rule (bitcoin-postgres/Fabric — temporary until Fabric migration)"
+    warn "Remove once Fabric access is migrated: ufw delete allow 5432/tcp"
+  fi
 
   ufw --force enable
   ok "Barter UFW rules added and firewall enabled"
@@ -762,7 +789,7 @@ print_summary() {
   _chk "Fail2Ban active"            "systemctl is-active fail2ban"
   _chk "unattended-upgrades active" "systemctl is-active unattended-upgrades"
   _chk "Docker active"              "systemctl is-active docker"
-  _chk "sshd running"               "systemctl is-active sshd"
+  _chk "SSH service (${SURVEY_SSH_SERVICE}) running" "systemctl is-active ${SURVEY_SSH_SERVICE}"
   _chk "NTP enabled"                "systemctl is-active systemd-timesyncd"
   _chk "Deploy user exists"         "id ${DEPLOY_USER}"
   _chk "Deploy path exists"         "test -d ${DEPLOY_PATH}"
