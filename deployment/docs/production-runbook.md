@@ -4,6 +4,105 @@ This document covers first-time and ongoing production deployment of the Barter 
 
 ---
 
+## Production Deployment Policy
+
+### Why Production Deploy Is Manual-Only
+
+Production deployments are **never automatic**. There is no CI/CD trigger that pushes to production on merge to `main` or on any branch push. This is by design:
+
+- **Safety**: Every production release is a deliberate, reviewed human decision.
+- **Auditability**: The GitHub Actions run log records who triggered the deploy and which exact tag was deployed.
+- **Immutability**: Production only runs images tagged with a specific semver version (e.g. `1.0.0`). The `:latest` tag is never used.
+- **Rollback clarity**: If something breaks, you know exactly which version was deployed and which version to roll back to.
+
+### What Must NEVER Be Used in Production
+
+| Forbidden Tag / Pattern | Why |
+|-------------------------|-----|
+| `latest` | Mutable, unpredictable — could change between pull and restart |
+| `main` / `master` | Branch HEAD, not a release — untested for production |
+| `dev` / `develop` | Development-only images |
+| `main-<sha>` | Dev commit SHA tags — not a release |
+| Auto-deploy from `main` push | Bypasses manual review gate |
+
+### Tag-Based Release Flow
+
+```
+1.  Merge feature PRs into main
+2.  CI runs on main (tests, lint, build)
+3.  When ready for a release:
+      git tag v1.0.0
+      git push origin v1.0.0
+4.  Docker Publish workflow triggers automatically on the tag push
+    → builds and pushes images tagged: v1.0.0, 1.0.0
+5.  Manually trigger PROD Deploy workflow with image_tag = "v1.0.0" (or "1.0.0")
+6.  Workflow SSHs into production, runs deploy-prod.sh with the normalized tag
+7.  Health checks verify the deployment
+```
+
+### How to Create and Push a Release Tag
+
+```bash
+# Ensure main is up to date
+git checkout main
+git pull origin main
+
+# Create an annotated tag
+git tag -a v1.0.0 -m "Release 1.0.0: <brief description>"
+
+# Push the tag — triggers Docker image build
+git push origin v1.0.0
+```
+
+Wait for the **Docker Publish** workflow to complete before deploying.
+
+### How to Run the Production Deploy Workflow
+
+1. Go to **Actions** → **PROD Deploy** in the GitHub repository
+2. Click **Run workflow**
+3. Enter the `image_tag` (e.g. `v1.0.0` or `1.0.0`)
+4. Click **Run workflow**
+5. The workflow validates the tag, SSHs into production, and runs `deploy-prod.sh`
+6. Monitor the workflow run for health check results
+
+### How to Rollback
+
+**Option A: Via rollback script on the server**
+
+```bash
+cd /opt/barter-platform
+bash deployment/scripts/rollback-prod.sh 0.9.0
+```
+
+**Option B: Via deploy workflow with the old tag**
+
+1. Go to **Actions** → **PROD Deploy**
+2. Enter the previous known-good tag (e.g. `0.9.0`)
+3. Run the workflow
+
+> ⚠️ **Database warning**: If the release you are rolling back FROM introduced
+> irreversible database migrations (dropped columns, renamed tables, deleted
+> data), you must also restore the database from a backup taken before the
+> forward deploy. Database restore is a separate manual step.
+
+### Required GitHub Secrets
+
+| Secret | Description |
+|--------|-------------|
+| `PROD_SSH_HOST` | Production server hostname or IP |
+| `PROD_SSH_PORT` | SSH port (default: 22) |
+| `PROD_SSH_USER` | SSH username for deployment |
+| `PROD_SSH_PRIVATE_KEY` | SSH private key (ed25519 recommended) |
+| `PROD_DEPLOY_PATH` | Absolute path to the barter-platform checkout on the server (e.g. `/opt/barter-platform`) |
+| `PROD_SSH_KNOWN_HOSTS` | (Optional) SSH known_hosts content for strict host verification |
+| `DOCKERHUB_USERNAME` | DockerHub username (used by Docker Publish workflow) |
+| `DOCKERHUB_TOKEN` | DockerHub access token (used by Docker Publish workflow) |
+| `VITE_SENTRY_DSN_PROD` | (Optional) Frontend Sentry DSN for production images |
+
+The `production` GitHub environment should have protection rules (e.g. required reviewers) configured.
+
+---
+
 ## Prerequisites
 
 ### DNS
@@ -220,7 +319,7 @@ The `.gitignore` should already exclude `deployment/env/prod.env` and `deploymen
 
 ## Remaining TODOs (Future Phases)
 
-- [ ] CI/CD pipeline to automate image tag bump + deploy via SSH
+- [x] CI/CD pipeline to automate image tag bump + deploy via SSH (PROD Deploy workflow)
 - [ ] Uptime monitoring (e.g., UptimeRobot, Azure Monitor)
 - [ ] Log aggregation (e.g., Grafana Loki, Azure Log Analytics)
 - [ ] Database backup automation script for managed PostgreSQL
