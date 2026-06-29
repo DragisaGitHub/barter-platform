@@ -1,0 +1,135 @@
+# Barter Platform PRODUCTION Docker Compose
+#
+# This file runs the production stack on zameni.rs.
+# It does NOT include a local PostgreSQL — production uses a managed
+# (external) PostgreSQL instance. It does NOT include Mailpit.
+#
+# Prerequisites:
+#   - deployment/env/prod.env filled with real secrets (never committed)
+#   - DNS A records for zameni.rs and www.zameni.rs pointing to this host
+#   - Managed PostgreSQL reachable from this host
+#   - Ports 80 and 443 open for Caddy ACME and HTTPS traffic
+#
+# Usage:
+#   cd deployment
+#   docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env up -d
+
+services:
+  caddy:
+    image: caddy:2.8-alpine
+    container_name: barter-prod-caddy
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+      landing:
+        condition: service_healthy
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3 (QUIC)
+    volumes:
+      - ../docker/caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider --header='Host: zameni.rs' http://127.0.0.1:80/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    mem_limit: 128m
+    networks:
+      - barter-prod
+
+  backend:
+    image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be set to a pinned tag}
+    container_name: barter-prod-backend
+    restart: unless-stopped
+    env_file:
+      - ../env/prod.env
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx768m -XX:+UseContainerSupport -XX:MaxMetaspaceSize=256m}
+      DB_URL: ${DB_URL:?DB_URL must point to managed PostgreSQL}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      JWT_ACCESS_EXPIRATION_MINUTES: ${JWT_ACCESS_EXPIRATION_MINUTES:-15}
+      JWT_REFRESH_EXPIRATION_DAYS: ${JWT_REFRESH_EXPIRATION_DAYS:-7}
+      SPRING_MAIL_HOST: ${SMTP_HOST:?SMTP_HOST is required for production}
+      SPRING_MAIL_PORT: ${SMTP_PORT:-587}
+      SPRING_MAIL_USERNAME: ${SMTP_USERNAME:?SMTP_USERNAME is required}
+      SPRING_MAIL_PASSWORD: ${SMTP_PASSWORD:?SMTP_PASSWORD is required}
+      MAIL_FROM: ${MAIL_FROM:-noreply@zameni.rs}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-}
+      BARTER_SECURITY_ALLOWED_ORIGINS: ${BARTER_SECURITY_ALLOWED_ORIGINS:-}
+      BARTER_SECURITY_ALLOWED_METHODS: ${BARTER_SECURITY_ALLOWED_METHODS:-GET,POST,PUT,PATCH,DELETE,OPTIONS}
+      BARTER_SECURITY_ALLOWED_HEADERS: ${BARTER_SECURITY_ALLOWED_HEADERS:-Accept,Authorization,Content-Type,Origin,X-Correlation-Id,X-Request-Id,X-Requested-With}
+      BARTER_SECURITY_EXPOSED_HEADERS: ${BARTER_SECURITY_EXPOSED_HEADERS:-X-Correlation-Id}
+      BARTER_SECURITY_ALLOW_CREDENTIALS: ${BARTER_SECURITY_ALLOW_CREDENTIALS:-false}
+      BARTER_SECURITY_CORS_MAX_AGE: ${BARTER_SECURITY_CORS_MAX_AGE:-1h}
+      BARTER_SWAGGER_ENABLED: "false"
+      BARTER_EMAIL_VERIFICATION_ENABLED: "true"
+      SENTRY_DSN_BACKEND: ${SENTRY_DSN_BACKEND:-}
+      AZURE_STORAGE_CONNECTION_STRING_PROD: ${AZURE_STORAGE_CONNECTION_STRING_PROD:?Azure Storage connection is required}
+      AZURE_STORAGE_CONTAINER_PROD: ${AZURE_STORAGE_CONTAINER_PROD:-item-images-prod}
+      # Bootstrap admin — set once, then remove from env after first login.
+      BARTER_BOOTSTRAP_ADMIN_EMAIL: ${BARTER_BOOTSTRAP_ADMIN_EMAIL:-}
+      BARTER_BOOTSTRAP_ADMIN_PASSWORD: ${BARTER_BOOTSTRAP_ADMIN_PASSWORD:-}
+    expose:
+      - "8080"
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error http://localhost:8080/api/v1/actuator/health/readiness >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 10
+      start_period: 180s
+    mem_limit: 1024m
+    networks:
+      - barter-prod
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?FRONTEND_IMAGE must be set to a pinned tag}
+    container_name: barter-prod-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    mem_limit: 128m
+    networks:
+      - barter-prod
+
+  landing:
+    image: ${LANDING_IMAGE:?LANDING_IMAGE must be set to a pinned tag}
+    container_name: barter-prod-landing
+    restart: unless-stopped
+    expose:
+      - "80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1/health || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    mem_limit: 128m
+    networks:
+      - barter-prod
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  barter-prod:
+    driver: bridge

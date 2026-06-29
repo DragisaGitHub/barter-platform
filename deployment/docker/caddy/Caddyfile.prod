@@ -1,0 +1,77 @@
+# Barter Platform PRODUCTION reverse proxy — zameni.rs
+#
+# Caddy terminates TLS (auto HTTPS via Let's Encrypt / ZeroSSL),
+# enforces security headers, and routes traffic to internal services.
+#
+# Architecture:
+#   zameni.rs / www.zameni.rs  ->  landing page (marketing/SEO)
+#   app.zameni.rs              ->  React SPA (authenticated users)
+#   app.zameni.rs/api/v1/*     ->  Spring Boot backend (same-origin proxy)
+#
+# If app.zameni.rs is not yet desired, the block below can be merged into
+# the main zameni.rs block with path-based routing instead.
+
+# --- Shared snippet: security headers ---
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+		-Server
+	}
+}
+
+# --- Landing page: zameni.rs & www.zameni.rs ---
+zameni.rs, www.zameni.rs {
+	import security_headers
+
+	# Health endpoint for external uptime monitors / load balancers.
+	handle /health {
+		respond "OK" 200
+	}
+
+	handle {
+		reverse_proxy landing:80
+	}
+}
+
+# --- Application: app.zameni.rs ---
+app.zameni.rs {
+	import security_headers
+
+	# Health endpoint for external monitoring.
+	handle /health {
+		respond "OK" 200
+	}
+
+	# Public-safe health check for the backend (no internal actuator details).
+	handle /api/v1/actuator/health {
+		reverse_proxy backend:8080
+	}
+	handle /api/v1/actuator/health/readiness {
+		reverse_proxy backend:8080
+	}
+	handle /api/v1/actuator/health/liveness {
+		reverse_proxy backend:8080
+	}
+
+	# Block all other actuator endpoints from public access.
+	handle /api/v1/actuator/* {
+		respond "Not Found" 404
+	}
+	handle /actuator/* {
+		respond "Not Found" 404
+	}
+
+	# Backend API — same-origin for browser fetch calls.
+	handle /api/v1/* {
+		reverse_proxy backend:8080
+	}
+
+	# React SPA — all non-API routes go to frontend nginx.
+	handle {
+		reverse_proxy frontend:80
+	}
+}
