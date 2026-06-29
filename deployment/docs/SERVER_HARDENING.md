@@ -183,7 +183,13 @@ Validate the configuration before restarting:
 
 ```bash
 sshd -t && echo "SSH config is valid"
-systemctl restart sshd
+
+# The SSH service name changed between Ubuntu releases:
+#   Ubuntu 22.04 — sshd.service:  systemctl restart sshd
+#   Ubuntu 24.04 — ssh.service:   systemctl restart ssh
+# Detect and restart automatically:
+SSH_SVC=$(systemctl list-units --type=service | grep -oE 'ssh[d]?\.service' | head -1 | sed 's/\.service//')
+systemctl restart "${SSH_SVC:-ssh}"
 ```
 
 ### AllowUsers — shared server warning
@@ -203,7 +209,7 @@ requires typing `YES` before writing the directive, or add it manually:
 
 ```bash
 echo "AllowUsers barter admin-alice" >> /etc/ssh/sshd_config.d/99-barter-hardening.conf
-sshd -t && systemctl restart sshd
+sshd -t && systemctl restart ssh   # use 'sshd' on Ubuntu 22.04
 ```
 
 ### PermitRootLogin — staged approach
@@ -368,16 +374,19 @@ ufw allow 443/tcp comment "HTTPS"
 # HTTP/3 QUIC
 ufw allow 443/udp comment "HTTP/3 QUIC"
 
-# Port 5432 — KEEP EXISTING RULE.  Do not add or remove.
-# bitcoin-postgres uses this for Microsoft Fabric access.
-# Barter uses Azure managed PostgreSQL and does NOT need this port.
-# Close only after confirming Fabric access is migrated.
+# Port 5432 — required for bitcoin-postgres / Microsoft Fabric access.
+# ⚠ If UFW was previously INACTIVE there is no pre-existing 5432 rule.
+# Enabling UFW with "deny incoming" default would silently block Fabric.
+# Always add this rule explicitly on the shared server.
+# Barter does NOT need port 5432 (it uses Azure managed PostgreSQL).
+# Remove only after confirming Fabric access is migrated off this server.
+ufw allow 5432/tcp comment "TEMP: bitcoin-postgres/Fabric — remove after Fabric migration"
 
 ufw --force enable
 ufw status verbose
 ```
 
-Expected output (Mode B) — 5432 rule from bitcoin-postgres should already be present:
+Expected output (Mode B) — 5432 rule explicitly added for bitcoin-postgres/Fabric:
 
 ```
 Status: active
@@ -387,7 +396,7 @@ To                         Action      From
 80/tcp                     ALLOW IN    Anywhere
 443/tcp                    ALLOW IN    Anywhere
 443/udp                    ALLOW IN    Anywhere
-5432/tcp                   ALLOW IN    Anywhere    ← bitcoin-postgres / Fabric (keep)
+5432/tcp                   ALLOW IN    Anywhere    ← bitcoin-postgres / Fabric (temporary)
 ```
 
 > **Do NOT open port 8080 (backend) or 3000 (frontend).**  These are internal-only Docker
@@ -488,8 +497,11 @@ Docker container logs are managed by Docker itself (see §8).  Script output log
 `deployment/logs/` need logrotate:
 
 ```bash
-cat > /etc/logrotate.d/barter-platform << 'EOF'
-/opt/barter-platform/deployment/logs/*.log {
+# BARTER_DEPLOY_PATH defaults to /opt/barter-platform but is configurable.
+DEPLOY_PATH="${BARTER_DEPLOY_PATH:-/opt/barter-platform}"
+
+cat > /etc/logrotate.d/barter-platform << EOF
+${DEPLOY_PATH}/deployment/logs/*.log {
     weekly
     rotate 12
     compress
@@ -559,10 +571,19 @@ tail -f /var/log/fail2ban.log
 
 ## 11. Filesystem Layout
 
-The production server hosts a single checkout of the repository at a fixed path:
+The production server hosts a single checkout of the repository at a configurable path.
+The default is `/opt/barter-platform`.  Override with the `BARTER_DEPLOY_PATH` environment
+variable before running `harden-server.sh` or any deployment script:
+
+```bash
+export BARTER_DEPLOY_PATH=/opt/barter-platform   # default — change if needed
+```
+
+> All examples below use `$BARTER_DEPLOY_PATH`.  If you did not export the variable,
+> substitute `/opt/barter-platform` directly.
 
 ```
-/opt/barter-platform/                        ← repository root (git checkout)
+$BARTER_DEPLOY_PATH/                             ← repository root (git checkout)
 ├── deployment/
 │   ├── backups/
 │   │   └── postgres/                        ← pg_dump files (future backup implementation)
@@ -602,18 +623,20 @@ The production server hosts a single checkout of the repository at a fixed path:
 ### Create the directory structure
 
 ```bash
-# Create and set ownership
-mkdir -p /opt/barter-platform
-chown barter:barter /opt/barter-platform
+DEPLOY_PATH="${BARTER_DEPLOY_PATH:-/opt/barter-platform}"
+
+# Create root directory and set ownership
+mkdir -p "${DEPLOY_PATH}"
+chown barter:barter "${DEPLOY_PATH}"
 
 # As the barter user, clone the repository
-su - barter -c "git clone https://github.com/your-org/barter-platform.git /opt/barter-platform"
+su - barter -c "git clone https://github.com/your-org/barter-platform.git ${DEPLOY_PATH}"
 
-# Create runtime directories not in git
-mkdir -p /opt/barter-platform/deployment/logs
-mkdir -p /opt/barter-platform/deployment/backups/postgres
-chown -R barter:barter /opt/barter-platform/deployment/logs
-chown -R barter:barter /opt/barter-platform/deployment/backups
+# Create runtime directories not tracked by git
+mkdir -p "${DEPLOY_PATH}/deployment/logs"
+mkdir -p "${DEPLOY_PATH}/deployment/backups/postgres"
+chown -R barter:barter "${DEPLOY_PATH}/deployment/logs"
+chown -R barter:barter "${DEPLOY_PATH}/deployment/backups"
 ```
 
 ---
@@ -621,33 +644,37 @@ chown -R barter:barter /opt/barter-platform/deployment/backups
 ## 12. File Permissions
 
 ```bash
+DEPLOY_PATH="${BARTER_DEPLOY_PATH:-/opt/barter-platform}"
+
 # Repository root — deployment user owns everything
-chown -R barter:barter /opt/barter-platform
+chown -R barter:barter "${DEPLOY_PATH}"
 
 # Secret env file — readable only by owner
 install -o barter -g barter -m 600 \
-  /opt/barter-platform/deployment/env/prod.env.example \
-  /opt/barter-platform/deployment/env/prod.env
+  "${DEPLOY_PATH}/deployment/env/prod.env.example" \
+  "${DEPLOY_PATH}/deployment/env/prod.env"
 # Then fill in real values
 
 # Scripts must be executable
-chmod +x /opt/barter-platform/deployment/scripts/*.sh
+chmod +x "${DEPLOY_PATH}/deployment/scripts/"*.sh
 
 # Backup directory — private (future use)
-chmod 700 /opt/barter-platform/deployment/backups
-chmod 700 /opt/barter-platform/deployment/backups/postgres
+chmod 700 "${DEPLOY_PATH}/deployment/backups"
+chmod 700 "${DEPLOY_PATH}/deployment/backups/postgres"
 
 # Logs directory
-chmod 750 /opt/barter-platform/deployment/logs
+chmod 750 "${DEPLOY_PATH}/deployment/logs"
 ```
 
 Verify the key files:
 
 ```bash
-ls -la /opt/barter-platform/deployment/env/
+DEPLOY_PATH="${BARTER_DEPLOY_PATH:-/opt/barter-platform}"
+
+ls -la "${DEPLOY_PATH}/deployment/env/"
 # Expected: -rw------- 1 barter barter ... prod.env
 
-ls -la /opt/barter-platform/deployment/backups/
+ls -la "${DEPLOY_PATH}/deployment/backups/"
 # Expected: drwx------ 2 barter barter ... postgres
 ```
 
@@ -664,8 +691,10 @@ Caddy automatically obtains TLS certificates from Let's Encrypt when:
 Check certificate status after first startup:
 
 ```bash
-docker compose -f /opt/barter-platform/deployment/compose/docker-compose.prod.yml \
-  --env-file /opt/barter-platform/deployment/env/prod.env \
+DEPLOY_PATH="${BARTER_DEPLOY_PATH:-/opt/barter-platform}"
+
+docker compose -f "${DEPLOY_PATH}/deployment/compose/docker-compose.prod.yml" \
+  --env-file "${DEPLOY_PATH}/deployment/env/prod.env" \
   logs --tail=50 caddy | grep -i "certificate\|tls\|acme\|error"
 ```
 
@@ -684,11 +713,19 @@ echo | openssl s_client -connect zameni.rs:443 -servername zameni.rs 2>/dev/null
 Run these checks after completing setup and after every server maintenance window:
 
 ```bash
+DEPLOY_PATH="${BARTER_DEPLOY_PATH:-/opt/barter-platform}"
+
 # ── SSH ────────────────────────────────────────────────────────────────────
 
 # Confirm password authentication is disabled
 sshd -T | grep -E "passwordauthentication|permitrootlogin|pubkeyauthentication"
 # Expected: passwordauthentication no | permitrootlogin no | pubkeyauthentication yes
+
+# ── SSH service name ───────────────────────────────────────────────────────
+# Ubuntu 22.04 uses sshd.service; Ubuntu 24.04 uses ssh.service.
+SSH_SVC=$(systemctl list-units --type=service | grep -oE 'ssh[d]?\.service' | head -1 | sed 's/\.service//')
+systemctl is-active "${SSH_SVC:-ssh}"
+# Expected: active
 
 # ── Firewall ───────────────────────────────────────────────────────────────
 
@@ -722,10 +759,10 @@ docker info --format '{{.LoggingDriver}} {{json .LoggingConfig}}'
 
 # ── File permissions ───────────────────────────────────────────────────────
 
-stat -c "%n  %a  %U:%G" /opt/barter-platform/deployment/env/prod.env
+stat -c "%n  %a  %U:%G" "${DEPLOY_PATH}/deployment/env/prod.env"
 # Expected: 600  barter:barter
 
-stat -c "%n  %a  %U:%G" /opt/barter-platform/deployment/backups
+stat -c "%n  %a  %U:%G" "${DEPLOY_PATH}/deployment/backups"
 # Expected: 700  barter:barter
 
 # ── Docker group ───────────────────────────────────────────────────────────
