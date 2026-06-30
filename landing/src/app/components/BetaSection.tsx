@@ -1,8 +1,8 @@
 import { ArrowRight, Bug, Lightbulb, MessageCircle } from "lucide-react";
-import { DEMO_URL } from "@/config/demo";
+import { APP_URL } from "@/config/app";
 import { trackCtaClick } from "@/lib/analytics";
 
-const betaPerks = [
+const feedbackPerks = [
   {
     icon: Bug,
     title: "Prijavi grešku",
@@ -15,8 +15,8 @@ const betaPerks = [
   },
   {
     icon: MessageCircle,
-    title: "Isprobavaš osnovni tok",
-    desc: "Postavi predmet, pošalji ponudu i proveri kako izgleda dogovor oko razmene u beta verziji.",
+    title: "Isprobaj sve funkcije",
+    desc: "Postavi predmet, pošalji ponudu i dogovori se oko razmene — sve je dostupno odmah.",
   },
 ];
 
@@ -44,7 +44,7 @@ export function BetaSection() {
             className="inline-block text-xs font-semibold tracking-widest uppercase mb-3 px-3 py-1 rounded-full"
             style={{ background: "rgba(255,255,255,0.15)", color: "rgba(255,255,255,0.9)" }}
           >
-            Javna beta
+            Rano izdanje
           </span>
           <h2
             style={{ fontSize: "clamp(1.6rem, 4vw, 2.5rem)", color: "white" }}
@@ -52,14 +52,14 @@ export function BetaSection() {
             Pomogni nam da napravimo bolju platformu
           </h2>
           <p className="mt-4 text-base" style={{ color: "rgba(255,255,255,0.8)", lineHeight: 1.7 }}>
-            U javnoj beta fazi možeš da napraviš nalog, postaviš predmet i isprobaš osnovni tok razmene.
-            Neke funkcije će se menjati dok prikupljamo povratne informacije, a svaka prijava greške, predlog ili komentar pomažu da Zameni.rs bude korisniji i pouzdaniji.
+            Zameni.rs je sada dostupan svima. Možeš da napraviš nalog, postaviš predmet i odmah počneš da razmenjuješ.
+            Platforma je u ranom izdanju — neke funkcije se još razvijaju, a svaka prijava greške, predlog ili komentar pomažu da Zameni.rs bude korisniji i pouzdaniji.
           </p>
         </div>
 
         {/* Perks */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-10">
-          {betaPerks.map(({ icon: Icon, title, desc }) => (
+          {feedbackPerks.map(({ icon: Icon, title, desc }) => (
             <div
               key={title}
               className="rounded-2xl p-5"
@@ -84,10 +84,10 @@ export function BetaSection() {
         {/* CTA */}
         <div className="flex justify-center">
           <a
-            href={DEMO_URL}
+            href={APP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => trackCtaClick('beta_section_udji_beta')}
+            onClick={() => trackCtaClick('beta_section_otvori_app')}
             className="inline-flex items-center gap-2.5 px-8 py-4 rounded-xl font-semibold text-base transition-all duration-150 hover:opacity-95 active:scale-95"
             style={{
               background: "white",
@@ -95,7 +95,7 @@ export function BetaSection() {
               boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
             }}
           >
-            Uđi u javnu beta
+            Otvori aplikaciju
             <ArrowRight size={18} />
           </a>
         </div>

@@ -1,4 +1,4 @@
-import { Banknote, Repeat2, ShieldAlert, FlaskConical } from "lucide-react";
+import { Banknote, Repeat2, ShieldAlert, Rocket } from "lucide-react";
 
 const benefits = [
   {
@@ -17,9 +17,9 @@ const benefits = [
     desc: "Greške i predlozi stižu timu koji razvija platformu.",
   },
   {
-    icon: FlaskConical,
-    title: "Javna beta verzija",
-    desc: "Pomogni nam da platforma bude jasnija, korisnija i stabilnija.",
+    icon: Rocket,
+    title: "Dostupno svima",
+    desc: "Registruj se i počni odmah — besplatno, bez čekanja.",
   },
 ];
 

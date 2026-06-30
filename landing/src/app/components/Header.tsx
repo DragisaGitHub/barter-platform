@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { Menu, X, ArrowRight } from "lucide-react";
-import { DEMO_URL } from "@/config/demo";
+import { APP_URL } from "@/config/app";
 import { trackCtaClick } from "@/lib/analytics";
 
 const navLinks = [
   { label: "Kako funkcioniše", href: "#kako-funkcionise" },
   { label: "Funkcionalnosti", href: "#funkcionalnosti" },
-  { label: "Beta testiranje", href: "#beta-testiranje" },
+  { label: "Podrži razvoj", href: "#beta-testiranje" },
   { label: "FAQ", href: "#faq" },
 ];
 
@@ -57,14 +57,14 @@ export function Header() {
 
           {/* Desktop CTA */}
           <a
-            href={DEMO_URL}
+            href={APP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => trackCtaClick('header_isprobaj_beta')}
+            onClick={() => trackCtaClick('header_otvori_app')}
             className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm text-white transition-all duration-150 hover:opacity-90 active:scale-95"
             style={{ background: "var(--primary)" }}
           >
-            Isprobaj javnu beta
+            Otvori aplikaciju
             <ArrowRight size={15} />
           </a>
 
@@ -98,14 +98,14 @@ export function Header() {
             </a>
           ))}
           <a
-            href={DEMO_URL}
+            href={APP_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full text-center px-4 py-2.5 rounded-xl text-sm text-white"
             style={{ background: "var(--primary)" }}
-            onClick={() => { trackCtaClick('header_mobile_isprobaj_beta'); setOpen(false); }}
+            onClick={() => { trackCtaClick('header_mobile_otvori_app'); setOpen(false); }}
           >
-            Isprobaj javnu beta
+            Otvori aplikaciju
           </a>
         </div>
       )}

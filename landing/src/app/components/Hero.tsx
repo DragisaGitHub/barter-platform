@@ -1,5 +1,5 @@
 import { ArrowRight, ChevronDown, Tag, RefreshCw, MessageCircle, Check } from "lucide-react";
-import { DEMO_URL } from "@/config/demo";
+import { APP_URL } from "@/config/app";
 import { trackCtaClick } from "@/lib/analytics";
 
 const sampleItems = [
@@ -146,13 +146,13 @@ export function Hero() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
           {/* Text side */}
           <div className="space-y-6 order-2 md:order-1">
-            {/* Beta badge */}
+            {/* Badge */}
             <div className="inline-flex items-center gap-2">
               <span
                 className="px-3 py-1 rounded-full text-xs font-semibold border"
                 style={{ background: "var(--primary-light)", color: "var(--primary)", borderColor: "rgba(26,127,90,0.2)" }}
               >
-                🚀 Javna beta verzija
+                🚀 Sada dostupno
               </span>
             </div>
 
@@ -171,14 +171,14 @@ export function Hero() {
 
             <div className="flex flex-col sm:flex-row gap-3">
               <a
-                href={DEMO_URL}
+                href={APP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => trackCtaClick('hero_isprobaj_beta')}
+                onClick={() => trackCtaClick('hero_pocni_odmah')}
                 className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white transition-all duration-150 hover:opacity-90 active:scale-95"
                 style={{ background: "var(--primary)", boxShadow: "0 4px 14px rgba(26,127,90,0.3)" }}
               >
-                Isprobaj javnu beta
+                Počni odmah
                 <ArrowRight size={17} />
               </a>
               <a
@@ -189,17 +189,6 @@ export function Hero() {
                 Kako funkcioniše
                 <ChevronDown size={16} />
               </a>
-            </div>
-
-            {/* Beta warning */}
-            <div
-              className="flex gap-3 p-3.5 rounded-xl border text-sm"
-              style={{ background: "#fffbeb", borderColor: "#fde68a", color: "#92400e" }}
-            >
-              <span className="flex-shrink-0 mt-0.5">⚠️</span>
-              <span>
-                Beta verzija služi za testiranje. Podaci mogu biti izmenjeni ili obrisani, zato ne unosi osetljive ili poverljive lične podatke.
-              </span>
             </div>
           </div>
 
