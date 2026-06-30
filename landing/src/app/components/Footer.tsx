@@ -1,7 +1,7 @@
-import { DEMO_URL } from "@/config/demo";
+import { APP_URL } from "@/config/app";
 
 const footerLinks = [
-  { label: "Beta verzija", href: DEMO_URL, external: true },
+  { label: "Otvori aplikaciju", href: APP_URL, external: true },
   { label: "Kontakt (uskoro)", href: "#" },
   { label: "Uslovi korišćenja (uskoro)", href: "#" },
   { label: "Politika privatnosti (uskoro)", href: "#" },
@@ -35,7 +35,7 @@ export function Footer() {
               className="text-xs px-2.5 py-1 rounded-full font-medium mt-1"
               style={{ background: "var(--primary-light)", color: "var(--primary)" }}
             >
-              Trenutno u javnoj beta fazi.
+              Rano izdanje — dobrodošli svi.
             </span>
           </div>
 
