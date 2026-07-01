@@ -25,7 +25,7 @@ backups:
       - AdminOperations
     operationId: getAdminOperationsBackups
     summary: Get backup status for administrators
-    description: Returns safe placeholder backup status information. Real backup integration with Azure Blob Storage or cron jobs is not wired yet.
+    description: Returns latest backup metadata from Azure Blob Storage when configured, or a safe placeholder when backup configuration is absent. Never exposes connection strings or storage secrets.
     security:
       - bearerJwt: []
     responses:

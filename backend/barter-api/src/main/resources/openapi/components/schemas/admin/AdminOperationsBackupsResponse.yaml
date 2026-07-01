@@ -10,7 +10,12 @@ properties:
     type: string
     format: date-time
     nullable: true
-    description: Timestamp of the last known backup, if available.
+    description: Timestamp of the last known backup parsed from the blob filename, if available.
+  blobLastModified:
+    type: string
+    format: date-time
+    nullable: true
+    description: Last-modified timestamp reported by Azure Blob Storage for the newest backup blob.
   nextScheduledBackupTimestamp:
     type: string
     format: date-time
@@ -20,6 +25,27 @@ properties:
     type: string
     nullable: true
     description: Configured backup storage type, for example local or azure-blob.
+  storageProvider:
+    type: string
+    nullable: true
+    description: Storage provider identifier, for example azure-blob.
+  blobName:
+    type: string
+    nullable: true
+    description: Full blob name (path within the container) of the latest backup, if found.
+  sizeBytes:
+    type: integer
+    format: int64
+    nullable: true
+    description: Size of the latest backup blob in bytes, if available.
+  container:
+    type: string
+    nullable: true
+    description: Azure Blob Storage container name used for backups.
+  prefix:
+    type: string
+    nullable: true
+    description: Blob prefix (folder path) used when listing backup blobs.
   scheduledBackupEnabled:
     type: boolean
     nullable: true
