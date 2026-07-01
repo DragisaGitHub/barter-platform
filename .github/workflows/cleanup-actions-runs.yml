@@ -114,37 +114,40 @@ jobs:
         run: |
           $scriptPath = "${{ github.workspace }}/tools/github/cleanup-actions-runs.ps1"
 
-          # Build argument list dynamically.
-          # NOTE: Do NOT use $args — it is a PowerShell automatic variable and
-          # @args splatting passes elements positionally, which would cause
-          # switch parameters like -Yes to be bound as positional arguments.
-          $scriptArgs = @()
-
           $workflowName = '${{ inputs.workflow_name }}'.Trim()
+          $status       = '${{ inputs.status }}'.Trim()
+          $keepLast     = [int]'${{ inputs.keep_last }}'
+          $dryRun       = '${{ inputs.dry_run }}' -eq 'true'
+
+          # Use hashtable splatting so every parameter is bound by name.
+          # This guarantees that switch parameters (-DryRun, -Yes) are never
+          # mistaken for positional arguments, regardless of pwsh version or runner OS.
+          $splat = @{}
+
           if ($workflowName -ne '') {
-            $scriptArgs += @('-WorkflowName', $workflowName)
+            $splat['WorkflowName'] = $workflowName
           }
 
-          $status = '${{ inputs.status }}'.Trim()
           if ($status -ne '' -and $status -ne 'all') {
-            $scriptArgs += @('-Status', $status)
+            $splat['Status'] = $status
           }
 
-          $keepLast = [int]'${{ inputs.keep_last }}'
           if ($keepLast -gt 0) {
-            $scriptArgs += @('-KeepLast', $keepLast)
+            $splat['KeepLast'] = $keepLast
           }
 
-          $dryRun = '${{ inputs.dry_run }}' -eq 'true'
           if ($dryRun) {
-            $scriptArgs += @('-DryRun')
+            $splat['DryRun'] = $true   # binds -DryRun as a named switch
           } else {
-            # -Yes skips the interactive confirmation prompt in CI
-            $scriptArgs += @('-Yes')
+            $splat['Yes'] = $true      # binds -Yes as a named switch; skips interactive prompt in CI
           }
 
-          Write-Host "Executing: pwsh $scriptPath $($scriptArgs -join ' ')"
-          & $scriptPath @scriptArgs
+          $displayArgs = ($splat.GetEnumerator() | Sort-Object Key | ForEach-Object {
+            if ($_.Value -is [bool]) { "-$($_.Key)" } else { "-$($_.Key) $($_.Value)" }
+          }) -join ' '
+          Write-Host "Executing: $scriptPath $displayArgs"
+
+          & $scriptPath @splat
 
       # ── Post-run summary ────────────────────────────────────────────────────
       - name: Write job summary
