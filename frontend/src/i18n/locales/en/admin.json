@@ -241,18 +241,30 @@
     },
     "backupsTab": {
       "loading": "Loading backup status…",
+      "errorTitle": "Backup data unavailable",
+      "errorDescription": "The backup status endpoint could not be reached.",
+      "tryAgain": "Try again",
       "title": "Backup status",
       "description": "Database backup tracking and schedule visibility for operational awareness.",
       "cardTitle": "Backup configuration",
       "cardDescription": "Safe placeholder state. Automated backup integration is planned for a future release.",
+      "configuredCardDescription": "Latest backup metadata from Azure Blob Storage.",
       "enabled": "Enabled",
       "disabled": "Not enabled",
+      "noBackupFound": "No backup found yet",
+      "noBackupFoundDescription": "Azure Blob Storage is configured and reachable, but no .dump.gz backup blobs were found under the configured prefix.",
       "metrics": {
         "availability": "Availability",
         "lastBackup": "Last backup",
+        "blobLastModified": "Blob last modified",
         "nextScheduled": "Next scheduled",
         "storageType": "Storage type",
-        "scheduledEnabled": "Scheduled backups"
+        "scheduledEnabled": "Scheduled backups",
+        "blobPath": "Blob path",
+        "size": "Size",
+        "container": "Container",
+        "prefix": "Prefix",
+        "provider": "Provider"
       },
       "availability": {
         "placeholder": "Placeholder",

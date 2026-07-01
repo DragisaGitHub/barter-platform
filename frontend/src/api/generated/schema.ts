@@ -2577,9 +2577,14 @@ export interface components {
             availability: string;
             /**
              * Format: date-time
-             * @description Timestamp of the last known backup, if available.
+             * @description Timestamp of the last known backup parsed from the blob filename, if available.
              */
             lastBackupTimestamp?: string | null;
+            /**
+             * Format: date-time
+             * @description Last-modified timestamp reported by Azure Blob Storage for the newest backup blob.
+             */
+            blobLastModified?: string | null;
             /**
              * Format: date-time
              * @description Next scheduled backup timestamp, if available.
@@ -2587,6 +2592,19 @@ export interface components {
             nextScheduledBackupTimestamp?: string | null;
             /** @description Configured backup storage type, for example local or azure-blob. */
             backupStorageType?: string | null;
+            /** @description Storage provider identifier, for example azure-blob. */
+            storageProvider?: string | null;
+            /** @description Full blob name (path within the container) of the latest backup, if found. */
+            blobName?: string | null;
+            /**
+             * Format: int64
+             * @description Size of the latest backup blob in bytes, if available.
+             */
+            sizeBytes?: number | null;
+            /** @description Azure Blob Storage container name used for backups. */
+            container?: string | null;
+            /** @description Blob prefix (folder path) used when listing backup blobs. */
+            prefix?: string | null;
             /** @description Whether a scheduled backup job is configured and enabled. */
             scheduledBackupEnabled?: boolean | null;
             /** @description Human-readable note about the current backup configuration state. */

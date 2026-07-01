@@ -141,6 +141,15 @@ barter:
       container-name: ${AZURE_STORAGE_CONTAINER:}
     max-images-per-item: ${BARTER_STORAGE_MAX_IMAGES_PER_ITEM:6}
     max-image-size-bytes: ${BARTER_STORAGE_MAX_IMAGE_SIZE_BYTES:10485760}
+  backup:
+    # Set BACKUP_ENABLED=true to indicate scheduled backups are active.
+    enabled: ${BACKUP_ENABLED:false}
+    azure:
+      # Set BACKUP_AZURE_CONNECTION_STRING, BACKUP_AZURE_CONTAINER, and BACKUP_AZURE_PREFIX
+      # to enable real backup blob listing. Connection string is never logged or returned.
+      connection-string: ${BACKUP_AZURE_CONNECTION_STRING:}
+      container: ${BACKUP_AZURE_CONTAINER:}
+      prefix: ${BACKUP_AZURE_PREFIX:}
 
 sentry:
   # Leave empty to disable Sentry (no-op). Set SENTRY_DSN_BACKEND to enable error tracking.

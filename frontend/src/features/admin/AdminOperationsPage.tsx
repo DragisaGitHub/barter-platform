@@ -2,21 +2,36 @@ import {
   Activity,
   AlertTriangle,
   Boxes,
+  CheckCircle2,
   Clock,
+  CloudUpload,
   Database,
   HardDrive,
   RefreshCw,
   ShieldAlert,
   Users,
 } from "lucide-react";
+import { useState } from "react";
+import * as RadixTabs from "@radix-ui/react-tabs";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
+import { cn } from "@/utils";
 import { AdminPageShell, AdminSurface } from "./components/AdminPageShell";
-import { useAdminOperationsOverview } from "./useAdminOperations";
-import type { AdminOperationsOverviewResponse } from "@/api/generated/types";
+import {
+  useAdminOperationsBackups,
+  useAdminOperationsDeployments,
+  useAdminOperationsOverview,
+} from "./useAdminOperations";
+import type {
+  AdminOperationsBackupsResponse,
+  AdminOperationsDeploymentsResponse,
+  AdminOperationsOverviewResponse,
+} from "@/api/generated/types";
+
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type BadgeVariant = "default" | "primary" | "success" | "warning" | "danger" | "secondary";
 
@@ -40,11 +55,21 @@ interface OperationsCardRenderProps extends OperationsCardProps {
   locale: string;
 }
 
+type TabId = "overview" | "backups" | "deployments" | "costs" | "monitoring" | "security";
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export function AdminOperationsPage() {
   const { t, i18n } = useTranslation(["admin"]);
-  const { data, isLoading, isError, error, refetch, isFetching } = useAdminOperationsOverview();
-  const healthStatus = data?.health.overallStatus;
+  const { data: overviewData, isFetching: overviewFetching, refetch: refetchOverview } =
+    useAdminOperationsOverview();
+  const healthStatus = overviewData?.health.overallStatus;
   const locale = toIntlLocale(i18n.language);
+  const [activeTab, setActiveTab] = useState<TabId>("overview");
+
+  function handleRefetch() {
+    void refetchOverview();
+  }
 
   return (
     <AdminPageShell
@@ -59,31 +84,425 @@ export function AdminOperationsPage() {
         </>
       }
       actions={
-        <Button variant="outline" size="sm" onClick={() => refetch()} isLoading={isFetching}>
-          <RefreshCw className="size-4" />
-          {t("admin:refresh")}
-        </Button>
+        activeTab === "overview" ? (
+          <Button variant="outline" size="sm" onClick={handleRefetch} isLoading={overviewFetching}>
+            <RefreshCw className="size-4" />
+            {t("admin:refresh")}
+          </Button>
+        ) : undefined
       }
     >
-      {isLoading ? <LoadingState t={t} /> : null}
-      {isError ? <ErrorState t={t} message={error instanceof Error ? error.message : undefined} onRetry={() => refetch()} /> : null}
-      {data ? <OperationsOverview data={data} t={t} locale={locale} /> : null}
+      {/* Tab bar */}
+      <RadixTabs.Root
+        value={activeTab}
+        onValueChange={(v) => setActiveTab(v as TabId)}
+        className="flex flex-col gap-6"
+      >
+        <RadixTabs.List className="flex flex-wrap gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          {(["overview", "backups", "deployments", "costs", "monitoring", "security"] as TabId[]).map(
+            (tab) => (
+              <RadixTabs.Trigger
+                key={tab}
+                value={tab}
+                className={cn(
+                  "rounded-xl px-4 py-2 text-sm font-medium transition-colors",
+                  "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
+                  "data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700",
+                  "dark:data-[state=active]:bg-indigo-900/30 dark:data-[state=active]:text-indigo-300",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
+                  ["costs", "monitoring", "security"].includes(tab)
+                    ? "cursor-default opacity-60"
+                    : ""
+                )}
+              >
+                {t(`admin:operationsPage.tabs.${tab}`)}
+              </RadixTabs.Trigger>
+            )
+          )}
+        </RadixTabs.List>
+
+        {/* Overview tab */}
+        <RadixTabs.Content value="overview" className="flex flex-col gap-6 outline-none">
+          <OverviewTabContent t={t} locale={locale} />
+        </RadixTabs.Content>
+
+        {/* Backups tab */}
+        <RadixTabs.Content value="backups" className="flex flex-col gap-6 outline-none">
+          <BackupsTabContent t={t} locale={locale} />
+        </RadixTabs.Content>
+
+        {/* Deployments tab */}
+        <RadixTabs.Content value="deployments" className="flex flex-col gap-6 outline-none">
+          <DeploymentsTabContent t={t} locale={locale} />
+        </RadixTabs.Content>
+
+        {/* Coming soon tabs */}
+        {(["costs", "monitoring", "security"] as const).map((tab) => (
+          <RadixTabs.Content key={tab} value={tab} className="outline-none">
+            <ComingSoonState t={t} tabKey={tab} />
+          </RadixTabs.Content>
+        ))}
+      </RadixTabs.Root>
     </AdminPageShell>
   );
 }
 
-function LoadingState({ t }: { t: TFunction }) {
+// ── Overview tab ──────────────────────────────────────────────────────────────
+
+function OverviewTabContent({ t, locale }: { t: TFunction; locale: string }) {
+  const { data, isLoading, isError, error, refetch } = useAdminOperationsOverview();
+
+  if (isLoading) return <TabLoadingState message={t("admin:operationsPage.loading")} />;
+  if (isError) {
+    return (
+      <TabErrorState
+        t={t}
+        message={error instanceof Error ? error.message : undefined}
+        onRetry={() => refetch()}
+      />
+    );
+  }
+  if (!data) return null;
+  return <OperationsOverview data={data} t={t} locale={locale} />;
+}
+
+// ── Backups tab ───────────────────────────────────────────────────────────────
+
+function BackupsTabContent({ t, locale }: { t: TFunction; locale: string }) {
+  const { data, isLoading, isError, error, refetch, isFetching } = useAdminOperationsBackups();
+
   return (
-    <AdminSurface contentClassName="flex min-h-64 items-center justify-center">
-      <div className="text-center">
-        <Spinner size="lg" />
-        <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">{t("admin:operationsPage.loading")}</p>
+    <>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+            {t("admin:operationsPage.backupsTab.title")}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {t("admin:operationsPage.backupsTab.description")}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} isLoading={isFetching}>
+          <RefreshCw className="size-4" />
+          {t("admin:refresh")}
+        </Button>
+      </div>
+
+      {isLoading ? <TabLoadingState message={t("admin:operationsPage.backupsTab.loading")} /> : null}
+      {isError ? (
+        <TabErrorState
+          t={t}
+          message={error instanceof Error ? error.message : undefined}
+          onRetry={() => refetch()}
+          titleKey="admin:operationsPage.backupsTab.errorTitle"
+          descriptionKey="admin:operationsPage.backupsTab.errorDescription"
+          retryKey="admin:operationsPage.backupsTab.tryAgain"
+        />
+      ) : null}
+      {data ? <BackupsContent data={data} t={t} locale={locale} /> : null}
+    </>
+  );
+}
+
+function BackupsContent({
+  data,
+  t,
+  locale,
+}: {
+  data: AdminOperationsBackupsResponse;
+  t: TFunction;
+  locale: string;
+}) {
+  const isConfigured = data.availability === "configured";
+  const isPlaceholder = data.availability === "placeholder";
+  const hasBlob = !!data.blobName;
+
+  const availabilityVariant: BadgeVariant =
+    isConfigured ? "success" : isPlaceholder ? "warning" : "danger";
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Status header card */}
+      <AdminSurface contentClassName="p-0">
+        <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-5 dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex items-start gap-4">
+              <div
+                className={cn(
+                  "flex size-12 items-center justify-center rounded-2xl",
+                  isConfigured && hasBlob
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                    : isConfigured
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                )}
+              >
+                {isConfigured && hasBlob ? (
+                  <CheckCircle2 className="size-6" />
+                ) : (
+                  <CloudUpload className="size-6" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-950 dark:text-white">
+                  {t("admin:operationsPage.backupsTab.cardTitle")}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  {isConfigured && hasBlob
+                    ? t("admin:operationsPage.backupsTab.configuredCardDescription")
+                    : t("admin:operationsPage.backupsTab.cardDescription")}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant={availabilityVariant}>
+                {t(
+                  `admin:operationsPage.backupsTab.availability.${data.availability}`,
+                  { defaultValue: data.availability }
+                )}
+              </Badge>
+              <Badge variant={data.scheduledBackupEnabled ? "success" : "default"}>
+                {data.scheduledBackupEnabled
+                  ? t("admin:operationsPage.backupsTab.enabled")
+                  : t("admin:operationsPage.backupsTab.disabled")}
+              </Badge>
+            </div>
+          </div>
+
+          {/* Note banner */}
+          {data.note && !hasBlob ? (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+              {data.note}
+            </div>
+          ) : null}
+        </div>
+      </AdminSurface>
+
+      {/* No backup found state */}
+      {isConfigured && !hasBlob ? (
+        <AdminSurface contentClassName="p-0">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50/50 p-8 text-center dark:border-amber-800/40 dark:bg-amber-950/20">
+            <CloudUpload className="mx-auto size-10 text-amber-500 dark:text-amber-400" />
+            <p className="mt-3 font-semibold text-amber-900 dark:text-amber-200">
+              {t("admin:operationsPage.backupsTab.noBackupFound")}
+            </p>
+            <p className="mt-1 text-sm text-amber-700 dark:text-amber-400">
+              {t("admin:operationsPage.backupsTab.noBackupFoundDescription")}
+            </p>
+          </div>
+        </AdminSurface>
+      ) : null}
+
+      {/* Metadata grid — only shown when a backup blob was found */}
+      {hasBlob ? (
+        <AdminSurface
+          title={t("admin:operationsPage.backupsTab.cardTitle")}
+          description={t("admin:operationsPage.backupsTab.configuredCardDescription")}
+          contentClassName="space-y-4"
+        >
+          <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <MetricCell
+              label={t("admin:operationsPage.backupsTab.metrics.lastBackup")}
+              value={formatDateTime(data.lastBackupTimestamp, t, locale)}
+            />
+            <MetricCell
+              label={t("admin:operationsPage.backupsTab.metrics.blobLastModified")}
+              value={formatDateTime(data.blobLastModified, t, locale)}
+            />
+            <MetricCell
+              label={t("admin:operationsPage.backupsTab.metrics.size")}
+              value={formatBytes(data.sizeBytes, t)}
+            />
+            <MetricCell
+              label={t("admin:operationsPage.backupsTab.metrics.blobPath")}
+              value={data.blobName ?? null}
+              mono
+            />
+            <MetricCell
+              label={t("admin:operationsPage.backupsTab.metrics.container")}
+              value={data.container ?? null}
+              mono
+            />
+            <MetricCell
+              label={t("admin:operationsPage.backupsTab.metrics.prefix")}
+              value={data.prefix ?? null}
+              mono
+            />
+            <MetricCell
+              label={t("admin:operationsPage.backupsTab.metrics.provider")}
+              value={data.storageProvider ?? null}
+            />
+            <MetricCell
+              label={t("admin:operationsPage.backupsTab.metrics.scheduledEnabled")}
+              value={
+                data.scheduledBackupEnabled
+                  ? t("admin:operationsPage.backupsTab.enabled")
+                  : t("admin:operationsPage.backupsTab.disabled")
+              }
+            />
+          </dl>
+        </AdminSurface>
+      ) : null}
+    </div>
+  );
+}
+
+function MetricCell({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string | null | undefined;
+  mono?: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+      <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{label}</dt>
+      <dd
+        className={cn(
+          "mt-2 break-all text-sm font-medium text-slate-900 dark:text-white",
+          mono ? "font-mono text-xs" : ""
+        )}
+      >
+        {value ?? "—"}
+      </dd>
+    </div>
+  );
+}
+
+// ── Deployments tab ───────────────────────────────────────────────────────────
+
+function DeploymentsTabContent({ t, locale }: { t: TFunction; locale: string }) {
+  const { data, isLoading, isError, error, refetch, isFetching } = useAdminOperationsDeployments();
+
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+            {t("admin:operationsPage.deploymentsTab.title")}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {t("admin:operationsPage.deploymentsTab.description")}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} isLoading={isFetching}>
+          <RefreshCw className="size-4" />
+          {t("admin:refresh")}
+        </Button>
+      </div>
+
+      {isLoading ? <TabLoadingState message={t("admin:operationsPage.deploymentsTab.loading")} /> : null}
+      {isError ? (
+        <TabErrorState
+          t={t}
+          message={error instanceof Error ? error.message : undefined}
+          onRetry={() => refetch()}
+        />
+      ) : null}
+      {data ? <DeploymentsContent data={data} t={t} locale={locale} /> : null}
+    </>
+  );
+}
+
+function DeploymentsContent({
+  data,
+  t,
+  locale,
+}: {
+  data: AdminOperationsDeploymentsResponse;
+  t: TFunction;
+  locale: string;
+}) {
+  return (
+    <AdminSurface
+      title={t("admin:operationsPage.deploymentsTab.cardTitle")}
+      description={t("admin:operationsPage.deploymentsTab.cardDescription")}
+      contentClassName="space-y-4"
+    >
+      <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <MetricCell
+          label={t("admin:operationsPage.deploymentsTab.metrics.availability")}
+          value={t(
+            `admin:operationsPage.deploymentsTab.availability.${data.availability}`,
+            { defaultValue: data.availability }
+          )}
+        />
+        <MetricCell
+          label={t("admin:operationsPage.deploymentsTab.metrics.environment")}
+          value={data.environment}
+        />
+        <MetricCell
+          label={t("admin:operationsPage.deploymentsTab.metrics.currentVersion")}
+          value={data.currentVersion ?? null}
+        />
+        <MetricCell
+          label={t("admin:operationsPage.deploymentsTab.metrics.lastDeployment")}
+          value={formatDateTime(data.lastDeploymentTimestamp, t, locale)}
+        />
+        <MetricCell
+          label={t("admin:operationsPage.deploymentsTab.metrics.deploymentSource")}
+          value={data.deploymentSource ?? null}
+        />
+      </dl>
+      {data.note ? (
+        <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
+          {data.note}
+        </p>
+      ) : null}
+    </AdminSurface>
+  );
+}
+
+// ── Coming soon placeholder ───────────────────────────────────────────────────
+
+function ComingSoonState({ t, tabKey }: { t: TFunction; tabKey: "costs" | "monitoring" | "security" }) {
+  return (
+    <AdminSurface contentClassName="p-0">
+      <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-10 text-center dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">
+        <Badge variant="secondary" className="mb-4">
+          {t("admin:operationsPage.comingSoon.label")}
+        </Badge>
+        <h3 className="text-base font-semibold text-slate-950 dark:text-white">
+          {t(`admin:operationsPage.comingSoon.${tabKey}.title`)}
+        </h3>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+          {t(`admin:operationsPage.comingSoon.${tabKey}.description`)}
+        </p>
       </div>
     </AdminSurface>
   );
 }
 
-function ErrorState({ t, message, onRetry }: { t: TFunction; message?: string; onRetry: () => void }) {
+// ── Shared states ─────────────────────────────────────────────────────────────
+
+function TabLoadingState({ message }: { message: string }) {
+  return (
+    <AdminSurface contentClassName="flex min-h-52 items-center justify-center">
+      <div className="text-center">
+        <Spinner size="lg" />
+        <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">{message}</p>
+      </div>
+    </AdminSurface>
+  );
+}
+
+function TabErrorState({
+  t,
+  message,
+  onRetry,
+  titleKey = "admin:operationsPage.errorTitle",
+  descriptionKey = "admin:operationsPage.errorDescription",
+  retryKey = "admin:operationsPage.tryAgain",
+}: {
+  t: TFunction;
+  message?: string;
+  onRetry: () => void;
+  titleKey?: string;
+  descriptionKey?: string;
+  retryKey?: string;
+}) {
   return (
     <AdminSurface contentClassName="p-0">
       <div className="rounded-2xl border border-red-200 bg-red-50 p-5 dark:border-red-900/60 dark:bg-red-950/30">
@@ -93,20 +512,22 @@ function ErrorState({ t, message, onRetry }: { t: TFunction; message?: string; o
               <AlertTriangle className="size-5" />
             </div>
             <div>
-              <h2 className="font-semibold text-red-950 dark:text-red-100">{t("admin:operationsPage.errorTitle")}</h2>
+              <h2 className="font-semibold text-red-950 dark:text-red-100">{t(titleKey)}</h2>
               <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                {message ?? t("admin:operationsPage.errorDescription")}
+                {message ?? t(descriptionKey)}
               </p>
             </div>
           </div>
           <Button variant="outline" size="sm" onClick={onRetry}>
-            {t("admin:operationsPage.tryAgain")}
+            {t(retryKey)}
           </Button>
         </div>
       </div>
     </AdminSurface>
   );
 }
+
+// ── Overview cards ────────────────────────────────────────────────────────────
 
 function OperationsOverview({ data, t, locale }: { data: AdminOperationsOverviewResponse; t: TFunction; locale: string }) {
   const cards: OperationsCardProps[] = [
@@ -283,6 +704,8 @@ function SummaryPill({ label, value, variant }: { label: string; value: string; 
   );
 }
 
+// ── Formatters ────────────────────────────────────────────────────────────────
+
 function formatMetric(value: string | number | null | undefined, t: TFunction, locale: string) {
   if (value === null || value === undefined || value === "") {
     return t("admin:operationsPage.statusLabels.unavailable");
@@ -305,6 +728,16 @@ function formatDateTime(value: string | null | undefined, t: TFunction, locale: 
     dateStyle: "medium",
     timeStyle: "short",
   }).format(parsed);
+}
+
+function formatBytes(bytes: number | null | undefined, t: TFunction): string {
+  if (bytes === null || bytes === undefined) {
+    return t("admin:operationsPage.statusLabels.unavailable");
+  }
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 function formatDuration(seconds: number | null | undefined, t: TFunction) {
@@ -332,7 +765,6 @@ function formatStatus(status: string | null | undefined, t: TFunction) {
   }
   return t(`admin:operationsPage.statusLabels.${status}`, { defaultValue: status });
 }
-
 
 function formatStorageProvider(value: string | null | undefined, t: TFunction) {
   if (!value) {

@@ -241,18 +241,30 @@
     },
     "backupsTab": {
       "loading": "Učitavanje statusa rezervnih kopija…",
+      "errorTitle": "Podaci o rezervnim kopijama nisu dostupni",
+      "errorDescription": "Endpoint za status rezervnih kopija nije dostupan.",
+      "tryAgain": "Pokušaj ponovo",
       "title": "Status rezervnih kopija",
       "description": "Praćenje rezervnih kopija baze podataka i vidljivost rasporeda za operativnu svest.",
       "cardTitle": "Konfiguracija rezervnih kopija",
       "cardDescription": "Privremeni placeholder status. Automatska integracija rezervnih kopija planirana je za buduće izdanje.",
+      "configuredCardDescription": "Najnoviji metapodaci rezervnih kopija iz Azure Blob Storage-a.",
       "enabled": "Aktivirano",
       "disabled": "Nije aktivirano",
+      "noBackupFound": "Nije pronađena nijedna rezervna kopija",
+      "noBackupFoundDescription": "Azure Blob Storage je podešen i dostupan, ali nije pronađena nijedna .dump.gz rezervna kopija pod podešenim prefiksom.",
       "metrics": {
         "availability": "Dostupnost",
         "lastBackup": "Poslednja kopija",
+        "blobLastModified": "Blob poslednja izmena",
         "nextScheduled": "Sledeća zakazana",
         "storageType": "Tip skladišta",
-        "scheduledEnabled": "Zakazano pravljenje kopija"
+        "scheduledEnabled": "Zakazano pravljenje kopija",
+        "blobPath": "Putanja bloba",
+        "size": "Veličina",
+        "container": "Kontejner",
+        "prefix": "Prefiks",
+        "provider": "Provajder"
       },
       "availability": {
         "placeholder": "Privremeno",

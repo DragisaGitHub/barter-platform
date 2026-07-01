@@ -180,10 +180,15 @@ class AdminOperationsIntegrationTest {
     void adminCanAccessOperationalBackups() throws Exception {
         String adminToken = registerActivateLoginAndAssignAdmin();
 
+        // No BACKUP_AZURE_CONNECTION_STRING / BACKUP_AZURE_CONTAINER set in test context —
+        // service must return a safe placeholder, never throw or expose config secrets.
         mockMvc.perform(apiBackupsGet().header("Authorization", "Bearer " + adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.availability").value("placeholder"))
-                .andExpect(jsonPath("$.scheduledBackupEnabled").value(false));
+                .andExpect(jsonPath("$.scheduledBackupEnabled").value(false))
+                .andExpect(jsonPath("$.note").exists())
+                // sensitive fields must be absent when no config is present
+                .andExpect(jsonPath("$.blobName").doesNotExist());
     }
 
     @Test
