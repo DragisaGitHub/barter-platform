@@ -137,10 +137,10 @@ jobs:
 
           $dryRun = '${{ inputs.dry_run }}' -eq 'true'
           if ($dryRun) {
-            $scriptArgs += '-DryRun'
+            $scriptArgs += @('-DryRun')
           } else {
             # -Yes skips the interactive confirmation prompt in CI
-            $scriptArgs += '-Yes'
+            $scriptArgs += @('-Yes')
           }
 
           Write-Host "Executing: pwsh $scriptPath $($scriptArgs -join ' ')"
