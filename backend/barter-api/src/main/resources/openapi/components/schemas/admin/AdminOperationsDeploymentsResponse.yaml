@@ -10,10 +10,14 @@ properties:
   environment:
     type: string
     description: Active environment label derived from Spring profiles.
+  releaseVersion:
+    type: string
+    nullable: true
+    description: Deployed release version from BARTER_RELEASE_VERSION (Docker image tag), if available.
   currentVersion:
     type: string
     nullable: true
-    description: Application version from build properties, if available.
+    description: Application build version from build properties, if available.
   lastDeploymentTimestamp:
     type: string
     format: date-time

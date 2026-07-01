@@ -198,11 +198,13 @@ function OperationsOverview({ data, t, locale }: { data: AdminOperationsOverview
       metrics: [
         { label: t("admin:operationsPage.metrics.environment"), value: data.deployment.environment, badgeVariant: "primary" },
         {
-          label: t("admin:operationsPage.metrics.deploymentState"),
-          value: data.deployment.deploymentStateAvailability,
-          displayValue: formatDeploymentAvailability(data.deployment.deploymentStateAvailability, t),
+          label: t("admin:operationsPage.metrics.currentRelease"),
+          value: data.deployment.releaseVersion,
+          badgeVariant: data.deployment.releaseVersion ? "success" : undefined,
         },
-        { label: t("admin:operationsPage.metrics.lastDeployment"), value: formatDateTime(data.deployment.lastDeploymentTimestamp, t, locale) },
+        { label: t("admin:operationsPage.metrics.buildVersion"), value: data.deployment.currentVersion },
+        { label: t("admin:operationsPage.metrics.lastDeployed"), value: formatDateTime(data.deployment.lastDeploymentTimestamp, t, locale) },
+        { label: t("admin:operationsPage.metrics.deploymentSource"), value: data.deployment.deploymentSource },
       ],
     },
   ];
@@ -331,12 +333,6 @@ function formatStatus(status: string | null | undefined, t: TFunction) {
   return t(`admin:operationsPage.statusLabels.${status}`, { defaultValue: status });
 }
 
-function formatDeploymentAvailability(value: string | null | undefined, t: TFunction) {
-  if (!value) {
-    return t("admin:operationsPage.statusLabels.unavailable");
-  }
-  return t(`admin:operationsPage.deploymentAvailability.${value}`, { defaultValue: value });
-}
 
 function formatStorageProvider(value: string | null | undefined, t: TFunction) {
   if (!value) {

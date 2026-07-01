@@ -148,6 +148,7 @@ record_successful_deployment_metadata() {
 
   if [[ "${DRY_RUN}" == "true" ]]; then
     echo "[dry-run] Would record safe public deployment metadata in ${state_file}."
+    echo "[dry-run] Would write BARTER_RELEASE_VERSION=dev, BARTER_DEPLOYED_AT, BARTER_DEPLOY_SOURCE=github-actions-dev to ${ENV_FILE}."
     return 0
   fi
 
@@ -166,6 +167,23 @@ record_successful_deployment_metadata() {
   printf '%s=%s\n' "DEPLOYED_AT_UTC" "${deployed_at}" >> "${temp_state_file}"
   mv "${temp_state_file}" "${state_file}"
   echo "Safe public deployment metadata updated: ${state_file}"
+
+  # Write release metadata into dev.env so the backend container can read it.
+  if [[ -f "${ENV_FILE}" ]]; then
+    sed -i \
+      -e "s|^BARTER_RELEASE_VERSION=.*|BARTER_RELEASE_VERSION=dev|" \
+      -e "s|^BARTER_DEPLOYED_AT=.*|BARTER_DEPLOYED_AT=${deployed_at}|" \
+      -e "s|^BARTER_DEPLOY_SOURCE=.*|BARTER_DEPLOY_SOURCE=github-actions-dev|" \
+      "${ENV_FILE}"
+
+    grep -q "^BARTER_RELEASE_VERSION=" "${ENV_FILE}" || echo "BARTER_RELEASE_VERSION=dev"             >> "${ENV_FILE}"
+    grep -q "^BARTER_DEPLOYED_AT="     "${ENV_FILE}" || echo "BARTER_DEPLOYED_AT=${deployed_at}"      >> "${ENV_FILE}"
+    grep -q "^BARTER_DEPLOY_SOURCE="   "${ENV_FILE}" || echo "BARTER_DEPLOY_SOURCE=github-actions-dev" >> "${ENV_FILE}"
+
+    echo "Release metadata written to ${ENV_FILE}: BARTER_RELEASE_VERSION=dev, BARTER_DEPLOYED_AT=${deployed_at}, BARTER_DEPLOY_SOURCE=github-actions-dev"
+  else
+    echo "Warning: ENV_FILE not found at ${ENV_FILE} — release metadata not persisted."
+  fi
 }
 
 while [[ $# -gt 0 ]]; do

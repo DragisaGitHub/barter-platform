@@ -10,6 +10,18 @@ properties:
   deploymentStateAvailability:
     type: string
     description: Availability of deployment state metadata to the application, such as unavailable or configured.
+  releaseVersion:
+    type: string
+    nullable: true
+    description: Deployed release version from BARTER_RELEASE_VERSION (Docker image tag), if available.
+  currentVersion:
+    type: string
+    nullable: true
+    description: Application build version from build properties, if available.
+  deploymentSource:
+    type: string
+    nullable: true
+    description: Source of the last deployment, for example github-actions-prod or github-actions-dev.
   lastDeploymentTimestamp:
     type: string
     format: date-time
