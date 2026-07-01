@@ -1,0 +1,166 @@
+name: Cleanup Actions Runs
+
+# Manual trigger only — never runs automatically.
+on:
+  workflow_dispatch:
+    inputs:
+      workflow_name:
+        description: >
+          (Optional) Only delete runs for this workflow.
+          Use the workflow file name (e.g. ci.yml) or display name.
+        required: false
+        default: ''
+        type: string
+
+      status:
+        description: >
+          Filter runs by status / conclusion.
+          Use "all" to match every run regardless of outcome.
+        required: false
+        default: all
+        type: choice
+        options:
+          - all
+          - completed
+          - failure
+          - success
+          - cancelled
+          - skipped
+
+      keep_last:
+        description: >
+          Keep the newest N matching runs per workflow and delete older ones.
+          Set to 0 to delete all matching runs.
+        required: false
+        default: '0'
+        type: string
+
+      dry_run:
+        description: >
+          Dry run — print what would be deleted without actually deleting.
+          ⚠️  Set to false only when you are ready to permanently delete run history.
+        required: false
+        default: 'true'
+        type: boolean
+
+permissions:
+  actions: write   # required to delete workflow runs
+  contents: read   # required for checkout
+
+jobs:
+  cleanup:
+    name: Cleanup workflow run history
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── Safety banner ───────────────────────────────────────────────────────
+      - name: Show run configuration
+        shell: pwsh
+        run: |
+          $dryRun    = '${{ inputs.dry_run }}' -eq 'true'
+          $keepLast  = [int]'${{ inputs.keep_last }}'
+          $status    = '${{ inputs.status }}'
+          $workflow  = '${{ inputs.workflow_name }}'
+
+          Write-Host "╔══════════════════════════════════════════════════╗"
+          Write-Host "║         GitHub Actions Run Cleanup               ║"
+          Write-Host "╚══════════════════════════════════════════════════╝"
+          Write-Host ""
+          Write-Host "  workflow_name : $(if ($workflow) { $workflow } else { '(all workflows)' })"
+          Write-Host "  status        : $status"
+          Write-Host "  keep_last     : $keepLast"
+          Write-Host "  dry_run       : $dryRun"
+          Write-Host ""
+
+          if (-not $dryRun) {
+            # Emit a prominent warning in the workflow summary
+            $summary = @"
+          ## ⚠️ WARNING: REAL DELETION MODE
+
+          **`dry_run` is set to `false`.**
+          Workflow run history will be **permanently deleted** and cannot be recovered.
+
+          | Setting | Value |
+          |---------|-------|
+          | Workflow | $(if ($workflow) { $workflow } else { 'all workflows' }) |
+          | Status filter | $status |
+          | Keep last N runs | $keepLast |
+          "@
+            $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+            Write-Host "::warning::dry_run=false — runs will be permanently deleted!"
+          } else {
+            $summary = @"
+          ## ℹ️ Dry Run Mode
+
+          No runs will be deleted. Set **`dry_run`** to `false` to perform actual cleanup.
+
+          | Setting | Value |
+          |---------|-------|
+          | Workflow | $(if ($workflow) { $workflow } else { 'all workflows' }) |
+          | Status filter | $status |
+          | Keep last N runs | $keepLast |
+          "@
+            $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          }
+
+      # ── Run the cleanup script ──────────────────────────────────────────────
+      - name: Run cleanup script
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $scriptPath = "${{ github.workspace }}/tools/github/cleanup-actions-runs.ps1"
+
+          # Build argument list dynamically
+          $args = @()
+
+          $workflowName = '${{ inputs.workflow_name }}'.Trim()
+          if ($workflowName -ne '') {
+            $args += '-WorkflowName', $workflowName
+          }
+
+          $status = '${{ inputs.status }}'.Trim()
+          if ($status -ne '' -and $status -ne 'all') {
+            $args += '-Status', $status
+          }
+
+          $keepLast = [int]'${{ inputs.keep_last }}'
+          if ($keepLast -gt 0) {
+            $args += '-KeepLast', $keepLast
+          }
+
+          $dryRun = '${{ inputs.dry_run }}' -eq 'true'
+          if ($dryRun) {
+            $args += '-DryRun'
+          } else {
+            # -Yes skips the interactive confirmation prompt in CI
+            $args += '-Yes'
+          }
+
+          Write-Host "Executing: pwsh $scriptPath $($args -join ' ')"
+          & $scriptPath @args
+
+      # ── Post-run summary ────────────────────────────────────────────────────
+      - name: Write job summary
+        if: always()
+        shell: pwsh
+        run: |
+          $dryRun   = '${{ inputs.dry_run }}' -eq 'true'
+          $outcome  = '${{ job.status }}'
+          $icon     = if ($outcome -eq 'success') { '✅' } else { '❌' }
+
+          $summary = @"
+
+          ## $icon Cleanup Result
+
+          | | |
+          |---|---|
+          | Job status | $outcome |
+          | Mode | $(if ($dryRun) { '🔍 Dry run (no changes)' } else { '🗑️ Deletion executed' }) |
+
+          "@
+          $summary | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
