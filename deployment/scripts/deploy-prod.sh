@@ -40,6 +40,21 @@ log() {
   echo "=== $* ==="
 }
 
+read_env_value_from_file() {
+  local key="$1"
+  local file="$2"
+  local value
+
+  value="$(grep -E "^[[:space:]]*${key}[[:space:]]*=" "${file}" | tail -n 1 | cut -d '=' -f 2- || true)"
+  value="${value%$'\r'}"
+
+  if [[ "${value}" =~ ^\".*\"$ ]] || [[ "${value}" =~ ^\'.*\'$ ]]; then
+    value="${value:1:-1}"
+  fi
+
+  printf '%s' "${value}"
+}
+
 # ─── Tag Validation ────────────────────────────────────────────────────────
 
 validate_tag() {
@@ -103,6 +118,38 @@ update_env_images() {
   echo "LANDING_IMAGE  → ${LANDING_REPO}:${tag}"
 }
 
+# ─── Pre-deployment Database Backup ────────────────────────────────────────
+
+run_pre_deploy_backup() {
+  log "Pre-deployment production database backup"
+
+  local backup_enabled
+  backup_enabled="$(read_env_value_from_file BACKUP_ENABLED "${ENV_FILE}")"
+  backup_enabled="${backup_enabled:-true}"
+
+  case "${backup_enabled,,}" in
+    1|true|yes|y|on)
+      ;;
+    *)
+      echo "BACKUP_ENABLED=${backup_enabled} — skipping pre-deployment backup."
+      echo "Set BACKUP_ENABLED=true in ${ENV_FILE} to enable automatic pre-deploy backups."
+      return 0
+      ;;
+  esac
+
+  echo "BACKUP_ENABLED=true — running production database backup before deploying..."
+  echo "This protects data in case the deployment includes schema migrations or config changes."
+
+  if BACKUP_DB_MODE=external \
+     ENV_FILE="${ENV_FILE}" \
+     COMPOSE_FILE="${COMPOSE_FILE}" \
+     bash "${SCRIPT_DIR}/backup-db.sh"; then
+    echo "Production backup completed. Continuing deploy..."
+  else
+    fail "Pre-deployment backup failed. Aborting deployment to protect database integrity."
+  fi
+}
+
 # ─── Health Check ──────────────────────────────────────────────────────────
 
 wait_for_url() {
@@ -147,6 +194,8 @@ echo "Previous tag:     ${PREVIOUS_TAG:-unknown}  ← use this if rollback is ne
 echo "Compose file:     ${COMPOSE_FILE}"
 echo "Env file:         ${ENV_FILE}"
 echo "Started at (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+run_pre_deploy_backup
 
 update_env_images "${IMAGE_TAG}"
 
