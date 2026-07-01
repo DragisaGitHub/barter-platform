@@ -1,0 +1,30 @@
+type: object
+additionalProperties: false
+required:
+  - availability
+  - environment
+properties:
+  availability:
+    type: string
+    description: Availability of deployment metadata, such as placeholder, configured, or unavailable.
+  environment:
+    type: string
+    description: Active environment label derived from Spring profiles.
+  currentVersion:
+    type: string
+    nullable: true
+    description: Application version from build properties, if available.
+  lastDeploymentTimestamp:
+    type: string
+    format: date-time
+    nullable: true
+    description: Timestamp of the last deployment, if available.
+  deploymentSource:
+    type: string
+    nullable: true
+    description: Source of the last deployment, for example github-actions or manual.
+  note:
+    type: string
+    nullable: true
+    description: Human-readable note about the current deployment information state.
+

@@ -1,7 +1,11 @@
 package com.barterplatform.web.admin.controller;
 
 import com.barterplatform.api.controller.AdminOperationsApi;
+import com.barterplatform.api.model.AdminOperationsBackupsResponse;
+import com.barterplatform.api.model.AdminOperationsDeploymentsResponse;
 import com.barterplatform.api.model.AdminOperationsOverviewResponse;
+import com.barterplatform.web.admin.service.AdminOperationsBackupsService;
+import com.barterplatform.web.admin.service.AdminOperationsDeploymentsService;
 import com.barterplatform.web.admin.service.AdminOperationsOverviewService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -12,14 +16,31 @@ import org.springframework.web.bind.annotation.RestController;
 public class AdminOperationsController implements AdminOperationsApi {
 
     private final AdminOperationsOverviewService adminOperationsOverviewService;
+    private final AdminOperationsBackupsService adminOperationsBackupsService;
+    private final AdminOperationsDeploymentsService adminOperationsDeploymentsService;
 
-    public AdminOperationsController(AdminOperationsOverviewService adminOperationsOverviewService) {
+    public AdminOperationsController(
+            AdminOperationsOverviewService adminOperationsOverviewService,
+            AdminOperationsBackupsService adminOperationsBackupsService,
+            AdminOperationsDeploymentsService adminOperationsDeploymentsService) {
         this.adminOperationsOverviewService = adminOperationsOverviewService;
+        this.adminOperationsBackupsService = adminOperationsBackupsService;
+        this.adminOperationsDeploymentsService = adminOperationsDeploymentsService;
     }
 
     @Override
     public ResponseEntity<AdminOperationsOverviewResponse> getAdminOperationsOverview() {
         return ResponseEntity.ok(adminOperationsOverviewService.getOverview());
+    }
+
+    @Override
+    public ResponseEntity<AdminOperationsBackupsResponse> getAdminOperationsBackups() {
+        return ResponseEntity.ok(adminOperationsBackupsService.getBackups());
+    }
+
+    @Override
+    public ResponseEntity<AdminOperationsDeploymentsResponse> getAdminOperationsDeployments() {
+        return ResponseEntity.ok(adminOperationsDeploymentsService.getDeployments());
     }
 
     /**

@@ -19,6 +19,48 @@ overview:
       '403':
         $ref: '../components/responses/Forbidden.yaml'
 
+backups:
+  get:
+    tags:
+      - AdminOperations
+    operationId: getAdminOperationsBackups
+    summary: Get backup status for administrators
+    description: Returns safe placeholder backup status information. Real backup integration with Azure Blob Storage or cron jobs is not wired yet.
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Backup status returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminOperationsBackupsResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
+deployments:
+  get:
+    tags:
+      - AdminOperations
+    operationId: getAdminOperationsDeployments
+    summary: Get deployment status for administrators
+    description: Returns safe deployment metadata available to the application. Real GitHub Actions integration is not wired yet.
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Deployment status returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminOperationsDeploymentsResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
 sentryTest:
   post:
     tags:
