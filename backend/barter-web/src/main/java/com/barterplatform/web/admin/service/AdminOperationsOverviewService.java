@@ -94,6 +94,7 @@ public class AdminOperationsOverviewService {
     public AdminOperationsOverviewResponse getOverview() {
         String databaseStatus = databaseStatus();
         OffsetDateTime lastDeploymentTimestamp = lastDeploymentTimestamp();
+        String releaseVersion = resolveReleaseVersion();
 
         return new AdminOperationsOverviewResponse()
                 .system(system())
@@ -102,7 +103,7 @@ public class AdminOperationsOverviewService {
                 .marketplace(marketplace())
                 .moderation(moderation())
                 .storage(storage())
-                .deployment(deployment(lastDeploymentTimestamp));
+                .deployment(deployment(lastDeploymentTimestamp, releaseVersion));
     }
 
     private AdminOperationsSystemResponse system() {
@@ -157,11 +158,27 @@ public class AdminOperationsOverviewService {
                 .storageProviderType(storageProviderType);
     }
 
-    private AdminOperationsDeploymentResponse deployment(OffsetDateTime lastDeploymentTimestamp) {
+    private AdminOperationsDeploymentResponse deployment(OffsetDateTime lastDeploymentTimestamp, String releaseVersion) {
+        boolean hasDeployInfo = releaseVersion != null || lastDeploymentTimestamp != null;
         return new AdminOperationsDeploymentResponse()
                 .environment(String.join(",", activeProfiles()))
-                .deploymentStateAvailability(lastDeploymentTimestamp == null ? DEPLOYMENT_UNAVAILABLE : DEPLOYMENT_CONFIGURED)
+                .deploymentStateAvailability(hasDeployInfo ? DEPLOYMENT_CONFIGURED : DEPLOYMENT_UNAVAILABLE)
+                .releaseVersion(releaseVersion)
+                .currentVersion(applicationVersion())
+                .deploymentSource(resolveDeploymentSource())
                 .lastDeploymentTimestamp(lastDeploymentTimestamp);
+    }
+
+    private String resolveReleaseVersion() {
+        return firstNonBlank(
+                environment.getProperty("barter.deployment.release-version"),
+                environment.getProperty("BARTER_RELEASE_VERSION"));
+    }
+
+    private String resolveDeploymentSource() {
+        return firstNonBlank(
+                environment.getProperty("barter.deployment.deploy-source"),
+                environment.getProperty("BARTER_DEPLOY_SOURCE"));
     }
 
     private String databaseStatus() {
@@ -234,7 +251,6 @@ public class AdminOperationsOverviewService {
         if (normalized.isBlank()) {
             return null;
         }
-
         try {
             return OffsetDateTime.parse(normalized);
         } catch (DateTimeParseException ex) {

@@ -73,6 +73,10 @@ services:
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-}
       BARTER_SECURITY_ALLOWED_ORIGINS: ${BARTER_SECURITY_ALLOWED_ORIGINS:-}
       BARTER_DEPLOYMENT_STATE_FILE: ${BARTER_DEPLOYMENT_STATE_FILE:-/app/deployment-state/latest.env}
+      # Release metadata written by deploy-dev.sh — drives the Admin Operations display.
+      BARTER_RELEASE_VERSION: ${BARTER_RELEASE_VERSION:-}
+      BARTER_DEPLOYED_AT: ${BARTER_DEPLOYED_AT:-}
+      BARTER_DEPLOY_SOURCE: ${BARTER_DEPLOY_SOURCE:-}
       # Injected by CI (SENTRY_DSN_BACKEND_DEV secret); overrides the empty placeholder in dev.env.
       # Leave unset or empty to keep Sentry disabled.
       SENTRY_DSN_BACKEND: ${SENTRY_DSN_BACKEND:-}

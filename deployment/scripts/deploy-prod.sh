@@ -118,6 +118,31 @@ update_env_images() {
   echo "LANDING_IMAGE  → ${LANDING_REPO}:${tag}"
 }
 
+# ─── Write Release Metadata to prod.env ───────────────────────────────────
+
+update_env_release_metadata() {
+  local tag="$1"
+  local deployed_at
+  deployed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+  log "Writing release metadata to ${ENV_FILE}"
+
+  # Update existing lines if present, then append any that are missing.
+  sed -i \
+    -e "s|^BARTER_RELEASE_VERSION=.*|BARTER_RELEASE_VERSION=${tag}|" \
+    -e "s|^BARTER_DEPLOYED_AT=.*|BARTER_DEPLOYED_AT=${deployed_at}|" \
+    -e "s|^BARTER_DEPLOY_SOURCE=.*|BARTER_DEPLOY_SOURCE=github-actions-prod|" \
+    "${ENV_FILE}"
+
+  grep -q "^BARTER_RELEASE_VERSION=" "${ENV_FILE}" || echo "BARTER_RELEASE_VERSION=${tag}" >> "${ENV_FILE}"
+  grep -q "^BARTER_DEPLOYED_AT="     "${ENV_FILE}" || echo "BARTER_DEPLOYED_AT=${deployed_at}" >> "${ENV_FILE}"
+  grep -q "^BARTER_DEPLOY_SOURCE="   "${ENV_FILE}" || echo "BARTER_DEPLOY_SOURCE=github-actions-prod" >> "${ENV_FILE}"
+
+  echo "BARTER_RELEASE_VERSION → ${tag}"
+  echo "BARTER_DEPLOYED_AT     → ${deployed_at}"
+  echo "BARTER_DEPLOY_SOURCE   → github-actions-prod"
+}
+
 # ─── Pre-deployment Database Backup ────────────────────────────────────────
 
 run_pre_deploy_backup() {
@@ -198,6 +223,7 @@ echo "Started at (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 run_pre_deploy_backup
 
 update_env_images "${IMAGE_TAG}"
+update_env_release_metadata "${IMAGE_TAG}"
 
 log "Pulling images"
 docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" pull

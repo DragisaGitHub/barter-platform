@@ -8,6 +8,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.List;
+
+import org.jspecify.annotations.Nullable;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.env.Environment;
@@ -41,18 +43,21 @@ public class AdminOperationsDeploymentsService {
 
     public AdminOperationsDeploymentsResponse getDeployments() {
         OffsetDateTime lastDeploymentTimestamp = resolveLastDeploymentTimestamp();
-        String version = applicationVersion();
+        String releaseVersion = resolveReleaseVersion();
+        String deploymentSource = resolveDeploymentSource();
+        boolean hasDeployInfo = releaseVersion != null || lastDeploymentTimestamp != null;
 
         return new AdminOperationsDeploymentsResponse()
-                .availability(lastDeploymentTimestamp != null ? AVAILABILITY_CONFIGURED : AVAILABILITY_PLACEHOLDER)
+                .availability(hasDeployInfo ? AVAILABILITY_CONFIGURED : AVAILABILITY_PLACEHOLDER)
                 .environment(String.join(",", activeProfiles()))
-                .currentVersion(version)
+                .releaseVersion(releaseVersion)
+                .currentVersion(buildVersion())
                 .lastDeploymentTimestamp(lastDeploymentTimestamp)
-                .deploymentSource(null)
-                .note(lastDeploymentTimestamp == null
-                        ? "Deployment timestamp is not available. "
-                                + "Set BARTER_DEPLOYED_AT or configure barter.deployment.state-file to enable tracking."
-                        : null);
+                .deploymentSource(deploymentSource)
+                .note(hasDeployInfo ? null
+                        : "Deployment info is not available. "
+                                + "Set BARTER_RELEASE_VERSION, BARTER_DEPLOYED_AT, and BARTER_DEPLOY_SOURCE "
+                                + "in the environment to enable deployment tracking.");
     }
 
     private OffsetDateTime resolveLastDeploymentTimestamp() {
@@ -62,11 +67,36 @@ public class AdminOperationsDeploymentsService {
         return parseDeploymentTimestamp(value);
     }
 
+    private String resolveReleaseVersion() {
+        return firstNonBlank(
+                environment.getProperty("barter.deployment.release-version"),
+                environment.getProperty("BARTER_RELEASE_VERSION"));
+    }
+
+    private String resolveDeploymentSource() {
+        return firstNonBlank(
+                environment.getProperty("barter.deployment.deploy-source"),
+                environment.getProperty("BARTER_DEPLOY_SOURCE"));
+    }
+
+    private String buildVersion() {
+        BuildProperties buildProperties = buildPropertiesProvider.getIfAvailable();
+        if (buildProperties != null && buildProperties.getVersion() != null && !buildProperties.getVersion().isBlank()) {
+            return buildProperties.getVersion();
+        }
+        return AdminOperationsDeploymentsService.class.getPackage().getImplementationVersion();
+    }
+
     private OffsetDateTime parseDeploymentTimestamp(String value) {
         if (value == null) {
             return null;
         }
         String normalized = value.trim();
+        return getOffsetDateTime(normalized, DEPLOYMENT_STATE_TIMESTAMP_FORMATTER);
+    }
+
+    @Nullable
+    static OffsetDateTime getOffsetDateTime(String normalized, DateTimeFormatter deploymentStateTimestampFormatter) {
         if (normalized.isBlank()) {
             return null;
         }
@@ -74,20 +104,13 @@ public class AdminOperationsDeploymentsService {
             return OffsetDateTime.parse(normalized);
         } catch (DateTimeParseException ex) {
             try {
-                return LocalDateTime.parse(normalized, DEPLOYMENT_STATE_TIMESTAMP_FORMATTER).atOffset(ZoneOffset.UTC);
+                return LocalDateTime.parse(normalized, deploymentStateTimestampFormatter).atOffset(ZoneOffset.UTC);
             } catch (DateTimeParseException ignored) {
                 return null;
             }
         }
     }
 
-    private String applicationVersion() {
-        BuildProperties buildProperties = buildPropertiesProvider.getIfAvailable();
-        if (buildProperties != null && buildProperties.getVersion() != null && !buildProperties.getVersion().isBlank()) {
-            return buildProperties.getVersion();
-        }
-        return AdminOperationsDeploymentsService.class.getPackage().getImplementationVersion();
-    }
 
     private List<String> activeProfiles() {
         String[] activeProfiles = environment.getActiveProfiles();

@@ -302,7 +302,7 @@
       },
       "deployment": {
         "title": "Deployment",
-        "description": "Safe environment metadata available to the application."
+        "description": "Release version, build version, deployment source, and last deployed timestamp."
       }
     },
     "metrics": {
@@ -334,7 +334,11 @@
       "primaryImages": "Primary images",
       "environment": "Environment",
       "deploymentState": "Deployment state",
-      "lastDeployment": "Last deployment"
+      "lastDeployment": "Last deployment",
+      "currentRelease": "Current release",
+      "buildVersion": "Build version",
+      "lastDeployed": "Last deployed",
+      "deploymentSource": "Deployment source"
     },
     "statusLabels": {
       "UP": "UP",

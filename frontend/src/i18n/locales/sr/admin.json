@@ -302,7 +302,7 @@
       },
       "deployment": {
         "title": "Raspoređivanje",
-        "description": "Bezbedni metapodaci okruženja dostupni aplikaciji."
+        "description": "Verzija izdanja, verzija izgradnje, izvor raspoređivanja i vreme poslednjeg raspoređivanja."
       }
     },
     "metrics": {
@@ -334,7 +334,11 @@
       "primaryImages": "Primarne slike",
       "environment": "Okruženje",
       "deploymentState": "Stanje raspoređivanja",
-      "lastDeployment": "Poslednje raspoređivanje"
+      "lastDeployment": "Poslednje raspoređivanje",
+      "currentRelease": "Tekuće izdanje",
+      "buildVersion": "Verzija izgradnje",
+      "lastDeployed": "Poslednje raspoređivanje",
+      "deploymentSource": "Izvor raspoređivanja"
     },
     "statusLabels": {
       "UP": "UP",

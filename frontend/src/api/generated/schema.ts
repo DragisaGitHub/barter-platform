@@ -725,6 +725,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/operations/backups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get backup status for administrators
+         * @description Returns safe placeholder backup status information. Real backup integration with Azure Blob Storage or cron jobs is not wired yet.
+         */
+        get: operations["getAdminOperationsBackups"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/operations/deployments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get deployment status for administrators
+         * @description Returns safe deployment metadata available to the application. Real GitHub Actions integration is not wired yet.
+         */
+        get: operations["getAdminOperationsDeployments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/system/sentry-test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Trigger a backend Sentry diagnostics test event
+         * @description Deliberately throws a RuntimeException to verify that backend Sentry error tracking is active and capturing exceptions correctly. Always returns HTTP 500 by design — this is the intended and expected outcome. Admin-only diagnostic operation; safe to use in all environments.
+         */
+        post: operations["triggerAdminSystemSentryTest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/catalog/tags": {
         parameters: {
             query?: never;
@@ -1205,6 +1265,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/trade-offers/messages/unread-count": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get unread trade message count for the authenticated user */
+        get: operations["getUnreadTradeOfferMessageCount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/trade-offers/{tradeOfferUuid}/messages": {
         parameters: {
             query?: never;
@@ -1363,6 +1440,7 @@ export interface components {
             code: string;
             message: string;
             path: string;
+            requestId?: string;
             fieldErrors: components["schemas"]["FieldErrorResponse"][];
         };
         PageMetadata: {
@@ -2200,6 +2278,10 @@ export interface components {
             /** Format: date-time */
             createdAt: string;
         };
+        TradeOfferMessageUnreadCountResponse: {
+            /** Format: int64 */
+            count: number;
+        };
         /** @enum {string} */
         TradeReviewRating: "POSITIVE" | "NEGATIVE";
         /** @enum {string} */
@@ -2481,18 +2563,31 @@ export interface components {
             environment: string;
             /** @description Availability of deployment state metadata to the application, such as unavailable or configured. */
             deploymentStateAvailability: string;
+            /** @description Deployed release version from BARTER_RELEASE_VERSION (Docker image tag), if available. */
+            releaseVersion?: string | null;
+            /** @description Application build version from build properties, if available. */
+            currentVersion?: string | null;
+            /** @description Source of the last deployment, for example github-actions-prod or github-actions-dev. */
+            deploymentSource?: string | null;
             /** Format: date-time */
             lastDeploymentTimestamp?: string | null;
         };
         AdminOperationsBackupsResponse: {
             /** @description Availability of backup metadata to the application, such as placeholder, configured, or unavailable. */
             availability: string;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Timestamp of the last known backup, if available.
+             */
             lastBackupTimestamp?: string | null;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Next scheduled backup timestamp, if available.
+             */
             nextScheduledBackupTimestamp?: string | null;
             /** @description Configured backup storage type, for example local or azure-blob. */
             backupStorageType?: string | null;
+            /** @description Whether a scheduled backup job is configured and enabled. */
             scheduledBackupEnabled?: boolean | null;
             /** @description Human-readable note about the current backup configuration state. */
             note?: string | null;
@@ -2502,9 +2597,14 @@ export interface components {
             availability: string;
             /** @description Active environment label derived from Spring profiles. */
             environment: string;
-            /** @description Application version from build properties, if available. */
+            /** @description Deployed release version from BARTER_RELEASE_VERSION (Docker image tag), if available. */
+            releaseVersion?: string | null;
+            /** @description Application build version from build properties, if available. */
             currentVersion?: string | null;
-            /** Format: date-time */
+            /**
+             * Format: date-time
+             * @description Timestamp of the last deployment, if available.
+             */
             lastDeploymentTimestamp?: string | null;
             /** @description Source of the last deployment, for example github-actions or manual. */
             deploymentSource?: string | null;
@@ -3933,6 +4033,12 @@ export interface operations {
                 targetType?: components["schemas"]["ReportTargetType"];
                 /** @description Filter reports by report reason. */
                 reasonCode?: components["schemas"]["ReportReasonCode"];
+                /** @description Filter reports assigned to a specific moderator by their UUID. */
+                assignedModeratorUuid?: string;
+                /** @description When true, return only reports with no assigned moderator. */
+                unassignedOnly?: boolean;
+                /** @description When true, return only stale reports (OPEN status, older than the stale threshold). */
+                staleOnly?: boolean;
             };
             header?: never;
             path?: never;
@@ -4064,6 +4170,72 @@ export interface operations {
             };
             401: components["responses"]["Unauthorized"];
             403: components["responses"]["Forbidden"];
+        };
+    };
+    getAdminOperationsBackups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Backup status returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOperationsBackupsResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getAdminOperationsDeployments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Deployment status returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOperationsDeploymentsResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    triggerAdminSystemSentryTest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            /** @description Sentry test event triggered — this 500 response is intentional and expected */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     listTags: {
@@ -5070,6 +5242,27 @@ export interface operations {
                 };
             };
             400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+        };
+    };
+    getUnreadTradeOfferMessageCount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Unread message count returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TradeOfferMessageUnreadCountResponse"];
+                };
+            };
             401: components["responses"]["Unauthorized"];
         };
     };
