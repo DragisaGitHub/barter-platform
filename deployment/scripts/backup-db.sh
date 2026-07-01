@@ -17,9 +17,12 @@ and prunes older local backup files according to BACKUP_LOCAL_RETENTION_COUNT.
 
 Backup modes (controlled by BACKUP_DB_MODE in the env file or environment):
   compose   (default) — runs pg_dump inside the running Docker Compose PostgreSQL container.
-  external            — runs pg_dump directly on the host against a managed/external PostgreSQL
-                        instance using DB_URL, DB_USERNAME, and DB_PASSWORD from the env file.
-                        Use this mode for production (BACKUP_DB_MODE=external in prod.env).
+  external            — runs pg_dump via a Docker PostgreSQL client image against a managed/
+                        external PostgreSQL instance using DB_URL, DB_USERNAME, and DB_PASSWORD
+                        from the env file.  The image version is controlled by
+                        POSTGRES_CLIENT_DOCKER_IMAGE (default: postgres:18).  Docker must be
+                        available on the host.  Use this mode for production
+                        (BACKUP_DB_MODE=external in prod.env).
 
 Options:
   --force   Run even when BACKUP_ENABLED=false.
@@ -194,6 +197,7 @@ AZURE_STORAGE_CONNECTION_STRING_DEV="${AZURE_STORAGE_CONNECTION_STRING_DEV:-$(re
 DB_URL="${DB_URL:-$(read_env_value DB_URL)}"
 DB_USERNAME="${DB_USERNAME:-$(read_env_value DB_USERNAME)}"
 DB_PASSWORD="${DB_PASSWORD:-$(read_env_value DB_PASSWORD)}"
+POSTGRES_CLIENT_DOCKER_IMAGE="${POSTGRES_CLIENT_DOCKER_IMAGE:-$(read_env_value POSTGRES_CLIENT_DOCKER_IMAGE)}"
 
 # ─── Apply defaults ────────────────────────────────────────────────────────────
 
@@ -206,6 +210,9 @@ BACKUP_WORK_DIR="${BACKUP_WORK_DIR:-${DEPLOYMENT_DIR}/backups/postgres}"
 POSTGRES_SERVICE="${POSTGRES_SERVICE:-postgres}"
 BACKUP_DB_MODE="${BACKUP_DB_MODE:-compose}"
 AZURE_CLI_DOCKER_IMAGE="mcr.microsoft.com/azure-cli"
+# Versioned PostgreSQL client image for external mode pg_dump.
+# Must be >= the major version of the managed PostgreSQL server.
+POSTGRES_CLIENT_DOCKER_IMAGE="${POSTGRES_CLIENT_DOCKER_IMAGE:-postgres:18}"
 
 BACKUP_AZURE_CONNECTION_STRING="${BACKUP_AZURE_CONNECTION_STRING:-${AZURE_STORAGE_CONNECTION_STRING_DEV:-}}"
 BACKUP_AZURE_PREFIX="${BACKUP_AZURE_PREFIX#/}"
@@ -240,8 +247,13 @@ if [[ "${BACKUP_DB_MODE}" == "external" ]]; then
   [[ -z "${DB_USERNAME}" ]] && fail "external mode requires DB_USERNAME to be set in ${ENV_FILE}."
   [[ -z "${DB_PASSWORD}" ]] && fail "external mode requires DB_PASSWORD to be set in ${ENV_FILE}."
 
-  if ! command_exists pg_dump; then
-    fail "pg_dump is required for external PostgreSQL backup. Install postgresql-client on the host."
+  # Docker is the only supported mechanism for external pg_dump.
+  # Running host pg_dump risks a version mismatch with the managed PostgreSQL server,
+  # which pg_dump treats as a fatal error.  Never fall back to host pg_dump silently.
+  if ! command_exists docker; then
+    fail "Docker is required for external PostgreSQL backup." \
+         "Install Docker or set POSTGRES_CLIENT_DOCKER_IMAGE to a postgres:<version> image" \
+         "that matches or exceeds the managed PostgreSQL server major version."
   fi
 
   # Parse the database name from the JDBC URL
@@ -328,6 +340,7 @@ echo "Azure container:    ${BACKUP_AZURE_CONTAINER}"
 echo "Azure blob path:    ${BACKUP_BLOB_NAME}"
 echo "Azure CLI mode:     ${AZURE_UPLOAD_MODE}"
 if [[ "${BACKUP_DB_MODE}" == "external" ]]; then
+  echo "PG client image:    ${POSTGRES_CLIENT_DOCKER_IMAGE}"
   echo "Database name:      ${BACKUP_DB_NAME}"
 fi
 echo "Creating compressed PostgreSQL backup: ${BACKUP_FILE}"
@@ -335,17 +348,29 @@ echo "Creating compressed PostgreSQL backup: ${BACKUP_FILE}"
 # ─── Run the backup dump ──────────────────────────────────────────────────────
 
 if [[ "${BACKUP_DB_MODE}" == "external" ]]; then
-  # Strip jdbc: prefix so pg_dump receives a valid libpq connection URI
+  # Strip jdbc: prefix so pg_dump receives a valid libpq connection URI.
+  # This is done in the shell variable before passing it into the container so
+  # the container command never needs to manipulate the raw DB_URL string.
   _pg_conn_uri="${DB_URL#jdbc:}"
 
-  # PGPASSWORD is passed via environment — never echoed or logged
-  PGPASSWORD="${DB_PASSWORD}" pg_dump \
-    --dbname="${_pg_conn_uri}" \
-    --username="${DB_USERNAME}" \
-    --format=custom \
-    --no-owner \
-    --no-privileges \
-    | gzip -c > "${TEMP_BACKUP_FILE}"
+  # Run pg_dump inside a versioned PostgreSQL Docker image so that the client
+  # version always matches (or exceeds) the managed server version.
+  # Secrets are injected via environment variables — never echoed or logged.
+  # pg_dump writes to stdout; the host pipes it through gzip into TEMP_BACKUP_FILE,
+  # preserving the umask 077 permissions set above.
+  docker run --rm \
+    --entrypoint sh \
+    -e PGPASSWORD="${DB_PASSWORD}" \
+    -e PG_CONN_URI="${_pg_conn_uri}" \
+    -e DB_USERNAME="${DB_USERNAME}" \
+    "${POSTGRES_CLIENT_DOCKER_IMAGE}" \
+    -c 'pg_dump \
+      --dbname="$PG_CONN_URI" \
+      --username="$DB_USERNAME" \
+      --format=custom \
+      --no-owner \
+      --no-privileges' \
+  | gzip -c > "${TEMP_BACKUP_FILE}"
 else
   docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" exec -T \
     -e BACKUP_POSTGRES_DB="${POSTGRES_DB}" \
