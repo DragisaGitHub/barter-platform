@@ -8,8 +8,13 @@ This document describes the production PostgreSQL backup strategy for Zameni.rs.
 
 Production uses a **managed/external PostgreSQL** instance (Azure Database for PostgreSQL
 Flexible Server). There is **no local PostgreSQL container** in the production Docker Compose
-stack. Backups are taken by running `pg_dump` directly on the production host against the
-managed database URL.
+stack. Backups are taken by running `pg_dump` inside a **versioned Docker PostgreSQL client
+container** on the production host, connecting to the managed database URL.
+
+Using a Docker client image — rather than whatever `pg_dump` is installed on the host — ensures
+that the pg_dump client version always matches or exceeds the managed PostgreSQL server version.
+An older host `pg_dump` would be rejected immediately by PostgreSQL with:
+`"aborting because of server version mismatch"`.
 
 Item image **binaries** are stored in Azure Blob Storage (`item-images-prod`) and are **not
 part of the server-side backup**. Only the PostgreSQL database is backed up by these scripts.
@@ -41,10 +46,10 @@ strongly discouraged for production.
 
 `backup-db.sh` supports two modes, controlled by `BACKUP_DB_MODE` in the env file:
 
-| Mode       | How pg_dump runs                                     | Use for      |
-|------------|------------------------------------------------------|--------------|
-| `compose`  | `docker compose exec` into the local postgres container | dev          |
-| `external` | `pg_dump` directly on the host via managed DB URL    | **production** |
+| Mode       | How pg_dump runs                                                         | Use for      |
+|------------|--------------------------------------------------------------------------|--------------|
+| `compose`  | `docker compose exec` into the local postgres container                  | dev          |
+| `external` | `pg_dump` inside a Docker PostgreSQL client image via managed DB URL     | **production** |
 
 Production `prod.env` must contain:
 
@@ -56,14 +61,22 @@ BACKUP_ENABLED=true
 `backup-db.sh` in external mode:
 
 - reads `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` from the env file;
-- strips the `jdbc:` prefix from `DB_URL` to build a libpq connection URI;
-- runs `pg_dump` with `PGPASSWORD` set via environment (never printed);
-- gzip-compresses the dump;
+- strips the `jdbc:` prefix from `DB_URL` to build a libpq connection URI before passing it
+  into the container (the raw `DB_URL` value is never logged);
+- launches `docker run --rm` with `POSTGRES_CLIENT_DOCKER_IMAGE` (default `postgres:18`),
+  passing `PGPASSWORD`, `PG_CONN_URI`, and `DB_USERNAME` via environment variables;
+- mounts the backup work directory (`BACKUP_WORK_DIR`) into the container at `/backup`;
+- pipes pg_dump stdout through gzip on the host and writes a `.dump.gz` file to
+  `BACKUP_WORK_DIR` with `umask 077` (owner-read-only) permissions;
 - uploads the `.dump.gz` to Azure Blob Storage;
 - applies local retention.
 
-**Secrets are never echoed or logged.** `DB_PASSWORD` and connection strings are passed via
-environment variables only.
+**Secrets are never echoed or logged.** `DB_PASSWORD`, `DB_URL`, and connection strings are
+passed via environment variables only and do not appear in process argument lists.
+
+**There is no fallback to host `pg_dump`.** If Docker is unavailable, the script fails
+immediately with a clear error message rather than silently attempting a version-mismatched
+host binary.
 
 ---
 
@@ -79,6 +92,11 @@ DB_URL=jdbc:postgresql://your-server.postgres.database.azure.com:5432/barter_db?
 DB_USERNAME=barter_user
 DB_PASSWORD=<strong-password>
 
+# PostgreSQL client Docker image — must match or exceed the managed server major version.
+# Azure Database for PostgreSQL Flexible Server 18.x → use postgres:18
+# Update this value whenever the managed server is upgraded to a new major version.
+POSTGRES_CLIENT_DOCKER_IMAGE=postgres:18
+
 # Backup destination
 BACKUP_AZURE_CONTAINER=postgres-backups
 BACKUP_AZURE_PREFIX=prod/postgres
@@ -91,6 +109,38 @@ BACKUP_LOCAL_RETENTION_COUNT=3
 BACKUP_FREQUENCY=daily
 BACKUP_SCHEDULE=          # leave empty to derive from BACKUP_FREQUENCY
 ```
+
+---
+
+## Keeping the Docker client image in sync with the server version
+
+`pg_dump` rejects connections to a server whose major version is **higher** than the client's
+with a fatal error:
+
+```
+pg_dump: error: server version: 18.x; pg_dump version: 16.x
+pg_dump: error: aborting because of server version mismatch
+```
+
+The `POSTGRES_CLIENT_DOCKER_IMAGE` variable controls which image is pulled for `docker run`.
+Docker pulls the image on first use and caches it — subsequent backups re-use the cached layer.
+
+**Rule:** `POSTGRES_CLIENT_DOCKER_IMAGE` major version ≥ managed server major version.
+
+| Azure PostgreSQL version | Recommended image |
+|--------------------------|-------------------|
+| 16.x                     | `postgres:16`     |
+| 17.x                     | `postgres:17`     |
+| 18.x                     | `postgres:18`     |
+
+When Azure upgrades the managed server major version:
+
+1. Update `POSTGRES_CLIENT_DOCKER_IMAGE` in `deployment/env/prod.env`.
+2. Run a manual backup to verify the new image works before the next cron run:
+   ```bash
+   BACKUP_DB_MODE=external ENV_FILE=deployment/env/prod.env \
+     bash deployment/scripts/backup-db.sh --force
+   ```
 
 ---
 
