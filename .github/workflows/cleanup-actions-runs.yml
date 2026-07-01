@@ -114,34 +114,37 @@ jobs:
         run: |
           $scriptPath = "${{ github.workspace }}/tools/github/cleanup-actions-runs.ps1"
 
-          # Build argument list dynamically
-          $args = @()
+          # Build argument list dynamically.
+          # NOTE: Do NOT use $args — it is a PowerShell automatic variable and
+          # @args splatting passes elements positionally, which would cause
+          # switch parameters like -Yes to be bound as positional arguments.
+          $scriptArgs = @()
 
           $workflowName = '${{ inputs.workflow_name }}'.Trim()
           if ($workflowName -ne '') {
-            $args += '-WorkflowName', $workflowName
+            $scriptArgs += @('-WorkflowName', $workflowName)
           }
 
           $status = '${{ inputs.status }}'.Trim()
           if ($status -ne '' -and $status -ne 'all') {
-            $args += '-Status', $status
+            $scriptArgs += @('-Status', $status)
           }
 
           $keepLast = [int]'${{ inputs.keep_last }}'
           if ($keepLast -gt 0) {
-            $args += '-KeepLast', $keepLast
+            $scriptArgs += @('-KeepLast', $keepLast)
           }
 
           $dryRun = '${{ inputs.dry_run }}' -eq 'true'
           if ($dryRun) {
-            $args += '-DryRun'
+            $scriptArgs += '-DryRun'
           } else {
             # -Yes skips the interactive confirmation prompt in CI
-            $args += '-Yes'
+            $scriptArgs += '-Yes'
           }
 
-          Write-Host "Executing: pwsh $scriptPath $($args -join ' ')"
-          & $scriptPath @args
+          Write-Host "Executing: pwsh $scriptPath $($scriptArgs -join ' ')"
+          & $scriptPath @scriptArgs
 
       # ── Post-run summary ────────────────────────────────────────────────────
       - name: Write job summary
