@@ -116,15 +116,33 @@ jobs:
             echo "PROD_SSH_KNOWN_HOSTS not set; loaded the current host key with ssh-keyscan."
           fi
 
-      - name: Copy deploy script to production server
+      - name: Copy deployment scripts to production server
         run: |
           set -euo pipefail
-          scp \
-            -P "${PROD_SSH_PORT}" \
+
+          # Ensure the remote scripts directory exists
+          printf -v DEPLOY_PATH_Q '%q' "${PROD_DEPLOY_PATH}"
+          ssh \
+            -p "${PROD_SSH_PORT}" \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
-            deployment/scripts/deploy-prod.sh \
-            "${PROD_SSH_USER}@${PROD_SSH_HOST}:${PROD_DEPLOY_PATH}/deployment/scripts/deploy-prod.sh"
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}" \
+            "mkdir -p ${DEPLOY_PATH_Q}/deployment/scripts"
+
+          # Sync all deployment scripts, preserving permissions.
+          # Exclude env files and any secret-like files to avoid accidental leakage.
+          rsync \
+            --archive \
+            --perms \
+            --delete \
+            --exclude='*.env' \
+            --exclude='*.env.*' \
+            --exclude='.env*' \
+            --exclude='*.secret' \
+            --exclude='*.secrets' \
+            --rsh="ssh -p ${PROD_SSH_PORT} -o BatchMode=yes -o StrictHostKeyChecking=yes" \
+            deployment/scripts/ \
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}:${PROD_DEPLOY_PATH}/deployment/scripts/"
 
       - name: Deploy on PROD server
         run: |
