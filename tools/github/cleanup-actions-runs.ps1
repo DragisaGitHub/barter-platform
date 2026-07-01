@@ -44,23 +44,17 @@
     .\cleanup-actions-runs.ps1 -Status completed -Yes
 #>
 
-[CmdletBinding(SupportsShouldProcess)]
+[CmdletBinding(PositionalBinding = $false)]
 param(
-    [Parameter()]
     [string]$WorkflowName,
 
-    [Parameter()]
     [ValidateSet('completed', 'failure', 'success', 'cancelled', 'skipped')]
     [string]$Status,
 
-    [Parameter()]
-    [ValidateRange(0, [int]::MaxValue)]
     [int]$KeepLast = 0,
 
-    [Parameter()]
     [switch]$DryRun,
 
-    [Parameter()]
     [switch]$Yes
 )
 
