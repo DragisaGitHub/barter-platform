@@ -205,17 +205,80 @@
     }
   },
   "operationsPage": {
-    "title": "Operativna kontrolna tabla",
-    "description": "Operativni pregled za administratore tokom lansiranja i beta rada. Prikazuje bezbedne brojače i statusne signale bez otkrivanja tajni, sirove konfiguracije ili lista sa osetljivim ličnim podacima.",
+    "title": "Operativni centar",
+    "description": "Operativni pregled dostupan samo administratorima — zdravlje platforme, rezervne kopije, raspoređivanja i infrastruktura. Samo bezbedni brojači i statusni signali, bez tajni, sirove konfiguracije ili ličnih podataka.",
     "badges": {
       "adminOnly": "Samo admin"
     },
     "loading": "Učitavanje operativnog pregleda…",
-    "errorTitle": "Operativni pregled nije dostupan",
+    "errorTitle": "Operativni podaci nisu dostupni",
     "errorDescription": "Admin endpoint za operacije trenutno nije dostupan.",
     "tryAgain": "Pokušaj ponovo",
     "runtimeOverviewTitle": "Pregled rada sistema",
     "runtimeOverviewDescription": "Brojači se učitavaju iz jednostavnih agregatnih upita. Provera skladišta izbegava skupe udaljene pozive ka blob skladištu.",
+    "tabs": {
+      "overview": "Pregled",
+      "backups": "Rezervne kopije",
+      "deployments": "Raspoređivanja",
+      "costs": "Troškovi",
+      "monitoring": "Nadzor",
+      "security": "Bezbednost"
+    },
+    "comingSoon": {
+      "label": "Uskoro",
+      "costs": {
+        "title": "Praćenje troškova — uskoro",
+        "description": "Pregled troškova Azure resursa i uvid u naplatu biće dostupni ovde nakon integracije."
+      },
+      "monitoring": {
+        "title": "Nadzor — uskoro",
+        "description": "Metrike aplikacije, dostupnost i integracije za upozorenja biće dostupni ovde nakon povezivanja."
+      },
+      "security": {
+        "title": "Uvid u bezbednost — uskoro",
+        "description": "Rezimei bezbednosnih događaja, anomalije prijava i pristup revizijskim zapisima biće dostupni ovde nakon integracije."
+      }
+    },
+    "backupsTab": {
+      "loading": "Učitavanje statusa rezervnih kopija…",
+      "title": "Status rezervnih kopija",
+      "description": "Praćenje rezervnih kopija baze podataka i vidljivost rasporeda za operativnu svest.",
+      "cardTitle": "Konfiguracija rezervnih kopija",
+      "cardDescription": "Privremeni placeholder status. Automatska integracija rezervnih kopija planirana je za buduće izdanje.",
+      "enabled": "Aktivirano",
+      "disabled": "Nije aktivirano",
+      "metrics": {
+        "availability": "Dostupnost",
+        "lastBackup": "Poslednja kopija",
+        "nextScheduled": "Sledeća zakazana",
+        "storageType": "Tip skladišta",
+        "scheduledEnabled": "Zakazano pravljenje kopija"
+      },
+      "availability": {
+        "placeholder": "Privremeno",
+        "configured": "Podešeno",
+        "unavailable": "Nedostupno"
+      }
+    },
+    "deploymentsTab": {
+      "loading": "Učitavanje statusa raspoređivanja…",
+      "title": "Status raspoređivanja",
+      "description": "Okruženje, verzija i praćenje raspoređivanja za operativnu svest.",
+      "cardTitle": "Informacije o raspoređivanju",
+      "cardDescription": "Bezbedni metapodaci okruženja dostupni aplikaciji. Integracija sa GitHub Actions planirana je za buduće izdanje.",
+      "metrics": {
+        "environment": "Okruženje",
+        "currentVersion": "Verzija",
+        "lastDeployment": "Poslednje raspoređivanje",
+        "deploymentSource": "Izvor",
+        "availability": "Dostupnost"
+      },
+      "availability": {
+        "placeholder": "Privremeno",
+        "configured": "Podešeno",
+        "unavailable": "Nedostupno"
+      }
+    },
     "cards": {
       "systemHealth": {
         "title": "Zdravlje sistema",

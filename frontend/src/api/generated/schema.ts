@@ -2484,6 +2484,33 @@ export interface components {
             /** Format: date-time */
             lastDeploymentTimestamp?: string | null;
         };
+        AdminOperationsBackupsResponse: {
+            /** @description Availability of backup metadata to the application, such as placeholder, configured, or unavailable. */
+            availability: string;
+            /** Format: date-time */
+            lastBackupTimestamp?: string | null;
+            /** Format: date-time */
+            nextScheduledBackupTimestamp?: string | null;
+            /** @description Configured backup storage type, for example local or azure-blob. */
+            backupStorageType?: string | null;
+            scheduledBackupEnabled?: boolean | null;
+            /** @description Human-readable note about the current backup configuration state. */
+            note?: string | null;
+        };
+        AdminOperationsDeploymentsResponse: {
+            /** @description Availability of deployment metadata, such as placeholder, configured, or unavailable. */
+            availability: string;
+            /** @description Active environment label derived from Spring profiles. */
+            environment: string;
+            /** @description Application version from build properties, if available. */
+            currentVersion?: string | null;
+            /** Format: date-time */
+            lastDeploymentTimestamp?: string | null;
+            /** @description Source of the last deployment, for example github-actions or manual. */
+            deploymentSource?: string | null;
+            /** @description Human-readable note about the current deployment information state. */
+            note?: string | null;
+        };
         ReputationSummaryResponse: {
             /** Format: int32 */
             positiveReviewCount: number;

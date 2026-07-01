@@ -174,6 +174,58 @@ class AdminOperationsIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    // ── /admin/operations/backups ────────────────────────────────────────────
+
+    @Test
+    void adminCanAccessOperationalBackups() throws Exception {
+        String adminToken = registerActivateLoginAndAssignAdmin();
+
+        mockMvc.perform(apiBackupsGet().header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availability").value("placeholder"))
+                .andExpect(jsonPath("$.scheduledBackupEnabled").value(false));
+    }
+
+    @Test
+    void regularUserCannotAccessOperationalBackups() throws Exception {
+        String userToken = registerActivateAndLogin();
+
+        mockMvc.perform(apiBackupsGet().header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedUserCannotAccessOperationalBackups() throws Exception {
+        mockMvc.perform(apiBackupsGet())
+                .andExpect(status().isUnauthorized());
+    }
+
+    // ── /admin/operations/deployments ────────────────────────────────────────
+
+    @Test
+    void adminCanAccessOperationalDeployments() throws Exception {
+        String adminToken = registerActivateLoginAndAssignAdmin();
+
+        mockMvc.perform(apiDeploymentsGet().header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availability").exists())
+                .andExpect(jsonPath("$.environment").exists());
+    }
+
+    @Test
+    void regularUserCannotAccessOperationalDeployments() throws Exception {
+        String userToken = registerActivateAndLogin();
+
+        mockMvc.perform(apiDeploymentsGet().header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedUserCannotAccessOperationalDeployments() throws Exception {
+        mockMvc.perform(apiDeploymentsGet())
+                .andExpect(status().isUnauthorized());
+    }
+
     private String registerActivateLoginAndAssignAdmin() throws Exception {
         UserEntity user = registerAndActivate("operations-admin", "operations-admin@example.com");
         var adminRole = roleRepository.findByCode(RoleCode.ADMIN).orElseThrow();
@@ -235,6 +287,20 @@ class AdminOperationsIntegrationTest {
         return get("/api/v1/admin/operations/overview")
                 .contextPath("/api/v1")
                 .servletPath("/admin/operations/overview")
+                .accept(MediaType.APPLICATION_JSON);
+    }
+
+    private MockHttpServletRequestBuilder apiBackupsGet() {
+        return get("/api/v1/admin/operations/backups")
+                .contextPath("/api/v1")
+                .servletPath("/admin/operations/backups")
+                .accept(MediaType.APPLICATION_JSON);
+    }
+
+    private MockHttpServletRequestBuilder apiDeploymentsGet() {
+        return get("/api/v1/admin/operations/deployments")
+                .contextPath("/api/v1")
+                .servletPath("/admin/operations/deployments")
                 .accept(MediaType.APPLICATION_JSON);
     }
 

@@ -1,0 +1,31 @@
+type: object
+additionalProperties: false
+required:
+  - availability
+properties:
+  availability:
+    type: string
+    description: Availability of backup metadata to the application, such as placeholder, configured, or unavailable.
+  lastBackupTimestamp:
+    type: string
+    format: date-time
+    nullable: true
+    description: Timestamp of the last known backup, if available.
+  nextScheduledBackupTimestamp:
+    type: string
+    format: date-time
+    nullable: true
+    description: Next scheduled backup timestamp, if available.
+  backupStorageType:
+    type: string
+    nullable: true
+    description: Configured backup storage type, for example local or azure-blob.
+  scheduledBackupEnabled:
+    type: boolean
+    nullable: true
+    description: Whether a scheduled backup job is configured and enabled.
+  note:
+    type: string
+    nullable: true
+    description: Human-readable note about the current backup configuration state.
+
