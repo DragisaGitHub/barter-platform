@@ -1,0 +1,40 @@
+type: object
+additionalProperties: false
+required:
+  - allowedOriginsConfigured
+  - allowedOriginsCount
+  - allowCredentials
+  - allowedMethods
+  - exposedHeaders
+  - corsStatus
+properties:
+  allowedOriginsConfigured:
+    type: boolean
+    description: Whether at least one allowed origin is configured.
+  allowedOriginsCount:
+    type: integer
+    format: int32
+    description: Number of configured allowed origins.
+  allowCredentials:
+    type: boolean
+    description: Whether credentials (cookies/auth headers) are allowed in CORS requests.
+  allowedMethods:
+    type: array
+    items:
+      type: string
+    description: Configured allowed HTTP methods for CORS.
+  exposedHeaders:
+    type: array
+    items:
+      type: string
+    description: Headers exposed to the browser via CORS.
+  corsStatus:
+    type: string
+    description: CORS security posture — OK, WARNING, or CRITICAL.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional notes about CORS configuration issues.
+

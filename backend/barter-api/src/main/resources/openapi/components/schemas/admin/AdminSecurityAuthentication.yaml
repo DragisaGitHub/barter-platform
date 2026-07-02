@@ -1,0 +1,41 @@
+type: object
+additionalProperties: false
+required:
+  - jwtConfigured
+  - accessTokenMinutes
+  - refreshTokenDays
+  - emailVerificationEnabled
+  - bootstrapAdminEnabled
+  - swaggerEnabled
+  - authStatus
+properties:
+  jwtConfigured:
+    type: boolean
+    description: Whether the JWT secret is configured and non-blank.
+  accessTokenMinutes:
+    type: integer
+    format: int32
+    description: Access token expiration in minutes.
+  refreshTokenDays:
+    type: integer
+    format: int32
+    description: Refresh token expiration in days.
+  emailVerificationEnabled:
+    type: boolean
+    description: Whether email verification is required for new accounts.
+  bootstrapAdminEnabled:
+    type: boolean
+    description: Whether bootstrap admin creation is enabled. Should be false in production.
+  swaggerEnabled:
+    type: boolean
+    description: Whether the Swagger UI is enabled.
+  authStatus:
+    type: string
+    description: Authentication security posture — OK, WARNING, or CRITICAL.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional notes about authentication configuration issues.
+

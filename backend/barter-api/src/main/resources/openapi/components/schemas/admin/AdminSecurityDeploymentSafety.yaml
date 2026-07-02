@@ -1,0 +1,31 @@
+type: object
+additionalProperties: false
+required:
+  - releaseVersionConfigured
+  - deployedAtConfigured
+  - deploySourceConfigured
+  - deploymentSafetyStatus
+properties:
+  releaseVersionConfigured:
+    type: boolean
+    description: Whether the release version environment variable is set.
+  deployedAtConfigured:
+    type: boolean
+    description: Whether the deployment timestamp environment variable is set.
+  deploySourceConfigured:
+    type: boolean
+    description: Whether the deployment source environment variable is set.
+  immutableImageTagsDetected:
+    type: boolean
+    nullable: true
+    description: Whether the release version appears to be an immutable image tag. Null when version is not set.
+  deploymentSafetyStatus:
+    type: string
+    description: Deployment safety posture — OK or WARNING.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional notes about deployment safety issues.
+

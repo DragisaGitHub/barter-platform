@@ -138,6 +138,8 @@ paths:
     $ref: './paths/admin-operations.yaml#/costs'
   /admin/operations/monitoring:
     $ref: './paths/admin-operations.yaml#/monitoring'
+  /admin/operations/security:
+    $ref: './paths/admin-operations.yaml#/security'
   /admin/system/sentry-test:
     $ref: './paths/admin-operations.yaml#/sentryTest'
   /catalog/tags:
@@ -511,6 +513,26 @@ components:
       $ref: './components/schemas/admin/AdminMonitoringHttp.yaml'
     AdminMonitoringStorage:
       $ref: './components/schemas/admin/AdminMonitoringStorage.yaml'
+    AdminOperationsSecurityResponse:
+      $ref: './components/schemas/admin/AdminOperationsSecurityResponse.yaml'
+    AdminSecurityAuthentication:
+      $ref: './components/schemas/admin/AdminSecurityAuthentication.yaml'
+    AdminSecurityCors:
+      $ref: './components/schemas/admin/AdminSecurityCors.yaml'
+    AdminSecurityStorage:
+      $ref: './components/schemas/admin/AdminSecurityStorage.yaml'
+    AdminSecurityBackups:
+      $ref: './components/schemas/admin/AdminSecurityBackups.yaml'
+    AdminSecurityEmail:
+      $ref: './components/schemas/admin/AdminSecurityEmail.yaml'
+    AdminSecurityObservability:
+      $ref: './components/schemas/admin/AdminSecurityObservability.yaml'
+    AdminSecurityDeploymentSafety:
+      $ref: './components/schemas/admin/AdminSecurityDeploymentSafety.yaml'
+    AdminSecurityEdge:
+      $ref: './components/schemas/admin/AdminSecurityEdge.yaml'
+    AdminSecurityOverall:
+      $ref: './components/schemas/admin/AdminSecurityOverall.yaml'
     ReputationSummaryResponse:
       $ref: './components/schemas/reputation/ReputationSummaryResponse.yaml'
     NotificationType:

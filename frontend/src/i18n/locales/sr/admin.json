@@ -497,6 +497,98 @@
         "ACCEPTING_TRAFFIC": "Prima saobraćaj",
         "REFUSING_TRAFFIC": "Odbija saobraćaj"
       }
+    },
+    "securityTab": {
+      "loading": "Učitavanje snimka bezbednosti…",
+      "errorTitle": "Podaci o bezbednosti nisu dostupni",
+      "errorDescription": "Endpoint za bezbednosni pregled nije dostupan.",
+      "tryAgain": "Pokušaj ponovo",
+      "title": "Bezbednosni položaj",
+      "description": "Bezbedni snimak konfiguracije za produkciju. Statusne vrednosti ukazuju na OK, UPOZORENJE, KRITIČNO ili NEPOZNATO. Tajne, akreditivi i sirove osetljive vrednosti se ne vraćaju.",
+      "heroTitle": "Snimak bezbednosne konfiguracije",
+      "heroDescription": "Položaj konfiguracije izveden iz okruženja, CORS-a, skladišta, rezervnih kopija, e-maila, posmatrljivosti i podešavanja raspoređivanja.",
+      "lastUpdated": "Poslednje ažuriranje:",
+      "notesTitle": "Rezime napomena",
+      "sections": {
+        "authentication": {
+          "title": "Autentifikacija",
+          "description": "JWT konfiguracija, isticanje tokena, provera e-maila i Swagger pristup."
+        },
+        "cors": {
+          "title": "CORS",
+          "description": "Konfiguracija deljenja resursa između izvora — dozvoljeni izvori, akreditivi i metode."
+        },
+        "storage": {
+          "title": "Skladište",
+          "description": "Konfiguracija Azure Blob Storage-a za slike predmeta i kontejnere rezervnih kopija."
+        },
+        "backups": {
+          "title": "Rezervne kopije",
+          "description": "Aktiviranje zakazanih rezervnih kopija baze podataka i konfiguracija Azure skladišta."
+        },
+        "email": {
+          "title": "E-mail",
+          "description": "SMTP konfiguracija i primena provere e-mail adrese."
+        },
+        "observability": {
+          "title": "Posmatrljivost",
+          "description": "Praćenje grešaka u backendu putem Sentry-ja i dostupnost nadzornog centra."
+        },
+        "deploymentSafety": {
+          "title": "Bezbednost raspoređivanja",
+          "description": "Praćenje verzije izdanja, vremenska oznaka raspoređivanja i detekcija nepromenljivih tagova slika."
+        },
+        "edge": {
+          "title": "Ivični čvor / Bezbednosna zaglavlja",
+          "description": "HTTPS, HSTS, Caddy reverzni proksi i zaglavlja odgovora Spring Security-ja."
+        },
+        "overall": {
+          "title": "Ukupni položaj",
+          "description": "Agregiran bezbednosni status kroz sve sekcije."
+        }
+      },
+      "metrics": {
+        "jwtConfigured": "JWT podešen",
+        "accessTokenMinutes": "Isticanje pristupnog tokena",
+        "accessTokenMinutesValue": "{{value}} min",
+        "refreshTokenDays": "Isticanje tokena za obnavljanje",
+        "refreshTokenDaysValue": "{{value}} dana",
+        "emailVerificationEnabled": "Provera e-maila",
+        "bootstrapAdminEnabled": "Bootstrap admin",
+        "swaggerEnabled": "Swagger UI",
+        "allowedOriginsConfigured": "Dozvoljeni izvori",
+        "allowedOriginsCount": "Broj izvora",
+        "allowCredentials": "Dozvoli akreditive",
+        "allowedMethods": "Dozvoljene metode",
+        "exposedHeaders": "Izložena zaglavlja",
+        "azureBlobConfigured": "Azure Blob Storage",
+        "imageContainerConfigured": "Kontejner za slike",
+        "backupContainerConfigured": "Kontejner rezervnih kopija",
+        "backupEnabled": "Rezervne kopije aktivirane",
+        "backupMode": "Režim rezervnih kopija",
+        "backupPrefixConfigured": "Prefiks rezervnih kopija",
+        "smtpConfigured": "SMTP podešen",
+        "mailFromConfigured": "Adresa pošiljaoca prilagođena",
+        "backendSentryConfigured": "Backend Sentry",
+        "frontendSentryRuntimeKnown": "Frontend Sentry",
+        "operationsMonitoringAvailable": "Operativni nadzor",
+        "releaseVersionConfigured": "Verzija izdanja",
+        "deployedAtConfigured": "Vremenska oznaka raspoređivanja",
+        "deploySourceConfigured": "Izvor raspoređivanja",
+        "immutableImageTagsDetected": "Nepromenljivi tagovi slika",
+        "httpsAssumedEnabled": "HTTPS",
+        "caddyConfigured": "Caddy (reverzni proksi)",
+        "hstsKnown": "HSTS podešen",
+        "overallStatus": "Ukupni status"
+      },
+      "statusLabels": {
+        "OK": "OK",
+        "WARNING": "Upozorenje",
+        "CRITICAL": "Kritično",
+        "UNKNOWN": "Nepoznato",
+        "true": "Podešeno",
+        "false": "Nije podešeno"
+      }
     }
   },
   "reviewsPage": {

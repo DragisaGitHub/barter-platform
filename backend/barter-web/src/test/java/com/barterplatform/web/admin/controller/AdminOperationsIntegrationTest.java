@@ -114,6 +114,77 @@ class AdminOperationsIntegrationTest {
         userRepository.deleteAllInBatch();
     }
 
+    // ── /admin/operations/security ────────────────────────────────────────────
+
+    @Test
+    void adminCanAccessOperationalSecurity() throws Exception {
+        String adminToken = registerActivateLoginAndAssignAdmin();
+
+        mockMvc.perform(apiSecurityGet().header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authentication").exists())
+                .andExpect(jsonPath("$.cors").exists())
+                .andExpect(jsonPath("$.storage").exists())
+                .andExpect(jsonPath("$.backups").exists())
+                .andExpect(jsonPath("$.email").exists())
+                .andExpect(jsonPath("$.observability").exists())
+                .andExpect(jsonPath("$.deploymentSafety").exists())
+                .andExpect(jsonPath("$.edge").exists())
+                .andExpect(jsonPath("$.overall").exists())
+                .andExpect(jsonPath("$.lastUpdated").exists())
+                // Authentication: JWT secret is set via test property, verify configured
+                .andExpect(jsonPath("$.authentication.jwtConfigured").value(true))
+                .andExpect(jsonPath("$.authentication.accessTokenMinutes").isNumber())
+                .andExpect(jsonPath("$.authentication.refreshTokenDays").isNumber())
+                .andExpect(jsonPath("$.authentication.bootstrapAdminEnabled").value(false))
+                .andExpect(jsonPath("$.authentication.authStatus").exists())
+                // CORS: no origins configured in test context
+                .andExpect(jsonPath("$.cors.allowedOriginsConfigured").value(false))
+                .andExpect(jsonPath("$.cors.allowedOriginsCount").value(0))
+                .andExpect(jsonPath("$.cors.corsStatus").exists())
+                // Backups: disabled in test context → CRITICAL
+                .andExpect(jsonPath("$.backups.backupEnabled").value(false))
+                .andExpect(jsonPath("$.backups.backupStatus").value("CRITICAL"))
+                // Email: emailVerificationEnabled defaults to true
+                .andExpect(jsonPath("$.email.emailVerificationEnabled").value(true))
+                // Observability
+                .andExpect(jsonPath("$.observability.operationsMonitoringAvailable").value(true))
+                // Overall should be at least CRITICAL (backups disabled)
+                .andExpect(jsonPath("$.overall.overallStatus").value("CRITICAL"))
+                // Ensure no secrets are present in the response
+                .andExpect(jsonPath("$.authentication.jwtSecret").doesNotExist())
+                .andExpect(jsonPath("$.email.smtpPassword").doesNotExist())
+                .andExpect(jsonPath("$.email.smtpUsername").doesNotExist())
+                .andExpect(jsonPath("$.storage.connectionString").doesNotExist())
+                .andExpect(jsonPath("$.observability.sentryDsn").doesNotExist());
+    }
+
+    @Test
+    void securityEndpointReturnsCriticalWhenBackupDisabled() throws Exception {
+        // Default test context has BACKUP_ENABLED=false — backup section must be CRITICAL
+        String adminToken = registerActivateLoginAndAssignAdmin();
+
+        mockMvc.perform(apiSecurityGet().header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.backups.backupEnabled").value(false))
+                .andExpect(jsonPath("$.backups.backupStatus").value("CRITICAL"))
+                .andExpect(jsonPath("$.overall.overallStatus").value("CRITICAL"));
+    }
+
+    @Test
+    void regularUserCannotAccessOperationalSecurity() throws Exception {
+        String userToken = registerActivateAndLogin();
+
+        mockMvc.perform(apiSecurityGet().header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedUserCannotAccessOperationalSecurity() throws Exception {
+        mockMvc.perform(apiSecurityGet())
+                .andExpect(status().isUnauthorized());
+    }
+
     // ── /admin/system/sentry-test ────────────────────────────────────────────
 
     @Test
@@ -395,6 +466,13 @@ class AdminOperationsIntegrationTest {
         return get("/api/v1/admin/operations/monitoring")
                 .contextPath("/api/v1")
                 .servletPath("/admin/operations/monitoring")
+                .accept(MediaType.APPLICATION_JSON);
+    }
+
+    private MockHttpServletRequestBuilder apiSecurityGet() {
+        return get("/api/v1/admin/operations/security")
+                .contextPath("/api/v1")
+                .servletPath("/admin/operations/security")
                 .accept(MediaType.APPLICATION_JSON);
     }
 
