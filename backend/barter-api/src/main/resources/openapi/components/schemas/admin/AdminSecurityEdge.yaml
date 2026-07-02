@@ -1,0 +1,27 @@
+type: object
+additionalProperties: false
+required:
+  - hstsKnown
+  - securityHeadersStatus
+properties:
+  httpsAssumedEnabled:
+    type: boolean
+    nullable: true
+    description: Whether HTTPS is assumed enabled based on active profiles. Null when undetermined.
+  caddyConfigured:
+    type: boolean
+    nullable: true
+    description: Whether Caddy is assumed to be the reverse proxy. Null when undetermined.
+  hstsKnown:
+    type: boolean
+    description: Whether HSTS (Strict-Transport-Security) is known to be configured in the application.
+  securityHeadersStatus:
+    type: string
+    description: Edge security posture — OK, UNKNOWN, or WARNING.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional notes about edge and security header configuration.
+

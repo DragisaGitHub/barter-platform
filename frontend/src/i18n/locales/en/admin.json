@@ -497,6 +497,98 @@
         "ACCEPTING_TRAFFIC": "Accepting traffic",
         "REFUSING_TRAFFIC": "Refusing traffic"
       }
+    },
+    "securityTab": {
+      "loading": "Loading security snapshot…",
+      "errorTitle": "Security data unavailable",
+      "errorDescription": "The security endpoint could not be reached.",
+      "tryAgain": "Try again",
+      "title": "Security posture",
+      "description": "Production-safe security configuration snapshot. Status values indicate OK, WARNING, CRITICAL, or UNKNOWN. No secrets, credentials, or raw sensitive values are returned.",
+      "heroTitle": "Security configuration snapshot",
+      "heroDescription": "Configuration posture derived from environment, CORS, storage, backups, email, observability, and deployment settings.",
+      "lastUpdated": "Last updated:",
+      "notesTitle": "Summary notes",
+      "sections": {
+        "authentication": {
+          "title": "Authentication",
+          "description": "JWT configuration, token expiration, email verification, and Swagger access."
+        },
+        "cors": {
+          "title": "CORS",
+          "description": "Cross-origin resource sharing configuration — allowed origins, credentials, and methods."
+        },
+        "storage": {
+          "title": "Storage",
+          "description": "Azure Blob Storage configuration for item images and backup containers."
+        },
+        "backups": {
+          "title": "Backups",
+          "description": "Scheduled database backup enablement and Azure storage configuration."
+        },
+        "email": {
+          "title": "Email",
+          "description": "SMTP configuration and email verification enforcement."
+        },
+        "observability": {
+          "title": "Observability",
+          "description": "Backend Sentry error tracking and operations monitoring availability."
+        },
+        "deploymentSafety": {
+          "title": "Deployment safety",
+          "description": "Release version tracking, deployment timestamp, and immutable image tag detection."
+        },
+        "edge": {
+          "title": "Edge / Security headers",
+          "description": "HTTPS, HSTS, Caddy reverse proxy, and Spring Security response headers."
+        },
+        "overall": {
+          "title": "Overall posture",
+          "description": "Aggregated security status across all sections."
+        }
+      },
+      "metrics": {
+        "jwtConfigured": "JWT configured",
+        "accessTokenMinutes": "Access token expiry",
+        "accessTokenMinutesValue": "{{value}} min",
+        "refreshTokenDays": "Refresh token expiry",
+        "refreshTokenDaysValue": "{{value}} days",
+        "emailVerificationEnabled": "Email verification",
+        "bootstrapAdminEnabled": "Bootstrap admin",
+        "swaggerEnabled": "Swagger UI",
+        "allowedOriginsConfigured": "Origins configured",
+        "allowedOriginsCount": "Origin count",
+        "allowCredentials": "Allow credentials",
+        "allowedMethods": "Allowed methods",
+        "exposedHeaders": "Exposed headers",
+        "azureBlobConfigured": "Azure Blob Storage",
+        "imageContainerConfigured": "Image container",
+        "backupContainerConfigured": "Backup container",
+        "backupEnabled": "Backups enabled",
+        "backupMode": "Backup mode",
+        "backupPrefixConfigured": "Backup prefix",
+        "smtpConfigured": "SMTP configured",
+        "mailFromConfigured": "Mail-from customized",
+        "backendSentryConfigured": "Backend Sentry",
+        "frontendSentryRuntimeKnown": "Frontend Sentry",
+        "operationsMonitoringAvailable": "Operations monitoring",
+        "releaseVersionConfigured": "Release version",
+        "deployedAtConfigured": "Deployment timestamp",
+        "deploySourceConfigured": "Deploy source",
+        "immutableImageTagsDetected": "Immutable image tags",
+        "httpsAssumedEnabled": "HTTPS",
+        "caddyConfigured": "Caddy (reverse proxy)",
+        "hstsKnown": "HSTS configured",
+        "overallStatus": "Overall status"
+      },
+      "statusLabels": {
+        "OK": "OK",
+        "WARNING": "Warning",
+        "CRITICAL": "Critical",
+        "UNKNOWN": "Unknown",
+        "true": "Configured",
+        "false": "Not configured"
+      }
     }
   },
   "reviewsPage": {

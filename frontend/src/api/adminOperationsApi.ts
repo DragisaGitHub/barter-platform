@@ -5,6 +5,7 @@ import type {
   AdminOperationsDeploymentsResponse,
   AdminOperationsMonitoringResponse,
   AdminOperationsOverviewResponse,
+  AdminOperationsSecurityResponse,
 } from "./generated/types";
 
 export async function getAdminOperationsOverview(): Promise<AdminOperationsOverviewResponse> {
@@ -29,6 +30,11 @@ export async function getAdminOperationsCosts(): Promise<AdminOperationsCostsRes
 
 export async function getAdminOperationsMonitoring(): Promise<AdminOperationsMonitoringResponse> {
   const response = await apiClient.get<AdminOperationsMonitoringResponse>("/admin/operations/monitoring");
+  return response.data;
+}
+
+export async function getAdminOperationsSecurity(): Promise<AdminOperationsSecurityResponse> {
+  const response = await apiClient.get<AdminOperationsSecurityResponse>("/admin/operations/security");
   return response.data;
 }
 

@@ -1,0 +1,31 @@
+type: object
+additionalProperties: false
+required:
+  - backupEnabled
+  - backupMode
+  - backupContainerConfigured
+  - backupPrefixConfigured
+  - backupStatus
+properties:
+  backupEnabled:
+    type: boolean
+    description: Whether scheduled backups are enabled via BACKUP_ENABLED.
+  backupMode:
+    type: string
+    description: Backup storage mode — azure-blob or unconfigured.
+  backupContainerConfigured:
+    type: boolean
+    description: Whether the Azure backup container is configured.
+  backupPrefixConfigured:
+    type: boolean
+    description: Whether the Azure backup prefix is configured.
+  backupStatus:
+    type: string
+    description: Backup security posture — OK, WARNING, or CRITICAL.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional notes about backup configuration issues.
+

@@ -1,0 +1,27 @@
+type: object
+additionalProperties: false
+required:
+  - backendSentryConfigured
+  - operationsMonitoringAvailable
+  - observabilityStatus
+properties:
+  backendSentryConfigured:
+    type: boolean
+    description: Whether the backend Sentry DSN is configured. Does not expose the DSN value.
+  frontendSentryRuntimeKnown:
+    type: boolean
+    nullable: true
+    description: Whether the frontend Sentry state is known from the backend. Null if unavailable.
+  operationsMonitoringAvailable:
+    type: boolean
+    description: Whether the Operations Center monitoring tab is available.
+  observabilityStatus:
+    type: string
+    description: Observability posture — OK or WARNING.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional notes about observability configuration.
+

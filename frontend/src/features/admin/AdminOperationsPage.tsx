@@ -11,8 +11,12 @@ import {
   Globe,
   HardDrive,
   Info,
+  KeyRound,
+  Lock,
+  Mail,
   RefreshCw,
   Server,
+  Shield,
   ShieldAlert,
   Users,
 } from "lucide-react";
@@ -31,6 +35,7 @@ import {
   useAdminOperationsDeployments,
   useAdminOperationsMonitoring,
   useAdminOperationsOverview,
+  useAdminOperationsSecurity,
 } from "./useAdminOperations";
 import type {
   AdminOperationsBackupsResponse,
@@ -38,6 +43,7 @@ import type {
   AdminOperationsDeploymentsResponse,
   AdminOperationsMonitoringResponse,
   AdminOperationsOverviewResponse,
+  AdminOperationsSecurityResponse,
 } from "@/api/generated/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -74,6 +80,7 @@ export function AdminOperationsPage() {
     useAdminOperationsOverview();
   const { isFetching: costsFetching, refetch: refetchCosts } = useAdminOperationsCosts();
   const { isFetching: monitoringFetching, refetch: refetchMonitoring } = useAdminOperationsMonitoring();
+  const { isFetching: securityFetching, refetch: refetchSecurity } = useAdminOperationsSecurity();
   const healthStatus = overviewData?.health.overallStatus;
   const locale = toIntlLocale(i18n.language);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -82,12 +89,14 @@ export function AdminOperationsPage() {
     if (activeTab === "overview") void refetchOverview();
     if (activeTab === "costs") void refetchCosts();
     if (activeTab === "monitoring") void refetchMonitoring();
+    if (activeTab === "security") void refetchSecurity();
   }
 
   const isRefetchingActive =
     (activeTab === "overview" && overviewFetching) ||
     (activeTab === "costs" && costsFetching) ||
-    (activeTab === "monitoring" && monitoringFetching);
+    (activeTab === "monitoring" && monitoringFetching) ||
+    (activeTab === "security" && securityFetching);
 
   return (
     <AdminPageShell
@@ -102,7 +111,7 @@ export function AdminOperationsPage() {
         </>
       }
       actions={
-        (activeTab === "overview" || activeTab === "costs" || activeTab === "monitoring") ? (
+        (activeTab === "overview" || activeTab === "costs" || activeTab === "monitoring" || activeTab === "security") ? (
           <Button variant="outline" size="sm" onClick={handleRefetch} isLoading={isRefetchingActive}>
             <RefreshCw className="size-4" />
             {t("admin:refresh")}
@@ -127,10 +136,7 @@ export function AdminOperationsPage() {
                   "text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white",
                   "data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700",
                   "dark:data-[state=active]:bg-indigo-900/30 dark:data-[state=active]:text-indigo-300",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
-                  ["security"].includes(tab)
-                    ? "cursor-default opacity-60"
-                    : ""
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
                 )}
               >
                 {t(`admin:operationsPage.tabs.${tab}`)}
@@ -164,12 +170,10 @@ export function AdminOperationsPage() {
           <MonitoringTabContent t={t} locale={locale} />
         </RadixTabs.Content>
 
-        {/* Coming soon tabs */}
-        {(["security"] as const).map((tab) => (
-          <RadixTabs.Content key={tab} value={tab} className="outline-none">
-            <ComingSoonState t={t} tabKey={tab} />
-          </RadixTabs.Content>
-        ))}
+        {/* Security tab */}
+        <RadixTabs.Content value="security" className="flex flex-col gap-6 outline-none">
+          <SecurityTabContent t={t} locale={locale} />
+        </RadixTabs.Content>
       </RadixTabs.Root>
     </AdminPageShell>
   );
@@ -1138,24 +1142,495 @@ function monitoringStatusVariant(status: string | null | undefined): BadgeVarian
   return "default";
 }
 
-// ── Coming soon placeholder ───────────────────────────────────────────────────
+// ── Security tab ──────────────────────────────────────────────────────────────
 
-function ComingSoonState({ t, tabKey }: { t: TFunction; tabKey: "security" }) {
+function SecurityTabContent({ t, locale }: { t: TFunction; locale: string }) {
+  const { data, isLoading, isError, error, refetch, isFetching } = useAdminOperationsSecurity();
+
   return (
-    <AdminSurface contentClassName="p-0">
-      <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-10 text-center dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">
-        <Badge variant="secondary" className="mb-4">
-          {t("admin:operationsPage.comingSoon.label")}
-        </Badge>
-        <h3 className="text-base font-semibold text-slate-950 dark:text-white">
-          {t(`admin:operationsPage.comingSoon.${tabKey}.title`)}
-        </h3>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-          {t(`admin:operationsPage.comingSoon.${tabKey}.description`)}
-        </p>
+    <>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+            {t("admin:operationsPage.securityTab.title")}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {t("admin:operationsPage.securityTab.description")}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} isLoading={isFetching}>
+          <RefreshCw className="size-4" />
+          {t("admin:refresh")}
+        </Button>
       </div>
+
+      {isLoading ? <TabLoadingState message={t("admin:operationsPage.securityTab.loading")} /> : null}
+      {isError ? (
+        <TabErrorState
+          t={t}
+          message={error instanceof Error ? error.message : undefined}
+          onRetry={() => refetch()}
+          titleKey="admin:operationsPage.securityTab.errorTitle"
+          descriptionKey="admin:operationsPage.securityTab.errorDescription"
+          retryKey="admin:operationsPage.securityTab.tryAgain"
+        />
+      ) : null}
+      {data ? <SecurityDashboard data={data} t={t} locale={locale} /> : null}
+    </>
+  );
+}
+
+function SecurityDashboard({
+  data,
+  t,
+  locale,
+}: {
+  data: AdminOperationsSecurityResponse;
+  t: TFunction;
+  locale: string;
+}) {
+  const overallVariant = securityStatusVariant(data.overall.overallStatus);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Hero status */}
+      <AdminSurface contentClassName="p-0">
+        <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-5 dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                "flex size-12 items-center justify-center rounded-2xl",
+                overallVariant === "success"
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                  : overallVariant === "warning"
+                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                  : overallVariant === "danger"
+                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+              )}>
+                {overallVariant === "success" ? (
+                  <CheckCircle2 className="size-6" />
+                ) : (
+                  <ShieldAlert className="size-6" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-950 dark:text-white">
+                  {t("admin:operationsPage.securityTab.heroTitle")}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  {t("admin:operationsPage.securityTab.heroDescription")}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={overallVariant}>
+                {t(`admin:operationsPage.securityTab.statusLabels.${data.overall.overallStatus}`, { defaultValue: data.overall.overallStatus })}
+              </Badge>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {t("admin:operationsPage.securityTab.lastUpdated")}{" "}
+                {formatDateTime(data.lastUpdated, t, locale)}
+              </span>
+            </div>
+          </div>
+          {data.overall.notes && data.overall.notes.length > 0 ? (
+            <div className="mt-4 space-y-1.5">
+              {data.overall.notes.map((note, i) => (
+                <div key={i} className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+                  <AlertTriangle className="mt-0.5 size-3.5 shrink-0" />
+                  <span>{note}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </AdminSurface>
+
+      {/* Authentication + CORS */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <SecuritySection
+          title={t("admin:operationsPage.securityTab.sections.authentication.title")}
+          description={t("admin:operationsPage.securityTab.sections.authentication.description")}
+          icon={KeyRound}
+          status={data.authentication.authStatus}
+          notes={data.authentication.notes}
+          metrics={[
+            {
+              label: t("admin:operationsPage.securityTab.metrics.jwtConfigured"),
+              value: data.authentication.jwtConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.authentication.jwtConfigured, t),
+              badgeVariant: data.authentication.jwtConfigured ? "success" : "danger",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.emailVerificationEnabled"),
+              value: data.authentication.emailVerificationEnabled ? "true" : "false",
+              displayValue: formatSecurityBool(data.authentication.emailVerificationEnabled, t),
+              badgeVariant: data.authentication.emailVerificationEnabled ? "success" : "danger",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.bootstrapAdminEnabled"),
+              value: data.authentication.bootstrapAdminEnabled ? "true" : "false",
+              displayValue: data.authentication.bootstrapAdminEnabled
+                ? t("admin:operationsPage.securityTab.statusLabels.CRITICAL")
+                : t("admin:operationsPage.securityTab.statusLabels.false"),
+              badgeVariant: data.authentication.bootstrapAdminEnabled ? "danger" : "success",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.swaggerEnabled"),
+              value: data.authentication.swaggerEnabled ? "true" : "false",
+              displayValue: formatSecurityBool(data.authentication.swaggerEnabled, t),
+              badgeVariant: data.authentication.swaggerEnabled ? "warning" : "success",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.accessTokenMinutes"),
+              value: null,
+              displayValue: t("admin:operationsPage.securityTab.metrics.accessTokenMinutesValue", { value: data.authentication.accessTokenMinutes }),
+              badgeVariant: data.authentication.accessTokenMinutes > 60 ? "warning" : undefined,
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.refreshTokenDays"),
+              value: null,
+              displayValue: t("admin:operationsPage.securityTab.metrics.refreshTokenDaysValue", { value: data.authentication.refreshTokenDays }),
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+
+        <SecuritySection
+          title={t("admin:operationsPage.securityTab.sections.cors.title")}
+          description={t("admin:operationsPage.securityTab.sections.cors.description")}
+          icon={Globe}
+          status={data.cors.corsStatus}
+          notes={data.cors.notes}
+          metrics={[
+            {
+              label: t("admin:operationsPage.securityTab.metrics.allowedOriginsConfigured"),
+              value: data.cors.allowedOriginsConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.cors.allowedOriginsConfigured, t),
+              badgeVariant: data.cors.allowedOriginsConfigured ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.allowedOriginsCount"),
+              value: data.cors.allowedOriginsCount,
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.allowCredentials"),
+              value: data.cors.allowCredentials ? "true" : "false",
+              displayValue: formatSecurityBool(data.cors.allowCredentials, t),
+              badgeVariant: data.cors.allowCredentials ? "warning" : "success",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.allowedMethods"),
+              value: data.cors.allowedMethods?.join(", ") ?? null,
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.exposedHeaders"),
+              value: data.cors.exposedHeaders?.join(", ") ?? null,
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+      </div>
+
+      {/* Storage + Backups */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <SecuritySection
+          title={t("admin:operationsPage.securityTab.sections.storage.title")}
+          description={t("admin:operationsPage.securityTab.sections.storage.description")}
+          icon={HardDrive}
+          status={data.storage.storageStatus}
+          notes={data.storage.notes}
+          metrics={[
+            {
+              label: t("admin:operationsPage.securityTab.metrics.azureBlobConfigured"),
+              value: data.storage.azureBlobConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.storage.azureBlobConfigured, t),
+              badgeVariant: data.storage.azureBlobConfigured ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.imageContainerConfigured"),
+              value: data.storage.imageContainerConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.storage.imageContainerConfigured, t),
+              badgeVariant: data.storage.imageContainerConfigured ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.backupContainerConfigured"),
+              value: data.storage.backupContainerConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.storage.backupContainerConfigured, t),
+              badgeVariant: data.storage.backupContainerConfigured ? "success" : "warning",
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+
+        <SecuritySection
+          title={t("admin:operationsPage.securityTab.sections.backups.title")}
+          description={t("admin:operationsPage.securityTab.sections.backups.description")}
+          icon={Database}
+          status={data.backups.backupStatus}
+          notes={data.backups.notes}
+          metrics={[
+            {
+              label: t("admin:operationsPage.securityTab.metrics.backupEnabled"),
+              value: data.backups.backupEnabled ? "true" : "false",
+              displayValue: formatSecurityBool(data.backups.backupEnabled, t),
+              badgeVariant: data.backups.backupEnabled ? "success" : "danger",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.backupMode"),
+              value: data.backups.backupMode ?? null,
+              badgeVariant: "secondary",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.backupContainerConfigured"),
+              value: data.backups.backupContainerConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.backups.backupContainerConfigured, t),
+              badgeVariant: data.backups.backupContainerConfigured ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.backupPrefixConfigured"),
+              value: data.backups.backupPrefixConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.backups.backupPrefixConfigured, t),
+              badgeVariant: data.backups.backupPrefixConfigured ? "success" : "default",
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+      </div>
+
+      {/* Email + Observability */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <SecuritySection
+          title={t("admin:operationsPage.securityTab.sections.email.title")}
+          description={t("admin:operationsPage.securityTab.sections.email.description")}
+          icon={Mail}
+          status={data.email.emailStatus}
+          notes={data.email.notes}
+          metrics={[
+            {
+              label: t("admin:operationsPage.securityTab.metrics.smtpConfigured"),
+              value: data.email.smtpConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.email.smtpConfigured, t),
+              badgeVariant: data.email.smtpConfigured ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.mailFromConfigured"),
+              value: data.email.mailFromConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.email.mailFromConfigured, t),
+              badgeVariant: data.email.mailFromConfigured ? "success" : "default",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.emailVerificationEnabled"),
+              value: data.email.emailVerificationEnabled ? "true" : "false",
+              displayValue: formatSecurityBool(data.email.emailVerificationEnabled, t),
+              badgeVariant: data.email.emailVerificationEnabled ? "success" : "danger",
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+
+        <SecuritySection
+          title={t("admin:operationsPage.securityTab.sections.observability.title")}
+          description={t("admin:operationsPage.securityTab.sections.observability.description")}
+          icon={Activity}
+          status={data.observability.observabilityStatus}
+          notes={data.observability.notes}
+          metrics={[
+            {
+              label: t("admin:operationsPage.securityTab.metrics.backendSentryConfigured"),
+              value: data.observability.backendSentryConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.observability.backendSentryConfigured, t),
+              badgeVariant: data.observability.backendSentryConfigured ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.frontendSentryRuntimeKnown"),
+              value: data.observability.frontendSentryRuntimeKnown == null
+                ? null
+                : data.observability.frontendSentryRuntimeKnown ? "true" : "false",
+              displayValue: data.observability.frontendSentryRuntimeKnown == null
+                ? t("admin:operationsPage.statusLabels.unavailable")
+                : formatSecurityBool(data.observability.frontendSentryRuntimeKnown, t),
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.operationsMonitoringAvailable"),
+              value: data.observability.operationsMonitoringAvailable ? "true" : "false",
+              displayValue: formatSecurityBool(data.observability.operationsMonitoringAvailable, t),
+              badgeVariant: data.observability.operationsMonitoringAvailable ? "success" : "warning",
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+      </div>
+
+      {/* Deployment Safety + Edge */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <SecuritySection
+          title={t("admin:operationsPage.securityTab.sections.deploymentSafety.title")}
+          description={t("admin:operationsPage.securityTab.sections.deploymentSafety.description")}
+          icon={Lock}
+          status={data.deploymentSafety.deploymentSafetyStatus}
+          notes={data.deploymentSafety.notes}
+          metrics={[
+            {
+              label: t("admin:operationsPage.securityTab.metrics.releaseVersionConfigured"),
+              value: data.deploymentSafety.releaseVersionConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.deploymentSafety.releaseVersionConfigured, t),
+              badgeVariant: data.deploymentSafety.releaseVersionConfigured ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.deployedAtConfigured"),
+              value: data.deploymentSafety.deployedAtConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.deploymentSafety.deployedAtConfigured, t),
+              badgeVariant: data.deploymentSafety.deployedAtConfigured ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.deploySourceConfigured"),
+              value: data.deploymentSafety.deploySourceConfigured ? "true" : "false",
+              displayValue: formatSecurityBool(data.deploymentSafety.deploySourceConfigured, t),
+              badgeVariant: data.deploymentSafety.deploySourceConfigured ? "success" : "default",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.immutableImageTagsDetected"),
+              value: data.deploymentSafety.immutableImageTagsDetected == null
+                ? null
+                : data.deploymentSafety.immutableImageTagsDetected ? "true" : "false",
+              displayValue: data.deploymentSafety.immutableImageTagsDetected == null
+                ? t("admin:operationsPage.statusLabels.unavailable")
+                : formatSecurityBool(data.deploymentSafety.immutableImageTagsDetected, t),
+              badgeVariant: data.deploymentSafety.immutableImageTagsDetected == null
+                ? undefined
+                : data.deploymentSafety.immutableImageTagsDetected ? "success" : "warning",
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+
+        <SecuritySection
+          title={t("admin:operationsPage.securityTab.sections.edge.title")}
+          description={t("admin:operationsPage.securityTab.sections.edge.description")}
+          icon={Shield}
+          status={data.edge.securityHeadersStatus}
+          notes={data.edge.notes}
+          metrics={[
+            {
+              label: t("admin:operationsPage.securityTab.metrics.httpsAssumedEnabled"),
+              value: data.edge.httpsAssumedEnabled == null
+                ? null
+                : data.edge.httpsAssumedEnabled ? "true" : "false",
+              displayValue: data.edge.httpsAssumedEnabled == null
+                ? t("admin:operationsPage.statusLabels.unavailable")
+                : formatSecurityBool(data.edge.httpsAssumedEnabled, t),
+              badgeVariant: data.edge.httpsAssumedEnabled == null
+                ? undefined
+                : data.edge.httpsAssumedEnabled ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.caddyConfigured"),
+              value: data.edge.caddyConfigured == null
+                ? null
+                : data.edge.caddyConfigured ? "true" : "false",
+              displayValue: data.edge.caddyConfigured == null
+                ? t("admin:operationsPage.statusLabels.unavailable")
+                : formatSecurityBool(data.edge.caddyConfigured, t),
+              badgeVariant: data.edge.caddyConfigured == null
+                ? undefined
+                : data.edge.caddyConfigured ? "success" : "warning",
+            },
+            {
+              label: t("admin:operationsPage.securityTab.metrics.hstsKnown"),
+              value: data.edge.hstsKnown ? "true" : "false",
+              displayValue: formatSecurityBool(data.edge.hstsKnown, t),
+              badgeVariant: data.edge.hstsKnown ? "success" : "warning",
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+      </div>
+    </div>
+  );
+}
+
+interface SecuritySectionProps {
+  title: string;
+  description: string;
+  icon: typeof Activity;
+  status: string;
+  notes?: string[] | null;
+  metrics: MetricItem[];
+  t: TFunction;
+  locale: string;
+}
+
+function SecuritySection({ title, description, icon: Icon, status, notes, metrics, t, locale }: SecuritySectionProps) {
+  const statusVariantValue = securityStatusVariant(status);
+
+  return (
+    <AdminSurface contentClassName="space-y-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+            <Icon className="size-5" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-950 dark:text-white">{title}</h3>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p>
+          </div>
+        </div>
+        <Badge variant={statusVariantValue} className="shrink-0">
+          {t(`admin:operationsPage.securityTab.statusLabels.${status}`, { defaultValue: status })}
+        </Badge>
+      </div>
+
+      <dl className="grid gap-3 sm:grid-cols-2">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+            <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{metric.label}</dt>
+            <dd className="mt-2 flex flex-wrap items-center gap-2 text-lg font-semibold text-slate-950 dark:text-white">
+              {metric.badgeVariant ? (
+                <Badge variant={metric.badgeVariant}>{metric.displayValue ?? formatMetric(metric.value, t, locale)}</Badge>
+              ) : (
+                <span className="text-base">{metric.displayValue ?? formatMetric(metric.value, t, locale)}</span>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      {notes && notes.length > 0 ? (
+        <div className="space-y-1.5">
+          {notes.map((note, i) => (
+            <div key={i} className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+              {note}
+            </div>
+          ))}
+        </div>
+      ) : null}
     </AdminSurface>
   );
+}
+
+// ── Security formatters ────────────────────────────────────────────────────────
+
+function formatSecurityBool(value: boolean, t: TFunction): string {
+  return t(`admin:operationsPage.securityTab.statusLabels.${value}`, {
+    defaultValue: value ? "Configured" : "Not configured",
+  });
+}
+
+function securityStatusVariant(status: string | null | undefined): BadgeVariant {
+  if (status === "OK") return "success";
+  if (status === "WARNING") return "warning";
+  if (status === "CRITICAL") return "danger";
+  if (status === "UNKNOWN") return "secondary";
+  return "default";
 }
 
 // ── Shared states ─────────────────────────────────────────────────────────────

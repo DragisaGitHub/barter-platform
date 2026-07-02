@@ -1,0 +1,27 @@
+type: object
+additionalProperties: false
+required:
+  - smtpConfigured
+  - mailFromConfigured
+  - emailVerificationEnabled
+  - emailStatus
+properties:
+  smtpConfigured:
+    type: boolean
+    description: Whether the SMTP host is configured. Does not expose the SMTP host value.
+  mailFromConfigured:
+    type: boolean
+    description: Whether the mail-from address has been configured to a non-default value.
+  emailVerificationEnabled:
+    type: boolean
+    description: Whether email verification is required for new user registrations.
+  emailStatus:
+    type: string
+    description: Email security posture — OK, WARNING, or CRITICAL.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional notes about email configuration. Never contains SMTP credentials.
+

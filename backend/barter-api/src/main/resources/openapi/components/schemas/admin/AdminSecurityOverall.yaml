@@ -1,0 +1,15 @@
+type: object
+additionalProperties: false
+required:
+  - overallStatus
+properties:
+  overallStatus:
+    type: string
+    description: Overall security posture — OK, WARNING, or CRITICAL. Derived as the worst status across all sections.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional summary notes listing sections that require attention.
+

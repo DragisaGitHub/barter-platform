@@ -805,6 +805,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/operations/security": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get security posture snapshot for administrators
+         * @description Returns a production-safe security configuration snapshot. Checks authentication, CORS, storage, backups, email, observability, deployment safety, and edge/header configuration. Status values are OK, WARNING, CRITICAL, or UNKNOWN. Never exposes secrets, connection strings, credentials, or raw sensitive values.
+         */
+        get: operations["getAdminOperationsSecurity"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/system/sentry-test": {
         parameters: {
             query?: never;
@@ -2866,6 +2886,147 @@ export interface components {
             /** @description Informational note about storage probe availability or configuration state. */
             note?: string | null;
         };
+        AdminOperationsSecurityResponse: {
+            authentication: components["schemas"]["AdminSecurityAuthentication"];
+            cors: components["schemas"]["AdminSecurityCors"];
+            storage: components["schemas"]["AdminSecurityStorage"];
+            backups: components["schemas"]["AdminSecurityBackups"];
+            email: components["schemas"]["AdminSecurityEmail"];
+            observability: components["schemas"]["AdminSecurityObservability"];
+            deploymentSafety: components["schemas"]["AdminSecurityDeploymentSafety"];
+            edge: components["schemas"]["AdminSecurityEdge"];
+            overall: components["schemas"]["AdminSecurityOverall"];
+            /**
+             * Format: date-time
+             * @description UTC timestamp when the security snapshot was collected.
+             */
+            lastUpdated: string;
+        };
+        AdminSecurityAuthentication: {
+            /** @description Whether the JWT secret is configured and non-blank. */
+            jwtConfigured: boolean;
+            /**
+             * Format: int32
+             * @description Access token expiration in minutes.
+             */
+            accessTokenMinutes: number;
+            /**
+             * Format: int32
+             * @description Refresh token expiration in days.
+             */
+            refreshTokenDays: number;
+            /** @description Whether email verification is required for new accounts. */
+            emailVerificationEnabled: boolean;
+            /** @description Whether bootstrap admin creation is enabled. Should be false in production. */
+            bootstrapAdminEnabled: boolean;
+            /** @description Whether the Swagger UI is enabled. */
+            swaggerEnabled: boolean;
+            /** @description Authentication security posture — OK, WARNING, or CRITICAL. */
+            authStatus: string;
+            /** @description Optional notes about authentication configuration issues. */
+            notes?: string[] | null;
+        };
+        AdminSecurityCors: {
+            /** @description Whether at least one allowed origin is configured. */
+            allowedOriginsConfigured: boolean;
+            /**
+             * Format: int32
+             * @description Number of configured allowed origins.
+             */
+            allowedOriginsCount: number;
+            /** @description Whether credentials (cookies/auth headers) are allowed in CORS requests. */
+            allowCredentials: boolean;
+            /** @description Configured allowed HTTP methods for CORS. */
+            allowedMethods: string[];
+            /** @description Headers exposed to the browser via CORS. */
+            exposedHeaders: string[];
+            /** @description CORS security posture — OK, WARNING, or CRITICAL. */
+            corsStatus: string;
+            /** @description Optional notes about CORS configuration issues. */
+            notes?: string[] | null;
+        };
+        AdminSecurityStorage: {
+            /** @description Whether the Azure Blob Storage connection string is configured. */
+            azureBlobConfigured: boolean;
+            /** @description Whether the Azure image container name is configured. */
+            imageContainerConfigured: boolean;
+            /** @description Whether the Azure backup container name is configured. */
+            backupContainerConfigured: boolean;
+            /** @description Storage security posture — OK or WARNING. */
+            storageStatus: string;
+            /** @description Optional notes about storage configuration. Never contains connection strings. */
+            notes?: string[] | null;
+        };
+        AdminSecurityBackups: {
+            /** @description Whether scheduled backups are enabled via BACKUP_ENABLED. */
+            backupEnabled: boolean;
+            /** @description Backup storage mode — azure-blob or unconfigured. */
+            backupMode: string;
+            /** @description Whether the Azure backup container is configured. */
+            backupContainerConfigured: boolean;
+            /** @description Whether the Azure backup prefix is configured. */
+            backupPrefixConfigured: boolean;
+            /** @description Backup security posture — OK, WARNING, or CRITICAL. */
+            backupStatus: string;
+            /** @description Optional notes about backup configuration issues. */
+            notes?: string[] | null;
+        };
+        AdminSecurityEmail: {
+            /** @description Whether the SMTP host is configured. Does not expose the SMTP host value. */
+            smtpConfigured: boolean;
+            /** @description Whether the mail-from address has been configured to a non-default value. */
+            mailFromConfigured: boolean;
+            /** @description Whether email verification is required for new user registrations. */
+            emailVerificationEnabled: boolean;
+            /** @description Email security posture — OK, WARNING, or CRITICAL. */
+            emailStatus: string;
+            /** @description Optional notes about email configuration. Never contains SMTP credentials. */
+            notes?: string[] | null;
+        };
+        AdminSecurityObservability: {
+            /** @description Whether the backend Sentry DSN is configured. Does not expose the DSN value. */
+            backendSentryConfigured: boolean;
+            /** @description Whether the frontend Sentry state is known from the backend. Null if unavailable. */
+            frontendSentryRuntimeKnown?: boolean | null;
+            /** @description Whether the Operations Center monitoring tab is available. */
+            operationsMonitoringAvailable: boolean;
+            /** @description Observability posture — OK or WARNING. */
+            observabilityStatus: string;
+            /** @description Optional notes about observability configuration. */
+            notes?: string[] | null;
+        };
+        AdminSecurityDeploymentSafety: {
+            /** @description Whether the release version environment variable is set. */
+            releaseVersionConfigured: boolean;
+            /** @description Whether the deployment timestamp environment variable is set. */
+            deployedAtConfigured: boolean;
+            /** @description Whether the deployment source environment variable is set. */
+            deploySourceConfigured: boolean;
+            /** @description Whether the release version appears to be an immutable image tag. Null when version is not set. */
+            immutableImageTagsDetected?: boolean | null;
+            /** @description Deployment safety posture — OK or WARNING. */
+            deploymentSafetyStatus: string;
+            /** @description Optional notes about deployment safety issues. */
+            notes?: string[] | null;
+        };
+        AdminSecurityEdge: {
+            /** @description Whether HTTPS is assumed enabled based on active profiles. Null when undetermined. */
+            httpsAssumedEnabled?: boolean | null;
+            /** @description Whether Caddy is assumed to be the reverse proxy. Null when undetermined. */
+            caddyConfigured?: boolean | null;
+            /** @description Whether HSTS (Strict-Transport-Security) is known to be configured in the application. */
+            hstsKnown: boolean;
+            /** @description Edge security posture — OK, UNKNOWN, or WARNING. */
+            securityHeadersStatus: string;
+            /** @description Optional notes about edge and security header configuration. */
+            notes?: string[] | null;
+        };
+        AdminSecurityOverall: {
+            /** @description Overall security posture — OK, WARNING, or CRITICAL. Derived as the worst status across all sections. */
+            overallStatus: string;
+            /** @description Optional summary notes listing sections that require attention. */
+            notes?: string[] | null;
+        };
         ReputationSummaryResponse: {
             /** Format: int32 */
             positiveReviewCount: number;
@@ -4509,6 +4670,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminOperationsMonitoringResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getAdminOperationsSecurity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Security snapshot returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOperationsSecurityResponse"];
                 };
             };
             401: components["responses"]["Unauthorized"];

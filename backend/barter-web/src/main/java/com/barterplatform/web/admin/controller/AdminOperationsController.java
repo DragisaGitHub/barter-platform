@@ -6,11 +6,13 @@ import com.barterplatform.api.model.AdminOperationsCostsResponse;
 import com.barterplatform.api.model.AdminOperationsDeploymentsResponse;
 import com.barterplatform.api.model.AdminOperationsMonitoringResponse;
 import com.barterplatform.api.model.AdminOperationsOverviewResponse;
+import com.barterplatform.api.model.AdminOperationsSecurityResponse;
 import com.barterplatform.web.admin.service.AdminOperationsBackupsService;
 import com.barterplatform.web.admin.service.AdminOperationsCostsService;
 import com.barterplatform.web.admin.service.AdminOperationsDeploymentsService;
 import com.barterplatform.web.admin.service.AdminOperationsMonitoringService;
 import com.barterplatform.web.admin.service.AdminOperationsOverviewService;
+import com.barterplatform.web.admin.service.AdminOperationsSecurityService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,18 +26,21 @@ public class AdminOperationsController implements AdminOperationsApi {
     private final AdminOperationsDeploymentsService adminOperationsDeploymentsService;
     private final AdminOperationsCostsService adminOperationsCostsService;
     private final AdminOperationsMonitoringService adminOperationsMonitoringService;
+    private final AdminOperationsSecurityService adminOperationsSecurityService;
 
     public AdminOperationsController(
             AdminOperationsOverviewService adminOperationsOverviewService,
             AdminOperationsBackupsService adminOperationsBackupsService,
             AdminOperationsDeploymentsService adminOperationsDeploymentsService,
             AdminOperationsCostsService adminOperationsCostsService,
-            AdminOperationsMonitoringService adminOperationsMonitoringService) {
+            AdminOperationsMonitoringService adminOperationsMonitoringService,
+            AdminOperationsSecurityService adminOperationsSecurityService) {
         this.adminOperationsOverviewService = adminOperationsOverviewService;
         this.adminOperationsBackupsService = adminOperationsBackupsService;
         this.adminOperationsDeploymentsService = adminOperationsDeploymentsService;
         this.adminOperationsCostsService = adminOperationsCostsService;
         this.adminOperationsMonitoringService = adminOperationsMonitoringService;
+        this.adminOperationsSecurityService = adminOperationsSecurityService;
     }
 
     @Override
@@ -61,6 +66,11 @@ public class AdminOperationsController implements AdminOperationsApi {
     @Override
     public ResponseEntity<AdminOperationsMonitoringResponse> getAdminOperationsMonitoring() {
         return ResponseEntity.ok(adminOperationsMonitoringService.getMonitoring());
+    }
+
+    @Override
+    public ResponseEntity<AdminOperationsSecurityResponse> getAdminOperationsSecurity() {
+        return ResponseEntity.ok(adminOperationsSecurityService.getSecurity());
     }
 
     /**

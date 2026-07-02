@@ -1,0 +1,37 @@
+type: object
+additionalProperties: false
+required:
+  - authentication
+  - cors
+  - storage
+  - backups
+  - email
+  - observability
+  - deploymentSafety
+  - edge
+  - overall
+  - lastUpdated
+properties:
+  authentication:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminSecurityAuthentication'
+  cors:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminSecurityCors'
+  storage:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminSecurityStorage'
+  backups:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminSecurityBackups'
+  email:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminSecurityEmail'
+  observability:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminSecurityObservability'
+  deploymentSafety:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminSecurityDeploymentSafety'
+  edge:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminSecurityEdge'
+  overall:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminSecurityOverall'
+  lastUpdated:
+    type: string
+    format: date-time
+    description: UTC timestamp when the security snapshot was collected.
+

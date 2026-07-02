@@ -1,0 +1,27 @@
+type: object
+additionalProperties: false
+required:
+  - azureBlobConfigured
+  - imageContainerConfigured
+  - backupContainerConfigured
+  - storageStatus
+properties:
+  azureBlobConfigured:
+    type: boolean
+    description: Whether the Azure Blob Storage connection string is configured.
+  imageContainerConfigured:
+    type: boolean
+    description: Whether the Azure image container name is configured.
+  backupContainerConfigured:
+    type: boolean
+    description: Whether the Azure backup container name is configured.
+  storageStatus:
+    type: string
+    description: Storage security posture — OK or WARNING.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional notes about storage configuration. Never contains connection strings.
+

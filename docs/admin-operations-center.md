@@ -6,7 +6,7 @@ The Admin Operations Center (`/admin/operations`) is the single place where plat
 
 - **Safe** — never exposes secrets, raw connection strings, environment variables, or user PII.
 - **Extensible** — each section is a self-contained tab so new modules can be wired in without touching existing ones.
-- **Honest about placeholders** — when real integrations are not yet available, the UI clearly shows "Coming soon" or a placeholder state rather than empty data.
+- **Honest about placeholders** — when real integrations are not yet available, the UI clearly shows a placeholder state rather than empty data.
 
 ---
 
@@ -28,8 +28,8 @@ The page lives under the existing `AdminRoute` guard and is registered in `route
 | Backups | ✅ Live (Azure Blob) | `GET /api/v1/admin/operations/backups` |
 | Deployments | ✅ Metadata | `GET /api/v1/admin/operations/deployments` |
 | Costs | ✅ Live (Azure Cost Management) | `GET /api/v1/admin/operations/costs` |
-| Monitoring | 🔜 Coming soon | — |
-| Security | 🔜 Coming soon | — |
+| Monitoring | ✅ Live (Actuator + JVM) | `GET /api/v1/admin/operations/monitoring` |
+| Security | ✅ Live (config posture) | `GET /api/v1/admin/operations/security` |
 
 ### Backend structure
 
@@ -37,25 +37,156 @@ The page lives under the existing `AdminRoute` guard and is registered in `route
 barter-web/
   admin/
     controller/
-      AdminOperationsController.java        ← implements AdminOperationsApi
+      AdminOperationsController.java          ← implements AdminOperationsApi
     service/
-      AdminOperationsOverviewService.java   ← live data from DB + runtime
-      AdminOperationsBackupsService.java    ← Azure Blob Storage backup listing
-      AdminOperationsDeploymentsService.java← safe env metadata + placeholder
-      AdminOperationsCostsService.java      ← Azure Cost Management Query API
+      AdminOperationsOverviewService.java     ← live data from DB + runtime
+      AdminOperationsBackupsService.java      ← Azure Blob Storage backup listing
+      AdminOperationsDeploymentsService.java  ← safe env metadata + placeholder
+      AdminOperationsCostsService.java        ← Azure Cost Management Query API
+      AdminOperationsMonitoringService.java   ← Actuator, JVM MXBeans, infra probes
+      AdminOperationsSecurityService.java     ← security configuration posture
 ```
 
 ### Frontend structure
 
 ```
 features/admin/
-  AdminOperationsPage.tsx      ← tab layout + all tab content (Overview, Backups, Deployments, Costs)
-  useAdminOperations.ts        ← React Query hooks (overview, backups, deployments, costs)
+  AdminOperationsPage.tsx      ← tab layout + all tab content
+  useAdminOperations.ts        ← React Query hooks (overview, backups, deployments, costs, monitoring, security)
 api/
-  adminOperationsApi.ts        ← axios wrappers for the four endpoints
+  adminOperationsApi.ts        ← axios wrappers for all six endpoints
 i18n/locales/en/admin.json     ← operationsPage section
 i18n/locales/sr/admin.json     ← operationsPage section (Serbian)
 ```
+
+---
+
+## Security tab
+
+### Purpose
+
+The Security tab provides a **read-only configuration posture snapshot** for administrators. It evaluates existing application configuration and environment state to surface security risks without requiring any external API calls.
+
+Each section returns a status value: **OK**, **WARNING**, **CRITICAL**, or **UNKNOWN**.
+
+The backend endpoint is `GET /api/v1/admin/operations/security` and is served by `AdminOperationsSecurityService`.
+
+### What is checked
+
+#### 1. Authentication
+- `jwtConfigured` — whether `JWT_SECRET` is set and non-blank
+- `accessTokenMinutes` — access token expiration in minutes (sourced from config, not secret)
+- `refreshTokenDays` — refresh token expiration in days
+- `emailVerificationEnabled` — whether new accounts must verify email
+- `bootstrapAdminEnabled` — whether `BARTER_BOOTSTRAP_ADMIN_ENABLED=true` (dangerous in prod)
+- `swaggerEnabled` — whether the Swagger UI is accessible
+
+Status rules:
+- **CRITICAL** — JWT secret missing, bootstrap admin enabled, email verification disabled, or Swagger enabled in production
+- **WARNING** — Swagger enabled in non-production, or access token > 60 minutes
+- **OK** — all production-safe settings present
+
+#### 2. CORS
+- `allowedOriginsConfigured` — whether at least one origin is configured
+- `allowedOriginsCount` — number of configured origins (safe count, no values)
+- `allowCredentials` — whether credentials are allowed in CORS requests
+- `allowedMethods` — list of allowed methods (not sensitive)
+- `exposedHeaders` — headers exposed to browser (not sensitive)
+
+Status rules:
+- **CRITICAL** — `allowCredentials=true` with no allowed origins
+- **WARNING** — no origins configured
+- **OK** — at least one origin configured
+
+#### 3. Storage
+- `azureBlobConfigured` — whether `AZURE_STORAGE_CONNECTION_STRING` is set (boolean only, no value)
+- `imageContainerConfigured` — whether `AZURE_STORAGE_CONTAINER` is set
+- `backupContainerConfigured` — whether `BACKUP_AZURE_CONTAINER` is set
+
+Status rules:
+- **WARNING** — Azure Blob not configured (uses local disk)
+- **OK** — Azure Blob and image container both configured
+
+#### 4. Backups
+- `backupEnabled` — whether `BACKUP_ENABLED=true`
+- `backupMode` — `azure-blob` or `unconfigured`
+- `backupContainerConfigured` / `backupPrefixConfigured` — configuration completeness
+
+Status rules:
+- **CRITICAL** — `BACKUP_ENABLED=false` (no active backups in production)
+- **WARNING** — backups enabled but container not configured
+- **OK** — backups enabled and container configured
+
+#### 5. Email
+- `smtpConfigured` — whether `SPRING_MAIL_HOST` is set (boolean only, no hostname)
+- `mailFromConfigured` — whether the mail-from address differs from the default
+- `emailVerificationEnabled` — same value as in authentication section
+
+Status rules:
+- **CRITICAL** — email verification disabled
+- **WARNING** — SMTP not configured (uses console logging fallback)
+- **OK** — SMTP configured and verification enabled
+
+#### 6. Observability
+- `backendSentryConfigured` — whether `SENTRY_DSN_BACKEND` is set (boolean only, no DSN value)
+- `frontendSentryRuntimeKnown` — always `null` (frontend state is not observable from the backend)
+- `operationsMonitoringAvailable` — always `true` (Monitoring tab is live)
+
+Status rules:
+- **WARNING** — backend Sentry not configured
+- **OK** — backend Sentry configured
+
+#### 7. Deployment Safety
+- `releaseVersionConfigured` — whether `BARTER_RELEASE_VERSION` is set
+- `deployedAtConfigured` — whether `BARTER_DEPLOYED_AT` is set
+- `deploySourceConfigured` — whether `BARTER_DEPLOY_SOURCE` is set
+- `immutableImageTagsDetected` — whether the release version is not a mutable tag (latest/main/master/develop). `null` when release version not set
+
+Status rules:
+- **WARNING** — release version and deploy timestamp not set; mutable image tags detected; or deploy source not set
+- **OK** — all deployment tracking fields configured with an immutable tag
+
+#### 8. Edge / Security Headers
+- `httpsAssumedEnabled` — `true` if production profile is active, `null` otherwise
+- `caddyConfigured` — `true` if production profile is active (Caddy assumed), `null` otherwise
+- `hstsKnown` — always `true` (HSTS is hardcoded in `SecurityConfig`)
+
+Status rules:
+- **OK** — production profile active (Caddy + HTTPS assumed)
+- **UNKNOWN** — non-production environment; edge state cannot be determined from the backend
+
+#### 9. Overall
+- `overallStatus` — worst status across all sections (CRITICAL > WARNING > UNKNOWN > OK)
+- `notes` — summary list of sections requiring attention
+
+### What is intentionally not exposed
+
+| Item | Reason |
+|------|--------|
+| `JWT_SECRET` value | Cryptographic secret — exposure would allow token forgery |
+| `SPRING_MAIL_USERNAME` / `SPRING_MAIL_PASSWORD` | SMTP credentials |
+| `AZURE_STORAGE_CONNECTION_STRING` | Storage account key |
+| `BACKUP_AZURE_CONNECTION_STRING` | Backup storage account key |
+| `AZURE_CLIENT_SECRET` | Service principal credential |
+| `SENTRY_DSN_BACKEND` | Full DSN contains project key |
+| `BARTER_BOOTSTRAP_ADMIN_PASSWORD` | Bootstrap admin credential |
+| CORS allowed origins list | Treated as safe (allowed origins/methods are returned) |
+
+### How the service works
+
+`AdminOperationsSecurityService` is constructed with `@Value`-injected properties and a `SecurityProperties` bean. It reads all values at request time (no caching) from:
+
+- Spring `Environment` (for deployment env vars)
+- `SecurityProperties` ConfigurationProperties bean (for CORS/security config)
+- Individual `@Value` bindings for JWT, email, storage, backup, Sentry
+
+Each section builder method produces its own status independently. The overall status is the worst-case across all sections.
+
+No external network calls are made.
+
+### React Query
+
+The security hook uses `staleTime: 60_000` (60 seconds) — consistent with the Monitoring tab. The data is considered fresh for 60 seconds after each fetch, preventing unnecessary re-requests on tab switch.
 
 ---
 
@@ -133,6 +264,19 @@ To force a fresh fetch, click the **Refresh** button in the UI or restart the ap
 - **Linear projection only**: `projectedMonthCost` is a simple linear extrapolation — not a forecast from the Azure Forecast API.
 - **In-memory cache only**: Cache does not survive application restarts. For multi-instance deployments, each instance maintains its own 15-minute cache independently.
 - **No resource group breakdown**: Costs are grouped by `ServiceName`. Resource group or tag-based breakdown is not supported in the current implementation.
+
+---
+
+## Future improvements for the Security tab
+
+The following enhancements are planned for future releases:
+
+- **Failed login metrics** — track and display recent failed authentication attempts (brute force signals). Requires adding a persistent failure counter to the auth service.
+- **Admin audit log** — surface the last N admin actions (role changes, report decisions, listing removals) for accountability. Requires a dedicated `admin_audit_log` table.
+- **Rate limit stats** — display current in-memory rate limit hit counts per endpoint. Requires exposing the `RateLimitService` metrics to the security service.
+- **IP ban / fail2ban visibility** — if a fail2ban or IP block list is added at the infrastructure level, surface blocked IP counts and last ban events.
+- **Security header live probe** — make an outbound HTTP HEAD request to the production frontend URL and verify that `Strict-Transport-Security`, `Content-Security-Policy`, and `X-Frame-Options` are present in the response. Requires an opt-in probe URL config.
+- **Dependency vulnerability status** — integrate with a CVE/NVD feed or OWASP Dependency Check report artifact to surface known vulnerable dependencies. Requires a build-time artifact or sidecar service.
 
 ---
 
@@ -220,6 +364,8 @@ Integration tests verify:
 - No token → 401 Unauthorized
 - Missing backup config → placeholder response (no crash)
 - Missing Azure cost config → placeholder response (no crash)
+- Security endpoint → CRITICAL overall when backups disabled (default test config)
+- Security endpoint → no secrets in response body
 
 ---
 
@@ -231,14 +377,12 @@ The following integrations are deferred and will be wired into existing tabs onc
 - **GitHub Actions** — use the GitHub REST API (`/repos/{owner}/{repo}/actions/runs`) to show the last successful workflow run, commit SHA, actor, and duration.
 - **Docker image tag** — read from a deployment state file or environment variable set at build time.
 
-
-### Monitoring tab (new)
+### Monitoring tab
 - **Sentry** — recent error rate, unresolved issues count, P95 response time.
 - **Uptime** — external uptime check integration.
 
-### Security tab (new)
-- **Login anomalies** — failed login attempts above threshold.
-- **Admin audit log** — last N admin actions.
+### Security tab
+See [Future improvements for the Security tab](#future-improvements-for-the-security-tab) above.
 
 ---
 
@@ -248,16 +392,22 @@ All visible text uses the `admin:operationsPage` namespace with keys for both En
 
 Key prefix structure:
 ```
-operationsPage.tabs.*                   ← tab labels
-operationsPage.backupsTab.*             ← Backups tab content
-operationsPage.backupsTab.metrics.*     ← Backups tab metric labels
-operationsPage.backupsTab.availability.*← Backups availability badge labels
-operationsPage.deploymentsTab.*         ← Deployments tab content
-operationsPage.costsTab.*               ← Costs tab content
-operationsPage.costsTab.metrics.*       ← Costs tab metric labels
-operationsPage.costsTab.availability.*  ← Costs availability badge labels
-operationsPage.comingSoon.*             ← Coming soon states (monitoring, security)
-operationsPage.cards.*                  ← Overview tab card titles/descriptions
-operationsPage.metrics.*                ← Overview tab metric labels
-operationsPage.statusLabels.*           ← Shared status badge labels
+operationsPage.tabs.*                    ← tab labels
+operationsPage.backupsTab.*              ← Backups tab content
+operationsPage.backupsTab.metrics.*      ← Backups tab metric labels
+operationsPage.backupsTab.availability.* ← Backups availability badge labels
+operationsPage.deploymentsTab.*          ← Deployments tab content
+operationsPage.costsTab.*                ← Costs tab content
+operationsPage.costsTab.metrics.*        ← Costs tab metric labels
+operationsPage.costsTab.availability.*   ← Costs availability badge labels
+operationsPage.monitoringTab.*           ← Monitoring tab content
+operationsPage.monitoringTab.metrics.*   ← Monitoring tab metric labels
+operationsPage.monitoringTab.statusLabels.* ← Monitoring status badge labels
+operationsPage.securityTab.*             ← Security tab content
+operationsPage.securityTab.sections.*    ← Security tab section titles/descriptions
+operationsPage.securityTab.metrics.*     ← Security tab metric labels
+operationsPage.securityTab.statusLabels.* ← Security status badge labels
+operationsPage.cards.*                   ← Overview tab card titles/descriptions
+operationsPage.metrics.*                 ← Overview tab metric labels
+operationsPage.statusLabels.*            ← Shared status badge labels
 ```

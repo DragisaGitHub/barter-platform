@@ -103,6 +103,27 @@ monitoring:
       '403':
         $ref: '../components/responses/Forbidden.yaml'
 
+security:
+  get:
+    tags:
+      - AdminOperations
+    operationId: getAdminOperationsSecurity
+    summary: Get security posture snapshot for administrators
+    description: Returns a production-safe security configuration snapshot. Checks authentication, CORS, storage, backups, email, observability, deployment safety, and edge/header configuration. Status values are OK, WARNING, CRITICAL, or UNKNOWN. Never exposes secrets, connection strings, credentials, or raw sensitive values.
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Security snapshot returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminOperationsSecurityResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
 sentryTest:
   post:
     tags:

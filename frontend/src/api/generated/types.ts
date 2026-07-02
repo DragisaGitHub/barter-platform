@@ -139,6 +139,16 @@ export type AdminMonitoringMemory = components["schemas"]["AdminMonitoringMemory
 export type AdminMonitoringDatabase = components["schemas"]["AdminMonitoringDatabase"];
 export type AdminMonitoringHttp = components["schemas"]["AdminMonitoringHttp"];
 export type AdminMonitoringStorage = components["schemas"]["AdminMonitoringStorage"];
+export type AdminOperationsSecurityResponse = components["schemas"]["AdminOperationsSecurityResponse"];
+export type AdminSecurityAuthentication = components["schemas"]["AdminSecurityAuthentication"];
+export type AdminSecurityCors = components["schemas"]["AdminSecurityCors"];
+export type AdminSecurityStorage = components["schemas"]["AdminSecurityStorage"];
+export type AdminSecurityBackups = components["schemas"]["AdminSecurityBackups"];
+export type AdminSecurityEmail = components["schemas"]["AdminSecurityEmail"];
+export type AdminSecurityObservability = components["schemas"]["AdminSecurityObservability"];
+export type AdminSecurityDeploymentSafety = components["schemas"]["AdminSecurityDeploymentSafety"];
+export type AdminSecurityEdge = components["schemas"]["AdminSecurityEdge"];
+export type AdminSecurityOverall = components["schemas"]["AdminSecurityOverall"];
 
 // ─── Reporting Request DTOs ─────────────────────────────────────────────────
 

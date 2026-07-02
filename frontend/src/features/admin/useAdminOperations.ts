@@ -5,6 +5,7 @@ import type {
   AdminOperationsDeploymentsResponse,
   AdminOperationsMonitoringResponse,
   AdminOperationsOverviewResponse,
+  AdminOperationsSecurityResponse,
 } from "@/api/generated/types";
 import {
   getAdminOperationsBackups,
@@ -12,6 +13,7 @@ import {
   getAdminOperationsDeployments,
   getAdminOperationsMonitoring,
   getAdminOperationsOverview,
+  getAdminOperationsSecurity,
 } from "@/api/adminOperationsApi";
 
 export const adminOperationsKeys = {
@@ -20,6 +22,7 @@ export const adminOperationsKeys = {
   deployments: () => ["admin", "operations", "deployments"] as const,
   costs: () => ["admin", "operations", "costs"] as const,
   monitoring: () => ["admin", "operations", "monitoring"] as const,
+  security: () => ["admin", "operations", "security"] as const,
 };
 
 export function useAdminOperationsOverview() {
@@ -60,6 +63,15 @@ export function useAdminOperationsMonitoring() {
   return useQuery<AdminOperationsMonitoringResponse>({
     queryKey: adminOperationsKeys.monitoring(),
     queryFn: getAdminOperationsMonitoring,
+    retry: 1,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useAdminOperationsSecurity() {
+  return useQuery<AdminOperationsSecurityResponse>({
+    queryKey: adminOperationsKeys.security(),
+    queryFn: getAdminOperationsSecurity,
     retry: 1,
     staleTime: 60 * 1000,
   });
