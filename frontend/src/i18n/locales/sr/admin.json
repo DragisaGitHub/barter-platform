@@ -412,6 +412,91 @@
       "minutes": "{{value}} min",
       "hoursMinutes": "{{hours}} h {{minutes}} min",
       "daysHours": "{{days}} d {{hours}} h"
+    },
+    "monitoringTab": {
+      "loading": "Učitavanje podataka nadzora…",
+      "errorTitle": "Podaci nadzora nisu dostupni",
+      "errorDescription": "Endpoint za nadzor trenutno nije dostupan.",
+      "tryAgain": "Pokušaj ponovo",
+      "title": "Nadzor platforme",
+      "description": "Snimak operativnog stanja u realnom vremenu iz Spring Boot Actuatora, JVM MXBeans-a i infrastrukturnih proba. Metrike koje nije moguće odrediti prikazuju se kao nedostupne.",
+      "heroTitle": "Snimak zdravlja platforme",
+      "heroDescription": "Agregirani status izveden iz baze podataka, JVM dostupnosti i proba spremnosti.",
+      "lastUpdated": "Poslednje ažuriranje:",
+      "notesTitle": "Napomene",
+      "sections": {
+        "platform": {
+          "title": "Zdravlje platforme",
+          "description": "Status dostupnosti komponenti za backend, bazu podataka i servise skladištenja."
+        },
+        "application": {
+          "title": "Aplikacija",
+          "description": "Identitet izvršavanja, verzija, aktivni profili i vreme servera."
+        },
+        "jvm": {
+          "title": "JVM",
+          "description": "Korišćenje heap memorije, non-heap, broj niti i dostupnost procesora iz JVM MXBeans-a."
+        },
+        "memory": {
+          "title": "Sistemska memorija",
+          "description": "Fizička memorija OS nivoa iz OperatingSystemMXBean-a. Nedostupno ako nije podržano na ovom JVM-u."
+        },
+        "database": {
+          "title": "Baza podataka",
+          "description": "Validacija DataSource-a i metrike HikariCP connection pool-a."
+        },
+        "http": {
+          "title": "HTTP dostupnost",
+          "description": "Spring Boot ApplicationAvailability stanja dostupnosti i živosti."
+        },
+        "storage": {
+          "title": "Skladište",
+          "description": "Dostupnost Azure Blob Storage-a i kontejnera za rezervne kopije putem živih proba."
+        }
+      },
+      "metrics": {
+        "backendStatus": "Backend",
+        "frontendStatus": "Frontend",
+        "landingStatus": "Landing",
+        "databaseStatus": "Baza podataka",
+        "blobStorageStatus": "Blob skladište",
+        "currentRelease": "Trenutno izdanje",
+        "buildVersion": "Verzija build-a",
+        "activeProfiles": "Aktivni profili",
+        "javaVersion": "Java verzija",
+        "springBootVersion": "Spring Boot verzija",
+        "uptime": "Vreme rada",
+        "serverTime": "Vreme servera",
+        "heapUsed": "Heap korišćen",
+        "heapMax": "Heap maksimum",
+        "nonHeapUsed": "Non-heap korišćen",
+        "threadCount": "Niti",
+        "daemonThreadCount": "Daemon niti",
+        "processors": "Procesori",
+        "systemMemoryTotal": "Ukupna memorija",
+        "systemMemoryUsed": "Korišćena memorija",
+        "systemMemoryAvailable": "Dostupna memorija",
+        "datasourceValid": "DataSource",
+        "activeConnections": "Aktivne konekcije",
+        "idleConnections": "Neaktivne konekcije",
+        "maxPoolSize": "Maks. veličina pool-a",
+        "readinessStatus": "Spremnost",
+        "livenessStatus": "Živost",
+        "storageProviderType": "Provajder",
+        "blobStorageReachable": "Blob skladište dostupno",
+        "backupContainerReachable": "Kontejner rezervnih kopija dostupan"
+      },
+      "statusLabels": {
+        "UP": "AKTIVAN",
+        "DOWN": "NEAKTIVAN",
+        "DEGRADED": "DEGRADIRAN",
+        "NOT_PROBED": "Nije provereno",
+        "NOT_CONFIGURED": "Nije konfigurisano",
+        "CORRECT": "Ispravno",
+        "BROKEN": "Prekinuto",
+        "ACCEPTING_TRAFFIC": "Prima saobraćaj",
+        "REFUSING_TRAFFIC": "Odbija saobraćaj"
+      }
     }
   },
   "reviewsPage": {

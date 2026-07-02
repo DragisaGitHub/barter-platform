@@ -1,0 +1,40 @@
+type: object
+additionalProperties: false
+required:
+  - processors
+properties:
+  heapUsedBytes:
+    type: integer
+    format: int64
+    minimum: 0
+    nullable: true
+    description: Current heap memory used in bytes from MemoryMXBean.
+  heapMaxBytes:
+    type: integer
+    format: int64
+    nullable: true
+    description: Maximum heap memory in bytes. Null or -1 if not bounded.
+  nonHeapUsedBytes:
+    type: integer
+    format: int64
+    minimum: 0
+    nullable: true
+    description: Current non-heap memory used in bytes (e.g., metaspace).
+  threadCount:
+    type: integer
+    format: int32
+    minimum: 0
+    nullable: true
+    description: Current total thread count from ThreadMXBean.
+  daemonThreadCount:
+    type: integer
+    format: int32
+    minimum: 0
+    nullable: true
+    description: Current daemon thread count from ThreadMXBean.
+  processors:
+    type: integer
+    format: int32
+    minimum: 1
+    description: Number of available processors reported by the JVM runtime.
+

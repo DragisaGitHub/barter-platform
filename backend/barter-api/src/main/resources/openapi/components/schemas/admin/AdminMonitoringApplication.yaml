@@ -1,0 +1,38 @@
+type: object
+additionalProperties: false
+required:
+  - activeProfiles
+  - javaVersion
+  - serverTime
+properties:
+  currentRelease:
+    type: string
+    nullable: true
+    description: Release label from BARTER_RELEASE_VERSION environment variable, if set.
+  buildVersion:
+    type: string
+    nullable: true
+    description: Build version from BuildProperties, typically from the Gradle build.
+  activeProfiles:
+    type: array
+    items:
+      type: string
+    description: Active Spring profiles at runtime.
+  javaVersion:
+    type: string
+    description: JVM runtime version string from java.version system property.
+  springBootVersion:
+    type: string
+    nullable: true
+    description: Spring Boot version from the framework manifest, if available.
+  uptimeSeconds:
+    type: integer
+    format: int64
+    minimum: 0
+    nullable: true
+    description: JVM uptime in seconds from RuntimeMXBean.
+  serverTime:
+    type: string
+    format: date-time
+    description: Current server time in UTC.
+

@@ -734,7 +734,7 @@ export interface paths {
         };
         /**
          * Get backup status for administrators
-         * @description Returns safe placeholder backup status information. Real backup integration with Azure Blob Storage or cron jobs is not wired yet.
+         * @description Returns latest backup metadata from Azure Blob Storage when configured, or a safe placeholder when backup configuration is absent. Never exposes connection strings or storage secrets.
          */
         get: operations["getAdminOperationsBackups"];
         put?: never;
@@ -774,9 +774,29 @@ export interface paths {
         };
         /**
          * Get Azure cost summary for administrators
-         * @description Returns Azure Cost Management data when configured, or a safe placeholder when configuration is absent.
+         * @description Returns Azure Cost Management data when configured, or a safe placeholder when configuration is absent. Never exposes credentials, access tokens, or raw Azure error bodies.
          */
         get: operations["getAdminOperationsCosts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/operations/monitoring": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get production monitoring snapshot for administrators
+         * @description Returns a real-time operational snapshot of platform component health, JVM metrics, memory usage, database pool state, HTTP availability, and Azure Blob Storage reachability. All metrics are sourced from Spring Boot Actuator, Java MXBeans, or live infrastructure probes. Metrics that cannot be determined are returned as null with explanatory notes. Never exposes secrets, connection strings, or raw configuration.
+         */
+        get: operations["getAdminOperationsMonitoring"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2650,8 +2670,10 @@ export interface components {
             note?: string | null;
         };
         AdminOperationsCostsDailyEntry: {
-            /** @description Date of the daily cost entry in YYYY-MM-DD format. */
-            /** Format: date */
+            /**
+             * Format: date
+             * @description Date of the daily cost entry in YYYY-MM-DD format.
+             */
             date: string;
             /**
              * Format: double
@@ -2702,6 +2724,146 @@ export interface components {
              */
             lastUpdated?: string | null;
             /** @description Human-readable note about the current cost data state or any errors. */
+            note?: string | null;
+        };
+        AdminOperationsMonitoringResponse: {
+            platform: components["schemas"]["AdminMonitoringPlatformHealth"];
+            application: components["schemas"]["AdminMonitoringApplication"];
+            jvm: components["schemas"]["AdminMonitoringJvm"];
+            memory: components["schemas"]["AdminMonitoringMemory"];
+            database: components["schemas"]["AdminMonitoringDatabase"];
+            http: components["schemas"]["AdminMonitoringHttp"];
+            storage: components["schemas"]["AdminMonitoringStorage"];
+            /** @description Aggregated platform health — UP, DEGRADED, or DOWN. */
+            overallStatus: string;
+            /**
+             * Format: date-time
+             * @description UTC timestamp when this monitoring snapshot was collected.
+             */
+            lastUpdated: string;
+            /** @description Optional informational notes about metric availability or probe limitations. */
+            notes?: string[] | null;
+        };
+        AdminMonitoringPlatformHealth: {
+            /** @description Backend service status. Always UP if this response is received. */
+            backendStatus: string;
+            /** @description Frontend service status. NOT_PROBED — not checked from the backend process. */
+            frontendStatus: string;
+            /** @description Landing page status. NOT_PROBED — not checked from the backend process. */
+            landingStatus: string;
+            /** @description Database connectivity status from a lightweight JDBC validation probe. */
+            databaseStatus: string;
+            /** @description Azure Blob Storage reachability. UP, DOWN, NOT_CONFIGURED, or NOT_PROBED. */
+            blobStorageStatus: string;
+        };
+        AdminMonitoringApplication: {
+            /** @description Release label from BARTER_RELEASE_VERSION environment variable, if set. */
+            currentRelease?: string | null;
+            /** @description Build version from BuildProperties, typically from the Gradle build. */
+            buildVersion?: string | null;
+            /** @description Active Spring profiles at runtime. */
+            activeProfiles: string[];
+            /** @description JVM runtime version string from java.version system property. */
+            javaVersion: string;
+            /** @description Spring Boot version from the framework manifest, if available. */
+            springBootVersion?: string | null;
+            /**
+             * Format: int64
+             * @description JVM uptime in seconds from RuntimeMXBean.
+             */
+            uptimeSeconds?: number | null;
+            /**
+             * Format: date-time
+             * @description Current server time in UTC.
+             */
+            serverTime: string;
+        };
+        AdminMonitoringJvm: {
+            /**
+             * Format: int64
+             * @description Current heap memory used in bytes from MemoryMXBean.
+             */
+            heapUsedBytes?: number | null;
+            /**
+             * Format: int64
+             * @description Maximum heap memory in bytes. Null or -1 if not bounded.
+             */
+            heapMaxBytes?: number | null;
+            /**
+             * Format: int64
+             * @description Current non-heap memory used in bytes (e.g., metaspace).
+             */
+            nonHeapUsedBytes?: number | null;
+            /**
+             * Format: int32
+             * @description Current total thread count from ThreadMXBean.
+             */
+            threadCount?: number | null;
+            /**
+             * Format: int32
+             * @description Current daemon thread count from ThreadMXBean.
+             */
+            daemonThreadCount?: number | null;
+            /**
+             * Format: int32
+             * @description Number of available processors reported by the JVM runtime.
+             */
+            processors: number;
+        };
+        AdminMonitoringMemory: {
+            /**
+             * Format: int64
+             * @description Total physical system memory in bytes from OperatingSystemMXBean. Null if not available.
+             */
+            systemMemoryTotalBytes?: number | null;
+            /**
+             * Format: int64
+             * @description Estimated used physical system memory in bytes (total minus free). Null if not available.
+             */
+            systemMemoryUsedBytes?: number | null;
+            /**
+             * Format: int64
+             * @description Free physical system memory in bytes from OperatingSystemMXBean. Null if not available.
+             */
+            systemMemoryAvailableBytes?: number | null;
+            /** @description Informational note when system memory data is unavailable or partially available. */
+            note?: string | null;
+        };
+        AdminMonitoringDatabase: {
+            /** @description Whether the DataSource connection validated successfully within the probe timeout. */
+            datasourceValid: boolean;
+            /**
+             * Format: int32
+             * @description Active (in-use) HikariCP pool connections. Null if pool stats are unavailable.
+             */
+            activeConnections?: number | null;
+            /**
+             * Format: int32
+             * @description Idle HikariCP pool connections. Null if pool stats are unavailable.
+             */
+            idleConnections?: number | null;
+            /**
+             * Format: int32
+             * @description Maximum configured HikariCP pool size. Null if pool stats are unavailable.
+             */
+            maxPoolSize?: number | null;
+            /** @description Informational note when connection pool statistics are not accessible. */
+            note?: string | null;
+        };
+        AdminMonitoringHttp: {
+            /** @description Spring Boot ApplicationAvailability readiness state — ACCEPTING_TRAFFIC or REFUSING_TRAFFIC. */
+            readinessStatus: string;
+            /** @description Spring Boot ApplicationAvailability liveness state — CORRECT or BROKEN. */
+            livenessStatus: string;
+        };
+        AdminMonitoringStorage: {
+            /** @description Configured storage provider type — local or azure. */
+            storageProviderType: string;
+            /** @description Whether Azure Blob Storage service was reachable. Null if not configured or not probed. */
+            blobStorageReachable?: boolean | null;
+            /** @description Whether the backup blob container exists and is reachable. Null if backup is not configured. */
+            backupContainerReachable?: boolean | null;
+            /** @description Informational note about storage probe availability or configuration state. */
             note?: string | null;
         };
         ReputationSummaryResponse: {
@@ -4325,6 +4487,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminOperationsCostsResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getAdminOperationsMonitoring: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Monitoring snapshot returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOperationsMonitoringResponse"];
                 };
             };
             401: components["responses"]["Unauthorized"];

@@ -1,0 +1,26 @@
+type: object
+additionalProperties: false
+properties:
+  systemMemoryTotalBytes:
+    type: integer
+    format: int64
+    minimum: 0
+    nullable: true
+    description: Total physical system memory in bytes from OperatingSystemMXBean. Null if not available.
+  systemMemoryUsedBytes:
+    type: integer
+    format: int64
+    minimum: 0
+    nullable: true
+    description: Estimated used physical system memory in bytes (total minus free). Null if not available.
+  systemMemoryAvailableBytes:
+    type: integer
+    format: int64
+    minimum: 0
+    nullable: true
+    description: Free physical system memory in bytes from OperatingSystemMXBean. Null if not available.
+  note:
+    type: string
+    nullable: true
+    description: Informational note when system memory data is unavailable or partially available.
+

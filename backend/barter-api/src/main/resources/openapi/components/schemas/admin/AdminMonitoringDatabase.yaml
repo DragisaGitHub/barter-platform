@@ -1,0 +1,31 @@
+type: object
+additionalProperties: false
+required:
+  - datasourceValid
+properties:
+  datasourceValid:
+    type: boolean
+    description: Whether the DataSource connection validated successfully within the probe timeout.
+  activeConnections:
+    type: integer
+    format: int32
+    minimum: 0
+    nullable: true
+    description: Active (in-use) HikariCP pool connections. Null if pool stats are unavailable.
+  idleConnections:
+    type: integer
+    format: int32
+    minimum: 0
+    nullable: true
+    description: Idle HikariCP pool connections. Null if pool stats are unavailable.
+  maxPoolSize:
+    type: integer
+    format: int32
+    minimum: 0
+    nullable: true
+    description: Maximum configured HikariCP pool size. Null if pool stats are unavailable.
+  note:
+    type: string
+    nullable: true
+    description: Informational note when connection pool statistics are not accessible.
+

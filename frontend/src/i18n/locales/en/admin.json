@@ -412,6 +412,91 @@
       "minutes": "{{value}}m",
       "hoursMinutes": "{{hours}}h {{minutes}}m",
       "daysHours": "{{days}}d {{hours}}h"
+    },
+    "monitoringTab": {
+      "loading": "Loading monitoring data…",
+      "errorTitle": "Monitoring data unavailable",
+      "errorDescription": "The monitoring endpoint could not be reached.",
+      "tryAgain": "Try again",
+      "title": "Platform monitoring",
+      "description": "Real-time operational snapshot sourced from Spring Boot Actuator, JVM MXBeans, and infrastructure probes. Metrics that cannot be determined are shown as unavailable.",
+      "heroTitle": "Platform health snapshot",
+      "heroDescription": "Aggregated status derived from database, JVM liveness, and readiness probes.",
+      "lastUpdated": "Last updated:",
+      "notesTitle": "Notes",
+      "sections": {
+        "platform": {
+          "title": "Platform health",
+          "description": "Component reachability status for backend, database, and storage services."
+        },
+        "application": {
+          "title": "Application",
+          "description": "Runtime identity, version, active profiles, and server time."
+        },
+        "jvm": {
+          "title": "JVM",
+          "description": "Heap memory usage, non-heap, thread counts, and processor availability from JVM MXBeans."
+        },
+        "memory": {
+          "title": "System memory",
+          "description": "OS-level physical memory from OperatingSystemMXBean. Null if unavailable on this JVM."
+        },
+        "database": {
+          "title": "Database",
+          "description": "DataSource validation and HikariCP connection pool metrics."
+        },
+        "http": {
+          "title": "HTTP availability",
+          "description": "Spring Boot ApplicationAvailability liveness and readiness states."
+        },
+        "storage": {
+          "title": "Storage",
+          "description": "Azure Blob Storage and backup container reachability via live probes."
+        }
+      },
+      "metrics": {
+        "backendStatus": "Backend",
+        "frontendStatus": "Frontend",
+        "landingStatus": "Landing",
+        "databaseStatus": "Database",
+        "blobStorageStatus": "Blob storage",
+        "currentRelease": "Current release",
+        "buildVersion": "Build version",
+        "activeProfiles": "Active profiles",
+        "javaVersion": "Java version",
+        "springBootVersion": "Spring Boot version",
+        "uptime": "Uptime",
+        "serverTime": "Server time",
+        "heapUsed": "Heap used",
+        "heapMax": "Heap max",
+        "nonHeapUsed": "Non-heap used",
+        "threadCount": "Threads",
+        "daemonThreadCount": "Daemon threads",
+        "processors": "Processors",
+        "systemMemoryTotal": "Total memory",
+        "systemMemoryUsed": "Used memory",
+        "systemMemoryAvailable": "Available memory",
+        "datasourceValid": "DataSource",
+        "activeConnections": "Active connections",
+        "idleConnections": "Idle connections",
+        "maxPoolSize": "Max pool size",
+        "readinessStatus": "Readiness",
+        "livenessStatus": "Liveness",
+        "storageProviderType": "Provider",
+        "blobStorageReachable": "Blob storage reachable",
+        "backupContainerReachable": "Backup container reachable"
+      },
+      "statusLabels": {
+        "UP": "UP",
+        "DOWN": "DOWN",
+        "DEGRADED": "DEGRADED",
+        "NOT_PROBED": "Not probed",
+        "NOT_CONFIGURED": "Not configured",
+        "CORRECT": "Correct",
+        "BROKEN": "Broken",
+        "ACCEPTING_TRAFFIC": "Accepting traffic",
+        "REFUSING_TRAFFIC": "Refusing traffic"
+      }
     }
   },
   "reviewsPage": {

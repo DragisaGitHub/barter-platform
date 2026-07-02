@@ -3,12 +3,14 @@ import type {
   AdminOperationsBackupsResponse,
   AdminOperationsCostsResponse,
   AdminOperationsDeploymentsResponse,
+  AdminOperationsMonitoringResponse,
   AdminOperationsOverviewResponse,
 } from "@/api/generated/types";
 import {
   getAdminOperationsBackups,
   getAdminOperationsCosts,
   getAdminOperationsDeployments,
+  getAdminOperationsMonitoring,
   getAdminOperationsOverview,
 } from "@/api/adminOperationsApi";
 
@@ -17,6 +19,7 @@ export const adminOperationsKeys = {
   backups: () => ["admin", "operations", "backups"] as const,
   deployments: () => ["admin", "operations", "deployments"] as const,
   costs: () => ["admin", "operations", "costs"] as const,
+  monitoring: () => ["admin", "operations", "monitoring"] as const,
 };
 
 export function useAdminOperationsOverview() {
@@ -50,6 +53,15 @@ export function useAdminOperationsCosts() {
     retry: 1,
     // Results are cached server-side for 15 min; staleTime prevents unnecessary re-fetches.
     staleTime: 10 * 60 * 1000,
+  });
+}
+
+export function useAdminOperationsMonitoring() {
+  return useQuery<AdminOperationsMonitoringResponse>({
+    queryKey: adminOperationsKeys.monitoring(),
+    queryFn: getAdminOperationsMonitoring,
+    retry: 1,
+    staleTime: 60 * 1000,
   });
 }
 

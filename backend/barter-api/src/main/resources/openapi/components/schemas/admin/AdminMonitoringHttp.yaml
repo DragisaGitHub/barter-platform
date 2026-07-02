@@ -1,0 +1,13 @@
+type: object
+additionalProperties: false
+required:
+  - readinessStatus
+  - livenessStatus
+properties:
+  readinessStatus:
+    type: string
+    description: Spring Boot ApplicationAvailability readiness state — ACCEPTING_TRAFFIC or REFUSING_TRAFFIC.
+  livenessStatus:
+    type: string
+    description: Spring Boot ApplicationAvailability liveness state — CORRECT or BROKEN.
+
