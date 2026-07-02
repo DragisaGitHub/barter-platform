@@ -16,9 +16,9 @@ public interface AuthService {
 
     CurrentUserResponse getCurrentUser(UUID userUuid);
 
-    MessageResponse verifyEmail(VerifyEmailRequest request);
-
     MessageResponse resendVerificationCode(ResendVerificationCodeRequest request);
+
+    VerifyEmailResponse verifyEmail(VerifyEmailRequest request);
 
     MessageResponse forgotPassword(ForgotPasswordRequest request);
 

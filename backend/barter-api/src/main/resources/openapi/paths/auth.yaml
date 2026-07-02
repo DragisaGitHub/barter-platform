@@ -135,11 +135,11 @@ verifyEmail:
       $ref: '../openapi.yaml#/components/requestBodies/VerifyEmailRequest'
     responses:
       '200':
-        description: Email verified successfully
+        description: Email verified successfully; authentication tokens included when newly verified
         content:
           application/json:
             schema:
-              $ref: '../components/schemas/MessageResponse.yaml'
+              $ref: '../components/schemas/VerifyEmailResponse.yaml'
       '400':
         $ref: '../components/responses/BadRequest.yaml'
       '403':

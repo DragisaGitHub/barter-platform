@@ -1681,6 +1681,21 @@ export interface components {
             scope?: string[];
             user: components["schemas"]["CurrentUserResponse"];
         };
+        VerifyEmailResponse: {
+            message: string;
+            accessToken?: string;
+            refreshToken?: string;
+            /**
+             * @default Bearer
+             * @enum {string}
+             */
+            tokenType?: "Bearer";
+            /** Format: int64 */
+            expiresIn?: number;
+            /** Format: int64 */
+            refreshExpiresIn?: number | null;
+            user?: components["schemas"]["CurrentUserResponse"];
+        };
         MessageResponse: {
             /** @example Email verified successfully. */
             message: string;
@@ -3519,13 +3534,13 @@ export interface operations {
         };
         requestBody?: components["requestBodies"]["requestBodies-VerifyEmailRequest"];
         responses: {
-            /** @description Email verified successfully */
+            /** @description Email verified successfully; authentication tokens included when newly verified */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["MessageResponse"];
+                    "application/json": components["schemas"]["VerifyEmailResponse"];
                 };
             };
             400: components["responses"]["BadRequest"];

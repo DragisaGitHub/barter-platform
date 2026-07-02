@@ -8,6 +8,7 @@ import { AxiosError } from "axios";
 import { Mail, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { verifyEmail, resendVerificationCode } from "@/api/authApi.ts";
+import { useAuth } from "@/auth/AuthContext";
 import { Button } from "../../components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
 import { FormInput } from "../../components/forms/FormInput";
@@ -28,6 +29,7 @@ export function VerifyEmailPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { t } = useTranslation(["auth", "common"]);
+  const { loginWithTokens } = useAuth();
   const emailFromParam = searchParams.get("email") ?? "";
   const redirectPath = getSafeRedirectPath(searchParams.get("redirect"));
   const loginHref = buildPathWithQuery(routePaths.login, { redirect: redirectPath });
@@ -57,8 +59,17 @@ export function VerifyEmailPage() {
     setIsSubmitting(true);
     try {
       const result = await verifyEmail(data.email, data.code);
-      toast.success(result.message ?? t("auth:verificationSuccess"));
-      navigate(loginHref);
+
+      if (result.accessToken && result.refreshToken) {
+        // Newly verified — auto sign-in and redirect into the app
+        await loginWithTokens(result.accessToken, result.refreshToken, result.user);
+        toast.success(result.message ?? t("auth:verificationSuccess"));
+        navigate(redirectPath ?? routePaths.dashboard, { replace: true });
+      } else {
+        // Already verified — no tokens issued; send user to login
+        toast.success(result.message ?? t("auth:verificationSuccess"));
+        navigate(loginHref, { replace: true });
+      }
     } catch (error) {
       if (error instanceof AxiosError) {
         const errorData = error.response?.data as ErrorResponse | undefined;

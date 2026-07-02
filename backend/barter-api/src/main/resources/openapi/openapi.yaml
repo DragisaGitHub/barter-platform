@@ -263,6 +263,8 @@ components:
       $ref: './components/schemas/UserPreferencesResponse.yaml'
     TokenResponse:
       $ref: './components/schemas/TokenResponse.yaml'
+    VerifyEmailResponse:
+      $ref: './components/schemas/VerifyEmailResponse.yaml'
     MessageResponse:
       $ref: './components/schemas/MessageResponse.yaml'
     BetaFeedbackCategory:

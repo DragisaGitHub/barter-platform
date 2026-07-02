@@ -25,6 +25,7 @@ export type UserResponse = components["schemas"]["UserResponse"];
 export type CurrentUserResponse = components["schemas"]["CurrentUserResponse"];
 export type UserPreferencesResponse = components["schemas"]["UserPreferencesResponse"];
 export type TokenResponse = components["schemas"]["TokenResponse"];
+export type VerifyEmailResponse = components["schemas"]["VerifyEmailResponse"];
 
 // ─── Request DTOs ───────────────────────────────────────────────────────────
 

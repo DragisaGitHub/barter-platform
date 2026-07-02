@@ -58,6 +58,9 @@ public class AdminOperationsCostsService {
 
     static final int COSTS_CACHE_TTL_MINUTES = 15;
     private static final Duration COSTS_CACHE_TTL = Duration.ofMinutes(COSTS_CACHE_TTL_MINUTES);
+    /** Short negative cache TTL – prevents hammering the Azure API after a 400/429. */
+    static final int ERROR_CACHE_TTL_MINUTES = 5;
+    private static final Duration ERROR_CACHE_TTL = Duration.ofMinutes(ERROR_CACHE_TTL_MINUTES);
     private static final Duration TOKEN_EXPIRY_BUFFER = Duration.ofMinutes(5);
 
     // ── Availability strings ─────────────────────────────────────────────────
@@ -81,6 +84,8 @@ public class AdminOperationsCostsService {
 
     private volatile TokenCache tokenCache;
     private volatile CostsCache costsCache;
+    /** Negative cache: holds the last error response for {@value #ERROR_CACHE_TTL_MINUTES} minutes. */
+    private volatile ErrorCache errorCache;
 
     public AdminOperationsCostsService(
             @Value("${barter.azure.cost.tenant-id:}") String tenantId,
@@ -109,23 +114,34 @@ public class AdminOperationsCostsService {
             return cached.response();
         }
 
+        ErrorCache cachedError = errorCache;
+        if (cachedError != null && !cachedError.isExpired()) {
+            log.debug("Returning negative-cached error response (age < {} min).", ERROR_CACHE_TTL_MINUTES);
+            return cachedError.response();
+        }
+
         try {
             AdminOperationsCostsResponse response = fetchFromAzure();
             costsCache = new CostsCache(response, Instant.now());
+            errorCache = null; // clear negative cache on success
             return response;
         } catch (RestClientException ex) {
             log.warn(
                     "Azure Cost Management HTTP call failed: exceptionClass={} message={}",
                     ex.getClass().getName(),
                     sanitizeMessage(ex.getMessage()));
-            return unavailable("Azure Cost Management is currently unavailable.");
+            AdminOperationsCostsResponse errResponse = unavailable("Azure Cost Management is currently unavailable.");
+            errorCache = new ErrorCache(errResponse, Instant.now());
+            return errResponse;
         } catch (Exception ex) {
             log.warn(
                     "Azure Cost Management query failed: exceptionClass={} rootCause={} message={}",
                     ex.getClass().getName(),
                     rootCauseClass(ex),
                     sanitizeMessage(rootCauseMessage(ex)));
-            return unavailable("Azure Cost Management is currently unavailable.");
+            AdminOperationsCostsResponse errResponse = unavailable("Azure Cost Management is currently unavailable.");
+            errorCache = new ErrorCache(errResponse, Instant.now());
+            return errResponse;
         }
     }
 
@@ -134,8 +150,9 @@ public class AdminOperationsCostsService {
     private AdminOperationsCostsResponse fetchFromAzure() {
         String token = acquireAccessToken();
 
-        JsonNode currentMonthResult = queryApi(token, buildCurrentMonthRequest());
-        JsonNode previousMonthResult = queryApi(token, buildPreviousMonthRequest());
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        JsonNode currentMonthResult = queryApi(token, buildCurrentMonthRequest(today));
+        JsonNode previousMonthResult = queryApi(token, buildPreviousMonthRequest(today));
 
         return parseResponse(currentMonthResult, previousMonthResult);
     }
@@ -186,10 +203,20 @@ public class AdminOperationsCostsService {
 
     // ── Private: request builders ────────────────────────────────────────────
 
-    private static Map<String, Object> buildCurrentMonthRequest() {
+    /**
+     * Builds a Cost Management query for the current month using {@code Custom} timeframe.
+     *
+     * <p>Range: first day of {@code today}'s month (inclusive) to {@code today + 1 day} (exclusive).
+     * Using {@code Custom} with an explicit {@code timePeriod} avoids the
+     * {@code TheLastMonth} / {@code MonthToDate} 400 errors on certain Azure tenants.
+     */
+    static Map<String, Object> buildCurrentMonthRequest(LocalDate today) {
+        String from = today.withDayOfMonth(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String to = today.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
         return Map.of(
                 "type", "ActualCost",
-                "timeframe", "MonthToDate",
+                "timeframe", "Custom",
+                "timePeriod", Map.of("from", from, "to", to),
                 "dataset", Map.of(
                         "granularity", "Daily",
                         "aggregation", Map.of(
@@ -200,10 +227,20 @@ public class AdminOperationsCostsService {
         );
     }
 
-    private static Map<String, Object> buildPreviousMonthRequest() {
+    /**
+     * Builds a Cost Management query for the previous calendar month using {@code Custom} timeframe.
+     *
+     * <p>Range: first day of the previous month (inclusive) to first day of the current month (exclusive).
+     */
+    static Map<String, Object> buildPreviousMonthRequest(LocalDate today) {
+        YearMonth currentMonth = YearMonth.from(today);
+        YearMonth previousMonth = currentMonth.minusMonths(1);
+        String from = previousMonth.atDay(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String to = currentMonth.atDay(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
         return Map.of(
                 "type", "ActualCost",
-                "timeframe", "TheLastMonth",
+                "timeframe", "Custom",
+                "timePeriod", Map.of("from", from, "to", to),
                 "dataset", Map.of(
                         "granularity", "None",
                         "aggregation", Map.of(
@@ -348,7 +385,7 @@ public class AdminOperationsCostsService {
         if (columns == null || columns.isMissingNode()) return -1;
         for (int i = 0; i < columns.size(); i++) {
             JsonNode col = columns.get(i);
-            if (col != null && name.equals(col.path("name").textValue())) {
+            if (col != null && name.equals(col.path("name").stringValue())) {
                 return i;
             }
         }
@@ -359,7 +396,7 @@ public class AdminOperationsCostsService {
         if (currencyIdx < 0) return "USD";
         for (JsonNode row : rows) {
             if (row.size() > currencyIdx) {
-                String currency = row.get(currencyIdx).textValue();
+                String currency = row.get(currencyIdx).stringValue();
                 if (currency != null && !currency.isBlank()) {
                     return currency;
                 }
@@ -463,6 +500,13 @@ public class AdminOperationsCostsService {
     private record CostsCache(AdminOperationsCostsResponse response, Instant cachedAt) {
         boolean isExpired() {
             return Duration.between(cachedAt, Instant.now()).compareTo(COSTS_CACHE_TTL) >= 0;
+        }
+    }
+
+    /** Negative cache: suppresses repeated Azure calls for {@value #ERROR_CACHE_TTL_MINUTES} minutes after a failure. */
+    private record ErrorCache(AdminOperationsCostsResponse response, Instant cachedAt) {
+        boolean isExpired() {
+            return Duration.between(cachedAt, Instant.now()).compareTo(ERROR_CACHE_TTL) >= 0;
         }
     }
 }

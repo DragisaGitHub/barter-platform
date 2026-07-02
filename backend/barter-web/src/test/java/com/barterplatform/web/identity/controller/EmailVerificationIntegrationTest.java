@@ -122,6 +122,17 @@ class EmailVerificationIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Invalid verification code."));
     }
 
+    @Test
+    void invalidCodeShouldNotAuthenticate() throws Exception {
+        mockMvc.perform(registerRequest("alex99", "alex@example.com", "P@ssword123"))
+                .andExpect(status().isCreated());
+
+        // Bad code → 400 error, no access token in response
+        mockMvc.perform(verifyEmailRequest("alex@example.com", "000000"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.accessToken").doesNotExist());
+    }
+
     // ══════════════════════════════════════════════════════════════
     //  Expired code rejected
     // ══════════════════════════════════════════════════════════════
@@ -152,6 +163,26 @@ class EmailVerificationIntegrationTest {
                 .andExpect(jsonPath("$.message").value("Verification code has expired. Please request a new one."));
     }
 
+    @Test
+    void expiredCodeShouldNotAuthenticate() throws Exception {
+        mockMvc.perform(registerRequest("alex99", "alex@example.com", "P@ssword123"))
+                .andExpect(status().isCreated());
+
+        var user = userRepository.findByEmail("alex@example.com").orElseThrow();
+        var codeEntity = emailVerificationCodeRepository
+                .findFirstByUserIdAndUsedAtIsNullOrderByCreatedAtDesc(user.getId())
+                .orElseThrow();
+        codeEntity.setExpiresAt(OffsetDateTime.now().minusMinutes(1));
+        String knownCode = "654321";
+        codeEntity.setCodeHash(EmailVerificationServiceImpl.hashCode(knownCode));
+        emailVerificationCodeRepository.save(codeEntity);
+
+        // Expired code → 400 error, no access token
+        mockMvc.perform(verifyEmailRequest("alex@example.com", knownCode))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.accessToken").doesNotExist());
+    }
+
     // ══════════════════════════════════════════════════════════════
     //  Correct code activates user
     // ══════════════════════════════════════════════════════════════
@@ -172,7 +203,11 @@ class EmailVerificationIntegrationTest {
 
         mockMvc.perform(verifyEmailRequest("alex@example.com", knownCode))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Email verified successfully."));
+                .andExpect(jsonPath("$.message").value("Email verified successfully."))
+                .andExpect(jsonPath("$.accessToken").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty())
+                .andExpect(jsonPath("$.user").exists())
+                .andExpect(jsonPath("$.user.email").value("alex@example.com"));
 
         // Verify user is now active and email verified
         var updatedUser = userRepository.findByEmail("alex@example.com").orElseThrow();
@@ -235,7 +270,9 @@ class EmailVerificationIntegrationTest {
 
         mockMvc.perform(verifyEmailRequest("alex@example.com", "123456"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Email is already verified."));
+                .andExpect(jsonPath("$.message").value("Email is already verified."))
+                .andExpect(jsonPath("$.accessToken").doesNotExist())
+                .andExpect(jsonPath("$.refreshToken").doesNotExist());
     }
 
     @Test

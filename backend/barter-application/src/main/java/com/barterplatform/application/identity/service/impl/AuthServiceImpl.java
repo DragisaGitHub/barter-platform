@@ -238,8 +238,41 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public MessageResponse verifyEmail(VerifyEmailRequest request) {
-        return emailVerificationService.verifyEmail(request);
+    public VerifyEmailResponse verifyEmail(VerifyEmailRequest request) {
+        // Pre-check user state: if already verified, we must not issue tokens (code was not validated for that case)
+        UserEntity user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,
+                        ErrorCode.NOT_FOUND,
+                        "User not found."));
+        boolean wasAlreadyVerified = user.isEmailVerified();
+
+        // Delegate to email verification service (validates code, activates user on success, throws on failure)
+        MessageResponse msgResponse = emailVerificationService.verifyEmail(request);
+
+        // Already verified — do not issue tokens (code was not validated in this early-return path)
+        if (wasAlreadyVerified) {
+            return new VerifyEmailResponse().message(msgResponse.getMessage());
+        }
+
+        // Newly verified — reload user to get fresh state, then issue authentication tokens
+        UserEntity verifiedUser = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        List<String> roles = resolveRoleNames(verifiedUser.getId());
+        String accessToken = jwtService.generateAccessToken(verifiedUser.getUuid(), verifiedUser.getUsername(), roles);
+        RefreshTokenService.RefreshTokenResult refreshResult = refreshTokenService.createRefreshToken(verifiedUser.getId());
+        ensurePreferredLanguage(verifiedUser);
+        verifiedUser.setLastLoginAt(OffsetDateTime.now());
+        userRepository.save(verifiedUser);
+        CurrentUserResponse userResponse = buildCurrentUserResponse(verifiedUser);
+
+        return new VerifyEmailResponse()
+                .message(msgResponse.getMessage())
+                .accessToken(accessToken)
+                .refreshToken(refreshResult.rawToken())
+                .tokenType(VerifyEmailResponse.TokenTypeEnum.BEARER)
+                .expiresIn(jwtService.getAccessTokenExpirationSeconds())
+                .refreshExpiresIn(refreshTokenService.getRefreshTokenExpirationSeconds())
+                .user(userResponse);
     }
 
     @Override

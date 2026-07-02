@@ -3,12 +3,13 @@ import type {
   ForgotPasswordRequest,
   MessageResponse,
   ResendVerificationCodeRequest, ResetPasswordRequest,
-  VerifyEmailRequest
+  VerifyEmailRequest,
+  VerifyEmailResponse
 } from "./generated/types";
 
-export async function verifyEmail(email: string, code: string): Promise<MessageResponse> {
+export async function verifyEmail(email: string, code: string): Promise<VerifyEmailResponse> {
   const body: VerifyEmailRequest = { email, code };
-  const response = await apiClient.post<MessageResponse>("/auth/verify-email", body);
+  const response = await apiClient.post<VerifyEmailResponse>("/auth/verify-email", body);
   return response.data;
 }
 
