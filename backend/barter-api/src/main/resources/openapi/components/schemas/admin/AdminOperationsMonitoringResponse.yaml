@@ -1,0 +1,41 @@
+type: object
+additionalProperties: false
+required:
+  - platform
+  - application
+  - jvm
+  - memory
+  - database
+  - http
+  - storage
+  - overallStatus
+  - lastUpdated
+properties:
+  platform:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminMonitoringPlatformHealth'
+  application:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminMonitoringApplication'
+  jvm:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminMonitoringJvm'
+  memory:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminMonitoringMemory'
+  database:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminMonitoringDatabase'
+  http:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminMonitoringHttp'
+  storage:
+    $ref: '../../../openapi.yaml#/components/schemas/AdminMonitoringStorage'
+  overallStatus:
+    type: string
+    description: Aggregated platform health — UP, DEGRADED, or DOWN.
+  lastUpdated:
+    type: string
+    format: date-time
+    description: UTC timestamp when this monitoring snapshot was collected.
+  notes:
+    type: array
+    nullable: true
+    items:
+      type: string
+    description: Optional informational notes about metric availability or probe limitations.
+

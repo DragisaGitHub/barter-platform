@@ -264,6 +264,48 @@ class AdminOperationsIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    // ── /admin/operations/monitoring ─────────────────────────────────────────
+
+    @Test
+    void adminCanAccessOperationalMonitoring() throws Exception {
+        String adminToken = registerActivateLoginAndAssignAdmin();
+
+        mockMvc.perform(apiMonitoringGet().header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.overallStatus").exists())
+                .andExpect(jsonPath("$.lastUpdated").exists())
+                .andExpect(jsonPath("$.platform.backendStatus").value("UP"))
+                .andExpect(jsonPath("$.platform.frontendStatus").value("NOT_PROBED"))
+                .andExpect(jsonPath("$.platform.landingStatus").value("NOT_PROBED"))
+                .andExpect(jsonPath("$.platform.databaseStatus").value("UP"))
+                .andExpect(jsonPath("$.application.javaVersion").exists())
+                .andExpect(jsonPath("$.application.activeProfiles").isArray())
+                .andExpect(jsonPath("$.application.serverTime").exists())
+                .andExpect(jsonPath("$.jvm.processors").isNumber())
+                .andExpect(jsonPath("$.jvm.heapUsedBytes").isNumber())
+                .andExpect(jsonPath("$.http.readinessStatus").value("ACCEPTING_TRAFFIC"))
+                .andExpect(jsonPath("$.http.livenessStatus").value("CORRECT"))
+                .andExpect(jsonPath("$.database.datasourceValid").value(true))
+                .andExpect(jsonPath("$.storage.storageProviderType").value("local"))
+                // Backup not configured in test context — blob probe must be absent
+                .andExpect(jsonPath("$.storage.blobStorageReachable").doesNotExist())
+                .andExpect(jsonPath("$.storage.backupContainerReachable").doesNotExist());
+    }
+
+    @Test
+    void regularUserCannotAccessOperationalMonitoring() throws Exception {
+        String userToken = registerActivateAndLogin();
+
+        mockMvc.perform(apiMonitoringGet().header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedUserCannotAccessOperationalMonitoring() throws Exception {
+        mockMvc.perform(apiMonitoringGet())
+                .andExpect(status().isUnauthorized());
+    }
+
     private String registerActivateLoginAndAssignAdmin() throws Exception {
         UserEntity user = registerAndActivate("operations-admin", "operations-admin@example.com");
         var adminRole = roleRepository.findByCode(RoleCode.ADMIN).orElseThrow();
@@ -346,6 +388,13 @@ class AdminOperationsIntegrationTest {
         return get("/api/v1/admin/operations/costs")
                 .contextPath("/api/v1")
                 .servletPath("/admin/operations/costs")
+                .accept(MediaType.APPLICATION_JSON);
+    }
+
+    private MockHttpServletRequestBuilder apiMonitoringGet() {
+        return get("/api/v1/admin/operations/monitoring")
+                .contextPath("/api/v1")
+                .servletPath("/admin/operations/monitoring")
                 .accept(MediaType.APPLICATION_JSON);
     }
 

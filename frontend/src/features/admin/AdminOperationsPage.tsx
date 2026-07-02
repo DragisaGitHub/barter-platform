@@ -5,10 +5,14 @@ import {
   CheckCircle2,
   Clock,
   CloudUpload,
+  Cpu,
   Database,
   DollarSign,
+  Globe,
   HardDrive,
+  Info,
   RefreshCw,
+  Server,
   ShieldAlert,
   Users,
 } from "lucide-react";
@@ -25,12 +29,14 @@ import {
   useAdminOperationsBackups,
   useAdminOperationsCosts,
   useAdminOperationsDeployments,
+  useAdminOperationsMonitoring,
   useAdminOperationsOverview,
 } from "./useAdminOperations";
 import type {
   AdminOperationsBackupsResponse,
   AdminOperationsCostsResponse,
   AdminOperationsDeploymentsResponse,
+  AdminOperationsMonitoringResponse,
   AdminOperationsOverviewResponse,
 } from "@/api/generated/types";
 
@@ -67,6 +73,7 @@ export function AdminOperationsPage() {
   const { data: overviewData, isFetching: overviewFetching, refetch: refetchOverview } =
     useAdminOperationsOverview();
   const { isFetching: costsFetching, refetch: refetchCosts } = useAdminOperationsCosts();
+  const { isFetching: monitoringFetching, refetch: refetchMonitoring } = useAdminOperationsMonitoring();
   const healthStatus = overviewData?.health.overallStatus;
   const locale = toIntlLocale(i18n.language);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
@@ -74,11 +81,13 @@ export function AdminOperationsPage() {
   function handleRefetch() {
     if (activeTab === "overview") void refetchOverview();
     if (activeTab === "costs") void refetchCosts();
+    if (activeTab === "monitoring") void refetchMonitoring();
   }
 
   const isRefetchingActive =
     (activeTab === "overview" && overviewFetching) ||
-    (activeTab === "costs" && costsFetching);
+    (activeTab === "costs" && costsFetching) ||
+    (activeTab === "monitoring" && monitoringFetching);
 
   return (
     <AdminPageShell
@@ -93,7 +102,7 @@ export function AdminOperationsPage() {
         </>
       }
       actions={
-        (activeTab === "overview" || activeTab === "costs") ? (
+        (activeTab === "overview" || activeTab === "costs" || activeTab === "monitoring") ? (
           <Button variant="outline" size="sm" onClick={handleRefetch} isLoading={isRefetchingActive}>
             <RefreshCw className="size-4" />
             {t("admin:refresh")}
@@ -119,7 +128,7 @@ export function AdminOperationsPage() {
                   "data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700",
                   "dark:data-[state=active]:bg-indigo-900/30 dark:data-[state=active]:text-indigo-300",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
-                  ["monitoring", "security"].includes(tab)
+                  ["security"].includes(tab)
                     ? "cursor-default opacity-60"
                     : ""
                 )}
@@ -150,8 +159,13 @@ export function AdminOperationsPage() {
           <CostsTabContent t={t} locale={locale} />
         </RadixTabs.Content>
 
+        {/* Monitoring tab */}
+        <RadixTabs.Content value="monitoring" className="flex flex-col gap-6 outline-none">
+          <MonitoringTabContent t={t} locale={locale} />
+        </RadixTabs.Content>
+
         {/* Coming soon tabs */}
-        {(["monitoring", "security"] as const).map((tab) => (
+        {(["security"] as const).map((tab) => (
           <RadixTabs.Content key={tab} value={tab} className="outline-none">
             <ComingSoonState t={t} tabKey={tab} />
           </RadixTabs.Content>
@@ -694,9 +708,439 @@ function CostsContent({
   );
 }
 
+// ── Monitoring tab ────────────────────────────────────────────────────────────
+
+function MonitoringTabContent({ t, locale }: { t: TFunction; locale: string }) {
+  const { data, isLoading, isError, error, refetch, isFetching } = useAdminOperationsMonitoring();
+
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+            {t("admin:operationsPage.monitoringTab.title")}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {t("admin:operationsPage.monitoringTab.description")}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} isLoading={isFetching}>
+          <RefreshCw className="size-4" />
+          {t("admin:refresh")}
+        </Button>
+      </div>
+
+      {isLoading ? <TabLoadingState message={t("admin:operationsPage.monitoringTab.loading")} /> : null}
+      {isError ? (
+        <TabErrorState
+          t={t}
+          message={error instanceof Error ? error.message : undefined}
+          onRetry={() => refetch()}
+          titleKey="admin:operationsPage.monitoringTab.errorTitle"
+          descriptionKey="admin:operationsPage.monitoringTab.errorDescription"
+          retryKey="admin:operationsPage.monitoringTab.tryAgain"
+        />
+      ) : null}
+      {data ? <MonitoringDashboard data={data} t={t} locale={locale} /> : null}
+    </>
+  );
+}
+
+function MonitoringDashboard({
+  data,
+  t,
+  locale,
+}: {
+  data: AdminOperationsMonitoringResponse;
+  t: TFunction;
+  locale: string;
+}) {
+  const overallVariant = monitoringStatusVariant(data.overallStatus);
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Hero status */}
+      <AdminSurface contentClassName="p-0">
+        <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-5 dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-4">
+              <div className={cn(
+                "flex size-12 items-center justify-center rounded-2xl",
+                overallVariant === "success"
+                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                  : overallVariant === "warning"
+                  ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                  : overallVariant === "danger"
+                  ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                  : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+              )}>
+                {overallVariant === "success" ? (
+                  <CheckCircle2 className="size-6" />
+                ) : (
+                  <AlertTriangle className="size-6" />
+                )}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-950 dark:text-white">
+                  {t("admin:operationsPage.monitoringTab.heroTitle")}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  {t("admin:operationsPage.monitoringTab.heroDescription")}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge variant={overallVariant}>
+                {t(`admin:operationsPage.statusLabels.${data.overallStatus}`, { defaultValue: data.overallStatus })}
+              </Badge>
+              <span className="text-xs text-slate-500 dark:text-slate-400">
+                {t("admin:operationsPage.monitoringTab.lastUpdated")}{" "}
+                {formatDateTime(data.lastUpdated, t, locale)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </AdminSurface>
+
+      {/* Platform Health + Application */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <MonitoringSection
+          title={t("admin:operationsPage.monitoringTab.sections.platform.title")}
+          description={t("admin:operationsPage.monitoringTab.sections.platform.description")}
+          icon={Globe}
+          metrics={[
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.backendStatus"),
+              value: data.platform.backendStatus,
+              displayValue: formatMonitoringStatus(data.platform.backendStatus, t),
+              badgeVariant: monitoringStatusVariant(data.platform.backendStatus),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.databaseStatus"),
+              value: data.platform.databaseStatus,
+              displayValue: formatMonitoringStatus(data.platform.databaseStatus, t),
+              badgeVariant: monitoringStatusVariant(data.platform.databaseStatus),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.blobStorageStatus"),
+              value: data.platform.blobStorageStatus,
+              displayValue: formatMonitoringStatus(data.platform.blobStorageStatus, t),
+              badgeVariant: monitoringStatusVariant(data.platform.blobStorageStatus),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.frontendStatus"),
+              value: data.platform.frontendStatus,
+              displayValue: formatMonitoringStatus(data.platform.frontendStatus, t),
+              badgeVariant: monitoringStatusVariant(data.platform.frontendStatus),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.landingStatus"),
+              value: data.platform.landingStatus,
+              displayValue: formatMonitoringStatus(data.platform.landingStatus, t),
+              badgeVariant: monitoringStatusVariant(data.platform.landingStatus),
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+
+        <MonitoringSection
+          title={t("admin:operationsPage.monitoringTab.sections.application.title")}
+          description={t("admin:operationsPage.monitoringTab.sections.application.description")}
+          icon={Info}
+          metrics={[
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.currentRelease"),
+              value: data.application.currentRelease,
+              badgeVariant: data.application.currentRelease ? "success" : undefined,
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.buildVersion"),
+              value: data.application.buildVersion,
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.activeProfiles"),
+              value: data.application.activeProfiles.join(", "),
+              badgeVariant: "primary",
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.javaVersion"),
+              value: data.application.javaVersion,
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.springBootVersion"),
+              value: data.application.springBootVersion,
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.uptime"),
+              value: null,
+              displayValue: formatDuration(data.application.uptimeSeconds, t),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.serverTime"),
+              value: null,
+              displayValue: formatDateTime(data.application.serverTime, t, locale),
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+      </div>
+
+      {/* JVM + Memory */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <MonitoringSection
+          title={t("admin:operationsPage.monitoringTab.sections.jvm.title")}
+          description={t("admin:operationsPage.monitoringTab.sections.jvm.description")}
+          icon={Cpu}
+          metrics={[
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.heapUsed"),
+              value: null,
+              displayValue: formatBytes(data.jvm.heapUsedBytes, t),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.heapMax"),
+              value: null,
+              displayValue: formatBytes(data.jvm.heapMaxBytes, t),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.nonHeapUsed"),
+              value: null,
+              displayValue: formatBytes(data.jvm.nonHeapUsedBytes, t),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.threadCount"),
+              value: data.jvm.threadCount,
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.daemonThreadCount"),
+              value: data.jvm.daemonThreadCount,
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.processors"),
+              value: data.jvm.processors,
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+
+        <MonitoringSection
+          title={t("admin:operationsPage.monitoringTab.sections.memory.title")}
+          description={t("admin:operationsPage.monitoringTab.sections.memory.description")}
+          icon={Server}
+          metrics={[
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.systemMemoryTotal"),
+              value: null,
+              displayValue: formatBytes(data.memory.systemMemoryTotalBytes, t),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.systemMemoryUsed"),
+              value: null,
+              displayValue: formatBytes(data.memory.systemMemoryUsedBytes, t),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.systemMemoryAvailable"),
+              value: null,
+              displayValue: formatBytes(data.memory.systemMemoryAvailableBytes, t),
+            },
+          ]}
+          note={data.memory.note}
+          t={t}
+          locale={locale}
+        />
+      </div>
+
+      {/* Database + HTTP */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <MonitoringSection
+          title={t("admin:operationsPage.monitoringTab.sections.database.title")}
+          description={t("admin:operationsPage.monitoringTab.sections.database.description")}
+          icon={Database}
+          metrics={[
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.datasourceValid"),
+              value: data.database.datasourceValid ? "UP" : "DOWN",
+              displayValue: data.database.datasourceValid
+                ? t("admin:operationsPage.statusLabels.UP")
+                : t("admin:operationsPage.statusLabels.DOWN"),
+              badgeVariant: data.database.datasourceValid ? "success" : "danger",
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.activeConnections"),
+              value: data.database.activeConnections,
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.idleConnections"),
+              value: data.database.idleConnections,
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.maxPoolSize"),
+              value: data.database.maxPoolSize,
+            },
+          ]}
+          note={data.database.note}
+          t={t}
+          locale={locale}
+        />
+
+        <MonitoringSection
+          title={t("admin:operationsPage.monitoringTab.sections.http.title")}
+          description={t("admin:operationsPage.monitoringTab.sections.http.description")}
+          icon={Activity}
+          metrics={[
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.readinessStatus"),
+              value: data.http.readinessStatus,
+              displayValue: formatMonitoringStatus(data.http.readinessStatus, t),
+              badgeVariant: monitoringStatusVariant(data.http.readinessStatus),
+            },
+            {
+              label: t("admin:operationsPage.monitoringTab.metrics.livenessStatus"),
+              value: data.http.livenessStatus,
+              displayValue: formatMonitoringStatus(data.http.livenessStatus, t),
+              badgeVariant: monitoringStatusVariant(data.http.livenessStatus),
+            },
+          ]}
+          t={t}
+          locale={locale}
+        />
+      </div>
+
+      {/* Storage */}
+      <MonitoringSection
+        title={t("admin:operationsPage.monitoringTab.sections.storage.title")}
+        description={t("admin:operationsPage.monitoringTab.sections.storage.description")}
+        icon={HardDrive}
+        metrics={[
+          {
+            label: t("admin:operationsPage.monitoringTab.metrics.storageProviderType"),
+            value: data.storage.storageProviderType,
+            displayValue: formatStorageProvider(data.storage.storageProviderType, t),
+            badgeVariant: "secondary",
+          },
+          {
+            label: t("admin:operationsPage.monitoringTab.metrics.blobStorageReachable"),
+            value: data.storage.blobStorageReachable == null
+              ? "NOT_CONFIGURED"
+              : data.storage.blobStorageReachable ? "UP" : "DOWN",
+            displayValue: data.storage.blobStorageReachable == null
+              ? formatMonitoringStatus("NOT_CONFIGURED", t)
+              : data.storage.blobStorageReachable
+              ? t("admin:operationsPage.statusLabels.UP")
+              : t("admin:operationsPage.statusLabels.DOWN"),
+            badgeVariant: data.storage.blobStorageReachable == null
+              ? "secondary"
+              : data.storage.blobStorageReachable ? "success" : "danger",
+          },
+          {
+            label: t("admin:operationsPage.monitoringTab.metrics.backupContainerReachable"),
+            value: data.storage.backupContainerReachable == null
+              ? "NOT_CONFIGURED"
+              : data.storage.backupContainerReachable ? "UP" : "DOWN",
+            displayValue: data.storage.backupContainerReachable == null
+              ? formatMonitoringStatus("NOT_CONFIGURED", t)
+              : data.storage.backupContainerReachable
+              ? t("admin:operationsPage.statusLabels.UP")
+              : t("admin:operationsPage.statusLabels.DOWN"),
+            badgeVariant: data.storage.backupContainerReachable == null
+              ? "secondary"
+              : data.storage.backupContainerReachable ? "success" : "danger",
+          },
+        ]}
+        note={data.storage.note}
+        t={t}
+        locale={locale}
+      />
+
+      {/* Notes */}
+      {data.notes && data.notes.length > 0 ? (
+        <AdminSurface contentClassName="p-0">
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/50">
+            <h3 className="mb-3 text-sm font-semibold text-slate-700 dark:text-slate-300">
+              {t("admin:operationsPage.monitoringTab.notesTitle")}
+            </h3>
+            <ul className="space-y-1.5">
+              {data.notes.map((note, i) => (
+                <li key={i} className="text-xs text-slate-500 dark:text-slate-400">
+                  • {note}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </AdminSurface>
+      ) : null}
+    </div>
+  );
+}
+
+interface MonitoringSectionProps {
+  title: string;
+  description: string;
+  icon: typeof Activity;
+  metrics: MetricItem[];
+  note?: string | null;
+  t: TFunction;
+  locale: string;
+}
+
+function MonitoringSection({ title, description, icon: Icon, metrics, note, t, locale }: MonitoringSectionProps) {
+  return (
+    <AdminSurface contentClassName="space-y-4">
+      <div className="flex items-start gap-3">
+        <div className="flex size-11 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          <Icon className="size-5" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-950 dark:text-white">{title}</h3>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{description}</p>
+        </div>
+      </div>
+
+      <dl className="grid gap-3 sm:grid-cols-2">
+        {metrics.map((metric) => (
+          <div key={metric.label} className="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
+            <dt className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">{metric.label}</dt>
+            <dd className="mt-2 flex flex-wrap items-center gap-2 text-lg font-semibold text-slate-950 dark:text-white">
+              {metric.badgeVariant ? (
+                <Badge variant={metric.badgeVariant}>{metric.displayValue ?? formatMetric(metric.value, t, locale)}</Badge>
+              ) : (
+                <span>{metric.displayValue ?? formatMetric(metric.value, t, locale)}</span>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+
+      {note ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+          {note}
+        </div>
+      ) : null}
+    </AdminSurface>
+  );
+}
+
+// ── Monitoring formatters ──────────────────────────────────────────────────────
+
+function formatMonitoringStatus(status: string | null | undefined, t: TFunction): string {
+  if (!status) return t("admin:operationsPage.statusLabels.unavailable");
+  return t(`admin:operationsPage.monitoringTab.statusLabels.${status}`, { defaultValue: status });
+}
+
+function monitoringStatusVariant(status: string | null | undefined): BadgeVariant {
+  if (status === "UP" || status === "CORRECT" || status === "ACCEPTING_TRAFFIC") return "success";
+  if (status === "DOWN" || status === "BROKEN") return "danger";
+  if (status === "DEGRADED" || status === "REFUSING_TRAFFIC") return "warning";
+  if (status === "NOT_PROBED" || status === "NOT_CONFIGURED") return "secondary";
+  return "default";
+}
+
 // ── Coming soon placeholder ───────────────────────────────────────────────────
 
-function ComingSoonState({ t, tabKey }: { t: TFunction; tabKey: "monitoring" | "security" }) {
+function ComingSoonState({ t, tabKey }: { t: TFunction; tabKey: "security" }) {
   return (
     <AdminSurface contentClassName="p-0">
       <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-10 text-center dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">

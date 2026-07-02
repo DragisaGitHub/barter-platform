@@ -82,6 +82,27 @@ costs:
       '403':
         $ref: '../components/responses/Forbidden.yaml'
 
+monitoring:
+  get:
+    tags:
+      - AdminOperations
+    operationId: getAdminOperationsMonitoring
+    summary: Get production monitoring snapshot for administrators
+    description: Returns a real-time operational snapshot of platform component health, JVM metrics, memory usage, database pool state, HTTP availability, and Azure Blob Storage reachability. All metrics are sourced from Spring Boot Actuator, Java MXBeans, or live infrastructure probes. Metrics that cannot be determined are returned as null with explanatory notes. Never exposes secrets, connection strings, or raw configuration.
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Monitoring snapshot returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminOperationsMonitoringResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
 sentryTest:
   post:
     tags:

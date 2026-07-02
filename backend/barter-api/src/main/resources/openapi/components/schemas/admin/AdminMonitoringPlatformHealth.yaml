@@ -1,0 +1,25 @@
+type: object
+additionalProperties: false
+required:
+  - backendStatus
+  - frontendStatus
+  - landingStatus
+  - databaseStatus
+  - blobStorageStatus
+properties:
+  backendStatus:
+    type: string
+    description: Backend service status. Always UP if this response is received.
+  frontendStatus:
+    type: string
+    description: Frontend service status. NOT_PROBED — not checked from the backend process.
+  landingStatus:
+    type: string
+    description: Landing page status. NOT_PROBED — not checked from the backend process.
+  databaseStatus:
+    type: string
+    description: Database connectivity status from a lightweight JDBC validation probe.
+  blobStorageStatus:
+    type: string
+    description: Azure Blob Storage reachability. UP, DOWN, NOT_CONFIGURED, or NOT_PROBED.
+

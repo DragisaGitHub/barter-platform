@@ -1,0 +1,21 @@
+type: object
+additionalProperties: false
+required:
+  - storageProviderType
+properties:
+  storageProviderType:
+    type: string
+    description: Configured storage provider type — local or azure.
+  blobStorageReachable:
+    type: boolean
+    nullable: true
+    description: Whether Azure Blob Storage service was reachable. Null if not configured or not probed.
+  backupContainerReachable:
+    type: boolean
+    nullable: true
+    description: Whether the backup blob container exists and is reachable. Null if backup is not configured.
+  note:
+    type: string
+    nullable: true
+    description: Informational note about storage probe availability or configuration state.
+
