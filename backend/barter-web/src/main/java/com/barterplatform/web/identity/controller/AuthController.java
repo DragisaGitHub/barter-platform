@@ -7,9 +7,10 @@ import com.barterplatform.web.security.jwt.AuthenticatedUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Objects;
 
 @RestController
 @RequiredArgsConstructor
@@ -18,13 +19,13 @@ public class AuthController implements AuthApi {
     private final AuthService authService;
 
     @Override
-    public ResponseEntity<CurrentUserResponse> registerUser(@Nullable RegisterUserRequest registerUserRequest) {
+    public ResponseEntity<CurrentUserResponse> registerUser(RegisterUserRequest registerUserRequest) {
         CurrentUserResponse response = authService.registerUser(registerUserRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @Override
-    public ResponseEntity<TokenResponse> login(@Nullable LoginRequest loginRequest) {
+    public ResponseEntity<TokenResponse> login(LoginRequest loginRequest) {
         TokenResponse response = authService.login(loginRequest);
         return ResponseEntity.ok(response);
     }
@@ -42,34 +43,35 @@ public class AuthController implements AuthApi {
     }
 
     @Override
-    public ResponseEntity<TokenResponse> refreshToken(@Nullable RefreshTokenRequest refreshTokenRequest) {
+    public ResponseEntity<TokenResponse> refreshToken(RefreshTokenRequest refreshTokenRequest) {
         TokenResponse response = authService.refreshToken(refreshTokenRequest);
         return ResponseEntity.ok(response);
     }
 
     @Override
-    public ResponseEntity<Void> logout(@Nullable RefreshTokenRequest refreshTokenRequest) {
+    public ResponseEntity<Void> logout(RefreshTokenRequest refreshTokenRequest) {
         authService.logout(refreshTokenRequest);
         return ResponseEntity.noContent().build();
     }
 
     @Override
     public ResponseEntity<CurrentUserResponse> getCurrentUser() {
-        AuthenticatedUser principal = (AuthenticatedUser) SecurityContextHolder.getContext()
-                .getAuthentication().getPrincipal();
+        AuthenticatedUser principal = (AuthenticatedUser) Objects.requireNonNull(SecurityContextHolder.getContext()
+                .getAuthentication()).getPrincipal();
+        assert principal != null;
         CurrentUserResponse response = authService.getCurrentUser(principal.getUserUuid());
         return ResponseEntity.ok(response);
     }
 
     @Override
-    public ResponseEntity<MessageResponse> verifyEmail(@Nullable VerifyEmailRequest verifyEmailRequest) {
-        MessageResponse response = authService.verifyEmail(verifyEmailRequest);
+    public ResponseEntity<VerifyEmailResponse> verifyEmail(VerifyEmailRequest verifyEmailRequest) {
+        VerifyEmailResponse response = authService.verifyEmail(verifyEmailRequest);
         return ResponseEntity.ok(response);
     }
 
     @Override
     public ResponseEntity<MessageResponse> resendVerificationCode(
-            @Nullable ResendVerificationCodeRequest resendVerificationCodeRequest) {
+            ResendVerificationCodeRequest resendVerificationCodeRequest) {
         MessageResponse response = authService.resendVerificationCode(resendVerificationCodeRequest);
         return ResponseEntity.ok(response);
     }
