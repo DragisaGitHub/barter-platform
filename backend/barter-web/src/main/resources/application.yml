@@ -150,6 +150,17 @@ barter:
       connection-string: ${BACKUP_AZURE_CONNECTION_STRING:}
       container: ${BACKUP_AZURE_CONTAINER:}
       prefix: ${BACKUP_AZURE_PREFIX:}
+  azure:
+    cost:
+      # Set AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, and AZURE_SUBSCRIPTION_ID
+      # to enable real Azure Cost Management data. Credentials are never logged or returned.
+      tenant-id: ${AZURE_TENANT_ID:}
+      client-id: ${AZURE_CLIENT_ID:}
+      client-secret: ${AZURE_CLIENT_SECRET:}
+      subscription-id: ${AZURE_SUBSCRIPTION_ID:}
+      # Optional: override the default scope (/subscriptions/{subscriptionId}).
+      # Example: /subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}
+      scope: ${AZURE_COST_SCOPE:}
 
 sentry:
   # Leave empty to disable Sentry (no-op). Set SENTRY_DSN_BACKEND to enable error tracking.

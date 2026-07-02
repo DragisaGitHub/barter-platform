@@ -61,6 +61,27 @@ deployments:
       '403':
         $ref: '../components/responses/Forbidden.yaml'
 
+costs:
+  get:
+    tags:
+      - AdminOperations
+    operationId: getAdminOperationsCosts
+    summary: Get Azure cost summary for administrators
+    description: Returns Azure Cost Management data when configured, or a safe placeholder when configuration is absent. Never exposes credentials, access tokens, or raw Azure error bodies.
+    security:
+      - bearerJwt: []
+    responses:
+      '200':
+        description: Cost summary returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/AdminOperationsCostsResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
 sentryTest:
   post:
     tags:

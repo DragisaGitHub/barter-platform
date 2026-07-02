@@ -2,9 +2,11 @@ package com.barterplatform.web.admin.controller;
 
 import com.barterplatform.api.controller.AdminOperationsApi;
 import com.barterplatform.api.model.AdminOperationsBackupsResponse;
+import com.barterplatform.api.model.AdminOperationsCostsResponse;
 import com.barterplatform.api.model.AdminOperationsDeploymentsResponse;
 import com.barterplatform.api.model.AdminOperationsOverviewResponse;
 import com.barterplatform.web.admin.service.AdminOperationsBackupsService;
+import com.barterplatform.web.admin.service.AdminOperationsCostsService;
 import com.barterplatform.web.admin.service.AdminOperationsDeploymentsService;
 import com.barterplatform.web.admin.service.AdminOperationsOverviewService;
 import org.springframework.http.ResponseEntity;
@@ -18,14 +20,17 @@ public class AdminOperationsController implements AdminOperationsApi {
     private final AdminOperationsOverviewService adminOperationsOverviewService;
     private final AdminOperationsBackupsService adminOperationsBackupsService;
     private final AdminOperationsDeploymentsService adminOperationsDeploymentsService;
+    private final AdminOperationsCostsService adminOperationsCostsService;
 
     public AdminOperationsController(
             AdminOperationsOverviewService adminOperationsOverviewService,
             AdminOperationsBackupsService adminOperationsBackupsService,
-            AdminOperationsDeploymentsService adminOperationsDeploymentsService) {
+            AdminOperationsDeploymentsService adminOperationsDeploymentsService,
+            AdminOperationsCostsService adminOperationsCostsService) {
         this.adminOperationsOverviewService = adminOperationsOverviewService;
         this.adminOperationsBackupsService = adminOperationsBackupsService;
         this.adminOperationsDeploymentsService = adminOperationsDeploymentsService;
+        this.adminOperationsCostsService = adminOperationsCostsService;
     }
 
     @Override
@@ -41,6 +46,11 @@ public class AdminOperationsController implements AdminOperationsApi {
     @Override
     public ResponseEntity<AdminOperationsDeploymentsResponse> getAdminOperationsDeployments() {
         return ResponseEntity.ok(adminOperationsDeploymentsService.getDeployments());
+    }
+
+    @Override
+    public ResponseEntity<AdminOperationsCostsResponse> getAdminOperationsCosts() {
+        return ResponseEntity.ok(adminOperationsCostsService.getCosts());
     }
 
     /**

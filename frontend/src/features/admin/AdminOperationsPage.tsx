@@ -6,6 +6,7 @@ import {
   Clock,
   CloudUpload,
   Database,
+  DollarSign,
   HardDrive,
   RefreshCw,
   ShieldAlert,
@@ -22,11 +23,13 @@ import { cn } from "@/utils";
 import { AdminPageShell, AdminSurface } from "./components/AdminPageShell";
 import {
   useAdminOperationsBackups,
+  useAdminOperationsCosts,
   useAdminOperationsDeployments,
   useAdminOperationsOverview,
 } from "./useAdminOperations";
 import type {
   AdminOperationsBackupsResponse,
+  AdminOperationsCostsResponse,
   AdminOperationsDeploymentsResponse,
   AdminOperationsOverviewResponse,
 } from "@/api/generated/types";
@@ -63,13 +66,19 @@ export function AdminOperationsPage() {
   const { t, i18n } = useTranslation(["admin"]);
   const { data: overviewData, isFetching: overviewFetching, refetch: refetchOverview } =
     useAdminOperationsOverview();
+  const { isFetching: costsFetching, refetch: refetchCosts } = useAdminOperationsCosts();
   const healthStatus = overviewData?.health.overallStatus;
   const locale = toIntlLocale(i18n.language);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
 
   function handleRefetch() {
-    void refetchOverview();
+    if (activeTab === "overview") void refetchOverview();
+    if (activeTab === "costs") void refetchCosts();
   }
+
+  const isRefetchingActive =
+    (activeTab === "overview" && overviewFetching) ||
+    (activeTab === "costs" && costsFetching);
 
   return (
     <AdminPageShell
@@ -84,8 +93,8 @@ export function AdminOperationsPage() {
         </>
       }
       actions={
-        activeTab === "overview" ? (
-          <Button variant="outline" size="sm" onClick={handleRefetch} isLoading={overviewFetching}>
+        (activeTab === "overview" || activeTab === "costs") ? (
+          <Button variant="outline" size="sm" onClick={handleRefetch} isLoading={isRefetchingActive}>
             <RefreshCw className="size-4" />
             {t("admin:refresh")}
           </Button>
@@ -110,7 +119,7 @@ export function AdminOperationsPage() {
                   "data-[state=active]:bg-indigo-50 data-[state=active]:text-indigo-700",
                   "dark:data-[state=active]:bg-indigo-900/30 dark:data-[state=active]:text-indigo-300",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500",
-                  ["costs", "monitoring", "security"].includes(tab)
+                  ["monitoring", "security"].includes(tab)
                     ? "cursor-default opacity-60"
                     : ""
                 )}
@@ -136,8 +145,13 @@ export function AdminOperationsPage() {
           <DeploymentsTabContent t={t} locale={locale} />
         </RadixTabs.Content>
 
+        {/* Costs tab */}
+        <RadixTabs.Content value="costs" className="flex flex-col gap-6 outline-none">
+          <CostsTabContent t={t} locale={locale} />
+        </RadixTabs.Content>
+
         {/* Coming soon tabs */}
-        {(["costs", "monitoring", "security"] as const).map((tab) => (
+        {(["monitoring", "security"] as const).map((tab) => (
           <RadixTabs.Content key={tab} value={tab} className="outline-none">
             <ComingSoonState t={t} tabKey={tab} />
           </RadixTabs.Content>
@@ -455,9 +469,234 @@ function DeploymentsContent({
   );
 }
 
+// ── Costs tab ─────────────────────────────────────────────────────────────────
+
+function CostsTabContent({ t, locale }: { t: TFunction; locale: string }) {
+  const { data, isLoading, isError, error, refetch, isFetching } = useAdminOperationsCosts();
+
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-base font-semibold text-slate-950 dark:text-white">
+            {t("admin:operationsPage.costsTab.title")}
+          </h2>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            {t("admin:operationsPage.costsTab.description")}
+          </p>
+        </div>
+        <Button variant="outline" size="sm" onClick={() => refetch()} isLoading={isFetching}>
+          <RefreshCw className="size-4" />
+          {t("admin:refresh")}
+        </Button>
+      </div>
+
+      {isLoading ? <TabLoadingState message={t("admin:operationsPage.costsTab.loading")} /> : null}
+      {isError ? (
+        <TabErrorState
+          t={t}
+          message={error instanceof Error ? error.message : undefined}
+          onRetry={() => refetch()}
+          titleKey="admin:operationsPage.costsTab.errorTitle"
+          descriptionKey="admin:operationsPage.costsTab.errorDescription"
+          retryKey="admin:operationsPage.costsTab.tryAgain"
+        />
+      ) : null}
+      {data ? <CostsContent data={data} t={t} locale={locale} /> : null}
+    </>
+  );
+}
+
+function CostsContent({
+  data,
+  t,
+  locale,
+}: {
+  data: AdminOperationsCostsResponse;
+  t: TFunction;
+  locale: string;
+}) {
+  const isConfigured = data.availability === "configured";
+  const isPlaceholder = data.availability === "placeholder";
+
+  const availabilityVariant: BadgeVariant =
+    isConfigured ? "success" : isPlaceholder ? "warning" : "danger";
+
+  return (
+    <div className="flex flex-col gap-4">
+      {/* Status header */}
+      <AdminSurface contentClassName="p-0">
+        <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-5 dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="flex items-start gap-4">
+              <div
+                className={cn(
+                  "flex size-12 items-center justify-center rounded-2xl",
+                  isConfigured
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                    : "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                )}
+              >
+                <DollarSign className="size-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-slate-950 dark:text-white">
+                  {t("admin:operationsPage.costsTab.cardTitle")}
+                </h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                  {isConfigured
+                    ? t("admin:operationsPage.costsTab.configuredCardDescription")
+                    : t("admin:operationsPage.costsTab.cardDescription")}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <Badge variant={availabilityVariant}>
+                {t(
+                  `admin:operationsPage.costsTab.availability.${data.availability}`,
+                  { defaultValue: data.availability }
+                )}
+              </Badge>
+              {data.currency ? (
+                <Badge variant="secondary">{data.currency}</Badge>
+              ) : null}
+            </div>
+          </div>
+
+          {data.note ? (
+            <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-300">
+              {data.note}
+            </div>
+          ) : null}
+        </div>
+      </AdminSurface>
+
+      {/* Cost summary cards — only when configured */}
+      {isConfigured ? (
+        <>
+          {/* Month totals */}
+          <AdminSurface
+            title={t("admin:operationsPage.costsTab.summaryTitle")}
+            description={t("admin:operationsPage.costsTab.summaryDescription")}
+            contentClassName="space-y-4"
+          >
+            <dl className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricCell
+                label={t("admin:operationsPage.costsTab.metrics.currentMonth")}
+                value={formatCurrency(data.currentMonthCost, data.currency, locale)}
+              />
+              <MetricCell
+                label={t("admin:operationsPage.costsTab.metrics.previousMonth")}
+                value={formatCurrency(data.previousMonthCost, data.currency, locale)}
+              />
+              <MetricCell
+                label={t("admin:operationsPage.costsTab.metrics.projected")}
+                value={
+                  data.projectedMonthCost != null
+                    ? formatCurrency(data.projectedMonthCost, data.currency, locale)
+                    : t("admin:operationsPage.statusLabels.unavailable")
+                }
+              />
+              <MetricCell
+                label={t("admin:operationsPage.costsTab.metrics.scope")}
+                value={data.scope ?? null}
+                mono
+              />
+            </dl>
+            <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
+              <span>
+                {t("admin:operationsPage.costsTab.metrics.lastUpdated")}:{" "}
+                {formatDateTime(data.lastUpdated, t, locale)}
+              </span>
+            </div>
+          </AdminSurface>
+
+          {/* Service breakdown */}
+          {data.serviceBreakdown && data.serviceBreakdown.length > 0 ? (
+            <AdminSurface
+              title={t("admin:operationsPage.costsTab.serviceBreakdownTitle")}
+              description={t("admin:operationsPage.costsTab.serviceBreakdownDescription")}
+              contentClassName="p-0"
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800">
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        {t("admin:operationsPage.costsTab.serviceBreakdownColumns.service")}
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        {t("admin:operationsPage.costsTab.serviceBreakdownColumns.cost")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.serviceBreakdown.map((entry, idx) => (
+                      <tr
+                        key={entry.serviceName ?? idx}
+                        className="border-b border-slate-100 last:border-0 dark:border-slate-800/60"
+                      >
+                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
+                          {entry.serviceName}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-slate-700 dark:text-slate-300">
+                          {formatCurrency(entry.cost, entry.currency, locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </AdminSurface>
+          ) : null}
+
+          {/* Daily trend */}
+          {data.dailyTrend && data.dailyTrend.length > 0 ? (
+            <AdminSurface
+              title={t("admin:operationsPage.costsTab.dailyTrendTitle")}
+              description={t("admin:operationsPage.costsTab.dailyTrendDescription")}
+              contentClassName="p-0"
+            >
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-200 dark:border-slate-800">
+                      <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        {t("admin:operationsPage.costsTab.dailyTrendColumns.date")}
+                      </th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        {t("admin:operationsPage.costsTab.dailyTrendColumns.cost")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.dailyTrend.map((entry, idx) => (
+                      <tr
+                        key={entry.date ?? idx}
+                        className="border-b border-slate-100 last:border-0 dark:border-slate-800/60"
+                      >
+                        <td className="px-4 py-3 font-mono text-slate-700 dark:text-slate-300">
+                          {entry.date}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-slate-700 dark:text-slate-300">
+                          {formatCurrency(entry.cost, data.currency, locale)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </AdminSurface>
+          ) : null}
+        </>
+      ) : null}
+    </div>
+  );
+}
+
 // ── Coming soon placeholder ───────────────────────────────────────────────────
 
-function ComingSoonState({ t, tabKey }: { t: TFunction; tabKey: "costs" | "monitoring" | "security" }) {
+function ComingSoonState({ t, tabKey }: { t: TFunction; tabKey: "monitoring" | "security" }) {
   return (
     <AdminSurface contentClassName="p-0">
       <div className="rounded-2xl border border-slate-200 bg-linear-to-br from-white to-slate-50 p-10 text-center dark:border-slate-800 dark:from-slate-950 dark:to-slate-900">
@@ -705,6 +944,24 @@ function SummaryPill({ label, value, variant }: { label: string; value: string; 
 }
 
 // ── Formatters ────────────────────────────────────────────────────────────────
+
+function formatCurrency(
+  amount: number | null | undefined,
+  currency: string | null | undefined,
+  locale: string
+): string {
+  if (amount == null) return "—";
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: currency ?? "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${currency ?? "USD"}`;
+  }
+}
 
 function formatMetric(value: string | number | null | undefined, t: TFunction, locale: string) {
   if (value === null || value === undefined || value === "") {

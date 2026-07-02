@@ -226,10 +226,6 @@
     },
     "comingSoon": {
       "label": "Coming soon",
-      "costs": {
-        "title": "Cost tracking coming soon",
-        "description": "Azure resource cost summaries and billing visibility will appear here once integrated."
-      },
       "monitoring": {
         "title": "Monitoring coming soon",
         "description": "Application metrics, uptime, and alerting integrations will appear here once connected."
@@ -237,6 +233,43 @@
       "security": {
         "title": "Security insights coming soon",
         "description": "Security event summaries, login anomalies, and audit log access will appear here once integrated."
+      }
+    },
+    "costsTab": {
+      "loading": "Loading cost data…",
+      "errorTitle": "Cost data unavailable",
+      "errorDescription": "The cost management endpoint could not be reached.",
+      "tryAgain": "Try again",
+      "title": "Azure cost management",
+      "description": "Azure Cost Management spend visibility for operational awareness.",
+      "cardTitle": "Cost configuration",
+      "cardDescription": "Azure Cost Management configuration is not present in this environment.",
+      "configuredCardDescription": "Live cost data from Azure Cost Management API.",
+      "summaryTitle": "Cost summary",
+      "summaryDescription": "Current month, previous month, and projected total costs.",
+      "serviceBreakdownTitle": "Service breakdown",
+      "serviceBreakdownDescription": "Cost by Azure service for the current month, sorted by spend.",
+      "dailyTrendTitle": "Daily trend",
+      "dailyTrendDescription": "Per-day cost totals for the current month.",
+      "metrics": {
+        "currentMonth": "Current month",
+        "previousMonth": "Previous month",
+        "projected": "Projected month",
+        "scope": "Scope",
+        "lastUpdated": "Last updated"
+      },
+      "serviceBreakdownColumns": {
+        "service": "Service",
+        "cost": "Cost"
+      },
+      "dailyTrendColumns": {
+        "date": "Date",
+        "cost": "Cost"
+      },
+      "availability": {
+        "placeholder": "Placeholder",
+        "configured": "Configured",
+        "unavailable": "Unavailable"
       }
     },
     "backupsTab": {

@@ -1,0 +1,15 @@
+type: object
+additionalProperties: false
+required:
+  - date
+  - cost
+properties:
+  date:
+    type: string
+    format: date
+    description: Date of the daily cost entry in YYYY-MM-DD format.
+  cost:
+    type: number
+    format: double
+    description: Total cost on this day across all services.
+
