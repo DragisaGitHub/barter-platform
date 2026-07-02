@@ -128,6 +128,9 @@ export type AdminOperationsStorageResponse = components["schemas"]["AdminOperati
 export type AdminOperationsDeploymentResponse = components["schemas"]["AdminOperationsDeploymentResponse"];
 export type AdminOperationsBackupsResponse = components["schemas"]["AdminOperationsBackupsResponse"];
 export type AdminOperationsDeploymentsResponse = components["schemas"]["AdminOperationsDeploymentsResponse"];
+export type AdminOperationsCostsDailyEntry = components["schemas"]["AdminOperationsCostsDailyEntry"];
+export type AdminOperationsCostsServiceEntry = components["schemas"]["AdminOperationsCostsServiceEntry"];
+export type AdminOperationsCostsResponse = components["schemas"]["AdminOperationsCostsResponse"];
 
 // ─── Reporting Request DTOs ─────────────────────────────────────────────────
 

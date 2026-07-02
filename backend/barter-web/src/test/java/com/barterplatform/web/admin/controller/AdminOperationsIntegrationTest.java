@@ -231,6 +231,39 @@ class AdminOperationsIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    // ── /admin/operations/costs ──────────────────────────────────────────────
+
+    @Test
+    void adminCanAccessOperationalCosts() throws Exception {
+        String adminToken = registerActivateLoginAndAssignAdmin();
+
+        // No Azure Cost Management config set in test context —
+        // service must return a safe placeholder, never throw or expose secrets.
+        mockMvc.perform(apiCostsGet().header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.availability").value("placeholder"))
+                .andExpect(jsonPath("$.note").exists())
+                // Sensitive cost fields must be absent when no config is present
+                .andExpect(jsonPath("$.currentMonthCost").doesNotExist())
+                .andExpect(jsonPath("$.previousMonthCost").doesNotExist())
+                .andExpect(jsonPath("$.dailyTrend").doesNotExist())
+                .andExpect(jsonPath("$.serviceBreakdown").doesNotExist());
+    }
+
+    @Test
+    void regularUserCannotAccessOperationalCosts() throws Exception {
+        String userToken = registerActivateAndLogin();
+
+        mockMvc.perform(apiCostsGet().header("Authorization", "Bearer " + userToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void unauthenticatedUserCannotAccessOperationalCosts() throws Exception {
+        mockMvc.perform(apiCostsGet())
+                .andExpect(status().isUnauthorized());
+    }
+
     private String registerActivateLoginAndAssignAdmin() throws Exception {
         UserEntity user = registerAndActivate("operations-admin", "operations-admin@example.com");
         var adminRole = roleRepository.findByCode(RoleCode.ADMIN).orElseThrow();
@@ -306,6 +339,13 @@ class AdminOperationsIntegrationTest {
         return get("/api/v1/admin/operations/deployments")
                 .contextPath("/api/v1")
                 .servletPath("/admin/operations/deployments")
+                .accept(MediaType.APPLICATION_JSON);
+    }
+
+    private MockHttpServletRequestBuilder apiCostsGet() {
+        return get("/api/v1/admin/operations/costs")
+                .contextPath("/api/v1")
+                .servletPath("/admin/operations/costs")
                 .accept(MediaType.APPLICATION_JSON);
     }
 

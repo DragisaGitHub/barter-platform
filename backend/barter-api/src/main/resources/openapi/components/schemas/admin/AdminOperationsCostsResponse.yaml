@@ -1,0 +1,53 @@
+type: object
+additionalProperties: false
+required:
+  - availability
+properties:
+  availability:
+    type: string
+    description: Availability state — one of configured, placeholder, or unavailable.
+  currency:
+    type: string
+    nullable: true
+    description: Currency code for all returned cost values, e.g. USD.
+  currentMonthCost:
+    type: number
+    format: double
+    nullable: true
+    description: Total cost for the current calendar month to date.
+  previousMonthCost:
+    type: number
+    format: double
+    nullable: true
+    description: Total cost for the previous calendar month.
+  projectedMonthCost:
+    type: number
+    format: double
+    nullable: true
+    description: Simple linear projection of the current month total cost, or null if insufficient data.
+  dailyTrend:
+    type: array
+    nullable: true
+    description: Per-day cost totals for the current month, aggregated across all services.
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/AdminOperationsCostsDailyEntry'
+  serviceBreakdown:
+    type: array
+    nullable: true
+    description: Cost breakdown by Azure service name for the current month.
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/AdminOperationsCostsServiceEntry'
+  scope:
+    type: string
+    nullable: true
+    description: The Azure Cost Management scope used for the query.
+  lastUpdated:
+    type: string
+    format: date-time
+    nullable: true
+    description: Timestamp when cost data was last fetched from Azure Cost Management.
+  note:
+    type: string
+    nullable: true
+    description: Human-readable note about the current cost data state or any errors.
+

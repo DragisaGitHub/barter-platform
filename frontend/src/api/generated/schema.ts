@@ -765,6 +765,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/operations/costs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Azure cost summary for administrators
+         * @description Returns Azure Cost Management data when configured, or a safe placeholder when configuration is absent.
+         */
+        get: operations["getAdminOperationsCosts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/system/sentry-test": {
         parameters: {
             query?: never;
@@ -2629,6 +2649,61 @@ export interface components {
             /** @description Human-readable note about the current deployment information state. */
             note?: string | null;
         };
+        AdminOperationsCostsDailyEntry: {
+            /** @description Date of the daily cost entry in YYYY-MM-DD format. */
+            /** Format: date */
+            date: string;
+            /**
+             * Format: double
+             * @description Total cost on this day across all services.
+             */
+            cost: number;
+        };
+        AdminOperationsCostsServiceEntry: {
+            /** @description Azure service or meter category name. */
+            serviceName: string;
+            /**
+             * Format: double
+             * @description Total cost for this service in the queried period.
+             */
+            cost: number;
+            /** @description Currency code, e.g. USD. */
+            currency: string;
+        };
+        AdminOperationsCostsResponse: {
+            /** @description Availability state — one of configured, placeholder, or unavailable. */
+            availability: string;
+            /** @description Currency code for all returned cost values, e.g. USD. */
+            currency?: string | null;
+            /**
+             * Format: double
+             * @description Total cost for the current calendar month to date.
+             */
+            currentMonthCost?: number | null;
+            /**
+             * Format: double
+             * @description Total cost for the previous calendar month.
+             */
+            previousMonthCost?: number | null;
+            /**
+             * Format: double
+             * @description Simple linear projection of the current month total cost, or null if insufficient data.
+             */
+            projectedMonthCost?: number | null;
+            /** @description Per-day cost totals for the current month, aggregated across all services. */
+            dailyTrend?: components["schemas"]["AdminOperationsCostsDailyEntry"][] | null;
+            /** @description Cost breakdown by Azure service name for the current month. */
+            serviceBreakdown?: components["schemas"]["AdminOperationsCostsServiceEntry"][] | null;
+            /** @description The Azure Cost Management scope used for the query. */
+            scope?: string | null;
+            /**
+             * Format: date-time
+             * @description Timestamp when cost data was last fetched from Azure Cost Management.
+             */
+            lastUpdated?: string | null;
+            /** @description Human-readable note about the current cost data state or any errors. */
+            note?: string | null;
+        };
         ReputationSummaryResponse: {
             /** Format: int32 */
             positiveReviewCount: number;
@@ -4228,6 +4303,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminOperationsDeploymentsResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    getAdminOperationsCosts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Cost summary returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdminOperationsCostsResponse"];
                 };
             };
             401: components["responses"]["Unauthorized"];

@@ -226,10 +226,6 @@
     },
     "comingSoon": {
       "label": "Uskoro",
-      "costs": {
-        "title": "Praćenje troškova — uskoro",
-        "description": "Pregled troškova Azure resursa i uvid u naplatu biće dostupni ovde nakon integracije."
-      },
       "monitoring": {
         "title": "Nadzor — uskoro",
         "description": "Metrike aplikacije, dostupnost i integracije za upozorenja biće dostupni ovde nakon povezivanja."
@@ -237,6 +233,43 @@
       "security": {
         "title": "Uvid u bezbednost — uskoro",
         "description": "Rezimei bezbednosnih događaja, anomalije prijava i pristup revizijskim zapisima biće dostupni ovde nakon integracije."
+      }
+    },
+    "costsTab": {
+      "loading": "Učitavanje podataka o troškovima…",
+      "errorTitle": "Podaci o troškovima nisu dostupni",
+      "errorDescription": "Endpoint za upravljanje troškovima nije dostupan.",
+      "tryAgain": "Pokušaj ponovo",
+      "title": "Azure upravljanje troškovima",
+      "description": "Pregled troškova Azure Cost Management-a za operativni uvid.",
+      "cardTitle": "Konfiguracija troškova",
+      "cardDescription": "Konfiguracija Azure Cost Management-a nije prisutna u ovom okruženju.",
+      "configuredCardDescription": "Aktuelni podaci o troškovima iz Azure Cost Management API-ja.",
+      "summaryTitle": "Rezime troškova",
+      "summaryDescription": "Troškovi tekućeg meseca, prethodnog meseca i projektovani ukupni troškovi.",
+      "serviceBreakdownTitle": "Raspodela po servisima",
+      "serviceBreakdownDescription": "Troškovi po Azure servisu za tekući mesec, sortirani po iznosu.",
+      "dailyTrendTitle": "Dnevni trend",
+      "dailyTrendDescription": "Dnevni ukupni troškovi za tekući mesec.",
+      "metrics": {
+        "currentMonth": "Tekući mesec",
+        "previousMonth": "Prethodni mesec",
+        "projected": "Projekcija meseca",
+        "scope": "Opseg",
+        "lastUpdated": "Poslednje ažuriranje"
+      },
+      "serviceBreakdownColumns": {
+        "service": "Servis",
+        "cost": "Trošak"
+      },
+      "dailyTrendColumns": {
+        "date": "Datum",
+        "cost": "Trošak"
+      },
+      "availability": {
+        "placeholder": "Privremeno",
+        "configured": "Podešeno",
+        "unavailable": "Nedostupno"
       }
     },
     "backupsTab": {

@@ -134,6 +134,8 @@ paths:
     $ref: './paths/admin-operations.yaml#/backups'
   /admin/operations/deployments:
     $ref: './paths/admin-operations.yaml#/deployments'
+  /admin/operations/costs:
+    $ref: './paths/admin-operations.yaml#/costs'
   /admin/system/sentry-test:
     $ref: './paths/admin-operations.yaml#/sentryTest'
   /catalog/tags:
@@ -485,6 +487,12 @@ components:
       $ref: './components/schemas/admin/AdminOperationsBackupsResponse.yaml'
     AdminOperationsDeploymentsResponse:
       $ref: './components/schemas/admin/AdminOperationsDeploymentsResponse.yaml'
+    AdminOperationsCostsDailyEntry:
+      $ref: './components/schemas/admin/AdminOperationsCostsDailyEntry.yaml'
+    AdminOperationsCostsServiceEntry:
+      $ref: './components/schemas/admin/AdminOperationsCostsServiceEntry.yaml'
+    AdminOperationsCostsResponse:
+      $ref: './components/schemas/admin/AdminOperationsCostsResponse.yaml'
     ReputationSummaryResponse:
       $ref: './components/schemas/reputation/ReputationSummaryResponse.yaml'
     NotificationType:
