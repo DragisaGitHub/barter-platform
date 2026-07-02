@@ -9,16 +9,19 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 
 import com.barterplatform.api.model.AdminCategoryPagedResponse;
 import com.barterplatform.api.model.AdminListingPagedResponse;
+import com.barterplatform.api.model.CategorySchemaPagedResponse;
 import com.barterplatform.api.model.ReportPagedResponse;
 import com.barterplatform.api.model.PermissionCode;
 import com.barterplatform.api.model.PermissionResponse;
 import com.barterplatform.application.catalog.service.AdminListingQueryService;
 import com.barterplatform.api.model.UserPagedResponse;
+import com.barterplatform.application.catalog.service.AdminCategorySchemaService;
 import com.barterplatform.application.catalog.service.AdminCategoryService;
 import com.barterplatform.web.admin.controller.AdminListingsController;
 import com.barterplatform.web.admin.controller.AdminReportsController;
 import com.barterplatform.application.catalog.service.ListingModerationService;
 import com.barterplatform.web.admin.controller.AdminCategoriesController;
+import com.barterplatform.web.admin.controller.AdminCategorySchemasController;
 import com.barterplatform.application.identity.service.PermissionService;
 import com.barterplatform.application.identity.service.UserManagementService;
 import com.barterplatform.application.identity.service.UserPreferenceService;
@@ -136,6 +139,28 @@ class RoleBasedAuthorizationMvcTest {
                 .andExpect(status().isOk());
     }
 
+    // --- Admin category schemas endpoint ---
+
+    @Test
+    void unauthenticatedCannotListAdminCategorySchemas() throws Exception {
+        mockMvc.perform(get("/admin/category-schemas"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(roles = "USER")
+    void userRoleCannotListAdminCategorySchemas() throws Exception {
+        mockMvc.perform(get("/admin/category-schemas"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
+    void adminRoleCanListAdminCategorySchemas() throws Exception {
+        mockMvc.perform(get("/admin/category-schemas"))
+                .andExpect(status().isOk());
+    }
+
     // --- Admin listings endpoint ---
 
     @Test
@@ -202,6 +227,7 @@ class RoleBasedAuthorizationMvcTest {
     })
     @Import({SecurityConfig.class, JwtAuthenticationFilter.class,
             UsersController.class, PermissionsController.class, AdminCategoriesController.class,
+            AdminCategorySchemasController.class,
             AdminListingsController.class, AdminReportsController.class})
     static class TestApplication {
 
@@ -252,6 +278,17 @@ class RoleBasedAuthorizationMvcTest {
                             .content(List.of())
                             .page(0).size(20).totalElements(0L).totalPages(0)
                             .first(true).last(true).sort("sortOrder,asc"));
+            return service;
+        }
+
+        @Bean
+        AdminCategorySchemaService adminCategorySchemaService() {
+            AdminCategorySchemaService service = mock(AdminCategorySchemaService.class);
+            when(service.searchSchemas(any(), any(), any(), any(), any(), any())).thenReturn(
+                    new CategorySchemaPagedResponse()
+                            .content(List.of())
+                            .page(0).size(20).totalElements(0L).totalPages(0)
+                            .first(true).last(true).sort("version,asc"));
             return service;
         }
 

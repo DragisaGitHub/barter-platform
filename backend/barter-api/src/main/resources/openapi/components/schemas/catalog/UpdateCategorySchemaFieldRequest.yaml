@@ -1,0 +1,39 @@
+type: object
+additionalProperties: false
+properties:
+  label:
+    type: string
+    minLength: 1
+    maxLength: 160
+    nullable: true
+  labelSr:
+    type: string
+    maxLength: 160
+    nullable: true
+  helpText:
+    type: string
+    nullable: true
+  required:
+    type: boolean
+    nullable: true
+  searchable:
+    type: boolean
+    nullable: true
+  filterable:
+    type: boolean
+    nullable: true
+  sortable:
+    type: boolean
+    nullable: true
+  unit:
+    type: string
+    maxLength: 40
+    nullable: true
+  displayOrder:
+    type: integer
+    format: int32
+    nullable: true
+  validationJson:
+    type: string
+    nullable: true
+

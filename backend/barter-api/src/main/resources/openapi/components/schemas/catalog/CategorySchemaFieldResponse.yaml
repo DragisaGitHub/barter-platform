@@ -1,0 +1,70 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - key
+  - label
+  - fieldType
+  - required
+  - searchable
+  - filterable
+  - sortable
+  - displayOrder
+  - options
+  - deleted
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  key:
+    type: string
+    maxLength: 100
+  label:
+    type: string
+    maxLength: 160
+  labelSr:
+    type: string
+    maxLength: 160
+    nullable: true
+  helpText:
+    type: string
+    nullable: true
+  fieldType:
+    $ref: '../../../openapi.yaml#/components/schemas/CategorySchemaFieldType'
+  required:
+    type: boolean
+  searchable:
+    type: boolean
+  filterable:
+    type: boolean
+  sortable:
+    type: boolean
+  unit:
+    type: string
+    maxLength: 40
+    nullable: true
+  displayOrder:
+    type: integer
+    format: int32
+  validationJson:
+    type: string
+    nullable: true
+  options:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/FieldOptionResponse'
+  deleted:
+    type: boolean
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    nullable: true
+  deletedAt:
+    type: string
+    format: date-time
+    nullable: true
+
