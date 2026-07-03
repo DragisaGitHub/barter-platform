@@ -267,7 +267,9 @@
     "proposeTradeDescription": "Send your offer directly to the owner and continue the conversation after signing in.",
     "ownerNotice": "This is your listing. You can manage it from your items dashboard.",
     "openOwnerDetail": "Open owner detail",
-    "editListing": "Edit listing"
+    "editListing": "Edit listing",
+    "specifications": "Specifications",
+    "noSpecifications": "No specifications provided for this item."
   },
   "itemForm": {
     "titlePlaceholder": "What are you listing?",

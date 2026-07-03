@@ -2323,6 +2323,10 @@ export interface components {
             fieldUuid: string;
             key: string;
             label: string;
+            labelSr?: string | null;
+            unit?: string | null;
+            /** Format: int32 */
+            displayOrder: number;
             fieldType: components["schemas"]["CategorySchemaFieldType"];
             valueText?: string | null;
             /** Format: double */

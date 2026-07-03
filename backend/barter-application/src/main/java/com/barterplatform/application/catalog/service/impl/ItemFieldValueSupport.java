@@ -166,6 +166,9 @@ public class ItemFieldValueSupport {
                     .fieldUuid(field.getUuid())
                     .key(field.getKey())
                     .label(field.getLabel())
+                    .labelSr(field.getLabelSr())
+                    .unit(field.getUnit())
+                    .displayOrder(field.getDisplayOrder())
                     .fieldType(com.barterplatform.api.model.CategorySchemaFieldType.valueOf(field.getFieldType().name()))
                     .valueText(value.getValueText())
                     .valueNumber(value.getValueNumber() == null ? null : value.getValueNumber().doubleValue())
@@ -188,6 +191,7 @@ public class ItemFieldValueSupport {
             response.setOptions(options);
             responses.add(response);
         }
+        responses.sort(java.util.Comparator.comparingInt(SchemaFieldValueResponse::getDisplayOrder));
         return responses;
     }
 
