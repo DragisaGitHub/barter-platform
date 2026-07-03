@@ -10,6 +10,8 @@ public interface FieldOptionRepository extends JpaRepository<FieldOptionEntity, 
 
     Optional<FieldOptionEntity> findByUuid(UUID uuid);
 
+    Optional<FieldOptionEntity> findByFieldIdAndValueIgnoreCaseAndDeletedAtIsNull(Long fieldId, String value);
+
     boolean existsByFieldIdAndValueAndDeletedAtIsNull(Long fieldId, String value);
 
     List<FieldOptionEntity> findAllByFieldIdAndDeletedAtIsNullOrderByDisplayOrderAsc(Long fieldId);

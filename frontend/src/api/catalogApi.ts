@@ -13,9 +13,17 @@ import type {
   ItemStatus,
   ItemCondition,
   CategoryFormSchemaResponse,
+  CategoryFiltersResponse,
 } from "./generated/types";
 
 // ─── Query parameter types ──────────────────────────────────────────────────
+
+/**
+ * Dynamic category-schema field filter values keyed by the schema field's `key` (Marketplace
+ * Schema Engine, Phase 6). Values are sent to the backend as `field.<key>` query parameters;
+ * arrays are sent as repeated parameters (OR-matched, used for MULTI_SELECT).
+ */
+export type SchemaFieldFilterValues = Record<string, string | boolean | string[] | undefined>;
 
 export interface SearchItemsParams {
   page?: number;
@@ -26,6 +34,7 @@ export interface SearchItemsParams {
   tagUuids?: string[];
   condition?: ItemCondition;
   location?: string;
+  fieldFilters?: SchemaFieldFilterValues;
 }
 
 export interface MyItemsParams {
@@ -79,9 +88,52 @@ export async function getCategoryFormSchema(categoryUuid: string): Promise<Categ
   return response.data;
 }
 
-export async function searchItems(params: SearchItemsParams = {}): Promise<ItemPagedResponse> {
-  const response = await apiClient.get<ItemPagedResponse>("/catalog/items", { params });
+export async function getCategoryFilters(categoryUuid: string): Promise<CategoryFiltersResponse> {
+  const response = await apiClient.get<CategoryFiltersResponse>(
+    `/categories/${categoryUuid}/filters`
+  );
   return response.data;
+}
+
+export async function searchItems(params: SearchItemsParams = {}): Promise<ItemPagedResponse> {
+  const { fieldFilters, ...rest } = params;
+  const response = await apiClient.get<ItemPagedResponse>("/catalog/items", {
+    params: { ...rest, ...buildFieldFilterQueryParams(fieldFilters) },
+  });
+  return response.data;
+}
+
+/**
+ * Converts dynamic schema field filter values into the `field.<key>` query parameter convention
+ * expected by the backend. Blank strings and undefined values are omitted so unrelated params are
+ * not sent for cleared filters.
+ */
+function buildFieldFilterQueryParams(fieldFilters?: SchemaFieldFilterValues): Record<string, string | string[]> {
+  if (!fieldFilters) {
+    return {};
+  }
+
+  const result: Record<string, string | string[]> = {};
+  for (const [key, value] of Object.entries(fieldFilters)) {
+    if (value === undefined || value === null) {
+      continue;
+    }
+    if (typeof value === "boolean") {
+      result[`field.${key}`] = String(value);
+      continue;
+    }
+    if (Array.isArray(value)) {
+      const nonEmpty = value.filter((v) => v !== undefined && v !== null && v !== "");
+      if (nonEmpty.length > 0) {
+        result[`field.${key}`] = nonEmpty;
+      }
+      continue;
+    }
+    if (value !== "") {
+      result[`field.${key}`] = value;
+    }
+  }
+  return result;
 }
 
 export async function listRecommendations(

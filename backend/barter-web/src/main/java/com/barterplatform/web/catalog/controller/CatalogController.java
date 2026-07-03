@@ -10,9 +10,14 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -50,6 +55,11 @@ public class CatalogController implements CatalogApi {
     }
 
     @Override
+    public ResponseEntity<CategoryFiltersResponse> getCategoryFilters(UUID categoryUuid) {
+        return ResponseEntity.ok(catalogQueryService.getCategoryFilters(categoryUuid));
+    }
+
+    @Override
     public ResponseEntity<ItemPagedResponse> searchItems(
             Integer page, Integer size, String sort,
             String q, UUID categoryUuid,
@@ -58,7 +68,8 @@ public class CatalogController implements CatalogApi {
         return ResponseEntity.ok(catalogQueryService.searchItems(
                 page, size, sort, q, categoryUuid, tagUuids,
                 mapConditionToDomain(condition),
-                location));
+                location,
+                extractFieldFilters()));
     }
 
     @Override
@@ -200,6 +211,33 @@ public class CatalogController implements CatalogApi {
             ItemCondition apiCondition) {
         return apiCondition == null ? null
                 : com.barterplatform.domain.catalog.enums.ItemCondition.valueOf(apiCondition.name());
+    }
+
+    /**
+     * Extracts dynamic category-schema field filters from the raw HTTP request query string using
+     * the {@code field.<key>=value} convention (Marketplace Schema Engine, Phase 6). These are not
+     * modeled as explicit OpenAPI parameters since the set of valid keys is dynamic per category
+     * schema; instead they are read directly from the current request, which is safe because this
+     * method only runs within an active servlet request (standard Spring MVC dispatch).
+     */
+    private Map<String, List<String>> extractFieldFilters() {
+        ServletRequestAttributes attributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            return Map.of();
+        }
+
+        Map<String, String[]> parameterMap = attributes.getRequest().getParameterMap();
+        Map<String, List<String>> fieldFilters = new LinkedHashMap<>();
+        for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
+            String name = entry.getKey();
+            if (!name.startsWith("field.") || name.length() <= "field.".length()) {
+                continue;
+            }
+            String key = name.substring("field.".length());
+            fieldFilters.put(key, new ArrayList<>(List.of(entry.getValue())));
+        }
+        return fieldFilters;
     }
 }
 

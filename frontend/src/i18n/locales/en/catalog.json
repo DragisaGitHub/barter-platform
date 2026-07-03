@@ -187,6 +187,12 @@
       "placeholder": "e.g. Belgrade, Vračar",
       "apply": "Apply location"
     },
+    "categoryFilters": {
+      "title": "Category filters",
+      "helper": "Narrow down results using specifications specific to the selected category.",
+      "apply": "Apply filters",
+      "any": "Any"
+    },
     "results": {
       "searchResults": "Search results for “{{query}}”",
       "categoryItems": "{{category}} items",

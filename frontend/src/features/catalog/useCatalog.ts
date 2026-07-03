@@ -4,6 +4,7 @@ import {
   listPopularCategories,
   listTags,
   getCategoryFormSchema,
+  getCategoryFilters,
   searchItems,
   listRecommendations,
   getItemByUuid,
@@ -31,6 +32,7 @@ import type {
   UpdateItemRequest,
   ArchiveItemRequest,
   CategoryFormSchemaResponse,
+  CategoryFiltersResponse,
 } from "@/api/generated/types.ts";
 
 // ─── Query keys ─────────────────────────────────────────────────────────────
@@ -40,6 +42,7 @@ export const catalogKeys = {
   popularCategories: (limit: number) => ["catalog", "categories", "popular", limit] as const,
   tags: ["catalog", "tags"] as const,
   categoryFormSchema: (categoryUuid: string) => ["catalog", "categories", categoryUuid, "form-schema"] as const,
+  categoryFilters: (categoryUuid: string) => ["catalog", "categories", categoryUuid, "filters"] as const,
   items: ["catalog", "items"] as const,
   favorites: ["catalog", "favorites"] as const,
   itemSearch: (params: SearchItemsParams) => ["catalog", "items", "search", params] as const,
@@ -81,6 +84,15 @@ export function useCategoryFormSchema(categoryUuid: string | undefined) {
   return useQuery<CategoryFormSchemaResponse>({
     queryKey: catalogKeys.categoryFormSchema(categoryUuid ?? ""),
     queryFn: () => getCategoryFormSchema(categoryUuid as string),
+    enabled: !!categoryUuid,
+    staleTime: 60 * 1000,
+  });
+}
+
+export function useCategoryFilters(categoryUuid: string | undefined) {
+  return useQuery<CategoryFiltersResponse>({
+    queryKey: catalogKeys.categoryFilters(categoryUuid ?? ""),
+    queryFn: () => getCategoryFilters(categoryUuid as string),
     enabled: !!categoryUuid,
     staleTime: 60 * 1000,
   });

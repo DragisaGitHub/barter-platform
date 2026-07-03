@@ -68,6 +68,35 @@ categoryFormSchema:
       '404':
         $ref: '../components/responses/NotFound.yaml'
 
+categoryFilters:
+  get:
+    tags:
+      - Catalog
+    operationId: getCategoryFilters
+    summary: Get dynamic marketplace filters for a category
+    description: >
+      Returns the filterable fields (filterable=true) from the category's ACTIVE schema, ordered
+      by displayOrder, so marketplace clients can render dynamic category-specific filter controls.
+      If no ACTIVE schema exists for the category, or it has no filterable fields, an empty
+      filters response is returned instead of an error.
+    parameters:
+      - name: categoryUuid
+        in: path
+        required: true
+        description: Category UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Category filters returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/CategoryFiltersResponse'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
 tags:
   get:
     tags:
@@ -90,6 +119,17 @@ items:
       - Catalog
     operationId: searchItems
     summary: Search and browse items
+    description: >
+      In addition to the documented query parameters, dynamic category-schema filters can be
+      supplied using the `field.<key>` query parameter convention, where `<key>` is the schema
+      field's key (see GET /categories/{categoryUuid}/filters). Example: `field.brand=Samsung`,
+      `field.has5g=true`. Repeat the same `field.<key>` parameter to OR-match multiple values
+      (used for MULTI_SELECT fields). Filtering semantics per field type: TEXT uses a
+      case-insensitive contains match; NUMBER and DATE use an exact match; BOOLEAN accepts
+      `true`/`false`; SINGLE_SELECT accepts the option value or option UUID; MULTI_SELECT matches
+      items where any selected option matches one of the provided values. Field filters require
+      `categoryUuid` to be provided, must reference an ACTIVE schema field with filterable=true,
+      and unrecognized/non-filterable keys result in a 400 response.
     parameters:
       - $ref: '../openapi.yaml#/components/parameters/Page'
       - $ref: '../openapi.yaml#/components/parameters/Size'

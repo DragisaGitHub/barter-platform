@@ -6,15 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.barterplatform.api.model.CategoryFiltersResponse;
 import com.barterplatform.api.model.CategoryFormSchemaResponse;
 import com.barterplatform.api.model.CategoryResponse;
 import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.TagResponse;
+import com.barterplatform.application.catalog.mapper.CategoryFiltersMapper;
 import com.barterplatform.application.catalog.mapper.CategoryFormSchemaMapper;
 import com.barterplatform.application.catalog.mapper.CategoryMapper;
 import com.barterplatform.application.catalog.mapper.ItemImageMapper;
@@ -50,6 +53,7 @@ import com.barterplatform.infrastructure.catalog.repository.TagRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
@@ -85,7 +89,9 @@ class CatalogQueryServiceImplTest {
     @Mock private ItemMapper itemMapper;
     @Mock private ItemImageMapper itemImageMapper;
     @Mock private CategoryFormSchemaMapper categoryFormSchemaMapper;
+    @Mock private CategoryFiltersMapper categoryFiltersMapper;
     @Mock private ItemFieldValueSupport itemFieldValueSupport;
+    @Mock private ItemFieldFilterSupport itemFieldFilterSupport;
     @Mock private PageResponseMapper pageResponseMapper;
 
     private CatalogQueryServiceImpl service;
@@ -101,7 +107,7 @@ class CatalogQueryServiceImplTest {
                 listingModerationActionRepository,
                 categorySchemaRepository, categorySchemaFieldRepository, fieldOptionRepository,
                 categoryMapper, tagMapper, itemMapper, itemImageMapper,
-                categoryFormSchemaMapper, itemFieldValueSupport,
+                categoryFormSchemaMapper, categoryFiltersMapper, itemFieldValueSupport, itemFieldFilterSupport,
                 pageRequestFactory, pageResponseMapper);
     }
 
@@ -548,7 +554,7 @@ class CatalogQueryServiceImplTest {
                     .thenReturn(expected);
 
             ItemPagedResponse result = service.searchItems(
-                    0, 20, null, null, null, null, null, null);
+                    0, 20, null, null, null, null, null, null, null);
 
             assertNotNull(result);
             assertEquals(0, result.getTotalElements());
@@ -574,7 +580,7 @@ class CatalogQueryServiceImplTest {
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
             ItemPagedResponse result = service.searchItems(
-                    0, 20, null, "test", catUuid, null, ItemCondition.NEW, null);
+                    0, 20, null, "test", catUuid, null, ItemCondition.NEW, null, null);
 
             assertNotNull(result);
             verify(categoryRepository).findByUuid(catUuid);
@@ -593,7 +599,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, null, null, null);
+            service.searchItems(0, 20, null, null, null, null, null, null, null);
 
             verify(tagRepository, never()).findByUuid(any());
         }
@@ -610,7 +616,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, List.of(), null, null);
+            service.searchItems(0, 20, null, null, null, List.of(), null, null, null);
 
             verify(tagRepository, never()).findByUuid(any());
         }
@@ -631,7 +637,7 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, List.of(tagUuid), null, null);
+            service.searchItems(0, 20, null, null, null, List.of(tagUuid), null, null, null);
 
             verify(tagRepository).findByUuid(tagUuid);
             verify(itemRepository).findAll(any(Specification.class), any(Pageable.class));
@@ -654,7 +660,7 @@ class CatalogQueryServiceImplTest {
 
             // Should not throw; unknown UUID is skipped
             ItemPagedResponse result = service.searchItems(
-                    0, 20, null, null, null, List.of(unknownUuid), null, null);
+                    0, 20, null, null, null, List.of(unknownUuid), null, null, null);
 
             assertNotNull(result);
             verify(tagRepository).findByUuid(unknownUuid);
@@ -672,10 +678,127 @@ class CatalogQueryServiceImplTest {
             when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
                     .thenReturn(new ItemPagedResponse().content(List.of()));
 
-            service.searchItems(0, 20, null, null, null, null, null, "belgrade");
+            service.searchItems(0, 20, null, null, null, null, null, "belgrade", null);
 
             verify(tagRepository, never()).findByUuid(any());
             verify(itemRepository).findAll(any(Specification.class), any(Pageable.class));
+        }
+
+        @Test
+        @DisplayName("delegates dynamic field filters to ItemFieldFilterSupport with resolved categoryId")
+        @SuppressWarnings("unchecked")
+        void delegatesFieldFiltersToSupport() {
+            UUID catUuid = UUID.randomUUID();
+            CategoryEntity cat = category(5L, catUuid, "Electronics");
+
+            Page<ItemEntity> emptyPage = new PageImpl<>(List.of(),
+                    PageRequest.of(0, 20, Sort.by(Sort.Direction.ASC, "createdAt")), 0);
+
+            Map<String, List<String>> fieldFilters = Map.of("brand", List.of("Samsung"));
+
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+            when(itemFieldFilterSupport.buildSpecifications(eq(5L), eq(fieldFilters)))
+                    .thenReturn(List.of(mock(Specification.class)));
+            when(itemRepository.findAll(any(Specification.class), any(Pageable.class)))
+                    .thenReturn(emptyPage);
+            when(pageResponseMapper.toItemPagedResponse(eq(emptyPage), any(), any()))
+                    .thenReturn(new ItemPagedResponse().content(List.of()));
+
+            ItemPagedResponse result = service.searchItems(
+                    0, 20, null, null, catUuid, null, null, null, fieldFilters);
+
+            assertNotNull(result);
+            verify(itemFieldFilterSupport).buildSpecifications(5L, fieldFilters);
+        }
+
+        @Test
+        @DisplayName("propagates BAD_REQUEST from ItemFieldFilterSupport (e.g. unknown field)")
+        @SuppressWarnings("unchecked")
+        void propagatesBadRequestFromFieldFilterSupport() {
+            Map<String, List<String>> fieldFilters = Map.of("unknownField", List.of("x"));
+
+            when(itemFieldFilterSupport.buildSpecifications(eq(null), eq(fieldFilters)))
+                    .thenThrow(new ApiException(org.springframework.http.HttpStatus.BAD_REQUEST,
+                            com.barterplatform.common.exception.ErrorCode.BAD_REQUEST,
+                            "Field filters require categoryUuid to be provided."));
+
+            ApiException ex = assertThrows(ApiException.class, () -> service.searchItems(
+                    0, 20, null, null, null, null, null, null, fieldFilters));
+
+            assertEquals(400, ex.getStatus().value());
+        }
+    }
+
+    // ── getCategoryFilters ────────────────────────────────────────
+
+    @Nested
+    @DisplayName("getCategoryFilters")
+    class GetCategoryFilters {
+
+        @Test
+        @DisplayName("throws NOT_FOUND when category does not exist")
+        void throwsNotFoundWhenCategoryMissing() {
+            UUID categoryUuid = UUID.randomUUID();
+            when(categoryRepository.findByUuid(categoryUuid)).thenReturn(Optional.empty());
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> service.getCategoryFilters(categoryUuid));
+            assertEquals(404, ex.getStatus().value());
+        }
+
+        @Test
+        @DisplayName("returns empty filters response when no ACTIVE schema exists")
+        void returnsEmptyResponseWhenNoActiveSchema() {
+            UUID categoryUuid = UUID.randomUUID();
+            CategoryEntity cat = category(1L, categoryUuid, "Books");
+            when(categoryRepository.findByUuid(categoryUuid)).thenReturn(Optional.of(cat));
+            when(categorySchemaRepository.findByCategoryIdAndStatusAndDeletedAtIsNull(1L, CategorySchemaStatus.ACTIVE))
+                    .thenReturn(Optional.empty());
+
+            CategoryFiltersResponse empty = new CategoryFiltersResponse()
+                    .categoryUuid(categoryUuid).filters(List.of());
+            when(categoryFiltersMapper.toEmptyResponse(categoryUuid)).thenReturn(empty);
+
+            CategoryFiltersResponse result = service.getCategoryFilters(categoryUuid);
+
+            assertNotNull(result);
+            assertEquals(categoryUuid, result.getCategoryUuid());
+            assertEquals(List.of(), result.getFilters());
+            verify(categorySchemaFieldRepository, never()).findAllBySchemaIdAndDeletedAtIsNullOrderByDisplayOrderAsc(any());
+        }
+
+        @Test
+        @DisplayName("only includes filterable fields, ordered by displayOrder")
+        void returnsOnlyFilterableFields() {
+            UUID categoryUuid = UUID.randomUUID();
+            CategoryEntity cat = category(1L, categoryUuid, "Electronics");
+            CategorySchemaEntity schemaEntity = schema(2L, UUID.randomUUID(), 1L, 1, CategorySchemaStatus.ACTIVE);
+
+            CategorySchemaFieldEntity filterableField = field(3L, UUID.randomUUID(), 2L, "brand",
+                    CategorySchemaFieldType.SINGLE_SELECT, 0);
+            filterableField.setFilterable(true);
+            CategorySchemaFieldEntity nonFilterableField = field(4L, UUID.randomUUID(), 2L, "notes",
+                    CategorySchemaFieldType.TEXT, 1);
+            nonFilterableField.setFilterable(false);
+
+            when(categoryRepository.findByUuid(categoryUuid)).thenReturn(Optional.of(cat));
+            when(categorySchemaRepository.findByCategoryIdAndStatusAndDeletedAtIsNull(1L, CategorySchemaStatus.ACTIVE))
+                    .thenReturn(Optional.of(schemaEntity));
+            when(categorySchemaFieldRepository.findAllBySchemaIdAndDeletedAtIsNullOrderByDisplayOrderAsc(2L))
+                    .thenReturn(List.of(filterableField, nonFilterableField));
+            when(fieldOptionRepository.findAllByFieldIdInAndDeletedAtIsNullOrderByDisplayOrderAsc(List.of(3L)))
+                    .thenReturn(List.of());
+
+            CategoryFiltersResponse expected = new CategoryFiltersResponse()
+                    .categoryUuid(categoryUuid).schemaUuid(schemaEntity.getUuid()).filters(List.of());
+            when(categoryFiltersMapper.toResponse(eq(categoryUuid), eq(schemaEntity), eq(List.of(filterableField)), any()))
+                    .thenReturn(expected);
+
+            CategoryFiltersResponse result = service.getCategoryFilters(categoryUuid);
+
+            assertNotNull(result);
+            verify(fieldOptionRepository).findAllByFieldIdInAndDeletedAtIsNullOrderByDisplayOrderAsc(List.of(3L));
+            verify(categoryFiltersMapper).toResponse(eq(categoryUuid), eq(schemaEntity), eq(List.of(filterableField)), any());
         }
     }
 }

@@ -180,7 +180,7 @@ class CatalogControllerMvcTest {
         ItemPagedResponse pagedResponse = new ItemPagedResponse()
                 .content(List.of(new ItemSummaryResponse().uuid(UUID.randomUUID()).title("Widget")))
                 .page(0).size(20).totalElements(1L).totalPages(1).first(true).last(true);
-        when(catalogQueryService.searchItems(any(), any(), any(), any(), any(), any(), any(), any()))
+        when(catalogQueryService.searchItems(any(), any(), any(), any(), any(), any(), any(), any(), any()))
                 .thenReturn(pagedResponse);
 
         mockMvc.perform(apiGet("/catalog/items")
@@ -191,7 +191,87 @@ class CatalogControllerMvcTest {
                 .andExpect(jsonPath("$.content[0].title").value("Widget"))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
-        verify(catalogQueryService).searchItems(eq(0), eq(20), any(), any(), any(), any(), any(), eq("Belgrade"));
+        verify(catalogQueryService).searchItems(eq(0), eq(20), any(), any(), any(), any(), any(), eq("Belgrade"), any());
+    }
+
+    @Test
+    void searchItemsShouldExtractFieldFiltersFromQueryString() throws Exception {
+        ItemPagedResponse pagedResponse = new ItemPagedResponse()
+                .content(List.of()).page(0).size(20).totalElements(0L).totalPages(0).first(true).last(true);
+        when(catalogQueryService.searchItems(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .thenReturn(pagedResponse);
+
+        mockMvc.perform(apiGet("/catalog/items")
+                        .queryParam("field.brand", "Samsung")
+                        .queryParam("field.has5g", "true"))
+                .andExpect(status().isOk());
+
+        @SuppressWarnings("unchecked")
+        org.mockito.ArgumentCaptor<java.util.Map<String, java.util.List<String>>> captor =
+                org.mockito.ArgumentCaptor.forClass(java.util.Map.class);
+        verify(catalogQueryService).searchItems(any(), any(), any(), any(), any(), any(), any(), any(), captor.capture());
+        java.util.Map<String, java.util.List<String>> fieldFilters = captor.getValue();
+        org.junit.jupiter.api.Assertions.assertEquals(List.of("Samsung"), fieldFilters.get("brand"));
+        org.junit.jupiter.api.Assertions.assertEquals(List.of("true"), fieldFilters.get("has5g"));
+    }
+
+    // ── Public: getCategoryFilters ───────────────────────────────
+
+    @Test
+    void getCategoryFiltersShouldReturn200WithoutAuthentication() throws Exception {
+        UUID categoryUuid = UUID.randomUUID();
+        CategoryFormFieldOptionResponse option = new CategoryFormFieldOptionResponse()
+                .optionUuid(UUID.randomUUID()).value("samsung").label("Samsung").displayOrder(0);
+        CategoryFilterFieldResponse filterField = new CategoryFilterFieldResponse()
+                .fieldUuid(UUID.randomUUID())
+                .key("brand")
+                .label("Brand")
+                .fieldType(CategorySchemaFieldType.SINGLE_SELECT)
+                .displayOrder(0)
+                .options(List.of(option));
+        CategoryFiltersResponse response = new CategoryFiltersResponse()
+                .categoryUuid(categoryUuid)
+                .schemaUuid(UUID.randomUUID())
+                .schemaVersion(1)
+                .filters(List.of(filterField));
+        when(catalogQueryService.getCategoryFilters(categoryUuid)).thenReturn(response);
+
+        mockMvc.perform(apiGet("/categories/" + categoryUuid + "/filters"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.categoryUuid").value(categoryUuid.toString()))
+                .andExpect(jsonPath("$.filters[0].key").value("brand"))
+                .andExpect(jsonPath("$.filters[0].options[0].value").value("samsung"));
+
+        verify(catalogQueryService).getCategoryFilters(categoryUuid);
+    }
+
+    @Test
+    void getCategoryFiltersShouldReturn200WithEmptyFiltersWhenNoActiveSchema() throws Exception {
+        UUID categoryUuid = UUID.randomUUID();
+        CategoryFiltersResponse response = new CategoryFiltersResponse()
+                .categoryUuid(categoryUuid)
+                .schemaUuid(null)
+                .schemaVersion(null)
+                .filters(List.of());
+        when(catalogQueryService.getCategoryFilters(categoryUuid)).thenReturn(response);
+
+        mockMvc.perform(apiGet("/categories/" + categoryUuid + "/filters"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.categoryUuid").value(categoryUuid.toString()))
+                .andExpect(jsonPath("$.filters").isArray())
+                .andExpect(jsonPath("$.filters").isEmpty());
+    }
+
+    @Test
+    void getCategoryFiltersShouldReturn404WhenCategoryUnknown() throws Exception {
+        UUID categoryUuid = UUID.randomUUID();
+        when(catalogQueryService.getCategoryFilters(categoryUuid))
+                .thenThrow(new ApiException(org.springframework.http.HttpStatus.NOT_FOUND,
+                        com.barterplatform.common.exception.ErrorCode.NOT_FOUND,
+                        "Category with uuid '%s' was not found.".formatted(categoryUuid)));
+
+        mockMvc.perform(apiGet("/categories/" + categoryUuid + "/filters"))
+                .andExpect(status().isNotFound());
     }
 
     // ── Public: getItemByUuid ────────────────────────────────────
