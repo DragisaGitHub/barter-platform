@@ -36,6 +36,7 @@ export function CreateItemPage() {
                 quantity: entry.quantity,
               })),
         status: data.status,
+        schemaFieldValues: data.schemaFieldValues,
       },
       {
         onSuccess: (item) => {

@@ -1,16 +1,23 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCategories, useTags } from "./useCatalog";
+import { useCategories, useTags, useCategoryFormSchema } from "./useCatalog";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import type { ItemCondition, ItemStatus, ListingMode, ListingTemplateType } from "@/api/generated/types.ts";
+import type { ItemCondition, ItemStatus, ListingMode, ListingTemplateType, SchemaFieldValueRequest, SchemaFieldValueResponse } from "@/api/generated/types.ts";
 import { useTranslation } from "react-i18next";
 import {
   LISTING_TEMPLATE_OPTIONS,
   resolveListingModeForTemplate,
 } from "./listingTemplates";
+import { SchemaFieldsSection } from "./SchemaFieldsSection";
+import {
+  buildInitialDynamicValues,
+  validateAndBuildSchemaFieldValues,
+  type DynamicFieldValue,
+  type DynamicFieldValues,
+} from "./schemaFieldValues";
 
 const CONDITIONS: { value: ItemCondition; labelKey: string }[] = [
   { value: "NEW", labelKey: "condition.new" },
@@ -127,10 +134,14 @@ const itemFormSchema = z
   });
 
 type ItemFormInput = z.input<typeof itemFormSchema>;
-export type ItemFormValues = z.output<typeof itemFormSchema>;
+export type ItemFormValues = z.output<typeof itemFormSchema> & {
+  schemaFieldValues?: SchemaFieldValueRequest[];
+};
 
 interface ItemFormProps {
   defaultValues?: Partial<ItemFormInput>;
+  /** Existing dynamic schema field values for edit prefill, when available from the backend. */
+  initialSchemaFieldValues?: SchemaFieldValueResponse[];
   onSubmit: (data: ItemFormValues) => void;
   isSubmitting?: boolean;
   submitLabel?: string;
@@ -138,6 +149,7 @@ interface ItemFormProps {
 
 export function ItemForm({
   defaultValues,
+  initialSchemaFieldValues,
   onSubmit,
   isSubmitting = false,
   submitLabel,
@@ -202,6 +214,7 @@ export function ItemForm({
   const selectedTags = methods.watch("tagUuids") ?? [];
   const selectedTemplate = methods.watch("listingTemplateType") ?? "STANDARD_ITEM";
   const selectedListingMode = methods.watch("listingMode") ?? "SINGLE";
+  const selectedCategoryUuid = methods.watch("categoryUuid");
   const showEntries = selectedListingMode !== "SINGLE";
   const selectedTemplateOption = LISTING_TEMPLATE_OPTIONS.find((template) => template.value === selectedTemplate);
   const selectedListingModeOption = LISTING_MODES.find((mode) => mode.value === selectedListingMode);
@@ -215,9 +228,53 @@ export function ItemForm({
     }
   }, [methods, selectedTemplate]);
 
+  // ── Dynamic category-schema fields ──────────────────────────────────────
+
+  const { data: categoryFormSchema, isLoading: schemaLoading } = useCategoryFormSchema(
+    selectedCategoryUuid || undefined
+  );
+  const schemaFields = categoryFormSchema?.fields ?? [];
+
+  const [dynamicValues, setDynamicValues] = useState<DynamicFieldValues>(() =>
+    buildInitialDynamicValues(initialSchemaFieldValues)
+  );
+  const [dynamicErrors, setDynamicErrors] = useState<Record<string, string>>({});
+
+  const previousCategoryUuidRef = useRef(selectedCategoryUuid);
+  useEffect(() => {
+    if (previousCategoryUuidRef.current !== selectedCategoryUuid) {
+      // Category changed: dynamic fields belong to a different schema, so reset local state.
+      setDynamicValues({});
+      setDynamicErrors({});
+      previousCategoryUuidRef.current = selectedCategoryUuid;
+    }
+  }, [selectedCategoryUuid]);
+
+  const handleDynamicFieldChange = (fieldUuid: string, value: DynamicFieldValue) => {
+    setDynamicValues((prev) => ({ ...prev, [fieldUuid]: value }));
+    setDynamicErrors((prev) => {
+      if (!prev[fieldUuid]) {
+        return prev;
+      }
+      const next = { ...prev };
+      delete next[fieldUuid];
+      return next;
+    });
+  };
+
+  const handleFormSubmit = handleSubmit((data) => {
+    const { errors: schemaErrors, requests } = validateAndBuildSchemaFieldValues(schemaFields, dynamicValues);
+    if (Object.keys(schemaErrors).length > 0) {
+      setDynamicErrors(schemaErrors);
+      return;
+    }
+    setDynamicErrors({});
+    onSubmit({ ...data, schemaFieldValues: requests });
+  });
+
   return (
     <FormProvider {...methods}>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
         <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4 dark:border-sky-900/50 dark:bg-sky-950/20">
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
@@ -455,6 +512,16 @@ export function ItemForm({
             </p>
           )}
         </div>
+
+        <SchemaFieldsSection
+          fields={schemaFields}
+          isLoading={schemaLoading}
+          hasCategory={!!selectedCategoryUuid}
+          values={dynamicValues}
+          errors={dynamicErrors}
+          onChange={handleDynamicFieldChange}
+          t={t}
+        />
 
         <div>
           <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">

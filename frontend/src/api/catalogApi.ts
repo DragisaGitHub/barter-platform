@@ -12,6 +12,7 @@ import type {
   ArchiveItemRequest,
   ItemStatus,
   ItemCondition,
+  CategoryFormSchemaResponse,
 } from "./generated/types";
 
 // ─── Query parameter types ──────────────────────────────────────────────────
@@ -68,6 +69,13 @@ export async function listPopularCategories(
 
 export async function listTags(): Promise<TagResponse[]> {
   const response = await apiClient.get<TagResponse[]>("/catalog/tags");
+  return response.data;
+}
+
+export async function getCategoryFormSchema(categoryUuid: string): Promise<CategoryFormSchemaResponse> {
+  const response = await apiClient.get<CategoryFormSchemaResponse>(
+    `/categories/${categoryUuid}/form-schema`
+  );
   return response.data;
 }
 

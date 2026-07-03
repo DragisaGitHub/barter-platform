@@ -85,6 +85,7 @@ class CatalogQueryServiceImplTest {
     @Mock private ItemMapper itemMapper;
     @Mock private ItemImageMapper itemImageMapper;
     @Mock private CategoryFormSchemaMapper categoryFormSchemaMapper;
+    @Mock private ItemFieldValueSupport itemFieldValueSupport;
     @Mock private PageResponseMapper pageResponseMapper;
 
     private CatalogQueryServiceImpl service;
@@ -100,7 +101,7 @@ class CatalogQueryServiceImplTest {
                 listingModerationActionRepository,
                 categorySchemaRepository, categorySchemaFieldRepository, fieldOptionRepository,
                 categoryMapper, tagMapper, itemMapper, itemImageMapper,
-                categoryFormSchemaMapper,
+                categoryFormSchemaMapper, itemFieldValueSupport,
                 pageRequestFactory, pageResponseMapper);
     }
 

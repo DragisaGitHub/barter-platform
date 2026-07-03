@@ -50,4 +50,9 @@ properties:
   status:
     $ref: '../../../openapi.yaml#/components/schemas/ItemStatus'
     description: Optional initial status. Defaults to DRAFT if omitted.
+  schemaFieldValues:
+    type: array
+    description: Dynamic category-schema field values. Only fields from the category's ACTIVE schema are accepted.
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/SchemaFieldValueRequest'
 

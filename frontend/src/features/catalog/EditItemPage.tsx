@@ -50,6 +50,7 @@ export function EditItemPage() {
                 quantity: entry.quantity,
               })),
         status: data.status,
+        schemaFieldValues: data.schemaFieldValues,
       },
       {
         onSuccess: () => {
@@ -207,6 +208,7 @@ export function EditItemPage() {
               wishlistSummary: item.templateMetadata?.wishlistSummary ?? "",
               wantedConditionNotes: item.templateMetadata?.wantedConditionNotes ?? "",
             }}
+            initialSchemaFieldValues={item.schemaFieldValues}
             onSubmit={handleSubmit}
             isSubmitting={updateMutation.isPending}
             submitLabel={t("catalog:editItem.submit")}

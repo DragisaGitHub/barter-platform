@@ -46,4 +46,9 @@ properties:
   status:
     $ref: '../../../openapi.yaml#/components/schemas/ItemStatus'
     description: Only DRAFT and ACTIVE transitions are allowed by the owner.
+  schemaFieldValues:
+    type: array
+    description: When provided, replaces the full set of dynamic category-schema field values for this item. When omitted, existing values are preserved.
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/SchemaFieldValueRequest'
 

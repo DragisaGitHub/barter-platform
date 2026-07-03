@@ -306,7 +306,15 @@
     "selectCategory": "Select a category",
     "selectCondition": "Select condition",
     "loadingTags": "Loading tags...",
-    "noTags": "No tags available"
+    "noTags": "No tags available",
+    "schemaFields": {
+      "title": "Category specifications",
+      "helper": "These fields are specific to the selected category and help other traders compare listings.",
+      "loading": "Loading category fields...",
+      "empty": "This category does not have any additional specification fields.",
+      "selectOption": "Select an option",
+      "noOptions": "No options available"
+    }
   },
   "validation": {
     "titleRequired": "Title is required",
@@ -330,7 +338,8 @@
     "duplicateCountMin": "Duplicate count cannot be negative",
     "duplicateCountMax": "Duplicate count must be 10000 or less",
     "duplicateCountCannotExceedOwned": "Duplicate count cannot exceed total owned",
-    "wishlistSummaryRequired": "Wishlist listings need a summary or at least one wanted entry"
+    "wishlistSummaryRequired": "Wishlist listings need a summary or at least one wanted entry",
+    "schemaFieldRequired": "This field is required"
   },
   "createItem": {
     "title": "Create New Item",

@@ -363,6 +363,10 @@ components:
       $ref: './components/schemas/catalog/ItemListingEntryRequest.yaml'
     ItemListingEntryResponse:
       $ref: './components/schemas/catalog/ItemListingEntryResponse.yaml'
+    SchemaFieldValueRequest:
+      $ref: './components/schemas/catalog/SchemaFieldValueRequest.yaml'
+    SchemaFieldValueResponse:
+      $ref: './components/schemas/catalog/SchemaFieldValueResponse.yaml'
     WishlistMatchReason:
       $ref: './components/schemas/catalog/WishlistMatchReason.yaml'
     WishlistMatchResponse:

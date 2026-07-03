@@ -61,6 +61,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     private final ItemMapper itemMapper;
     private final ItemImageMapper itemImageMapper;
     private final CategoryFormSchemaMapper categoryFormSchemaMapper;
+    private final ItemFieldValueSupport itemFieldValueSupport;
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
 
@@ -172,6 +173,7 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                 item, category, tags, owner.getUuid(), owner.getUsername(), primaryImageUrl, images,
                 itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(item.getId()));
         enrichTemplateFields(response, item);
+        response.setSchemaFieldValues(itemFieldValueSupport.loadResponses(item.getId()));
         if (elevatedAccess) {
             response.setModerationSummary(loadModerationSummary(item.getId()));
         }

@@ -2257,6 +2257,8 @@ export interface components {
             /** Format: date-time */
             removedAt?: string | null;
             moderationSummary?: components["schemas"]["OwnerListingModerationSummary"];
+            /** @description Dynamic category-schema field values currently set on this item. */
+            schemaFieldValues?: components["schemas"]["SchemaFieldValueResponse"][];
         };
         ItemPagedResponse: {
             content: components["schemas"]["ItemSummaryResponse"][];
@@ -2287,6 +2289,49 @@ export interface components {
             quantity?: number | null;
             /** Format: int32 */
             sortOrder: number;
+        };
+        SchemaFieldValueRequest: {
+            /**
+             * Format: uuid
+             * @description UUID of the category_schema_field this value belongs to.
+             */
+            fieldUuid: string;
+            /** @description Value for TEXT fields. */
+            valueText?: string | null;
+            /**
+             * Format: double
+             * @description Value for NUMBER fields.
+             */
+            valueNumber?: number | null;
+            /** @description Value for BOOLEAN fields. */
+            valueBoolean?: boolean | null;
+            /**
+             * Format: date
+             * @description Value for DATE fields.
+             */
+            valueDate?: string | null;
+            /**
+             * Format: uuid
+             * @description Selected field option for SINGLE_SELECT fields.
+             */
+            optionUuid?: string | null;
+            /** @description Selected field options for MULTI_SELECT fields. */
+            optionUuids?: string[] | null;
+        };
+        SchemaFieldValueResponse: {
+            /** Format: uuid */
+            fieldUuid: string;
+            key: string;
+            label: string;
+            fieldType: components["schemas"]["CategorySchemaFieldType"];
+            valueText?: string | null;
+            /** Format: double */
+            valueNumber?: number | null;
+            valueBoolean?: boolean | null;
+            /** Format: date */
+            valueDate?: string | null;
+            /** @description Selected option(s). Zero or one entry for SINGLE_SELECT, zero or more for MULTI_SELECT. */
+            options: components["schemas"]["CategoryFormFieldOptionResponse"][];
         };
         /**
          * @description Explainable reason shown with a recommended listing. No scores are exposed to users.
@@ -2450,6 +2495,8 @@ export interface components {
             entries?: components["schemas"]["ItemListingEntryRequest"][];
             /** @description Optional initial status. Defaults to DRAFT if omitted. */
             status?: components["schemas"]["ItemStatus"];
+            /** @description Dynamic category-schema field values. Only fields from the category's ACTIVE schema are accepted. */
+            schemaFieldValues?: components["schemas"]["SchemaFieldValueRequest"][];
         };
         CreateCategoryRequest: {
             name: string;
@@ -2489,6 +2536,8 @@ export interface components {
             entries?: components["schemas"]["ItemListingEntryRequest"][];
             /** @description Only DRAFT and ACTIVE transitions are allowed by the owner. */
             status?: components["schemas"]["ItemStatus"];
+            /** @description When provided, replaces the full set of dynamic category-schema field values for this item. When omitted, existing values are preserved. */
+            schemaFieldValues?: components["schemas"]["SchemaFieldValueRequest"][];
         };
         UpdateCategoryRequest: {
             name?: string | null;
