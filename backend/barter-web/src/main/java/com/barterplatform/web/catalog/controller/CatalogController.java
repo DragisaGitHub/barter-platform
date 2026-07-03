@@ -45,6 +45,11 @@ public class CatalogController implements CatalogApi {
     }
 
     @Override
+    public ResponseEntity<CategoryFormSchemaResponse> getCategoryFormSchema(UUID categoryUuid) {
+        return ResponseEntity.ok(catalogQueryService.getCategoryFormSchema(categoryUuid));
+    }
+
+    @Override
     public ResponseEntity<ItemPagedResponse> searchItems(
             Integer page, Integer size, String sort,
             String q, UUID categoryUuid,

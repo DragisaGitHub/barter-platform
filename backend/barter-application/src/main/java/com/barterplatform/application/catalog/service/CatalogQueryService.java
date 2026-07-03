@@ -1,5 +1,6 @@
 package com.barterplatform.application.catalog.service;
 
+import com.barterplatform.api.model.CategoryFormSchemaResponse;
 import com.barterplatform.api.model.CategoryResponse;
 import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
@@ -17,6 +18,15 @@ public interface CatalogQueryService {
     List<PopularCategoryResponse> listPopularCategories(Integer limit);
 
     List<TagResponse> listTags();
+
+    /**
+     * Get the active form schema for a category so clients can build dynamic listing forms.
+     * Returns schema metadata with ordered fields, and ordered options for SINGLE_SELECT/MULTI_SELECT
+     * fields. Soft-deleted schemas, fields, and options are excluded.
+     * If no ACTIVE schema exists for the category, an empty schema response is returned (not an error).
+     * Throws ApiException NOT_FOUND if the category UUID does not exist or is soft-deleted.
+     */
+    CategoryFormSchemaResponse getCategoryFormSchema(UUID categoryUuid);
 
     /**
      * Public item search with optional filters.

@@ -43,6 +43,31 @@ popularCategories:
       '400':
         $ref: '../components/responses/BadRequest.yaml'
 
+categoryFormSchema:
+  get:
+    tags:
+      - Catalog
+    operationId: getCategoryFormSchema
+    summary: Get the active form schema for a category
+    description: Returns the active category schema (metadata, ordered fields, and ordered options) so clients can build dynamic listing forms. If no active schema exists for the category, an empty schema response is returned instead of an error.
+    parameters:
+      - name: categoryUuid
+        in: path
+        required: true
+        description: Category UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Category form schema returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/CategoryFormSchemaResponse'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
 tags:
   get:
     tags:

@@ -1,0 +1,25 @@
+type: object
+additionalProperties: false
+required:
+  - optionUuid
+  - value
+  - label
+  - displayOrder
+properties:
+  optionUuid:
+    type: string
+    format: uuid
+  value:
+    type: string
+    maxLength: 100
+  label:
+    type: string
+    maxLength: 160
+  labelSr:
+    type: string
+    maxLength: 160
+    nullable: true
+  displayOrder:
+    type: integer
+    format: int32
+

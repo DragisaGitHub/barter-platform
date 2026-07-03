@@ -9,11 +9,13 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.barterplatform.api.model.CategoryFormSchemaResponse;
 import com.barterplatform.api.model.CategoryResponse;
 import com.barterplatform.api.model.ItemDetailResponse;
 import com.barterplatform.api.model.ItemPagedResponse;
 import com.barterplatform.api.model.ItemSummaryResponse;
 import com.barterplatform.api.model.TagResponse;
+import com.barterplatform.application.catalog.mapper.CategoryFormSchemaMapper;
 import com.barterplatform.application.catalog.mapper.CategoryMapper;
 import com.barterplatform.application.catalog.mapper.ItemImageMapper;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
@@ -22,15 +24,23 @@ import com.barterplatform.application.common.pagination.PageRequestFactory;
 import com.barterplatform.application.common.pagination.PageResponseMapper;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.domain.catalog.entity.CategoryEntity;
+import com.barterplatform.domain.catalog.entity.CategorySchemaEntity;
+import com.barterplatform.domain.catalog.entity.CategorySchemaFieldEntity;
+import com.barterplatform.domain.catalog.entity.FieldOptionEntity;
 import com.barterplatform.domain.catalog.entity.ItemEntity;
 import com.barterplatform.domain.catalog.entity.ItemListingEntryEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagEntity;
 import com.barterplatform.domain.catalog.entity.ItemTagId;
 import com.barterplatform.domain.catalog.entity.TagEntity;
+import com.barterplatform.domain.catalog.enums.CategorySchemaFieldType;
+import com.barterplatform.domain.catalog.enums.CategorySchemaStatus;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.infrastructure.catalog.repository.CategoryRepository;
+import com.barterplatform.infrastructure.catalog.repository.CategorySchemaFieldRepository;
+import com.barterplatform.infrastructure.catalog.repository.CategorySchemaRepository;
+import com.barterplatform.infrastructure.catalog.repository.FieldOptionRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemImageRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemListingEntryRepository;
 import com.barterplatform.infrastructure.catalog.repository.ItemRepository;
@@ -67,10 +77,14 @@ class CatalogQueryServiceImplTest {
     @Mock private ItemImageRepository itemImageRepository;
     @Mock private ItemListingEntryRepository itemListingEntryRepository;
     @Mock private ListingModerationActionRepository listingModerationActionRepository;
+    @Mock private CategorySchemaRepository categorySchemaRepository;
+    @Mock private CategorySchemaFieldRepository categorySchemaFieldRepository;
+    @Mock private FieldOptionRepository fieldOptionRepository;
     @Mock private CategoryMapper categoryMapper;
     @Mock private TagMapper tagMapper;
     @Mock private ItemMapper itemMapper;
     @Mock private ItemImageMapper itemImageMapper;
+    @Mock private CategoryFormSchemaMapper categoryFormSchemaMapper;
     @Mock private PageResponseMapper pageResponseMapper;
 
     private CatalogQueryServiceImpl service;
@@ -84,7 +98,9 @@ class CatalogQueryServiceImplTest {
                 itemTagRepository, userRepository, itemImageRepository,
                 itemListingEntryRepository,
                 listingModerationActionRepository,
+                categorySchemaRepository, categorySchemaFieldRepository, fieldOptionRepository,
                 categoryMapper, tagMapper, itemMapper, itemImageMapper,
+                categoryFormSchemaMapper,
                 pageRequestFactory, pageResponseMapper);
     }
 
@@ -135,6 +151,44 @@ class CatalogQueryServiceImplTest {
         return u;
     }
 
+    private CategorySchemaEntity schema(Long id, UUID uuid, Long categoryId, int version, CategorySchemaStatus status) {
+        CategorySchemaEntity e = new CategorySchemaEntity();
+        e.setId(id);
+        e.setUuid(uuid);
+        e.setCategoryId(categoryId);
+        e.setVersion(version);
+        e.setStatus(status);
+        e.setName("Schema " + version);
+        e.setCreatedAt(OffsetDateTime.now());
+        return e;
+    }
+
+    private CategorySchemaFieldEntity field(Long id, UUID uuid, Long schemaId, String key,
+                                             CategorySchemaFieldType fieldType, int displayOrder) {
+        CategorySchemaFieldEntity e = new CategorySchemaFieldEntity();
+        e.setId(id);
+        e.setUuid(uuid);
+        e.setSchemaId(schemaId);
+        e.setKey(key);
+        e.setLabel(key);
+        e.setFieldType(fieldType);
+        e.setDisplayOrder(displayOrder);
+        e.setCreatedAt(OffsetDateTime.now());
+        return e;
+    }
+
+    private FieldOptionEntity option(Long id, UUID uuid, Long fieldId, String value, int displayOrder) {
+        FieldOptionEntity e = new FieldOptionEntity();
+        e.setId(id);
+        e.setUuid(uuid);
+        e.setFieldId(fieldId);
+        e.setValue(value);
+        e.setLabel(value);
+        e.setDisplayOrder(displayOrder);
+        e.setCreatedAt(OffsetDateTime.now());
+        return e;
+    }
+
     // ── listCategories ───────────────────────────────────────────
 
     @Nested
@@ -182,6 +236,119 @@ class CatalogQueryServiceImplTest {
 
             assertEquals(1, result.size());
             assertEquals("Vintage", result.getFirst().getName());
+        }
+    }
+
+    // ── getItemByUuid ────────────────────────────────────────────
+
+    @Nested
+    @DisplayName("getCategoryFormSchema")
+    class GetCategoryFormSchema {
+
+        @Test
+        @DisplayName("throws NOT_FOUND when category does not exist")
+        void throwsNotFoundWhenCategoryMissing() {
+            UUID categoryUuid = UUID.randomUUID();
+            when(categoryRepository.findByUuid(categoryUuid)).thenReturn(Optional.empty());
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> service.getCategoryFormSchema(categoryUuid));
+            assertEquals(404, ex.getStatus().value());
+        }
+
+        @Test
+        @DisplayName("throws NOT_FOUND when category is soft-deleted")
+        void throwsNotFoundWhenCategorySoftDeleted() {
+            UUID categoryUuid = UUID.randomUUID();
+            CategoryEntity cat = category(1L, categoryUuid, "Books");
+            cat.setDeletedAt(OffsetDateTime.now());
+            when(categoryRepository.findByUuid(categoryUuid)).thenReturn(Optional.of(cat));
+
+            ApiException ex = assertThrows(ApiException.class,
+                    () -> service.getCategoryFormSchema(categoryUuid));
+            assertEquals(404, ex.getStatus().value());
+        }
+
+        @Test
+        @DisplayName("returns empty schema response when no ACTIVE schema exists")
+        void returnsEmptyResponseWhenNoActiveSchema() {
+            UUID categoryUuid = UUID.randomUUID();
+            CategoryEntity cat = category(1L, categoryUuid, "Books");
+            when(categoryRepository.findByUuid(categoryUuid)).thenReturn(Optional.of(cat));
+            when(categorySchemaRepository.findByCategoryIdAndStatusAndDeletedAtIsNull(1L, CategorySchemaStatus.ACTIVE))
+                    .thenReturn(Optional.empty());
+
+            CategoryFormSchemaResponse empty = new CategoryFormSchemaResponse()
+                    .categoryUuid(categoryUuid).fields(List.of());
+            when(categoryFormSchemaMapper.toEmptyResponse(categoryUuid)).thenReturn(empty);
+
+            CategoryFormSchemaResponse result = service.getCategoryFormSchema(categoryUuid);
+
+            assertNotNull(result);
+            assertEquals(categoryUuid, result.getCategoryUuid());
+            assertEquals(List.of(), result.getFields());
+            verify(categorySchemaFieldRepository, never()).findAllBySchemaIdAndDeletedAtIsNullOrderByDisplayOrderAsc(any());
+        }
+
+        @Test
+        @DisplayName("returns ordered fields and options for the ACTIVE schema")
+        void returnsOrderedFieldsAndOptions() {
+            UUID categoryUuid = UUID.randomUUID();
+            CategoryEntity cat = category(1L, categoryUuid, "Books");
+            CategorySchemaEntity schemaEntity = schema(2L, UUID.randomUUID(), 1L, 1, CategorySchemaStatus.ACTIVE);
+
+            CategorySchemaFieldEntity field1 = field(3L, UUID.randomUUID(), 2L, "author",
+                    CategorySchemaFieldType.TEXT, 0);
+            CategorySchemaFieldEntity field2 = field(4L, UUID.randomUUID(), 2L, "condition",
+                    CategorySchemaFieldType.SINGLE_SELECT, 1);
+            FieldOptionEntity opt1 = option(5L, UUID.randomUUID(), 4L, "new", 0);
+            FieldOptionEntity opt2 = option(6L, UUID.randomUUID(), 4L, "used", 1);
+
+            when(categoryRepository.findByUuid(categoryUuid)).thenReturn(Optional.of(cat));
+            when(categorySchemaRepository.findByCategoryIdAndStatusAndDeletedAtIsNull(1L, CategorySchemaStatus.ACTIVE))
+                    .thenReturn(Optional.of(schemaEntity));
+            when(categorySchemaFieldRepository.findAllBySchemaIdAndDeletedAtIsNullOrderByDisplayOrderAsc(2L))
+                    .thenReturn(List.of(field1, field2));
+            when(fieldOptionRepository.findAllByFieldIdInAndDeletedAtIsNullOrderByDisplayOrderAsc(List.of(3L, 4L)))
+                    .thenReturn(List.of(opt1, opt2));
+
+            CategoryFormSchemaResponse expected = new CategoryFormSchemaResponse()
+                    .categoryUuid(categoryUuid)
+                    .schemaUuid(schemaEntity.getUuid())
+                    .schemaVersion(1)
+                    .fields(List.of());
+            when(categoryFormSchemaMapper.toResponse(eq(categoryUuid), eq(schemaEntity), eq(List.of(field1, field2)), any()))
+                    .thenReturn(expected);
+
+            CategoryFormSchemaResponse result = service.getCategoryFormSchema(categoryUuid);
+
+            assertNotNull(result);
+            assertEquals(schemaEntity.getUuid(), result.getSchemaUuid());
+            verify(fieldOptionRepository).findAllByFieldIdInAndDeletedAtIsNullOrderByDisplayOrderAsc(List.of(3L, 4L));
+        }
+
+        @Test
+        @DisplayName("does not query options when the ACTIVE schema has no fields")
+        void doesNotQueryOptionsWhenNoFields() {
+            UUID categoryUuid = UUID.randomUUID();
+            CategoryEntity cat = category(1L, categoryUuid, "Books");
+            CategorySchemaEntity schemaEntity = schema(2L, UUID.randomUUID(), 1L, 1, CategorySchemaStatus.ACTIVE);
+
+            when(categoryRepository.findByUuid(categoryUuid)).thenReturn(Optional.of(cat));
+            when(categorySchemaRepository.findByCategoryIdAndStatusAndDeletedAtIsNull(1L, CategorySchemaStatus.ACTIVE))
+                    .thenReturn(Optional.of(schemaEntity));
+            when(categorySchemaFieldRepository.findAllBySchemaIdAndDeletedAtIsNullOrderByDisplayOrderAsc(2L))
+                    .thenReturn(List.of());
+
+            CategoryFormSchemaResponse expected = new CategoryFormSchemaResponse()
+                    .categoryUuid(categoryUuid).schemaUuid(schemaEntity.getUuid()).fields(List.of());
+            when(categoryFormSchemaMapper.toResponse(eq(categoryUuid), eq(schemaEntity), eq(List.of()), any()))
+                    .thenReturn(expected);
+
+            CategoryFormSchemaResponse result = service.getCategoryFormSchema(categoryUuid);
+
+            assertNotNull(result);
+            verify(fieldOptionRepository, never()).findAllByFieldIdInAndDeletedAtIsNullOrderByDisplayOrderAsc(any());
         }
     }
 
