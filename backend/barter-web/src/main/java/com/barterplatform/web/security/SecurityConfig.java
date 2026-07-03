@@ -144,6 +144,7 @@ public class SecurityConfig {
                              "/catalog/recommendations",
                             "/catalog/items/*",
                             "/catalog/items/*/images",
+                            "/categories/*/form-schema",
                             "/api/v1/catalog/categories",
                             "/api/v1/catalog/categories/popular",
                             "/api/v1/catalog/tags",
@@ -151,6 +152,7 @@ public class SecurityConfig {
                             "/api/v1/catalog/recommendations",
                             "/api/v1/catalog/items/*",
                             "/api/v1/catalog/items/*/images",
+                            "/api/v1/categories/*/form-schema",
                             "/profiles/**",
                             "/api/v1/profiles/**").permitAll();
                     authorize.requestMatchers("/files/**", "/api/v1/files/**").permitAll();

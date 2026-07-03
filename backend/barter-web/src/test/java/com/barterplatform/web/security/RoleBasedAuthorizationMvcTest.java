@@ -9,6 +9,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 
 import com.barterplatform.api.model.AdminCategoryPagedResponse;
 import com.barterplatform.api.model.AdminListingPagedResponse;
+import com.barterplatform.api.model.CategoryFormSchemaResponse;
 import com.barterplatform.api.model.CategorySchemaPagedResponse;
 import com.barterplatform.api.model.ReportPagedResponse;
 import com.barterplatform.api.model.PermissionCode;
@@ -17,11 +18,21 @@ import com.barterplatform.application.catalog.service.AdminListingQueryService;
 import com.barterplatform.api.model.UserPagedResponse;
 import com.barterplatform.application.catalog.service.AdminCategorySchemaService;
 import com.barterplatform.application.catalog.service.AdminCategoryService;
+import com.barterplatform.application.catalog.service.CatalogQueryService;
+import com.barterplatform.application.catalog.service.FavoriteItemService;
+import com.barterplatform.application.catalog.service.ItemCommandService;
+import com.barterplatform.application.catalog.service.ItemImageService;
+import com.barterplatform.application.catalog.service.RecommendationService;
+import com.barterplatform.application.catalog.service.WishlistMatchService;
+import com.barterplatform.common.exception.ApiException;
+import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.web.admin.controller.AdminListingsController;
 import com.barterplatform.web.admin.controller.AdminReportsController;
 import com.barterplatform.application.catalog.service.ListingModerationService;
 import com.barterplatform.web.admin.controller.AdminCategoriesController;
 import com.barterplatform.web.admin.controller.AdminCategorySchemasController;
+import com.barterplatform.web.catalog.controller.CatalogController;
+import com.barterplatform.web.exception.GlobalExceptionHandler;
 import com.barterplatform.application.identity.service.PermissionService;
 import com.barterplatform.application.identity.service.UserManagementService;
 import com.barterplatform.application.identity.service.UserPreferenceService;
@@ -55,6 +66,9 @@ import org.springframework.test.web.servlet.MockMvc;
 )
 @AutoConfigureMockMvc
 class RoleBasedAuthorizationMvcTest {
+
+    private static final UUID EXISTING_CATEGORY_UUID = UUID.fromString("22222222-2222-2222-2222-222222222222");
+    private static final UUID UNKNOWN_CATEGORY_UUID = UUID.fromString("33333333-3333-3333-3333-333333333333");
 
     @Autowired
     private MockMvc mockMvc;
@@ -190,6 +204,20 @@ class RoleBasedAuthorizationMvcTest {
                 .andExpect(status().isOk());
     }
 
+    // --- Public category form-schema endpoint ---
+
+    @Test
+    void anonymousCanGetCategoryFormSchemaWhenCategoryExists() throws Exception {
+        mockMvc.perform(get("/categories/" + EXISTING_CATEGORY_UUID + "/form-schema"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void anonymousGetsNotFoundForUnknownCategoryFormSchema() throws Exception {
+        mockMvc.perform(get("/categories/" + UNKNOWN_CATEGORY_UUID + "/form-schema"))
+                .andExpect(status().isNotFound());
+    }
+
     // --- Admin reports endpoint ---
 
     @Test
@@ -227,8 +255,8 @@ class RoleBasedAuthorizationMvcTest {
     })
     @Import({SecurityConfig.class, JwtAuthenticationFilter.class,
             UsersController.class, PermissionsController.class, AdminCategoriesController.class,
-            AdminCategorySchemasController.class,
-            AdminListingsController.class, AdminReportsController.class})
+            AdminCategorySchemasController.class, CatalogController.class,
+            AdminListingsController.class, AdminReportsController.class, GlobalExceptionHandler.class})
     static class TestApplication {
 
         @Bean
@@ -290,6 +318,44 @@ class RoleBasedAuthorizationMvcTest {
                             .page(0).size(20).totalElements(0L).totalPages(0)
                             .first(true).last(true).sort("version,asc"));
             return service;
+        }
+
+        @Bean
+        CatalogQueryService catalogQueryService() {
+            CatalogQueryService service = mock(CatalogQueryService.class);
+            when(service.getCategoryFormSchema(EXISTING_CATEGORY_UUID)).thenReturn(
+                    new CategoryFormSchemaResponse()
+                            .categoryUuid(EXISTING_CATEGORY_UUID)
+                            .fields(List.of()));
+            when(service.getCategoryFormSchema(UNKNOWN_CATEGORY_UUID)).thenThrow(
+                    new ApiException(org.springframework.http.HttpStatus.NOT_FOUND, ErrorCode.NOT_FOUND,
+                            "Category with uuid '%s' was not found.".formatted(UNKNOWN_CATEGORY_UUID)));
+            return service;
+        }
+
+        @Bean
+        FavoriteItemService favoriteItemService() {
+            return mock(FavoriteItemService.class);
+        }
+
+        @Bean
+        ItemCommandService itemCommandService() {
+            return mock(ItemCommandService.class);
+        }
+
+        @Bean
+        ItemImageService itemImageService() {
+            return mock(ItemImageService.class);
+        }
+
+        @Bean
+        RecommendationService recommendationService() {
+            return mock(RecommendationService.class);
+        }
+
+        @Bean
+        WishlistMatchService wishlistMatchService() {
+            return mock(WishlistMatchService.class);
         }
 
         @Bean

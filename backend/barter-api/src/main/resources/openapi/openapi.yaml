@@ -98,6 +98,8 @@ paths:
     $ref: './paths/catalog.yaml#/categories'
   /catalog/categories/popular:
     $ref: './paths/catalog.yaml#/popularCategories'
+  /categories/{categoryUuid}/form-schema:
+    $ref: './paths/catalog.yaml#/categoryFormSchema'
   /admin/categories:
     $ref: './paths/admin-categories.yaml#/categories'
   /admin/categories/{categoryUuid}:
@@ -339,6 +341,12 @@ components:
       $ref: './components/schemas/catalog/CreateFieldOptionRequest.yaml'
     UpdateFieldOptionRequest:
       $ref: './components/schemas/catalog/UpdateFieldOptionRequest.yaml'
+    CategoryFormFieldOptionResponse:
+      $ref: './components/schemas/catalog/CategoryFormFieldOptionResponse.yaml'
+    CategoryFormFieldResponse:
+      $ref: './components/schemas/catalog/CategoryFormFieldResponse.yaml'
+    CategoryFormSchemaResponse:
+      $ref: './components/schemas/catalog/CategoryFormSchemaResponse.yaml'
     TagResponse:
       $ref: './components/schemas/catalog/TagResponse.yaml'
     AdminTagResponse:

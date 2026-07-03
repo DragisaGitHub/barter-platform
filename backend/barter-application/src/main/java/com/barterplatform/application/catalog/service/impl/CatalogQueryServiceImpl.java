@@ -1,6 +1,7 @@
 package com.barterplatform.application.catalog.service.impl;
 
 import com.barterplatform.api.model.*;
+import com.barterplatform.application.catalog.mapper.CategoryFormSchemaMapper;
 import com.barterplatform.application.catalog.mapper.CategoryMapper;
 import com.barterplatform.application.catalog.mapper.ItemImageMapper;
 import com.barterplatform.application.catalog.mapper.ItemMapper;
@@ -11,6 +12,7 @@ import com.barterplatform.application.common.pagination.PageResponseMapper;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
 import com.barterplatform.domain.catalog.entity.*;
+import com.barterplatform.domain.catalog.enums.CategorySchemaStatus;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import com.barterplatform.domain.catalog.moderation.ListingModerationActionEntity;
@@ -51,10 +53,14 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     private final ItemImageRepository itemImageRepository;
     private final ItemListingEntryRepository itemListingEntryRepository;
     private final ListingModerationActionRepository listingModerationActionRepository;
+    private final CategorySchemaRepository categorySchemaRepository;
+    private final CategorySchemaFieldRepository categorySchemaFieldRepository;
+    private final FieldOptionRepository fieldOptionRepository;
     private final CategoryMapper categoryMapper;
     private final TagMapper tagMapper;
     private final ItemMapper itemMapper;
     private final ItemImageMapper itemImageMapper;
+    private final CategoryFormSchemaMapper categoryFormSchemaMapper;
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
 
@@ -78,6 +84,36 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     public List<com.barterplatform.api.model.TagResponse> listTags() {
         return tagMapper.toResponseList(
                 tagRepository.findAllByDeletedAtIsNullOrderByNameAsc());
+    }
+
+    @Override
+    public CategoryFormSchemaResponse getCategoryFormSchema(UUID categoryUuid) {
+        CategoryEntity category = categoryRepository.findByUuid(categoryUuid)
+                .filter(c -> c.getDeletedAt() == null)
+                .orElseThrow(() -> notFound("Category with uuid '%s' was not found.", categoryUuid));
+
+        Optional<CategorySchemaEntity> activeSchema = categorySchemaRepository
+                .findByCategoryIdAndStatusAndDeletedAtIsNull(category.getId(), CategorySchemaStatus.ACTIVE);
+
+        if (activeSchema.isEmpty()) {
+            return categoryFormSchemaMapper.toEmptyResponse(categoryUuid);
+        }
+
+        CategorySchemaEntity schema = activeSchema.get();
+        List<CategorySchemaFieldEntity> fields = categorySchemaFieldRepository
+                .findAllBySchemaIdAndDeletedAtIsNullOrderByDisplayOrderAsc(schema.getId());
+
+        Map<Long, List<FieldOptionEntity>> optionsByFieldId;
+        if (fields.isEmpty()) {
+            optionsByFieldId = Map.of();
+        } else {
+            List<Long> fieldIds = fields.stream().map(CategorySchemaFieldEntity::getId).toList();
+            optionsByFieldId = fieldOptionRepository
+                    .findAllByFieldIdInAndDeletedAtIsNullOrderByDisplayOrderAsc(fieldIds).stream()
+                    .collect(Collectors.groupingBy(FieldOptionEntity::getFieldId, LinkedHashMap::new, Collectors.toList()));
+        }
+
+        return categoryFormSchemaMapper.toResponse(categoryUuid, schema, fields, optionsByFieldId);
     }
 
     // ── Public item search ───────────────────────────────────────

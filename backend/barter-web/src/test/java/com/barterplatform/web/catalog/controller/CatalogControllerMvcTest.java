@@ -2,6 +2,7 @@ package com.barterplatform.web.catalog.controller;
 
 import com.barterplatform.api.model.*;
 import com.barterplatform.application.catalog.service.*;
+import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.web.exception.GlobalExceptionHandler;
 import com.barterplatform.web.security.jwt.AuthenticatedUser;
 import org.junit.jupiter.api.AfterEach;
@@ -103,6 +104,73 @@ class CatalogControllerMvcTest {
                 .andExpect(jsonPath("$[0].name").value("Vintage"));
 
         verify(catalogQueryService).listTags();
+    }
+
+    // ── Public: getCategoryFormSchema ─────────────────────────────
+
+    @Test
+    void getCategoryFormSchemaShouldReturn200WithoutAuthentication() throws Exception {
+        UUID categoryUuid = UUID.randomUUID();
+        CategoryFormFieldOptionResponse option = new CategoryFormFieldOptionResponse()
+                .optionUuid(UUID.randomUUID()).value("new").label("New").displayOrder(0);
+        CategoryFormFieldResponse field = new CategoryFormFieldResponse()
+                .fieldUuid(UUID.randomUUID())
+                .key("condition")
+                .label("Condition")
+                .fieldType(CategorySchemaFieldType.SINGLE_SELECT)
+                .required(true)
+                .searchable(true)
+                .filterable(true)
+                .sortable(false)
+                .displayOrder(0)
+                .options(List.of(option));
+        CategoryFormSchemaResponse response = new CategoryFormSchemaResponse()
+                .categoryUuid(categoryUuid)
+                .schemaUuid(UUID.randomUUID())
+                .schemaVersion(1)
+                .schemaStatus(CategorySchemaStatus.ACTIVE)
+                .fields(List.of(field));
+        when(catalogQueryService.getCategoryFormSchema(categoryUuid)).thenReturn(response);
+
+        // No authentication is set up (SecurityContextHolder is cleared in setUp), confirming the endpoint is public.
+        mockMvc.perform(apiGet("/categories/" + categoryUuid + "/form-schema"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.categoryUuid").value(categoryUuid.toString()))
+                .andExpect(jsonPath("$.fields[0].key").value("condition"))
+                .andExpect(jsonPath("$.fields[0].options[0].value").value("new"));
+
+        verify(catalogQueryService).getCategoryFormSchema(categoryUuid);
+    }
+
+    @Test
+    void getCategoryFormSchemaShouldReturn200WithEmptyFieldsWhenNoActiveSchema() throws Exception {
+        UUID categoryUuid = UUID.randomUUID();
+        CategoryFormSchemaResponse response = new CategoryFormSchemaResponse()
+                .categoryUuid(categoryUuid)
+                .schemaUuid(null)
+                .schemaVersion(null)
+                .schemaStatus(null)
+                .fields(List.of());
+        when(catalogQueryService.getCategoryFormSchema(categoryUuid)).thenReturn(response);
+
+        mockMvc.perform(apiGet("/categories/" + categoryUuid + "/form-schema"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.categoryUuid").value(categoryUuid.toString()))
+                .andExpect(jsonPath("$.schemaUuid").doesNotExist())
+                .andExpect(jsonPath("$.fields").isArray())
+                .andExpect(jsonPath("$.fields").isEmpty());
+    }
+
+    @Test
+    void getCategoryFormSchemaShouldReturn404WhenCategoryUnknown() throws Exception {
+        UUID categoryUuid = UUID.randomUUID();
+        when(catalogQueryService.getCategoryFormSchema(categoryUuid))
+                .thenThrow(new ApiException(org.springframework.http.HttpStatus.NOT_FOUND,
+                        com.barterplatform.common.exception.ErrorCode.NOT_FOUND,
+                        "Category with uuid '%s' was not found.".formatted(categoryUuid)));
+
+        mockMvc.perform(apiGet("/categories/" + categoryUuid + "/form-schema"))
+                .andExpect(status().isNotFound());
     }
 
     // ── Public: searchItems ──────────────────────────────────────
