@@ -1,0 +1,22 @@
+type: object
+additionalProperties: false
+required:
+  - categoryUuid
+  - filters
+properties:
+  categoryUuid:
+    type: string
+    format: uuid
+  schemaUuid:
+    type: string
+    format: uuid
+    nullable: true
+  schemaVersion:
+    type: integer
+    format: int32
+    nullable: true
+  filters:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/CategoryFilterFieldResponse'
+

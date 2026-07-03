@@ -1,5 +1,6 @@
 package com.barterplatform.application.catalog.service;
 
+import com.barterplatform.api.model.CategoryFiltersResponse;
 import com.barterplatform.api.model.CategoryFormSchemaResponse;
 import com.barterplatform.api.model.CategoryResponse;
 import com.barterplatform.api.model.ItemDetailResponse;
@@ -9,6 +10,7 @@ import com.barterplatform.api.model.TagResponse;
 import com.barterplatform.domain.catalog.enums.ItemCondition;
 import com.barterplatform.domain.catalog.enums.ItemStatus;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public interface CatalogQueryService {
@@ -29,6 +31,16 @@ public interface CatalogQueryService {
     CategoryFormSchemaResponse getCategoryFormSchema(UUID categoryUuid);
 
     /**
+     * Get the dynamic marketplace filters for a category (Marketplace Schema Engine, Phase 6):
+     * the {@code filterable=true} fields from the category's ACTIVE schema, ordered by
+     * displayOrder, with options for SINGLE_SELECT/MULTI_SELECT fields.
+     * If no ACTIVE schema exists, or it has no filterable fields, an empty filters response is
+     * returned (not an error).
+     * Throws ApiException NOT_FOUND if the category UUID does not exist or is soft-deleted.
+     */
+    CategoryFiltersResponse getCategoryFilters(UUID categoryUuid);
+
+    /**
      * Public item search with optional filters.
      * Public marketplace search always returns ACTIVE items only.
      * Only returns non-deleted items (deletedAt is null, status != REMOVED).
@@ -41,11 +53,15 @@ public interface CatalogQueryService {
      * @param tagUuids     filter by tag UUIDs — items matching at least one tag are returned; ignored when null/empty
      * @param condition    filter by item condition
      * @param location     case-insensitive text filter across approximate exchange city/area/location fields
+     * @param fieldFilters dynamic category-schema field filters keyed by schema field key (raw string
+     *                     values as supplied via {@code field.<key>} query parameters); requires
+     *                     categoryUuid, and only ACTIVE-schema filterable fields are accepted
      */
     ItemPagedResponse searchItems(Integer page, Integer size, String sort,
                                   String q, UUID categoryUuid, List<UUID> tagUuids,
                                   ItemCondition condition,
-                                  String location);
+                                  String location,
+                                  Map<String, List<String>> fieldFilters);
 
     /**
      * Get full item detail by UUID.

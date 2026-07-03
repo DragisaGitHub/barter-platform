@@ -450,6 +450,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/categories/{categoryUuid}/filters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get dynamic marketplace filters for a category
+         * @description Returns the filterable fields (filterable=true) from the category's ACTIVE schema, ordered by displayOrder, so marketplace clients can render dynamic category-specific filter controls. If no ACTIVE schema exists for the category, or it has no filterable fields, an empty filters response is returned instead of an error.
+         */
+        get: operations["getCategoryFilters"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/categories": {
         parameters: {
             query?: never;
@@ -1066,7 +1086,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Search and browse items */
+        /**
+         * Search and browse items
+         * @description In addition to the documented query parameters, dynamic category-schema filters can be supplied using the `field.<key>` query parameter convention, where `<key>` is the schema field's key (see GET /categories/{categoryUuid}/filters). Example: `field.brand=Samsung`, `field.has5g=true`. Repeat the same `field.<key>` parameter to OR-match multiple values (used for MULTI_SELECT fields). Filtering semantics per field type: TEXT uses a case-insensitive contains match; NUMBER and DATE use an exact match; BOOLEAN accepts `true`/`false`; SINGLE_SELECT accepts the option value or option UUID; MULTI_SELECT matches items where any selected option matches one of the provided values. Field filters require `categoryUuid` to be provided, must reference an ACTIVE schema field with filterable=true, and unrecognized/non-filterable keys result in a 400 response.
+         */
         get: operations["searchItems"];
         put?: never;
         /** Create a new item listing */
@@ -2163,6 +2186,27 @@ export interface components {
             schemaVersion?: number | null;
             schemaStatus?: components["schemas"]["CategorySchemaStatus"] | null;
             fields: components["schemas"]["CategoryFormFieldResponse"][];
+        };
+        CategoryFilterFieldResponse: {
+            /** Format: uuid */
+            fieldUuid: string;
+            key: string;
+            label: string;
+            labelSr?: string | null;
+            fieldType: components["schemas"]["CategorySchemaFieldType"];
+            unit?: string | null;
+            /** Format: int32 */
+            displayOrder: number;
+            options: components["schemas"]["CategoryFormFieldOptionResponse"][];
+        };
+        CategoryFiltersResponse: {
+            /** Format: uuid */
+            categoryUuid: string;
+            /** Format: uuid */
+            schemaUuid?: string | null;
+            /** Format: int32 */
+            schemaVersion?: number | null;
+            filters: components["schemas"]["CategoryFilterFieldResponse"][];
         };
         TagResponse: {
             /** Format: uuid */
@@ -4410,6 +4454,30 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CategoryFormSchemaResponse"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
+    getCategoryFilters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category UUID. */
+                categoryUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category filters returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryFiltersResponse"];
                 };
             };
             404: components["responses"]["NotFound"];

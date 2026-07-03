@@ -14,7 +14,7 @@ import {
   UserPlus,
   X,
 } from "lucide-react";
-import type { SearchItemsParams } from "@/api/catalogApi";
+import type { SearchItemsParams, SchemaFieldFilterValues } from "@/api/catalogApi";
 import type {
   CategoryResponse,
   ItemSummaryResponse,
@@ -36,6 +36,7 @@ import {
   useTags,
   useUnfavoriteItem,
 } from "./useCatalog";
+import { CategoryFiltersPanel } from "./CategoryFiltersPanel";
 import { SavedSearchesPanel } from "./SavedSearchesPanel";
 import { RecommendationsSection } from "./RecommendationsSection";
 import { MarketplaceUserMenu } from "./MarketplaceUserMenu";
@@ -138,6 +139,7 @@ export function MarketplacePage() {
       ...previous,
       page: 0,
       categoryUuid: categoryUuidFromUrl,
+      fieldFilters: undefined,
     }));
   }, [categoryUuidFromUrl, params.categoryUuid]);
 
@@ -231,6 +233,7 @@ export function MarketplacePage() {
       ...previous,
       page: 0,
       categoryUuid: nextCategoryUuid,
+      fieldFilters: undefined,
     }));
 
     if (categoryUuidFromUrl !== nextCategoryUuid) {
@@ -246,6 +249,15 @@ export function MarketplacePage() {
         return next;
       });
     }
+  };
+
+  const handleApplyFieldFilters = (fieldFilters: SchemaFieldFilterValues) => {
+    resetResults();
+    setParams((previous) => ({
+      ...previous,
+      page: 0,
+      fieldFilters: Object.keys(fieldFilters).length > 0 ? fieldFilters : undefined,
+    }));
   };
 
   const handleTagToggle = (tagUuid: string) => {
@@ -542,6 +554,15 @@ export function MarketplacePage() {
               <ArrowRight className="size-4" />
             </Link>
           </div>
+
+          {params.categoryUuid ? (
+            <CategoryFiltersPanel
+              categoryUuid={params.categoryUuid}
+              values={params.fieldFilters ?? {}}
+              onApply={handleApplyFieldFilters}
+              className={`${pageShellClassName} p-4`}
+            />
+          ) : null}
 
           {tags && tags.length > 0 ? (
             <div className={`${pageShellClassName} p-4`}>

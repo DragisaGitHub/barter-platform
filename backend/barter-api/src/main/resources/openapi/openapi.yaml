@@ -100,6 +100,8 @@ paths:
     $ref: './paths/catalog.yaml#/popularCategories'
   /categories/{categoryUuid}/form-schema:
     $ref: './paths/catalog.yaml#/categoryFormSchema'
+  /categories/{categoryUuid}/filters:
+    $ref: './paths/catalog.yaml#/categoryFilters'
   /admin/categories:
     $ref: './paths/admin-categories.yaml#/categories'
   /admin/categories/{categoryUuid}:
@@ -347,6 +349,10 @@ components:
       $ref: './components/schemas/catalog/CategoryFormFieldResponse.yaml'
     CategoryFormSchemaResponse:
       $ref: './components/schemas/catalog/CategoryFormSchemaResponse.yaml'
+    CategoryFilterFieldResponse:
+      $ref: './components/schemas/catalog/CategoryFilterFieldResponse.yaml'
+    CategoryFiltersResponse:
+      $ref: './components/schemas/catalog/CategoryFiltersResponse.yaml'
     TagResponse:
       $ref: './components/schemas/catalog/TagResponse.yaml'
     AdminTagResponse:

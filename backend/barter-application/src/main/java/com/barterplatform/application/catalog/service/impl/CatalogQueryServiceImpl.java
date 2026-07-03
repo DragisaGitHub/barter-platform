@@ -1,6 +1,7 @@
 package com.barterplatform.application.catalog.service.impl;
 
 import com.barterplatform.api.model.*;
+import com.barterplatform.application.catalog.mapper.CategoryFiltersMapper;
 import com.barterplatform.application.catalog.mapper.CategoryFormSchemaMapper;
 import com.barterplatform.application.catalog.mapper.CategoryMapper;
 import com.barterplatform.application.catalog.mapper.ItemImageMapper;
@@ -61,7 +62,9 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     private final ItemMapper itemMapper;
     private final ItemImageMapper itemImageMapper;
     private final CategoryFormSchemaMapper categoryFormSchemaMapper;
+    private final CategoryFiltersMapper categoryFiltersMapper;
     private final ItemFieldValueSupport itemFieldValueSupport;
+    private final ItemFieldFilterSupport itemFieldFilterSupport;
     private final PageRequestFactory pageRequestFactory;
     private final PageResponseMapper pageResponseMapper;
 
@@ -117,17 +120,50 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
         return categoryFormSchemaMapper.toResponse(categoryUuid, schema, fields, optionsByFieldId);
     }
 
+    @Override
+    public CategoryFiltersResponse getCategoryFilters(UUID categoryUuid) {
+        CategoryEntity category = categoryRepository.findByUuid(categoryUuid)
+                .filter(c -> c.getDeletedAt() == null)
+                .orElseThrow(() -> notFound("Category with uuid '%s' was not found.", categoryUuid));
+
+        Optional<CategorySchemaEntity> activeSchema = categorySchemaRepository
+                .findByCategoryIdAndStatusAndDeletedAtIsNull(category.getId(), CategorySchemaStatus.ACTIVE);
+
+        if (activeSchema.isEmpty()) {
+            return categoryFiltersMapper.toEmptyResponse(categoryUuid);
+        }
+
+        CategorySchemaEntity schema = activeSchema.get();
+        List<CategorySchemaFieldEntity> filterableFields = categorySchemaFieldRepository
+                .findAllBySchemaIdAndDeletedAtIsNullOrderByDisplayOrderAsc(schema.getId()).stream()
+                .filter(CategorySchemaFieldEntity::isFilterable)
+                .toList();
+
+        Map<Long, List<FieldOptionEntity>> optionsByFieldId;
+        if (filterableFields.isEmpty()) {
+            optionsByFieldId = Map.of();
+        } else {
+            List<Long> fieldIds = filterableFields.stream().map(CategorySchemaFieldEntity::getId).toList();
+            optionsByFieldId = fieldOptionRepository
+                    .findAllByFieldIdInAndDeletedAtIsNullOrderByDisplayOrderAsc(fieldIds).stream()
+                    .collect(Collectors.groupingBy(FieldOptionEntity::getFieldId, LinkedHashMap::new, Collectors.toList()));
+        }
+
+        return categoryFiltersMapper.toResponse(categoryUuid, schema, filterableFields, optionsByFieldId);
+    }
+
     // ── Public item search ───────────────────────────────────────
 
     public ItemPagedResponse searchItems(Integer page, Integer size, String sort,
                                          String q, UUID categoryUuid, List<UUID> tagUuids,
                                          ItemCondition condition,
-                                         String location) {
+                                         String location,
+                                         Map<String, List<String>> fieldFilters) {
 
         PageRequestFactory.ResolvedPageRequest pageRequest = pageRequestFactory.create(
                 page, size, sort, DEFAULT_ITEM_SORT_FIELD, ALLOWED_ITEM_SORT_FIELDS);
 
-        Specification<ItemEntity> spec = buildSearchSpecification(q, categoryUuid, tagUuids, condition, location);
+        Specification<ItemEntity> spec = buildSearchSpecification(q, categoryUuid, tagUuids, condition, location, fieldFilters);
 
         Page<ItemEntity> itemPage = itemRepository.findAll(spec, pageRequest.pageable());
 
@@ -209,7 +245,8 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
     private Specification<ItemEntity> buildSearchSpecification(String q, UUID categoryUuid,
                                                                List<UUID> tagUuids,
                                                                 ItemCondition condition,
-                                                                String location) {
+                                                                String location,
+                                                                Map<String, List<String>> fieldFilters) {
         List<Specification<ItemEntity>> specs = new ArrayList<>();
 
         // Always exclude soft-deleted items
@@ -222,10 +259,12 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
             specs.add(ItemSpecifications.conditionEquals(condition));
         }
 
+        Long categoryId = null;
         if (categoryUuid != null) {
             CategoryEntity category = categoryRepository.findByUuid(categoryUuid)
                     .orElseThrow(() -> notFound("Category with uuid '%s' was not found.", categoryUuid));
-            specs.add(ItemSpecifications.categoryIdEquals(category.getId()));
+            categoryId = category.getId();
+            specs.add(ItemSpecifications.categoryIdEquals(categoryId));
         }
 
         if (q != null && !q.isBlank()) {
@@ -245,6 +284,8 @@ public class CatalogQueryServiceImpl implements CatalogQueryService {
                 specs.add(ItemSpecifications.hasAnyTagId(tagIds));
             }
         }
+
+        specs.addAll(itemFieldFilterSupport.buildSpecifications(categoryId, fieldFilters));
 
         return Specification.allOf(specs);
     }

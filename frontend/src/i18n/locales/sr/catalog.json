@@ -189,6 +189,12 @@
       "placeholder": "npr. Beograd, Vračar",
       "apply": "Primeni lokaciju"
     },
+    "categoryFilters": {
+      "title": "Filteri kategorije",
+      "helper": "Suzi rezultate koristeći specifikacije koje su specifične za izabranu kategoriju.",
+      "apply": "Primeni filtere",
+      "any": "Bilo koji"
+    },
     "results": {
       "searchResults": "Rezultati pretrage za „{{query}}”",
       "categoryItems": "Oglasi u kategoriji {{category}}",
