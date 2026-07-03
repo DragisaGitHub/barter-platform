@@ -189,7 +189,7 @@
     },
     "categoryFilters": {
       "title": "Category filters",
-      "helper": "Narrow down results using specifications specific to the selected category.",
+      "helper": "Narrow down results using specifications specific to the selected category, replacing the old global tags list.",
       "apply": "Apply filters",
       "any": "Any"
     },
@@ -313,11 +313,9 @@
     "wantedConditionNotesPlaceholder": "Optional condition or quality notes for what you want.",
     "selectCategory": "Select a category",
     "selectCondition": "Select condition",
-    "loadingTags": "Loading tags...",
-    "noTags": "No tags available",
     "schemaFields": {
       "title": "Category specifications",
-      "helper": "These fields are specific to the selected category and help other traders compare listings.",
+      "helper": "These fields are specific to the selected category and help other traders compare listings. Category-specific specifications now replace the old global tags list.",
       "loading": "Loading category fields...",
       "empty": "This category does not have any additional specification fields.",
       "selectOption": "Select an option",

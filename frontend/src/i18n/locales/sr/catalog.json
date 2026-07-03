@@ -191,7 +191,7 @@
     },
     "categoryFilters": {
       "title": "Filteri kategorije",
-      "helper": "Suzi rezultate koristeći specifikacije koje su specifične za izabranu kategoriju.",
+      "helper": "Suzi rezultate koristeći specifikacije koje su specifične za izabranu kategoriju, umesto starog spiska globalnih oznaka.",
       "apply": "Primeni filtere",
       "any": "Bilo koji"
     },
@@ -325,11 +325,9 @@
     "wantedConditionNotesPlaceholder": "Opcione napomene o stanju ili kvalitetu onoga što tražiš.",
     "selectCategory": "Izaberi kategoriju",
     "selectCondition": "Izaberi stanje",
-    "loadingTags": "Učitavanje oznaka...",
-    "noTags": "Nema dostupnih oznaka",
     "schemaFields": {
       "title": "Specifikacije kategorije",
-      "helper": "Ova polja su specifična za izabranu kategoriju i pomažu drugim korisnicima da porede oglase.",
+      "helper": "Ova polja su specifična za izabranu kategoriju i pomažu drugim korisnicima da porede oglase. Specifikacije po kategoriji sada zamenjuju stari spisak globalnih oznaka.",
       "loading": "Učitavanje polja kategorije...",
       "empty": "Ova kategorija nema dodatnih polja specifikacije.",
       "selectOption": "Izaberi opciju",
