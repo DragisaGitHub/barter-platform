@@ -5,6 +5,7 @@ required:
   - key
   - label
   - fieldType
+  - displayOrder
   - options
 properties:
   fieldUuid:
@@ -16,6 +17,17 @@ properties:
   label:
     type: string
     maxLength: 160
+  labelSr:
+    type: string
+    maxLength: 160
+    nullable: true
+  unit:
+    type: string
+    maxLength: 40
+    nullable: true
+  displayOrder:
+    type: integer
+    format: int32
   fieldType:
     $ref: '../../../openapi.yaml#/components/schemas/CategorySchemaFieldType'
   valueText:

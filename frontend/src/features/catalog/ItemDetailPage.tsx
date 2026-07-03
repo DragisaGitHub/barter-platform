@@ -29,6 +29,7 @@ import { cn, parseApiError } from "@/utils";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { inferListingTemplateType } from "./listingTemplates";
+import { ItemSpecificationsSection } from "./ItemSpecificationsSection";
 
 function ImageSection({ images }: { images: ItemImageResponse[] }) {
   const { t } = useTranslation("catalog");
@@ -473,6 +474,8 @@ export function ItemDetailPage() {
             </p>
           </div>
         </section>
+
+        <ItemSpecificationsSection schemaFieldValues={item.schemaFieldValues} />
 
         {isMultiItem ? (
           <section className="marketplace-panel mt-4 p-4">

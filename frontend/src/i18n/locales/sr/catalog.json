@@ -119,7 +119,9 @@
     "exchangeCity": "Približan javni grad za razmenu",
     "exchangeArea": "Približna javna oblast za razmenu",
     "exchangeLocation": "Napomena o javnoj lokaciji razmene",
-    "created": "Kreirano"
+    "created": "Kreirano",
+    "booleanYes": "Da",
+    "booleanNo": "Ne"
   },
   "myItems": {
     "title": "Moji oglasi",
@@ -267,7 +269,9 @@
     "proposeTradeDescription": "Pošalji ponudu direktno vlasniku i nastavi razgovor nakon prijave.",
     "ownerNotice": "Ovo je tvoj oglas. Možeš njime upravljati iz panela Moji oglasi.",
     "openOwnerDetail": "Otvori detalje vlasnika",
-    "editListing": "Uredi oglas"
+    "editListing": "Uredi oglas",
+    "specifications": "Karakteristike",
+    "noSpecifications": "Za ovaj oglas nisu navedene karakteristike."
   },
   "itemForm": {
     "titlePlaceholder": "Šta oglašavaš?",
