@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useFieldArray, useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCategories, useTags, useCategoryFormSchema } from "./useCatalog";
+import { useCategories, useCategoryFormSchema } from "./useCatalog";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import type { ItemCondition, ItemStatus, ListingMode, ListingTemplateType, SchemaFieldValueRequest, SchemaFieldValueResponse } from "@/api/generated/types.ts";
@@ -156,7 +156,6 @@ export function ItemForm({
 }: ItemFormProps) {
   const { t } = useTranslation(["catalog", "common"]);
   const { data: categories, isLoading: categoriesLoading } = useCategories();
-  const { data: tags, isLoading: tagsLoading } = useTags();
 
   const methods = useForm<ItemFormInput, unknown, ItemFormValues>({
     resolver: zodResolver(itemFormSchema),
@@ -199,19 +198,6 @@ export function ItemForm({
     name: "entries",
   });
 
-  const handleTagToggle = (tagUuid: string) => {
-    const current = methods.getValues("tagUuids") ?? [];
-    if (current.includes(tagUuid)) {
-      methods.setValue(
-        "tagUuids",
-        current.filter((t) => t !== tagUuid)
-      );
-    } else {
-      methods.setValue("tagUuids", [...current, tagUuid]);
-    }
-  };
-
-  const selectedTags = methods.watch("tagUuids") ?? [];
   const selectedTemplate = methods.watch("listingTemplateType") ?? "STANDARD_ITEM";
   const selectedListingMode = methods.watch("listingMode") ?? "SINGLE";
   const selectedCategoryUuid = methods.watch("categoryUuid");
@@ -582,34 +568,6 @@ export function ItemForm({
           </div>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-            {t("catalog:tags")}
-          </label>
-          {tagsLoading ? (
-            <p className="text-sm text-slate-500">{t("catalog:itemForm.loadingTags")}</p>
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              {tags?.map((tag) => (
-                <button
-                  key={tag.uuid}
-                  type="button"
-                  onClick={() => handleTagToggle(tag.uuid)}
-                  className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${
-                    selectedTags.includes(tag.uuid)
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-white text-slate-700 border-slate-300 hover:border-indigo-400 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-600"
-                  }`}
-                >
-                  {tag.name}
-                </button>
-              ))}
-              {tags?.length === 0 && (
-                <p className="text-sm text-slate-500">{t("catalog:itemForm.noTags")}</p>
-              )}
-            </div>
-          )}
-        </div>
 
         <div className="flex justify-end gap-3 pt-4">
           <Button type="submit" isLoading={isSubmitting}>

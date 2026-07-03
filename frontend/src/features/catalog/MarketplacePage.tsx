@@ -33,7 +33,6 @@ import {
   useFavoriteItems,
   usePopularCategories,
   useSearchItems,
-  useTags,
   useUnfavoriteItem,
 } from "./useCatalog";
 import { CategoryFiltersPanel } from "./CategoryFiltersPanel";
@@ -79,7 +78,6 @@ export function MarketplacePage() {
   const { data, isLoading, isFetching, isError } = useSearchItems(params);
   const { data: categories } = useCategories();
   const { data: popularCategoriesData, isLoading: isPopularCategoriesLoading } = usePopularCategories({ limit: 10 });
-  const { data: tags } = useTags();
   const favoriteListParams = useMemo(
     () => ({ page: 0, size: 100, sort: "createdAt,desc" }),
     []
@@ -260,27 +258,6 @@ export function MarketplacePage() {
     }));
   };
 
-  const handleTagToggle = (tagUuid: string) => {
-    resetResults();
-    setParams((previous) => {
-      const current = previous.tagUuids ?? [];
-      const next = current.includes(tagUuid)
-        ? current.filter((id) => id !== tagUuid)
-        : [...current, tagUuid];
-      const nextParams = { ...previous, page: 0, tagUuids: next.length > 0 ? next : undefined };
-      updateMarketplaceSearchParams(nextParams, setSearchParams);
-      return nextParams;
-    });
-  };
-
-  const clearTags = () => {
-    resetResults();
-    setParams((previous) => {
-      const nextParams = { ...previous, page: 0, tagUuids: undefined };
-      updateMarketplaceSearchParams(nextParams, setSearchParams);
-      return nextParams;
-    });
-  };
 
   const handleLocationSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -564,41 +541,6 @@ export function MarketplacePage() {
             />
           ) : null}
 
-          {tags && tags.length > 0 ? (
-            <div className={`${pageShellClassName} p-4`}>
-              <div className="mb-3 flex items-center justify-between">
-                <h2 className="text-base font-medium text-slate-900">{t("catalog:tags")}</h2>
-                {params.tagUuids && params.tagUuids.length > 0 ? (
-                  <button
-                    type="button"
-                    onClick={clearTags}
-                    className="text-xs font-medium text-violet-600 transition hover:text-violet-800"
-                  >
-                    {t("catalog:clear")}
-                  </button>
-                ) : null}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {tags.map((tag) => {
-                  const isSelected = params.tagUuids?.includes(tag.uuid) ?? false;
-                  return (
-                    <button
-                      key={tag.uuid}
-                      type="button"
-                      onClick={() => handleTagToggle(tag.uuid)}
-                      className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                        isSelected
-                          ? "border-violet-400 bg-violet-100 text-violet-700"
-                          : "border-slate-200 bg-white text-slate-600 hover:border-violet-300 hover:text-violet-600"
-                      }`}
-                    >
-                      {tag.name}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null}
 
           <div className={`${pageShellClassName} p-4`}>
             <div className="mb-3 flex items-center justify-between">
