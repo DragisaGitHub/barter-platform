@@ -15,6 +15,7 @@ import { VerifyEmailPage } from "../features/auth/VerifyEmailPage";
 import { DashboardPage } from "../features/dashboard/DashboardPage";
 import { AdminDashboardPage } from "../features/admin/AdminDashboardPage";
 import { AdminCategoriesPage } from "../features/admin/AdminCategoriesPage";
+import { AdminCategorySchemasPage } from "../features/admin/AdminCategorySchemasPage";
 import { AdminListingsPage } from "../features/admin/AdminListingsPage";
 import { AdminListingDetailPage } from "../features/admin/AdminListingDetailPage";
 import { AdminReportsPage } from "../features/admin/AdminReportsPage";
@@ -321,6 +322,10 @@ export const router = createBrowserRouter([
       {
         path: "/admin/categories",
         element: <AdminCategoriesPage />,
+      },
+      {
+        path: routePaths.admin.categorySchemas,
+        element: <AdminCategorySchemasPage />,
       },
       {
         path: routePaths.admin.betaFeedback,

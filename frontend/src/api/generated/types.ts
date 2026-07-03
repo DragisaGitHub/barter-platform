@@ -77,6 +77,30 @@ export type SavedSearchPagedResponse = components["schemas"]["SavedSearchPagedRe
 export type ListingModerationActionResponse = components["schemas"]["ListingModerationActionResponse"];
 export type OwnerListingModerationSummary = components["schemas"]["OwnerListingModerationSummary"];
 
+// ─── Category Schema (Fields & Specifications) Enums ────────────────────────
+
+export type CategorySchemaStatus = components["schemas"]["CategorySchemaStatus"];
+export type CategorySchemaFieldType = components["schemas"]["CategorySchemaFieldType"];
+
+// ─── Category Schema Response DTOs ───────────────────────────────────────────
+
+export type FieldOptionResponse = components["schemas"]["FieldOptionResponse"];
+export type CategorySchemaFieldResponse = components["schemas"]["CategorySchemaFieldResponse"];
+export type CategorySchemaResponse = components["schemas"]["CategorySchemaResponse"];
+export type CategorySchemaPagedResponse = components["schemas"]["CategorySchemaPagedResponse"];
+export type CategoryFormFieldOptionResponse = components["schemas"]["CategoryFormFieldOptionResponse"];
+export type CategoryFormFieldResponse = components["schemas"]["CategoryFormFieldResponse"];
+export type CategoryFormSchemaResponse = components["schemas"]["CategoryFormSchemaResponse"];
+
+// ─── Category Schema Request DTOs ────────────────────────────────────────────
+
+export type CreateCategorySchemaRequest = components["schemas"]["CreateCategorySchemaRequest"];
+export type UpdateCategorySchemaRequest = components["schemas"]["UpdateCategorySchemaRequest"];
+export type CreateCategorySchemaFieldRequest = components["schemas"]["CreateCategorySchemaFieldRequest"];
+export type UpdateCategorySchemaFieldRequest = components["schemas"]["UpdateCategorySchemaFieldRequest"];
+export type CreateFieldOptionRequest = components["schemas"]["CreateFieldOptionRequest"];
+export type UpdateFieldOptionRequest = components["schemas"]["UpdateFieldOptionRequest"];
+
 // ─── Catalog Image Response DTOs ────────────────────────────────────────────
 
 export type ItemImageResponse = components["schemas"]["ItemImageResponse"];

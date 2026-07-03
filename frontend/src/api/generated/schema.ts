@@ -430,6 +430,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/categories/{categoryUuid}/form-schema": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get the active form schema for a category
+         * @description Returns the active category schema (metadata, ordered fields, and ordered options) so clients can build dynamic listing forms. If no active schema exists for the category, an empty schema response is returned instead of an error.
+         */
+        get: operations["getCategoryFormSchema"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/categories": {
         parameters: {
             query?: never;
@@ -465,6 +485,146 @@ export interface paths {
         head?: never;
         /** Update a category */
         patch: operations["updateAdminCategory"];
+        trace?: never;
+    };
+    "/admin/category-schemas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List category schemas for administrators */
+        get: operations["listAdminCategorySchemas"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/categories/{categoryUuid}/schemas": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a new schema version for a category */
+        post: operations["createAdminCategorySchema"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/category-schemas/{schemaUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get category schema detail for administrators */
+        get: operations["getAdminCategorySchemaByUuid"];
+        put?: never;
+        post?: never;
+        /** Soft-delete a category schema */
+        delete: operations["deleteAdminCategorySchema"];
+        options?: never;
+        head?: never;
+        /** Update category schema metadata */
+        patch: operations["updateAdminCategorySchema"];
+        trace?: never;
+    };
+    "/admin/category-schemas/{schemaUuid}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate a category schema, archiving the previous active schema for the category */
+        post: operations["activateAdminCategorySchema"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/category-schemas/{schemaUuid}/fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add a field to a category schema */
+        post: operations["createAdminCategorySchemaField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/category-schema-fields/{fieldUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Soft-delete a category schema field */
+        delete: operations["deleteAdminCategorySchemaField"];
+        options?: never;
+        head?: never;
+        /** Update a category schema field */
+        patch: operations["updateAdminCategorySchemaField"];
+        trace?: never;
+    };
+    "/admin/category-schema-fields/{fieldUuid}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add an option to a SINGLE_SELECT or MULTI_SELECT category schema field */
+        post: operations["createAdminCategorySchemaFieldOption"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/category-schema-field-options/{optionUuid}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Soft-delete a field option */
+        delete: operations["deleteAdminCategorySchemaFieldOption"];
+        options?: never;
+        head?: never;
+        /** Update a field option */
+        patch: operations["updateAdminCategorySchemaFieldOption"];
         trace?: never;
     };
     "/admin/listings": {
@@ -1689,7 +1849,7 @@ export interface components {
              * @default Bearer
              * @enum {string}
              */
-            tokenType?: "Bearer";
+            tokenType: "Bearer";
             /** Format: int64 */
             expiresIn?: number;
             /** Format: int64 */
@@ -1827,6 +1987,182 @@ export interface components {
             first: boolean;
             last: boolean;
             sort: string;
+        };
+        /** @enum {string} */
+        CategorySchemaStatus: "DRAFT" | "ACTIVE" | "ARCHIVED";
+        /** @enum {string} */
+        CategorySchemaFieldType: "TEXT" | "NUMBER" | "BOOLEAN" | "SINGLE_SELECT" | "MULTI_SELECT" | "DATE";
+        FieldOptionResponse: {
+            /** Format: uuid */
+            uuid: string;
+            value: string;
+            label: string;
+            labelSr?: string | null;
+            /** Format: int32 */
+            displayOrder: number;
+            deleted: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** Format: date-time */
+            deletedAt?: string | null;
+        };
+        CategorySchemaFieldResponse: {
+            /** Format: uuid */
+            uuid: string;
+            key: string;
+            label: string;
+            labelSr?: string | null;
+            helpText?: string | null;
+            fieldType: components["schemas"]["CategorySchemaFieldType"];
+            required: boolean;
+            searchable: boolean;
+            filterable: boolean;
+            sortable: boolean;
+            unit?: string | null;
+            /** Format: int32 */
+            displayOrder: number;
+            validationJson?: string | null;
+            options: components["schemas"]["FieldOptionResponse"][];
+            deleted: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** Format: date-time */
+            deletedAt?: string | null;
+        };
+        CategorySchemaResponse: {
+            /** Format: uuid */
+            uuid: string;
+            /** Format: uuid */
+            categoryUuid: string;
+            categoryName?: string | null;
+            /** Format: int32 */
+            version: number;
+            status: components["schemas"]["CategorySchemaStatus"];
+            name: string;
+            description?: string | null;
+            fields: components["schemas"]["CategorySchemaFieldResponse"][];
+            deleted: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt?: string | null;
+            /** Format: date-time */
+            deletedAt?: string | null;
+        };
+        CategorySchemaPagedResponse: {
+            content: components["schemas"]["CategorySchemaResponse"][];
+            /** Format: int32 */
+            page: number;
+            /** Format: int32 */
+            size: number;
+            /** Format: int64 */
+            totalElements: number;
+            /** Format: int32 */
+            totalPages: number;
+            first: boolean;
+            last: boolean;
+            sort: string;
+        };
+        CreateCategorySchemaRequest: {
+            name: string;
+            description?: string | null;
+        };
+        UpdateCategorySchemaRequest: {
+            name?: string | null;
+            description?: string | null;
+        };
+        CreateCategorySchemaFieldRequest: {
+            key: string;
+            label: string;
+            labelSr?: string | null;
+            helpText?: string | null;
+            fieldType: components["schemas"]["CategorySchemaFieldType"];
+            /** @default false */
+            required: boolean;
+            /** @default false */
+            searchable: boolean;
+            /** @default false */
+            filterable: boolean;
+            /** @default false */
+            sortable: boolean;
+            unit?: string | null;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            displayOrder: number;
+            validationJson?: string | null;
+        };
+        UpdateCategorySchemaFieldRequest: {
+            label?: string | null;
+            labelSr?: string | null;
+            helpText?: string | null;
+            required?: boolean | null;
+            searchable?: boolean | null;
+            filterable?: boolean | null;
+            sortable?: boolean | null;
+            unit?: string | null;
+            /** Format: int32 */
+            displayOrder?: number | null;
+            validationJson?: string | null;
+        };
+        CreateFieldOptionRequest: {
+            value: string;
+            label: string;
+            labelSr?: string | null;
+            /**
+             * Format: int32
+             * @default 0
+             */
+            displayOrder: number;
+        };
+        UpdateFieldOptionRequest: {
+            value?: string | null;
+            label?: string | null;
+            labelSr?: string | null;
+            /** Format: int32 */
+            displayOrder?: number | null;
+        };
+        CategoryFormFieldOptionResponse: {
+            /** Format: uuid */
+            optionUuid: string;
+            value: string;
+            label: string;
+            labelSr?: string | null;
+            /** Format: int32 */
+            displayOrder: number;
+        };
+        CategoryFormFieldResponse: {
+            /** Format: uuid */
+            fieldUuid: string;
+            key: string;
+            label: string;
+            labelSr?: string | null;
+            helpText?: string | null;
+            fieldType: components["schemas"]["CategorySchemaFieldType"];
+            required: boolean;
+            searchable: boolean;
+            filterable: boolean;
+            sortable: boolean;
+            unit?: string | null;
+            /** Format: int32 */
+            displayOrder: number;
+            validationJson?: string | null;
+            options: components["schemas"]["CategoryFormFieldOptionResponse"][];
+        };
+        CategoryFormSchemaResponse: {
+            /** Format: uuid */
+            categoryUuid: string;
+            /** Format: uuid */
+            schemaUuid?: string | null;
+            /** Format: int32 */
+            schemaVersion?: number | null;
+            schemaStatus?: components["schemas"]["CategorySchemaStatus"] | null;
+            fields: components["schemas"]["CategoryFormFieldResponse"][];
         };
         TagResponse: {
             /** Format: uuid */
@@ -4002,6 +4338,30 @@ export interface operations {
             400: components["responses"]["BadRequest"];
         };
     };
+    getCategoryFormSchema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category UUID. */
+                categoryUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category form schema returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategoryFormSchemaResponse"];
+                };
+            };
+            404: components["responses"]["NotFound"];
+        };
+    };
     listAdminCategories: {
         parameters: {
             query?: {
@@ -4137,6 +4497,358 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AdminCategoryResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    listAdminCategorySchemas: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page index. */
+                page?: components["parameters"]["Page"];
+                /** @description Page size. */
+                size?: components["parameters"]["Size"];
+                /** @description Sort using `field,direction` format, for example `createdAt,desc` or `username,asc`. */
+                sort?: components["parameters"]["Sort"];
+                /** @description Filter schemas by category. */
+                categoryUuid?: string;
+                /** @description Filter schemas by status. */
+                status?: components["schemas"]["CategorySchemaStatus"];
+                /** @description Include soft-deleted schemas in the result. */
+                includeDeleted?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category schemas returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySchemaPagedResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+        };
+    };
+    createAdminCategorySchema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category UUID. */
+                categoryUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCategorySchemaRequest"];
+            };
+        };
+        responses: {
+            /** @description Category schema created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySchemaResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    getAdminCategorySchemaByUuid: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category schema UUID. */
+                schemaUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category schema returned successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySchemaResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    deleteAdminCategorySchema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category schema UUID. */
+                schemaUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category schema deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    updateAdminCategorySchema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category schema UUID. */
+                schemaUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCategorySchemaRequest"];
+            };
+        };
+        responses: {
+            /** @description Category schema updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySchemaResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    activateAdminCategorySchema: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category schema UUID. */
+                schemaUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category schema activated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySchemaResponse"];
+                };
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    createAdminCategorySchemaField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category schema UUID. */
+                schemaUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateCategorySchemaFieldRequest"];
+            };
+        };
+        responses: {
+            /** @description Category schema field created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySchemaFieldResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    deleteAdminCategorySchemaField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category schema field UUID. */
+                fieldUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Category schema field deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateAdminCategorySchemaField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category schema field UUID. */
+                fieldUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCategorySchemaFieldRequest"];
+            };
+        };
+        responses: {
+            /** @description Category schema field updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CategorySchemaFieldResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    createAdminCategorySchemaFieldOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Category schema field UUID. */
+                fieldUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateFieldOptionRequest"];
+            };
+        };
+        responses: {
+            /** @description Field option created successfully */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldOptionResponse"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+        };
+    };
+    deleteAdminCategorySchemaFieldOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Field option UUID. */
+                optionUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Field option deleted successfully */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Unauthorized"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+        };
+    };
+    updateAdminCategorySchemaFieldOption: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Field option UUID. */
+                optionUuid: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateFieldOptionRequest"];
+            };
+        };
+        responses: {
+            /** @description Field option updated successfully */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FieldOptionResponse"];
                 };
             };
             400: components["responses"]["BadRequest"];

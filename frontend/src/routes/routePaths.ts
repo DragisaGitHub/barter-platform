@@ -72,6 +72,7 @@ export const routePaths = {
     system: "/admin/system",
     operations: "/admin/operations",
     categories: "/admin/categories",
+    categorySchemas: "/admin/category-schemas",
     betaFeedback: "/admin/feedback/beta",
     tags: "/admin/tags",
     listings: "/admin/listings",
