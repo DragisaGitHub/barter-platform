@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -56,6 +57,7 @@ class ItemCommandServiceImplTest {
     @Mock private ItemListingEntryRepository itemListingEntryRepository;
     @Mock private UserRepository userRepository;
     @Mock private ItemMapper itemMapper;
+    @Mock private ItemFieldValueSupport itemFieldValueSupport;
 
     private ItemCommandServiceImpl service;
 
@@ -63,7 +65,8 @@ class ItemCommandServiceImplTest {
     void setUp() {
         service = new ItemCommandServiceImpl(
                 itemRepository, categoryRepository, tagRepository,
-                itemTagRepository, itemListingEntryRepository, userRepository, itemMapper);
+                itemTagRepository, itemListingEntryRepository, userRepository, itemMapper,
+                itemFieldValueSupport);
     }
 
     // ── Helpers ──────────────────────────────────────────────────
@@ -386,6 +389,41 @@ class ItemCommandServiceImplTest {
         }
 
         @Test
+        @DisplayName("delegates schema field values to ItemFieldValueSupport and sets them on the response")
+        void createDelegatesSchemaFieldValues() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID catUuid = UUID.randomUUID();
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, catUuid, "Books");
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(categoryRepository.findByUuid(catUuid)).thenReturn(Optional.of(cat));
+            when(itemRepository.save(any(ItemEntity.class))).thenAnswer(invocation -> {
+                ItemEntity arg = invocation.getArgument(0);
+                arg.setId(100L);
+                return arg;
+            });
+            when(itemMapper.toDetailResponse(any(ItemEntity.class), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new ItemDetailResponse().uuid(UUID.randomUUID()).title("My Book"));
+
+            List<com.barterplatform.api.model.SchemaFieldValueRequest> schemaFieldValues =
+                    List.of(new com.barterplatform.api.model.SchemaFieldValueRequest(UUID.randomUUID()).valueText("Acme"));
+            List<com.barterplatform.api.model.SchemaFieldValueResponse> expectedSchemaResponses =
+                    List.of(new com.barterplatform.api.model.SchemaFieldValueResponse());
+            when(itemFieldValueSupport.replaceValues(org.mockito.ArgumentMatchers.eq(100L),
+                    org.mockito.ArgumentMatchers.eq(10L), org.mockito.ArgumentMatchers.eq(schemaFieldValues)))
+                    .thenReturn(expectedSchemaResponses);
+
+            CreateItemRequest request = new CreateItemRequest("My Book", catUuid,
+                    com.barterplatform.api.model.ItemCondition.GOOD)
+                    .schemaFieldValues(schemaFieldValues);
+
+            ItemDetailResponse result = service.createItem(ownerUuid, request);
+
+            assertEquals(expectedSchemaResponses, result.getSchemaFieldValues());
+        }
+
+        @Test
         @DisplayName("rejects more than twenty entries")
         void rejectTooManyEntries() {
             UUID ownerUuid = UUID.randomUUID();
@@ -572,6 +610,68 @@ class ItemCommandServiceImplTest {
             verify(itemRepository).save(captor.capture());
             assertEquals(ListingTemplateType.WISHLIST, captor.getValue().getListingTemplateType());
             org.junit.jupiter.api.Assertions.assertTrue(captor.getValue().getTemplateMetadataJson().contains("wishlistSummary"));
+        }
+
+        @Test
+        @DisplayName("replaces schema field values when provided")
+        void updateReplacesSchemaFieldValues() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID itemUuid = UUID.randomUUID();
+
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, UUID.randomUUID(), "Books");
+            ItemEntity existingItem = item(50L, itemUuid, 1L, 10L, ItemStatus.DRAFT, ItemCondition.GOOD);
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(existingItem));
+            when(categoryRepository.findById(10L)).thenReturn(Optional.of(cat));
+            when(itemRepository.save(any(ItemEntity.class))).thenAnswer(i -> i.getArgument(0));
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new ItemDetailResponse().uuid(itemUuid).title("Test Item"));
+
+            List<com.barterplatform.api.model.SchemaFieldValueRequest> schemaFieldValues =
+                    List.of(new com.barterplatform.api.model.SchemaFieldValueRequest(UUID.randomUUID()).valueText("Updated"));
+            List<com.barterplatform.api.model.SchemaFieldValueResponse> expectedSchemaResponses =
+                    List.of(new com.barterplatform.api.model.SchemaFieldValueResponse());
+            when(itemFieldValueSupport.replaceValues(50L, 10L, schemaFieldValues)).thenReturn(expectedSchemaResponses);
+
+            UpdateItemRequest request = new UpdateItemRequest().schemaFieldValues(schemaFieldValues);
+
+            ItemDetailResponse result = service.updateItem(ownerUuid, itemUuid, request);
+
+            verify(itemFieldValueSupport).replaceValues(50L, 10L, schemaFieldValues);
+            verify(itemFieldValueSupport, never()).loadResponses(any());
+            assertEquals(expectedSchemaResponses, result.getSchemaFieldValues());
+        }
+
+        @Test
+        @DisplayName("preserves existing schema field values when omitted from the update request")
+        void updatePreservesSchemaFieldValuesWhenOmitted() {
+            UUID ownerUuid = UUID.randomUUID();
+            UUID itemUuid = UUID.randomUUID();
+
+            UserEntity owner = user(1L, ownerUuid, "alice");
+            CategoryEntity cat = category(10L, UUID.randomUUID(), "Books");
+            ItemEntity existingItem = item(50L, itemUuid, 1L, 10L, ItemStatus.DRAFT, ItemCondition.GOOD);
+
+            when(userRepository.findByUuid(ownerUuid)).thenReturn(Optional.of(owner));
+            when(itemRepository.findByUuid(itemUuid)).thenReturn(Optional.of(existingItem));
+            when(categoryRepository.findById(10L)).thenReturn(Optional.of(cat));
+            when(itemRepository.save(any(ItemEntity.class))).thenAnswer(i -> i.getArgument(0));
+            when(itemMapper.toDetailResponse(any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(new ItemDetailResponse().uuid(itemUuid).title("Test Item"));
+
+            List<com.barterplatform.api.model.SchemaFieldValueResponse> existingSchemaResponses =
+                    List.of(new com.barterplatform.api.model.SchemaFieldValueResponse());
+            when(itemFieldValueSupport.loadResponses(50L)).thenReturn(existingSchemaResponses);
+
+            UpdateItemRequest request = new UpdateItemRequest().title("New title");
+
+            ItemDetailResponse result = service.updateItem(ownerUuid, itemUuid, request);
+
+            verify(itemFieldValueSupport, never()).replaceValues(anyLong(), anyLong(), any());
+            verify(itemFieldValueSupport).loadResponses(50L);
+            assertEquals(existingSchemaResponses, result.getSchemaFieldValues());
         }
     }
 

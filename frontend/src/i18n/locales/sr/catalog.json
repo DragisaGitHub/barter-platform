@@ -316,7 +316,15 @@
     "selectCategory": "Izaberi kategoriju",
     "selectCondition": "Izaberi stanje",
     "loadingTags": "Učitavanje oznaka...",
-    "noTags": "Nema dostupnih oznaka"
+    "noTags": "Nema dostupnih oznaka",
+    "schemaFields": {
+      "title": "Specifikacije kategorije",
+      "helper": "Ova polja su specifična za izabranu kategoriju i pomažu drugim korisnicima da porede oglase.",
+      "loading": "Učitavanje polja kategorije...",
+      "empty": "Ova kategorija nema dodatnih polja specifikacije.",
+      "selectOption": "Izaberi opciju",
+      "noOptions": "Nema dostupnih opcija"
+    }
   },
   "validation": {
     "titleRequired": "Naslov je obavezan",
@@ -340,7 +348,8 @@
     "duplicateCountMin": "Broj duplikata ne može biti negativan",
     "duplicateCountMax": "Broj duplikata mora biti 10000 ili manji",
     "duplicateCountCannotExceedOwned": "Broj duplikata ne može biti veći od ukupnog broja",
-    "wishlistSummaryRequired": "Lista želja mora imati sažetak ili bar jednu traženu stavku"
+    "wishlistSummaryRequired": "Lista želja mora imati sažetak ili bar jednu traženu stavku",
+    "schemaFieldRequired": "Ovo polje je obavezno"
   },
   "createItem": {
     "title": "Kreiraj novi oglas",

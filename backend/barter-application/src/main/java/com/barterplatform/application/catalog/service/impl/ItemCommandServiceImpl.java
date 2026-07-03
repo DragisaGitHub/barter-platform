@@ -50,6 +50,7 @@ public class ItemCommandServiceImpl implements ItemCommandService {
     private final ItemListingEntryRepository itemListingEntryRepository;
     private final UserRepository userRepository;
     private final ItemMapper itemMapper;
+    private final ItemFieldValueSupport itemFieldValueSupport;
 
     public ItemCommandServiceImpl(ItemRepository itemRepository,
                                   CategoryRepository categoryRepository,
@@ -57,7 +58,8 @@ public class ItemCommandServiceImpl implements ItemCommandService {
                                   ItemTagRepository itemTagRepository,
                                    ItemListingEntryRepository itemListingEntryRepository,
                                   UserRepository userRepository,
-                                  ItemMapper itemMapper) {
+                                  ItemMapper itemMapper,
+                                  ItemFieldValueSupport itemFieldValueSupport) {
         this.itemRepository = itemRepository;
         this.categoryRepository = categoryRepository;
         this.tagRepository = tagRepository;
@@ -65,6 +67,7 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         this.itemListingEntryRepository = itemListingEntryRepository;
         this.userRepository = userRepository;
         this.itemMapper = itemMapper;
+        this.itemFieldValueSupport = itemFieldValueSupport;
     }
 
     // ── Create ───────────────────────────────────────────────────
@@ -104,10 +107,13 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         // Save tags
         List<TagEntity> tags = resolveAndSaveTags(saved.getId(), request.getTagUuids());
         List<ItemListingEntryEntity> savedEntries = saveEntries(saved.getId(), entries);
+        List<com.barterplatform.api.model.SchemaFieldValueResponse> schemaFieldValues =
+                itemFieldValueSupport.replaceValues(saved.getId(), category.getId(), request.getSchemaFieldValues());
 
         ItemDetailResponse response = itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
                 null, java.util.List.of(), savedEntries);
         enrichTemplateFields(response, saved);
+        response.setSchemaFieldValues(schemaFieldValues);
         return response;
     }
 
@@ -194,9 +200,18 @@ public class ItemCommandServiceImpl implements ItemCommandService {
             entries = itemListingEntryRepository.findByItemIdOrderBySortOrderAsc(saved.getId());
         }
 
+        List<com.barterplatform.api.model.SchemaFieldValueResponse> schemaFieldValues;
+        if (request.getSchemaFieldValues() != null) {
+            schemaFieldValues = itemFieldValueSupport.replaceValues(
+                    saved.getId(), category.getId(), request.getSchemaFieldValues());
+        } else {
+            schemaFieldValues = itemFieldValueSupport.loadResponses(saved.getId());
+        }
+
         ItemDetailResponse response = itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
                 null, java.util.List.of(), entries);
         enrichTemplateFields(response, saved);
+        response.setSchemaFieldValues(schemaFieldValues);
         return response;
     }
 
@@ -221,6 +236,7 @@ public class ItemCommandServiceImpl implements ItemCommandService {
         ItemDetailResponse response = itemMapper.toDetailResponse(saved, category, tags, owner.getUuid(), owner.getUsername(),
                 null, java.util.List.of(), entries);
         enrichTemplateFields(response, saved);
+        response.setSchemaFieldValues(itemFieldValueSupport.loadResponses(saved.getId()));
         return response;
     }
 

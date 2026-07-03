@@ -100,6 +100,7 @@ public interface ItemMapper {
     @Mapping(target = "entries", ignore = true)
     @Mapping(target = "moderationSummary", ignore = true)
     @Mapping(target = "templateMetadata", ignore = true)
+    @Mapping(target = "schemaFieldValues", ignore = true)
     ItemDetailResponse toDetailResponse(ItemEntity entity);
 
     default ItemDetailResponse toDetailResponse(ItemEntity entity,

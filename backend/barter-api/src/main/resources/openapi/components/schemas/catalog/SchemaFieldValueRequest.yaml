@@ -1,0 +1,41 @@
+type: object
+additionalProperties: false
+required:
+  - fieldUuid
+properties:
+  fieldUuid:
+    type: string
+    format: uuid
+    description: UUID of the category_schema_field this value belongs to.
+  valueText:
+    type: string
+    nullable: true
+    description: Value for TEXT fields.
+  valueNumber:
+    type: number
+    format: double
+    nullable: true
+    description: Value for NUMBER fields.
+  valueBoolean:
+    type: boolean
+    nullable: true
+    description: Value for BOOLEAN fields.
+  valueDate:
+    type: string
+    format: date
+    nullable: true
+    description: Value for DATE fields.
+  optionUuid:
+    type: string
+    format: uuid
+    nullable: true
+    description: Selected field option for SINGLE_SELECT fields.
+  optionUuids:
+    type: array
+    nullable: true
+    description: Selected field options for MULTI_SELECT fields.
+    items:
+      type: string
+      format: uuid
+
+

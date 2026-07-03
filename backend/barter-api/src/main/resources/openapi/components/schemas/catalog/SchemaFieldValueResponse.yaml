@@ -1,0 +1,41 @@
+type: object
+additionalProperties: false
+required:
+  - fieldUuid
+  - key
+  - label
+  - fieldType
+  - options
+properties:
+  fieldUuid:
+    type: string
+    format: uuid
+  key:
+    type: string
+    maxLength: 100
+  label:
+    type: string
+    maxLength: 160
+  fieldType:
+    $ref: '../../../openapi.yaml#/components/schemas/CategorySchemaFieldType'
+  valueText:
+    type: string
+    nullable: true
+  valueNumber:
+    type: number
+    format: double
+    nullable: true
+  valueBoolean:
+    type: boolean
+    nullable: true
+  valueDate:
+    type: string
+    format: date
+    nullable: true
+  options:
+    type: array
+    description: Selected option(s). Zero or one entry for SINGLE_SELECT, zero or more for MULTI_SELECT.
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/CategoryFormFieldOptionResponse'
+
+

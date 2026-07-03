@@ -84,3 +84,8 @@ properties:
     nullable: true
   moderationSummary:
     $ref: '../../../openapi.yaml#/components/schemas/OwnerListingModerationSummary'
+  schemaFieldValues:
+    type: array
+    description: Dynamic category-schema field values currently set on this item.
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/SchemaFieldValueResponse'

@@ -91,6 +91,8 @@ export type CategorySchemaPagedResponse = components["schemas"]["CategorySchemaP
 export type CategoryFormFieldOptionResponse = components["schemas"]["CategoryFormFieldOptionResponse"];
 export type CategoryFormFieldResponse = components["schemas"]["CategoryFormFieldResponse"];
 export type CategoryFormSchemaResponse = components["schemas"]["CategoryFormSchemaResponse"];
+export type SchemaFieldValueRequest = components["schemas"]["SchemaFieldValueRequest"];
+export type SchemaFieldValueResponse = components["schemas"]["SchemaFieldValueResponse"];
 
 // ─── Category Schema Request DTOs ────────────────────────────────────────────
 

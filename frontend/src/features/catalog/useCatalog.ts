@@ -3,6 +3,7 @@ import {
   listCategories,
   listPopularCategories,
   listTags,
+  getCategoryFormSchema,
   searchItems,
   listRecommendations,
   getItemByUuid,
@@ -29,6 +30,7 @@ import type {
   CreateItemRequest,
   UpdateItemRequest,
   ArchiveItemRequest,
+  CategoryFormSchemaResponse,
 } from "@/api/generated/types.ts";
 
 // ─── Query keys ─────────────────────────────────────────────────────────────
@@ -37,6 +39,7 @@ export const catalogKeys = {
   categories: ["catalog", "categories"] as const,
   popularCategories: (limit: number) => ["catalog", "categories", "popular", limit] as const,
   tags: ["catalog", "tags"] as const,
+  categoryFormSchema: (categoryUuid: string) => ["catalog", "categories", categoryUuid, "form-schema"] as const,
   items: ["catalog", "items"] as const,
   favorites: ["catalog", "favorites"] as const,
   itemSearch: (params: SearchItemsParams) => ["catalog", "items", "search", params] as const,
@@ -71,6 +74,15 @@ export function useTags() {
     queryKey: catalogKeys.tags,
     queryFn: listTags,
     staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useCategoryFormSchema(categoryUuid: string | undefined) {
+  return useQuery<CategoryFormSchemaResponse>({
+    queryKey: catalogKeys.categoryFormSchema(categoryUuid ?? ""),
+    queryFn: () => getCategoryFormSchema(categoryUuid as string),
+    enabled: !!categoryUuid,
+    staleTime: 60 * 1000,
   });
 }
 
