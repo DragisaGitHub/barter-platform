@@ -1,0 +1,22 @@
+type: object
+additionalProperties: false
+properties:
+  value:
+    type: string
+    minLength: 1
+    maxLength: 100
+    nullable: true
+  label:
+    type: string
+    minLength: 1
+    maxLength: 160
+    nullable: true
+  labelSr:
+    type: string
+    maxLength: 160
+    nullable: true
+  displayOrder:
+    type: integer
+    format: int32
+    nullable: true
+

@@ -1,0 +1,416 @@
+schemas:
+  get:
+    tags:
+      - AdminCategorySchemas
+    operationId: listAdminCategorySchemas
+    summary: List category schemas for administrators
+    security:
+      - bearerJwt: []
+    parameters:
+      - $ref: '../openapi.yaml#/components/parameters/Page'
+      - $ref: '../openapi.yaml#/components/parameters/Size'
+      - $ref: '../openapi.yaml#/components/parameters/Sort'
+      - name: categoryUuid
+        in: query
+        required: false
+        description: Filter schemas by category.
+        schema:
+          type: string
+          format: uuid
+      - name: status
+        in: query
+        required: false
+        description: Filter schemas by status.
+        schema:
+          $ref: '../openapi.yaml#/components/schemas/CategorySchemaStatus'
+      - name: includeDeleted
+        in: query
+        required: false
+        description: Include soft-deleted schemas in the result.
+        schema:
+          type: boolean
+          default: false
+    responses:
+      '200':
+        description: Category schemas returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/CategorySchemaPagedResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+
+schemasByCategory:
+  post:
+    tags:
+      - AdminCategorySchemas
+    operationId: createAdminCategorySchema
+    summary: Create a new schema version for a category
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: categoryUuid
+        in: path
+        required: true
+        description: Category UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CreateCategorySchemaRequest'
+    responses:
+      '201':
+        description: Category schema created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/CategorySchemaResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+schemaByUuid:
+  get:
+    tags:
+      - AdminCategorySchemas
+    operationId: getAdminCategorySchemaByUuid
+    summary: Get category schema detail for administrators
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: schemaUuid
+        in: path
+        required: true
+        description: Category schema UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Category schema returned successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/CategorySchemaResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+  patch:
+    tags:
+      - AdminCategorySchemas
+    operationId: updateAdminCategorySchema
+    summary: Update category schema metadata
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: schemaUuid
+        in: path
+        required: true
+        description: Category schema UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/UpdateCategorySchemaRequest'
+    responses:
+      '200':
+        description: Category schema updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/CategorySchemaResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+  delete:
+    tags:
+      - AdminCategorySchemas
+    operationId: deleteAdminCategorySchema
+    summary: Soft-delete a category schema
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: schemaUuid
+        in: path
+        required: true
+        description: Category schema UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Category schema deleted successfully
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+schemaActivate:
+  post:
+    tags:
+      - AdminCategorySchemas
+    operationId: activateAdminCategorySchema
+    summary: Activate a category schema, archiving the previous active schema for the category
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: schemaUuid
+        in: path
+        required: true
+        description: Category schema UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '200':
+        description: Category schema activated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/CategorySchemaResponse'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+schemaFields:
+  post:
+    tags:
+      - AdminCategorySchemas
+    operationId: createAdminCategorySchemaField
+    summary: Add a field to a category schema
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: schemaUuid
+        in: path
+        required: true
+        description: Category schema UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CreateCategorySchemaFieldRequest'
+    responses:
+      '201':
+        description: Category schema field created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/CategorySchemaFieldResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+fieldByUuid:
+  patch:
+    tags:
+      - AdminCategorySchemas
+    operationId: updateAdminCategorySchemaField
+    summary: Update a category schema field
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: fieldUuid
+        in: path
+        required: true
+        description: Category schema field UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/UpdateCategorySchemaFieldRequest'
+    responses:
+      '200':
+        description: Category schema field updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/CategorySchemaFieldResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+  delete:
+    tags:
+      - AdminCategorySchemas
+    operationId: deleteAdminCategorySchemaField
+    summary: Soft-delete a category schema field
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: fieldUuid
+        in: path
+        required: true
+        description: Category schema field UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Category schema field deleted successfully
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+
+fieldOptions:
+  post:
+    tags:
+      - AdminCategorySchemas
+    operationId: createAdminCategorySchemaFieldOption
+    summary: Add an option to a SINGLE_SELECT or MULTI_SELECT category schema field
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: fieldUuid
+        in: path
+        required: true
+        description: Category schema field UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/CreateFieldOptionRequest'
+    responses:
+      '201':
+        description: Field option created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/FieldOptionResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+
+optionByUuid:
+  patch:
+    tags:
+      - AdminCategorySchemas
+    operationId: updateAdminCategorySchemaFieldOption
+    summary: Update a field option
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: optionUuid
+        in: path
+        required: true
+        description: Field option UUID.
+        schema:
+          type: string
+          format: uuid
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '../openapi.yaml#/components/schemas/UpdateFieldOptionRequest'
+    responses:
+      '200':
+        description: Field option updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '../openapi.yaml#/components/schemas/FieldOptionResponse'
+      '400':
+        $ref: '../components/responses/BadRequest.yaml'
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+      '409':
+        $ref: '../components/responses/Conflict.yaml'
+  delete:
+    tags:
+      - AdminCategorySchemas
+    operationId: deleteAdminCategorySchemaFieldOption
+    summary: Soft-delete a field option
+    security:
+      - bearerJwt: []
+    parameters:
+      - name: optionUuid
+        in: path
+        required: true
+        description: Field option UUID.
+        schema:
+          type: string
+          format: uuid
+    responses:
+      '204':
+        description: Field option deleted successfully
+      '401':
+        $ref: '../components/responses/Unauthorized.yaml'
+      '403':
+        $ref: '../components/responses/Forbidden.yaml'
+      '404':
+        $ref: '../components/responses/NotFound.yaml'
+

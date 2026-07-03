@@ -1,0 +1,12 @@
+type: object
+additionalProperties: false
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 160
+    nullable: true
+  description:
+    type: string
+    nullable: true
+

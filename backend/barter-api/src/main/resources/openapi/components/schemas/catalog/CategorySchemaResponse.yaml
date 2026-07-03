@@ -1,0 +1,51 @@
+type: object
+additionalProperties: false
+required:
+  - uuid
+  - categoryUuid
+  - version
+  - status
+  - name
+  - fields
+  - deleted
+  - createdAt
+properties:
+  uuid:
+    type: string
+    format: uuid
+  categoryUuid:
+    type: string
+    format: uuid
+  categoryName:
+    type: string
+    maxLength: 120
+    nullable: true
+  version:
+    type: integer
+    format: int32
+  status:
+    $ref: '../../../openapi.yaml#/components/schemas/CategorySchemaStatus'
+  name:
+    type: string
+    maxLength: 160
+  description:
+    type: string
+    nullable: true
+  fields:
+    type: array
+    items:
+      $ref: '../../../openapi.yaml#/components/schemas/CategorySchemaFieldResponse'
+  deleted:
+    type: boolean
+  createdAt:
+    type: string
+    format: date-time
+  updatedAt:
+    type: string
+    format: date-time
+    nullable: true
+  deletedAt:
+    type: string
+    format: date-time
+    nullable: true
+

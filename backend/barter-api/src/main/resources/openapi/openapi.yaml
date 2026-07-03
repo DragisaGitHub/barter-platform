@@ -27,6 +27,8 @@ tags:
     description: Authenticated product feedback submission operations
   - name: AdminCategories
     description: Administrator category management operations
+  - name: AdminCategorySchemas
+    description: Administrator category schema (fields & specifications) management operations
   - name: AdminListings
     description: Administrator listing moderation and governance operations
   - name: AdminReviews
@@ -100,6 +102,22 @@ paths:
     $ref: './paths/admin-categories.yaml#/categories'
   /admin/categories/{categoryUuid}:
     $ref: './paths/admin-categories.yaml#/categoryByUuid'
+  /admin/category-schemas:
+    $ref: './paths/admin-category-schemas.yaml#/schemas'
+  /admin/categories/{categoryUuid}/schemas:
+    $ref: './paths/admin-category-schemas.yaml#/schemasByCategory'
+  /admin/category-schemas/{schemaUuid}:
+    $ref: './paths/admin-category-schemas.yaml#/schemaByUuid'
+  /admin/category-schemas/{schemaUuid}/activate:
+    $ref: './paths/admin-category-schemas.yaml#/schemaActivate'
+  /admin/category-schemas/{schemaUuid}/fields:
+    $ref: './paths/admin-category-schemas.yaml#/schemaFields'
+  /admin/category-schema-fields/{fieldUuid}:
+    $ref: './paths/admin-category-schemas.yaml#/fieldByUuid'
+  /admin/category-schema-fields/{fieldUuid}/options:
+    $ref: './paths/admin-category-schemas.yaml#/fieldOptions'
+  /admin/category-schema-field-options/{optionUuid}:
+    $ref: './paths/admin-category-schemas.yaml#/optionByUuid'
   /admin/listings:
     $ref: './paths/admin-listings.yaml#/listings'
   /admin/listings/{itemUuid}:
@@ -297,6 +315,30 @@ components:
       $ref: './components/schemas/catalog/AdminCategoryResponse.yaml'
     AdminCategoryPagedResponse:
       $ref: './components/schemas/catalog/AdminCategoryPagedResponse.yaml'
+    CategorySchemaStatus:
+      $ref: './components/schemas/catalog/CategorySchemaStatus.yaml'
+    CategorySchemaFieldType:
+      $ref: './components/schemas/catalog/CategorySchemaFieldType.yaml'
+    FieldOptionResponse:
+      $ref: './components/schemas/catalog/FieldOptionResponse.yaml'
+    CategorySchemaFieldResponse:
+      $ref: './components/schemas/catalog/CategorySchemaFieldResponse.yaml'
+    CategorySchemaResponse:
+      $ref: './components/schemas/catalog/CategorySchemaResponse.yaml'
+    CategorySchemaPagedResponse:
+      $ref: './components/schemas/catalog/CategorySchemaPagedResponse.yaml'
+    CreateCategorySchemaRequest:
+      $ref: './components/schemas/catalog/CreateCategorySchemaRequest.yaml'
+    UpdateCategorySchemaRequest:
+      $ref: './components/schemas/catalog/UpdateCategorySchemaRequest.yaml'
+    CreateCategorySchemaFieldRequest:
+      $ref: './components/schemas/catalog/CreateCategorySchemaFieldRequest.yaml'
+    UpdateCategorySchemaFieldRequest:
+      $ref: './components/schemas/catalog/UpdateCategorySchemaFieldRequest.yaml'
+    CreateFieldOptionRequest:
+      $ref: './components/schemas/catalog/CreateFieldOptionRequest.yaml'
+    UpdateFieldOptionRequest:
+      $ref: './components/schemas/catalog/UpdateFieldOptionRequest.yaml'
     TagResponse:
       $ref: './components/schemas/catalog/TagResponse.yaml'
     AdminTagResponse:

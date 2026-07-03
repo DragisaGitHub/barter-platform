@@ -1,0 +1,49 @@
+type: object
+additionalProperties: false
+required:
+  - key
+  - label
+  - fieldType
+properties:
+  key:
+    type: string
+    minLength: 1
+    maxLength: 100
+    pattern: '^[a-z][a-z0-9_]*$'
+  label:
+    type: string
+    minLength: 1
+    maxLength: 160
+  labelSr:
+    type: string
+    maxLength: 160
+    nullable: true
+  helpText:
+    type: string
+    nullable: true
+  fieldType:
+    $ref: '../../../openapi.yaml#/components/schemas/CategorySchemaFieldType'
+  required:
+    type: boolean
+    default: false
+  searchable:
+    type: boolean
+    default: false
+  filterable:
+    type: boolean
+    default: false
+  sortable:
+    type: boolean
+    default: false
+  unit:
+    type: string
+    maxLength: 40
+    nullable: true
+  displayOrder:
+    type: integer
+    format: int32
+    default: 0
+  validationJson:
+    type: string
+    nullable: true
+
