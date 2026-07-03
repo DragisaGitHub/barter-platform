@@ -60,7 +60,7 @@ export function AdminCategorySchemasPage() {
   const [deleteFieldCandidate, setDeleteFieldCandidate] = useState<CategorySchemaFieldResponse | null>(null);
   const [optionsField, setOptionsField] = useState<CategorySchemaFieldResponse | null>(null);
 
-  const categoriesQuery = useAdminCategories({ page: 0, size: 500, sort: "name,asc", includeDeleted: false });
+  const categoriesQuery = useAdminCategories({ page: 0, size: 100, sort: "name,asc", includeDeleted: false });
   const categories = categoriesQuery.data?.content ?? [];
 
   const schemasQuery = useAdminCategorySchemas(
