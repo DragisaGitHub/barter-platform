@@ -43,6 +43,7 @@ services:
     mem_limit: 128m
     networks:
       - barter-prod
+      - wivaulty-edge
 
   backend:
     image: ${BACKEND_IMAGE:?BACKEND_IMAGE must be set to a pinned tag}
@@ -149,3 +150,7 @@ volumes:
 networks:
   barter-prod:
     driver: bridge
+
+  wivaulty-edge:
+    external: true
+    name: wivaulty-edge
