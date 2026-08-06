@@ -32,6 +32,7 @@ services:
       - "443:443/udp"   # HTTP/3 (QUIC)
     volumes:
       - ../docker/caddy/Caddyfile.prod:/etc/caddy/Caddyfile:ro
+      - ../docker/caddy/static:/srv/wivaulty-static:ro
       - caddy_data:/data
       - caddy_config:/config
     healthcheck:

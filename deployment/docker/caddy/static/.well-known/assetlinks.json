@@ -1,0 +1,14 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.wivaulty.app",
+      "sha256_cert_fingerprints": [
+        "37:97:8D:5E:68:C1:6C:B1:6F:CE:C3:81:57:3C:13:AB:10:A0:58:80:63:48:AD:F6:D8:0C:6C:41:10:3C:2F:EC"
+      ]
+    }
+  }
+]

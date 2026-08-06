@@ -7,9 +7,6 @@
 #   zameni.rs / www.zameni.rs  ->  landing page (marketing/SEO)
 #   app.zameni.rs              ->  React SPA (authenticated users)
 #   app.zameni.rs/api/v1/*     ->  Spring Boot backend (same-origin proxy)
-#
-# If app.zameni.rs is not yet desired, the block below can be merged into
-# the main zameni.rs block with path-based routing instead.
 
 # --- Shared snippet: security headers ---
 (security_headers) {
@@ -27,7 +24,6 @@
 zameni.rs, www.zameni.rs {
 	import security_headers
 
-	# Health endpoint for external uptime monitors / load balancers.
 	handle /health {
 		respond "OK" 200
 	}
@@ -41,36 +37,34 @@ zameni.rs, www.zameni.rs {
 app.zameni.rs {
 	import security_headers
 
-	# Health endpoint for external monitoring.
 	handle /health {
 		respond "OK" 200
 	}
 
-	# Public-safe health check for the backend (no internal actuator details).
 	handle /api/v1/actuator/health {
 		reverse_proxy backend:8080
 	}
+
 	handle /api/v1/actuator/health/readiness {
 		reverse_proxy backend:8080
 	}
+
 	handle /api/v1/actuator/health/liveness {
 		reverse_proxy backend:8080
 	}
 
-	# Block all other actuator endpoints from public access.
 	handle /api/v1/actuator/* {
 		respond "Not Found" 404
 	}
+
 	handle /actuator/* {
 		respond "Not Found" 404
 	}
 
-	# Backend API — same-origin for browser fetch calls.
 	handle /api/v1/* {
 		reverse_proxy backend:8080
 	}
 
-	# React SPA — all non-API routes go to frontend nginx.
 	handle {
 		reverse_proxy frontend:80
 	}
@@ -80,26 +74,26 @@ app.zameni.rs {
 api-test.wivaulty.com {
 	import security_headers
 
-	# Health endpoint for external monitoring.
 	handle /health {
 		respond "OK" 200
 	}
 
-	# Public-safe health check for the backend (no internal actuator details).
 	handle /api/v1/actuator/health {
 		reverse_proxy wivaulty-test-backend:8080
 	}
+
 	handle /api/v1/actuator/health/readiness {
 		reverse_proxy wivaulty-test-backend:8080
 	}
+
 	handle /api/v1/actuator/health/liveness {
 		reverse_proxy wivaulty-test-backend:8080
 	}
 
-	# Block all other actuator endpoints from public access.
 	handle /api/v1/actuator/* {
 		respond "Not Found" 404
 	}
+
 	handle /actuator/* {
 		respond "Not Found" 404
 	}
@@ -109,3 +103,70 @@ api-test.wivaulty.com {
 	}
 }
 
+# --- Wivaulty public links and Android App Links ---
+wivaulty.com, www.wivaulty.com {
+	import security_headers
+
+	handle /.well-known/assetlinks.json {
+		root * /srv/wivaulty-static
+		header Content-Type application/json
+		file_server
+	}
+
+	handle /s/* {
+		rewrite * /api/v1{uri}
+		reverse_proxy wivaulty-test-backend:8080
+	}
+
+	handle /invite/* {
+		header Content-Type text/html
+
+		respond <<HTML
+		<!doctype html>
+		<html lang="en">
+		<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width,initial-scale=1">
+		<meta name="robots" content="noindex,nofollow">
+		<title>Join Wivaulty</title>
+		<style>
+		body {
+			margin: 0;
+			padding: 32px;
+			background: #f7f2e8;
+			color: #20242d;
+			font-family: system-ui, sans-serif;
+		}
+
+		main {
+			max-width: 640px;
+			margin: 10vh auto;
+			padding: 32px;
+			background: #ffffff;
+			border-radius: 16px;
+		}
+		</style>
+		</head>
+		<body>
+		<main>
+		<h1>Join Wivaulty</h1>
+		<p>Open this link on an Android device with Wivaulty installed.</p>
+		</main>
+		</body>
+		</html>
+		HTML 200
+	}
+
+	handle {
+		respond "Not Found" 404
+	}
+
+	header {
+		Content-Security-Policy "default-src 'none'; img-src https:; style-src 'unsafe-inline'"
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
