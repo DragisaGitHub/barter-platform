@@ -103,6 +103,44 @@ api-test.wivaulty.com {
 	}
 }
 
+# --- PROD API: api.wivaulty.com ---
+api.wivaulty.com {
+        import security_headers
+        encode zstd gzip
+
+        handle /health {
+                respond "OK" 200
+        }
+
+        handle /api/v1/actuator/health {
+                reverse_proxy wivaulty-prod-backend:8080
+        }
+
+        handle /api/v1/actuator/health/readiness {
+                reverse_proxy wivaulty-prod-backend:8080
+        }
+
+        handle /api/v1/actuator/health/liveness {
+                reverse_proxy wivaulty-prod-backend:8080
+        }
+
+        handle /api/v1/actuator/* {
+                respond "Not Found" 404
+        }
+
+        handle /actuator/* {
+                respond "Not Found" 404
+        }
+
+        handle {
+                reverse_proxy wivaulty-prod-backend:8080
+        }
+
+        log {
+                output stdout
+                format console
+        }
+}
 # --- Wivaulty public links and Android App Links ---
 wivaulty.com, www.wivaulty.com {
 	import security_headers
@@ -115,7 +153,7 @@ wivaulty.com, www.wivaulty.com {
 
 	handle /s/* {
 		rewrite * /api/v1{uri}
-		reverse_proxy wivaulty-test-backend:8080
+		reverse_proxy wivaulty-prod-backend:8080
 	}
 
 	handle /invite/* {
