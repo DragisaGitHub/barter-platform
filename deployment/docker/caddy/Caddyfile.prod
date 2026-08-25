@@ -145,21 +145,21 @@ api.wivaulty.com {
 wivaulty.com, www.wivaulty.com {
 	import security_headers
 
-	handle /.well-known/assetlinks.json {
-		root * /srv/wivaulty-static
-		header Content-Type application/json
-		file_server
-	}
+	route {
+		handle /.well-known/assetlinks.json {
+			root * /srv/wivaulty-static
+			header Content-Type application/json
+			file_server
+		}
 
-	handle /s/* {
-		rewrite * /api/v1{uri}
-		reverse_proxy wivaulty-prod-backend:8080
-	}
+		handle /invite {
+			reverse_proxy wivaulty-prod-landing:8080
+		}
 
-	handle /invite/* {
-		header Content-Type text/html
+		handle /invite/* {
+			header Content-Type text/html
 
-		respond <<HTML
+			respond <<HTML
 	<!doctype html>
 	<html lang="en">
 	<head>
@@ -212,14 +212,24 @@ wivaulty.com, www.wivaulty.com {
 	</body>
 	</html>
 	HTML 200
-	}
+		}
 
-	handle {
-		respond "Not Found" 404
+		handle /shared-collection-invitations {
+			reverse_proxy wivaulty-prod-landing:8080
+		}
+
+		handle /s/* {
+			rewrite * /api/v1{uri}
+			reverse_proxy wivaulty-prod-backend:8080
+		}
+
+		handle {
+			reverse_proxy wivaulty-prod-landing:8080
+		}
 	}
 
 	header {
-		Content-Security-Policy "default-src 'none'; img-src https:; style-src 'unsafe-inline'"
+		Content-Security-Policy "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; form-action 'self'; upgrade-insecure-requests"
 	}
 
 	log {
