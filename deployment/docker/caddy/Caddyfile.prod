@@ -105,42 +105,46 @@ api-test.wivaulty.com {
 
 # --- PROD API: api.wivaulty.com ---
 api.wivaulty.com {
-        import security_headers
-        encode zstd gzip
+	import security_headers
+	encode zstd gzip
 
-        handle /health {
-                respond "OK" 200
-        }
+	handle /health {
+		respond "OK" 200
+	}
 
-        handle /api/v1/actuator/health {
-                reverse_proxy wivaulty-prod-backend:8080
-        }
+	handle /api/v1/actuator/health {
+		rewrite * /actuator/health
+		reverse_proxy wivaulty-prod-backend:8081
+	}
 
-        handle /api/v1/actuator/health/readiness {
-                reverse_proxy wivaulty-prod-backend:8080
-        }
+	handle /api/v1/actuator/health/readiness {
+		rewrite * /actuator/health/readiness
+		reverse_proxy wivaulty-prod-backend:8081
+	}
 
-        handle /api/v1/actuator/health/liveness {
-                reverse_proxy wivaulty-prod-backend:8080
-        }
+	handle /api/v1/actuator/health/liveness {
+		rewrite * /actuator/health/liveness
+		reverse_proxy wivaulty-prod-backend:8081
+	}
 
-        handle /api/v1/actuator/* {
-                respond "Not Found" 404
-        }
+	handle /api/v1/actuator/* {
+		respond "Not Found" 404
+	}
 
-        handle /actuator/* {
-                respond "Not Found" 404
-        }
+	handle /actuator/* {
+		respond "Not Found" 404
+	}
 
-        handle {
-                reverse_proxy wivaulty-prod-backend:8080
-        }
+	handle {
+		reverse_proxy wivaulty-prod-backend:8080
+	}
 
-        log {
-                output stdout
-                format console
-        }
+	log {
+		output stdout
+		format console
+	}
 }
+
 # --- Wivaulty public links and Android App Links ---
 wivaulty.com, www.wivaulty.com {
 	import security_headers
@@ -160,58 +164,58 @@ wivaulty.com, www.wivaulty.com {
 			header Content-Type text/html
 
 			respond <<HTML
-	<!doctype html>
-	<html lang="en">
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width,initial-scale=1">
-		<meta name="robots" content="noindex,nofollow">
-		<title>Join Wivaulty</title>
-		<style>
-			body {
-				margin: 0;
-				padding: 32px;
-				background: #f7f2e8;
-				color: #20242d;
-				font-family: system-ui, sans-serif;
-			}
+    <!doctype html>
+    <html lang="en">
+    <head>
+       <meta charset="utf-8">
+       <meta name="viewport" content="width=device-width,initial-scale=1">
+       <meta name="robots" content="noindex,nofollow">
+       <title>Join Wivaulty</title>
+       <style>
+          body {
+             margin: 0;
+             padding: 32px;
+             background: #f7f2e8;
+             color: #20242d;
+             font-family: system-ui, sans-serif;
+          }
 
-			main {
-				max-width: 640px;
-				margin: 10vh auto;
-				padding: 32px;
-				background: #ffffff;
-				border-radius: 16px;
-			}
+          main {
+             max-width: 640px;
+             margin: 10vh auto;
+             padding: 32px;
+             background: #ffffff;
+             border-radius: 16px;
+          }
 
-			h1 {
-				margin-top: 0;
-			}
+          h1 {
+             margin-top: 0;
+          }
 
-			a {
-				display: inline-block;
-				margin-top: 16px;
-				padding: 14px 20px;
-				background: #20242d;
-				color: #ffffff;
-				text-decoration: none;
-				border-radius: 10px;
-				font-weight: 600;
-			}
-		</style>
-	</head>
-	<body>
-		<main>
-			<h1>Join Wivaulty</h1>
-			<p>Save things you find online and come back to them later.</p>
+          a {
+             display: inline-block;
+             margin-top: 16px;
+             padding: 14px 20px;
+             background: #20242d;
+             color: #ffffff;
+             text-decoration: none;
+             border-radius: 10px;
+             font-weight: 600;
+          }
+       </style>
+    </head>
+    <body>
+       <main>
+          <h1>Join Wivaulty</h1>
+          <p>Save things you find online and come back to them later.</p>
 
-			<a href="https://play.google.com/store/apps/details?id=com.wivaulty.app">
-				Get Wivaulty on Google Play
-			</a>
-		</main>
-	</body>
-	</html>
-	HTML 200
+          <a href="https://play.google.com/store/apps/details?id=com.wivaulty.app">
+             Get Wivaulty on Google Play
+          </a>
+       </main>
+    </body>
+    </html>
+    HTML 200
 		}
 
 		handle /shared-collection-invitations {
