@@ -20,6 +20,10 @@
 	}
 }
 
+# --- Internal Docker health check ---
+http://:8080 {
+    respond /health "OK" 200
+}
 # --- Landing page: zameni.rs & www.zameni.rs ---
 zameni.rs, www.zameni.rs {
 	import security_headers

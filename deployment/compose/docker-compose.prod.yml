@@ -36,7 +36,7 @@ services:
       - caddy_data:/data
       - caddy_config:/config
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider --header='Host: zameni.rs' http://127.0.0.1:80/health || exit 1"]
+      test: ["CMD-SHELL", "wget --quiet --tries=1 --spider http://127.0.0.1:8080/health || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
