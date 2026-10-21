@@ -15,6 +15,7 @@ development deployments on **zameni.rs**.
 | [GITHUB_SECRETS.md](GITHUB_SECRETS.md) | Every GitHub Actions secret required for CI/CD — what each is, where to find it |
 | [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) | Step-by-step operator checklist before and after every production deployment |
 | [ROLLBACK_CHECKLIST.md](ROLLBACK_CHECKLIST.md) | When and how to roll back, including database migration considerations |
+| [SECURITY_HOTFIX.md](SECURITY_HOTFIX.md) | Verified CA trust remediation, email secret, TLS tests, and V030/V031 recovery |
 | [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) | Recovery procedures for VM failure, Docker failure, DB restore, DNS issues |
 | [V1_READINESS_REPORT.md](V1_READINESS_REPORT.md) | Deployment readiness audit report for v1.0.0 |
 
@@ -54,10 +55,10 @@ development deployments on **zameni.rs**.
 
 ```bash
 # Deploy a new release
-bash deployment/scripts/deploy-prod.sh 1.1.0
+bash deployment/scripts/deploy-prod.sh 1.1.0 sha256:<CADDY_MANIFEST_DIGEST>
 
 # Roll back to a previous release
-bash deployment/scripts/rollback-prod.sh 1.0.0
+bash deployment/scripts/rollback-prod.sh 1.0.0 --confirm-migration-state-reviewed
 ```
 
 ---

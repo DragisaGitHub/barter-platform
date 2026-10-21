@@ -1,6 +1,7 @@
 package com.barterplatform.application.identity.service.impl;
 
 import com.barterplatform.api.model.*;
+import com.barterplatform.application.identity.auth.EmailVerificationResult;
 import com.barterplatform.application.identity.auth.JwtService;
 import com.barterplatform.application.identity.auth.RefreshTokenService;
 import com.barterplatform.application.identity.mapper.RoleMapper;
@@ -239,24 +240,18 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public VerifyEmailResponse verifyEmail(VerifyEmailRequest request) {
-        // Pre-check user state: if already verified, we must not issue tokens (code was not validated for that case)
-        UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ApiException(
-                        HttpStatus.NOT_FOUND,
-                        ErrorCode.NOT_FOUND,
-                        "User not found."));
-        boolean wasAlreadyVerified = user.isEmailVerified();
-
-        // Delegate to email verification service (validates code, activates user on success, throws on failure)
-        MessageResponse msgResponse = emailVerificationService.verifyEmail(request);
-
-        // Already verified — do not issue tokens (code was not validated in this early-return path)
-        if (wasAlreadyVerified) {
-            return new VerifyEmailResponse().message(msgResponse.getMessage());
+        EmailVerificationResult result = emailVerificationService.verifyEmail(request);
+        if (result == EmailVerificationResult.ALREADY_VERIFIED) {
+            return new VerifyEmailResponse()
+                    .message("Email is already verified.")
+                    .tokenType(VerifyEmailResponse.TokenTypeEnum.BEARER);
+        }
+        if (result != EmailVerificationResult.VERIFIED) {
+            throw verificationException(result);
         }
 
-        // Newly verified — reload user to get fresh state, then issue authentication tokens
-        UserEntity verifiedUser = userRepository.findByEmail(request.getEmail()).orElseThrow();
+        UserEntity verifiedUser = userRepository.findByEmailIgnoreCase(request.getEmail()).orElseThrow();
+        validateUserStatus(verifiedUser);
         List<String> roles = resolveRoleNames(verifiedUser.getId());
         String accessToken = jwtService.generateAccessToken(verifiedUser.getUuid(), verifiedUser.getUsername(), roles);
         RefreshTokenService.RefreshTokenResult refreshResult = refreshTokenService.createRefreshToken(verifiedUser.getId());
@@ -266,13 +261,25 @@ public class AuthServiceImpl implements AuthService {
         CurrentUserResponse userResponse = buildCurrentUserResponse(verifiedUser);
 
         return new VerifyEmailResponse()
-                .message(msgResponse.getMessage())
+                .message("Email verified successfully.")
                 .accessToken(accessToken)
                 .refreshToken(refreshResult.rawToken())
                 .tokenType(VerifyEmailResponse.TokenTypeEnum.BEARER)
                 .expiresIn(jwtService.getAccessTokenExpirationSeconds())
                 .refreshExpiresIn(refreshTokenService.getRefreshTokenExpirationSeconds())
                 .user(userResponse);
+    }
+
+    private ApiException verificationException(EmailVerificationResult result) {
+        return switch (result) {
+            case MISSING, INVALID -> new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.VERIFICATION_CODE_INVALID,
+                    "Invalid verification code.");
+            case EXPIRED -> new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.VERIFICATION_CODE_EXPIRED,
+                    "Verification code has expired. Please request a new one.");
+            case LOCKED -> new ApiException(HttpStatus.BAD_REQUEST, ErrorCode.VERIFICATION_CODE_LOCKED,
+                    "Too many incorrect verification attempts. Please request a new code.");
+            case VERIFIED, ALREADY_VERIFIED -> throw new IllegalArgumentException("Unexpected verification outcome.");
+        };
     }
 
     @Override
@@ -313,11 +320,23 @@ public class AuthServiceImpl implements AuthService {
                     ErrorCode.FORBIDDEN,
                     "Account is banned.");
         }
+        if (user.getStatus() == UserStatus.DELETED) {
+            throw new ApiException(
+                    HttpStatus.FORBIDDEN,
+                    ErrorCode.FORBIDDEN,
+                    "Account is deleted.");
+        }
         if (user.getStatus() == UserStatus.PENDING_VERIFICATION || !user.isEmailVerified()) {
             throw new ApiException(
                     HttpStatus.FORBIDDEN,
                     ErrorCode.FORBIDDEN,
                     "Email verification required.");
+        }
+        if (user.getStatus() != UserStatus.ACTIVE) {
+            throw new ApiException(
+                    HttpStatus.FORBIDDEN,
+                    ErrorCode.FORBIDDEN,
+                    "Account is not active.");
         }
     }
 

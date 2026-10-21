@@ -1,6 +1,7 @@
 package com.barterplatform.web.security;
 
 import com.barterplatform.application.identity.auth.JwtSecretValidator;
+import com.barterplatform.application.identity.auth.VerificationCodeHasher;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +31,7 @@ public class ProductionSecurityEnvironmentValidator implements SmartInitializing
         List<String> errors = new ArrayList<>();
         validateProfiles(errors);
         validateJwtSecret(errors);
+        validateVerificationSecret(errors);
         validateJwtExpirations(errors);
         validateAllowedOrigins(errors);
         validateCorsPolicies(errors);
@@ -55,6 +57,13 @@ public class ProductionSecurityEnvironmentValidator implements SmartInitializing
             JwtSecretValidator.validateOrThrow(jwtSecret, "barter.jwt.secret (JWT_SECRET)");
         } catch (IllegalStateException ex) {
             errors.add(ex.getMessage());
+        }
+    }
+
+    private void validateVerificationSecret(List<String> errors) {
+        String verificationSecret = environment.getProperty("barter.verification.code-secret", "");
+        if (!VerificationCodeHasher.isValidDedicatedSecret(verificationSecret)) {
+            errors.add("barter.verification.code-secret (BARTER_VERIFICATION_CODE_SECRET) must be set to at least 32 printable ASCII characters in prod.");
         }
     }
 

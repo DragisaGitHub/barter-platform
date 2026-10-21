@@ -14,6 +14,7 @@ public class RateLimitProperties {
     private Policy forgotPassword = new Policy(5, Duration.ofMinutes(15));
     private Policy resetPassword = new Policy(10, Duration.ofMinutes(15));
     private Policy resendVerificationCode = new Policy(5, Duration.ofMinutes(15));
+    private Policy verifyEmail = new Policy(100, Duration.ofMinutes(15));
     private Policy imageUpload = new Policy(30, Duration.ofMinutes(10));
     private Policy tradeOfferCreate = new Policy(20, Duration.ofMinutes(10));
     private Policy tradeMessageSend = new Policy(60, Duration.ofMinutes(10));
@@ -82,6 +83,14 @@ public class RateLimitProperties {
 
     public void setResendVerificationCode(Policy resendVerificationCode) {
         this.resendVerificationCode = normalize(resendVerificationCode, this.resendVerificationCode);
+    }
+
+    public Policy getVerifyEmail() {
+        return verifyEmail;
+    }
+
+    public void setVerifyEmail(Policy verifyEmail) {
+        this.verifyEmail = normalize(verifyEmail, this.verifyEmail);
     }
 
     public Policy getImageUpload() {

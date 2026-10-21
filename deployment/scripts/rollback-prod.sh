@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # rollback-prod.sh — Roll back production to a previous known-good release tag.
 #
-# Usage:  rollback-prod.sh <previous-tag>
-# Example: rollback-prod.sh 1.0.0
+# Usage:  rollback-prod.sh <previous-tag> --confirm-migration-state-reviewed
+# Example: rollback-prod.sh 1.0.0 --confirm-migration-state-reviewed
 #
 # This script is functionally identical to deploy-prod.sh but provides explicit
 # rollback warnings, especially regarding irreversible database migrations.
@@ -18,6 +18,42 @@ HEALTH_POLL_INTERVAL=5
 BACKEND_REPO="dragisahub1984/barter-backend"
 FRONTEND_REPO="dragisahub1984/barter-frontend"
 LANDING_REPO="dragisahub1984/barter-landing"
+
+read_caddy_image() {
+  local configured
+  configured="$(grep -E '^CADDY_IMAGE=' "${ENV_FILE}" 2>/dev/null | tail -n1 | cut -d '=' -f 2- || true)"
+  configured="${configured%$'\r'}"
+  if [[ -n "${configured}" ]]; then
+    printf '%s' "${configured}"
+    return 0
+  fi
+
+  docker inspect --format '{{.Config.Image}}' barter-prod-caddy 2>/dev/null \
+    || fail "CADDY_IMAGE is missing and the current Caddy container could not be inspected. Set CADDY_IMAGE to its current image reference before rollback."
+}
+
+compose() {
+  CADDY_IMAGE="${CADDY_IMAGE_REF}" docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" "$@"
+}
+
+wait_for_compose_health() {
+  local service="$1"
+  local elapsed=0
+  local container_id state
+  while (( elapsed < HEALTH_TIMEOUT_SECONDS )); do
+    container_id="$(compose ps -q "${service}" | head -n 1)"
+    if [[ -n "${container_id}" ]]; then
+      state="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "${container_id}" 2>/dev/null || true)"
+      case "${state}" in
+        healthy|running) echo "Compose service '${service}' is ${state}."; return 0 ;;
+        unhealthy|exited|dead) fail "Compose service '${service}' entered '${state}'; inspect logs before continuing." ;;
+      esac
+    fi
+    sleep "${HEALTH_POLL_INTERVAL}"
+    elapsed=$((elapsed + HEALTH_POLL_INTERVAL))
+  done
+  fail "Timed out waiting for Compose service '${service}' to become healthy."
+}
 
 # ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -42,7 +78,7 @@ validate_tag() {
   local tag="$1"
 
   if [[ -z "${tag}" ]]; then
-    fail "Rollback tag must not be empty. Usage: $(basename "$0") <semver-tag>"
+    fail "Rollback tag must not be empty. Usage: $(basename "$0") <semver-tag> --confirm-migration-state-reviewed"
   fi
 
   case "${tag}" in
@@ -93,6 +129,10 @@ update_env_images() {
     -e "s|^LANDING_IMAGE=.*|LANDING_IMAGE=${LANDING_REPO}:${tag}|" \
     "${ENV_FILE}"
 
+  grep -q '^BACKEND_IMAGE=' "${ENV_FILE}" || printf 'BACKEND_IMAGE=%s:%s\n' "${BACKEND_REPO}" "${tag}" >> "${ENV_FILE}"
+  grep -q '^FRONTEND_IMAGE=' "${ENV_FILE}" || printf 'FRONTEND_IMAGE=%s:%s\n' "${FRONTEND_REPO}" "${tag}" >> "${ENV_FILE}"
+  grep -q '^LANDING_IMAGE=' "${ENV_FILE}" || printf 'LANDING_IMAGE=%s:%s\n' "${LANDING_REPO}" "${tag}" >> "${ENV_FILE}"
+
   echo "BACKEND_IMAGE  → ${BACKEND_REPO}:${tag}"
   echo "FRONTEND_IMAGE → ${FRONTEND_REPO}:${tag}"
   echo "LANDING_IMAGE  → ${LANDING_REPO}:${tag}"
@@ -131,8 +171,16 @@ run_health_checks() {
 # ─── Main ──────────────────────────────────────────────────────────────────
 
 ROLLBACK_TAG="${1:-}"
+MIGRATION_ACK="${2:-}"
 validate_tag "${ROLLBACK_TAG}"
+if [[ "${MIGRATION_ACK}" != "--confirm-migration-state-reviewed" ]]; then
+  fail "Review the applied Flyway state before rolling back; preserve forward migrations and pass --confirm-migration-state-reviewed only after confirmation."
+fi
 validate_prerequisites
+CADDY_IMAGE_REF="$(read_caddy_image)"
+
+log "Validating rollback Compose configuration"
+compose config --quiet || fail "Compose preflight failed; no containers or env files were changed."
 
 CURRENT_TAG="$(read_current_tag)"
 
@@ -143,24 +191,34 @@ echo "Compose file:        ${COMPOSE_FILE}"
 echo "Env file:            ${ENV_FILE}"
 echo "Started at (UTC):    $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
-warn "If the release you are rolling back FROM introduced irreversible database migrations"
-warn "(e.g. dropped columns, renamed tables, deleted data), this rollback may cause"
-warn "application errors. In that case, you must ALSO restore the database from a backup"
-warn "taken BEFORE the forward deploy. Database restore is a separate manual step."
+warn "This script rolls back application images only; it never reverses Flyway or restores a database."
+warn "Keep V030/V031 forward. V031 marks V030-retired legacy codes used for older backend compatibility."
+warn "For any other destructive migration, assess schema compatibility and consider a separately approved restore."
 warn ""
-warn "Proceed with caution. The rollback will now update images and recreate containers."
+warn "Caddy and unrelated services remain unchanged; only backend/frontend/landing are recreated."
 echo
+
+log "Pulling rollback application images only"
+BACKEND_IMAGE="${BACKEND_REPO}:${ROLLBACK_TAG}" \
+  FRONTEND_IMAGE="${FRONTEND_REPO}:${ROLLBACK_TAG}" \
+  LANDING_IMAGE="${LANDING_REPO}:${ROLLBACK_TAG}" \
+  compose pull backend frontend landing
+
+log "Rolling back backend, then frontend and landing (Caddy remains unchanged)"
+BACKEND_IMAGE="${BACKEND_REPO}:${ROLLBACK_TAG}" \
+  compose up -d --no-deps --force-recreate backend
+wait_for_compose_health backend
+BACKEND_IMAGE="${BACKEND_REPO}:${ROLLBACK_TAG}" \
+  FRONTEND_IMAGE="${FRONTEND_REPO}:${ROLLBACK_TAG}" \
+  LANDING_IMAGE="${LANDING_REPO}:${ROLLBACK_TAG}" \
+  compose up -d --no-deps --force-recreate frontend landing
+wait_for_compose_health frontend
+wait_for_compose_health landing
 
 update_env_images "${ROLLBACK_TAG}"
 
-log "Pulling rollback images"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" pull
-
-log "Recreating production stack with rollback images"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d --force-recreate --remove-orphans
-
 log "Container status after rollback"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" ps
+compose ps
 
 run_health_checks
 

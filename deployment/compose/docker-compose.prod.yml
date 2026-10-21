@@ -16,7 +16,8 @@
 
 services:
   caddy:
-    image: caddy:2.8-alpine
+    image: ${CADDY_IMAGE:?CADDY_IMAGE must be set to a verified immutable image digest}
+    platform: linux/amd64
     container_name: barter-prod-caddy
     restart: unless-stopped
     depends_on:
@@ -59,6 +60,7 @@ services:
       DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
+      BARTER_VERIFICATION_CODE_SECRET: ${BARTER_VERIFICATION_CODE_SECRET:-}
       JWT_ACCESS_EXPIRATION_MINUTES: ${JWT_ACCESS_EXPIRATION_MINUTES:-15}
       JWT_REFRESH_EXPIRATION_DAYS: ${JWT_REFRESH_EXPIRATION_DAYS:-7}
       SPRING_MAIL_HOST: ${SMTP_HOST:?SMTP_HOST is required for production}
@@ -70,11 +72,13 @@ services:
       BARTER_SECURITY_ALLOWED_ORIGINS: ${BARTER_SECURITY_ALLOWED_ORIGINS:-}
       BARTER_SECURITY_ALLOWED_METHODS: ${BARTER_SECURITY_ALLOWED_METHODS:-GET,POST,PUT,PATCH,DELETE,OPTIONS}
       BARTER_SECURITY_ALLOWED_HEADERS: ${BARTER_SECURITY_ALLOWED_HEADERS:-Accept,Authorization,Content-Type,Origin,X-Correlation-Id,X-Request-Id,X-Requested-With}
-      BARTER_SECURITY_EXPOSED_HEADERS: ${BARTER_SECURITY_EXPOSED_HEADERS:-X-Correlation-Id}
+      BARTER_SECURITY_EXPOSED_HEADERS: ${BARTER_SECURITY_EXPOSED_HEADERS:-X-Correlation-Id,Retry-After}
       BARTER_SECURITY_ALLOW_CREDENTIALS: ${BARTER_SECURITY_ALLOW_CREDENTIALS:-false}
       BARTER_SECURITY_CORS_MAX_AGE: ${BARTER_SECURITY_CORS_MAX_AGE:-1h}
       BARTER_SWAGGER_ENABLED: "false"
       BARTER_EMAIL_VERIFICATION_ENABLED: "true"
+      # Caddy overwrites this header with its client connection address.
+      BARTER_RATE_LIMITS_CLIENT_IP_HEADER: X-Real-IP
       # Safety hard-lock: never seed demo content in production regardless of prod.env.
       BARTER_SEED_DEMO_CONTENT: "false"
       SENTRY_DSN_BACKEND: ${SENTRY_DSN_BACKEND:-}

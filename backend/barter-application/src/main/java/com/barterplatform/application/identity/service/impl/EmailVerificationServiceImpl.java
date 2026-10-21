@@ -1,119 +1,161 @@
 package com.barterplatform.application.identity.service.impl;
 
-import com.barterplatform.api.model.MessageResponse;
 import com.barterplatform.api.model.ResendVerificationCodeRequest;
 import com.barterplatform.api.model.VerifyEmailRequest;
+import com.barterplatform.application.identity.auth.EmailVerificationResult;
+import com.barterplatform.application.identity.auth.VerificationCodeHasher;
 import com.barterplatform.application.identity.service.EmailVerificationService;
 import com.barterplatform.application.identity.service.MailSender;
+import com.barterplatform.api.model.MessageResponse;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
+import com.barterplatform.common.exception.RateLimitException;
 import com.barterplatform.domain.identity.entity.EmailVerificationCodeEntity;
 import com.barterplatform.domain.identity.entity.UserEntity;
 import com.barterplatform.domain.identity.enums.UserStatus;
 import com.barterplatform.infrastructure.identity.repository.EmailVerificationCodeRepository;
 import com.barterplatform.infrastructure.identity.repository.UserRepository;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.util.HexFormat;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 @Transactional
 public class EmailVerificationServiceImpl implements EmailVerificationService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final Logger log = LoggerFactory.getLogger(EmailVerificationServiceImpl.class);
 
     private final UserRepository userRepository;
     private final EmailVerificationCodeRepository verificationCodeRepository;
     private final MailSender mailSender;
+    private final VerificationCodeHasher codeHasher;
     private final long codeExpirationMinutes;
+    private final int maxFailedAttempts;
+    private final Duration resendCooldown;
+    private final int maxCodesPerWindow;
+    private final Duration issuanceWindow;
 
     public EmailVerificationServiceImpl(
             UserRepository userRepository,
             EmailVerificationCodeRepository verificationCodeRepository,
             MailSender mailSender,
-            @Value("${barter.verification.code-expiration-minutes:15}") long codeExpirationMinutes) {
+            VerificationCodeHasher codeHasher,
+            @Value("${barter.verification.code-expiration-minutes:15}") long codeExpirationMinutes,
+            @Value("${barter.verification.max-failed-attempts:5}") int maxFailedAttempts,
+            @Value("${barter.verification.resend-cooldown:60s}") Duration resendCooldown,
+            @Value("${barter.verification.max-codes-per-window:5}") int maxCodesPerWindow,
+            @Value("${barter.verification.issuance-window:1h}") Duration issuanceWindow) {
         this.userRepository = userRepository;
         this.verificationCodeRepository = verificationCodeRepository;
         this.mailSender = mailSender;
+        this.codeHasher = codeHasher;
         this.codeExpirationMinutes = codeExpirationMinutes;
+        this.maxFailedAttempts = Math.max(1, maxFailedAttempts);
+        this.resendCooldown = positiveOrDefault(resendCooldown, Duration.ofSeconds(60));
+        this.maxCodesPerWindow = Math.max(1, maxCodesPerWindow);
+        this.issuanceWindow = positiveOrDefault(issuanceWindow, Duration.ofHours(1));
     }
 
     @Override
     public void createAndSendVerificationCode(Long userId, String email) {
         String rawCode = generateCode();
-        String codeHash = hashCode(rawCode);
+        OffsetDateTime now = OffsetDateTime.now();
 
         EmailVerificationCodeEntity entity = new EmailVerificationCodeEntity();
         entity.setUserId(userId);
-        entity.setCodeHash(codeHash);
-        entity.setExpiresAt(OffsetDateTime.now().plusMinutes(codeExpirationMinutes));
-        entity.setCreatedAt(OffsetDateTime.now());
+        entity.setCodeHash(codeHasher.hash(userId, rawCode));
+        entity.setExpiresAt(now.plusMinutes(codeExpirationMinutes));
+        entity.setCreatedAt(now);
+        entity.setCountsTowardIssuanceLimit(true);
         verificationCodeRepository.save(entity);
 
-        mailSender.sendHtml(
-                email,
-                "Barter Platform – Verify your email",
-                buildVerificationEmailHtml(rawCode, codeExpirationMinutes)
-        );
+        sendAfterCommit(email, rawCode);
     }
 
     @Override
-    public MessageResponse verifyEmail(VerifyEmailRequest request) {
-        UserEntity user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ApiException(
-                        HttpStatus.NOT_FOUND,
-                        ErrorCode.NOT_FOUND,
-                        "User not found."));
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public EmailVerificationResult verifyEmail(VerifyEmailRequest request) {
+        Optional<UserEntity> userOptional = userRepository.findByEmailIgnoreCaseForUpdate(request.getEmail());
+        if (userOptional.isEmpty()) {
+            return EmailVerificationResult.MISSING;
+        }
+        UserEntity user = userOptional.get();
+        validateAccountStatusForVerification(user);
 
         if (user.isEmailVerified()) {
-            return new MessageResponse().message("Email is already verified.");
+            return EmailVerificationResult.ALREADY_VERIFIED;
         }
 
         EmailVerificationCodeEntity codeEntity = verificationCodeRepository
-                .findFirstByUserIdAndUsedAtIsNullOrderByCreatedAtDesc(user.getId())
-                .orElseThrow(() -> new ApiException(
-                        HttpStatus.BAD_REQUEST,
-                        ErrorCode.BAD_REQUEST,
-                        "No verification code found. Please request a new one."));
+                .findByUserIdForUpdate(user.getId(), PageRequest.of(0, 1))
+                .stream()
+                .findFirst()
+                .orElse(null);
+        if (codeEntity == null || codeEntity.getUsedAt() != null) {
+            return EmailVerificationResult.MISSING;
+        }
+        if (codeEntity.getInvalidatedAt() != null) {
+            return codeEntity.getFailedAttempts() >= maxFailedAttempts
+                    ? EmailVerificationResult.LOCKED
+                    : EmailVerificationResult.MISSING;
+        }
 
         if (codeEntity.getExpiresAt().isBefore(OffsetDateTime.now())) {
-            throw new ApiException(
-                    HttpStatus.BAD_REQUEST,
-                    ErrorCode.BAD_REQUEST,
-                    "Verification code has expired. Please request a new one.");
+            return EmailVerificationResult.EXPIRED;
         }
 
-        String providedHash = hashCode(request.getCode());
-        if (!providedHash.equals(codeEntity.getCodeHash())) {
-            throw new ApiException(
-                    HttpStatus.BAD_REQUEST,
-                    ErrorCode.BAD_REQUEST,
-                    "Invalid verification code.");
+        OffsetDateTime now = OffsetDateTime.now();
+        if (!codeHasher.matches(user.getId(), request.getCode(), codeEntity.getCodeHash())) {
+            int attempts = codeEntity.getFailedAttempts() + 1;
+            codeEntity.setFailedAttempts(attempts);
+            if (attempts >= maxFailedAttempts) {
+                codeEntity.setInvalidatedAt(now);
+                verificationCodeRepository.save(codeEntity);
+                return EmailVerificationResult.LOCKED;
+            }
+            verificationCodeRepository.save(codeEntity);
+            return EmailVerificationResult.INVALID;
         }
 
-        // Mark code as used
-        codeEntity.setUsedAt(OffsetDateTime.now());
+        codeEntity.setUsedAt(now);
         verificationCodeRepository.save(codeEntity);
 
-        // Activate user
         user.setEmailVerified(true);
         if (user.getStatus() == UserStatus.PENDING_VERIFICATION) {
             user.setStatus(UserStatus.ACTIVE);
         }
         userRepository.save(user);
 
-        return new MessageResponse().message("Email verified successfully.");
+        return EmailVerificationResult.VERIFIED;
+    }
+
+    private void validateAccountStatusForVerification(UserEntity user) {
+        if (user.getStatus() == UserStatus.SUSPENDED) {
+            throw new ApiException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN, "Account is suspended.");
+        }
+        if (user.getStatus() == UserStatus.BANNED) {
+            throw new ApiException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN, "Account is banned.");
+        }
+        if (user.getStatus() == UserStatus.DELETED) {
+            throw new ApiException(HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN, "Account is deleted.");
+        }
     }
 
     @Override
     public MessageResponse resendVerificationCode(ResendVerificationCodeRequest request) {
-        UserEntity user = userRepository.findByEmail(request.getEmail())
+        UserEntity user = userRepository.findByEmailIgnoreCaseForUpdate(request.getEmail())
                 .orElseThrow(() -> new ApiException(
                         HttpStatus.NOT_FOUND,
                         ErrorCode.NOT_FOUND,
@@ -123,6 +165,34 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
             return new MessageResponse().message("Email is already verified.");
         }
 
+        OffsetDateTime now = OffsetDateTime.now();
+        Optional<EmailVerificationCodeEntity> latest = verificationCodeRepository
+                .findFirstByUserIdOrderByCreatedAtDesc(user.getId());
+        if (latest.isPresent()) {
+            EmailVerificationCodeEntity latestCode = latest.get();
+            boolean lockedByAttempts = latestCode.getInvalidatedAt() != null
+                    && latestCode.getFailedAttempts() >= maxFailedAttempts;
+            OffsetDateTime cooldownEndsAt = latestCode.getCreatedAt().plus(resendCooldown);
+            if (!lockedByAttempts && now.isBefore(cooldownEndsAt)) {
+                throw new RateLimitException("Please wait before requesting another verification code.",
+                        retryAfterSeconds(now, cooldownEndsAt));
+            }
+        }
+
+        OffsetDateTime windowStart = now.minus(issuanceWindow);
+        long codeCount = verificationCodeRepository
+                .countByUserIdAndCreatedAtAfterAndCountsTowardIssuanceLimitTrue(user.getId(), windowStart);
+        if (codeCount >= maxCodesPerWindow) {
+            OffsetDateTime nextAvailableAt = verificationCodeRepository
+                    .findFirstByUserIdAndCreatedAtAfterAndCountsTowardIssuanceLimitTrueOrderByCreatedAtAsc(
+                            user.getId(), windowStart)
+                    .map(code -> code.getCreatedAt().plus(issuanceWindow))
+                    .orElse(now.plusSeconds(1));
+            throw new RateLimitException("Too many verification codes have been requested. Please retry later.",
+                    retryAfterSeconds(now, nextAvailableAt));
+        }
+
+        verificationCodeRepository.invalidateActiveCodes(user.getId(), now);
         createAndSendVerificationCode(user.getId(), user.getEmail());
         return new MessageResponse().message("Verification code sent.");
     }
@@ -132,13 +202,35 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         return String.valueOf(code);
     }
 
-    public static String hashCode(String rawCode) {
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(rawCode.getBytes());
-            return HexFormat.of().formatHex(hash);
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 algorithm not available", e);
+    private static Duration positiveOrDefault(Duration value, Duration fallback) {
+        return value != null && !value.isZero() && !value.isNegative() ? value : fallback;
+    }
+
+    private long retryAfterSeconds(OffsetDateTime now, OffsetDateTime availableAt) {
+        long millis = Duration.between(now, availableAt).toMillis();
+        return Math.max(1, (long) Math.ceil(millis / 1000.0d));
+    }
+
+    private void sendAfterCommit(String email, String rawCode) {
+        Runnable send = () -> {
+            try {
+                mailSender.sendHtml(
+                        email,
+                        "Barter Platform – Verify your email",
+                        buildVerificationEmailHtml(rawCode, codeExpirationMinutes));
+            } catch (RuntimeException e) {
+                log.warn("Verification email delivery failed after commit; a resend may be requested.");
+            }
+        };
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    send.run();
+                }
+            });
+        } else {
+            send.run();
         }
     }
 

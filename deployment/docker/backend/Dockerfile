@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM eclipse-temurin:21-jdk-jammy AS build
+FROM eclipse-temurin@sha256:c7d5863b5dd8f26b90c64f1d80cc2b0e5a5e4642f8db9955a370d348edd8f438 AS build
 WORKDIR /workspace
 
 COPY backend/gradlew backend/settings.gradle backend/build.gradle ./
@@ -15,12 +15,31 @@ COPY backend/barter-web ./barter-web
 RUN chmod +x ./gradlew \
     && ./gradlew --no-daemon :barter-web:bootJar -x test
 
-FROM eclipse-temurin:21-jre-jammy AS runtime
+FROM eclipse-temurin@sha256:61d6c7b34d36aee3f45d043101259f97f3c6d428dc2a6f75513789983c5e254f AS runtime
 WORKDIR /app
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN set -eu; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        ca-certificates=20260816ubuntu0.22.04.1 \
+        curl; \
+    rm -rf /var/lib/apt/lists/*; \
+    dpkg-query -W -f='${Version}' ca-certificates \
+        | grep -Fx '20260816ubuntu0.22.04.1'; \
+    keytool -delete -cacerts -storepass changeit \
+        -alias 'cn_emsign_root_ca__c1,o_emudhra_inc,ou_emsign_pki,c_us [jdk]'; \
+    keytool -delete -cacerts -storepass changeit \
+        -alias 'cn_emsign_ecc_root_ca__c3,o_emudhra_inc,ou_emsign_pki,c_us [jdk]'; \
+    keytool -delete -cacerts -storepass changeit \
+        -alias 'cn_emsign_ecc_root_ca__g3,o_emudhra_technologies_limited,ou_emsign_pki,c_in [jdk]'; \
+    if keytool -list -cacerts -storepass changeit 2>/dev/null \
+        | grep -E 'cn_emsign_(root_ca__c1|ecc_root_ca__c3|ecc_root_ca__g3),'; then \
+        echo 'An eMudhra root removed by the official CA bundle remains in the JVM cacerts store.' >&2; \
+        exit 1; \
+    fi; \
+    keytool -list -cacerts -storepass changeit \
+        -alias 'cn_emsign_root_ca__g1,o_emudhra_technologies_limited,ou_emsign_pki,c_in [jdk]' >/dev/null; \
+    test -f "$JAVA_HOME/lib/security/cacerts"
 
 RUN groupadd --system spring \
     && useradd --system --gid spring --home-dir /app --shell /usr/sbin/nologin spring

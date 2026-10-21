@@ -197,33 +197,30 @@ Expected: both commands succeed with no error.
 
 ```bash
 cd /opt/barter-platform
-bash deployment/scripts/deploy-prod.sh 1.0.0
+bash deployment/scripts/deploy-prod.sh 1.0.0 sha256:<CADDY_DIGEST_FROM_DOCKER_PUBLISH>
 ```
 
 What the script does:
-1. Validates the semver tag (`1.0.0`).
+1. Validates the semver tag, immutable Caddy digest, dedicated verification secret, and Compose config.
 2. Confirms `prod.env` and `docker-compose.prod.yml` exist.
-3. Updates `BACKEND_IMAGE`, `FRONTEND_IMAGE`, `LANDING_IMAGE` in `prod.env`.
-4. Runs `docker compose pull` to fetch images from Docker Hub.
-5. Runs `docker compose up -d --force-recreate --remove-orphans`.
+3. Completes the configured database backup before changing containers.
+4. Pulls only Caddy and the target application service images.
+5. Recreates Caddy first and waits for health; recreates backend only after Caddy is healthy;
+   recreates frontend/landing only after backend is healthy. No orphans or data volumes are removed.
 6. Polls `https://zameni.rs/health`, `https://app.zameni.rs/health`, and
    `https://app.zameni.rs/api/v1/actuator/health/readiness` until all return `200 OK`
    (up to 300 s timeout).
 
 ### Expected startup sequence
 
-The `depends_on: condition: service_healthy` chain enforces this order:
+The deployment script enforces this release order explicitly:
 
 ```
-backend starts
-  └─ Spring Boot loads
-  └─ Flyway runs V001 … V026 migrations on empty database
-  └─ Roles, permissions, role_permissions seeded (V002)
-  └─ Bootstrap admin created (BARTER_BOOTSTRAP_ADMIN_ENABLED=true)
-  └─ Readiness endpoint → UP
-       └─ frontend starts (depends_on backend healthy)
-       └─ landing starts (independent, no depends_on)
-            └─ caddy starts (depends_on backend + frontend + landing healthy)
+Caddy starts with the patched CA bundle (brief edge interruption)
+  └─ Caddy health check → healthy
+       └─ backend starts; Spring Boot runs pending Flyway migrations
+            └─ backend readiness → UP
+                 └─ frontend and landing are updated
 ```
 
 The backend has `start_period: 180s` in the compose healthcheck — Spring Boot cold-start

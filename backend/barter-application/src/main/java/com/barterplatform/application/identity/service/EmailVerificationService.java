@@ -3,6 +3,7 @@ package com.barterplatform.application.identity.service;
 import com.barterplatform.api.model.MessageResponse;
 import com.barterplatform.api.model.ResendVerificationCodeRequest;
 import com.barterplatform.api.model.VerifyEmailRequest;
+import com.barterplatform.application.identity.auth.EmailVerificationResult;
 
 public interface EmailVerificationService {
 
@@ -14,7 +15,7 @@ public interface EmailVerificationService {
     /**
      * Verify the email with the provided code. Activates the user on success.
      */
-    MessageResponse verifyEmail(VerifyEmailRequest request);
+    EmailVerificationResult verifyEmail(VerifyEmailRequest request);
 
     /**
      * Resend a new verification code to the user.

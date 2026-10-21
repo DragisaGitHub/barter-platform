@@ -94,6 +94,9 @@ Complete this section at least 30 minutes before every deployment.
   ```
   Expected: all three return "OK" with a recent push timestamp
 
+- [ ] **Caddy immutable digest recorded** — copy the CA-remediated Caddy `sha256:` manifest digest
+  from the Docker Publish run summary. Do not use a tag for the production Caddy image.
+
 - [ ] **The Docker Publish workflow completed successfully** for the `v<TAG>` git tag:
   - GitHub → Actions → Docker Publish — confirm the run for `v${TAG}` is green
 
@@ -130,6 +133,10 @@ Complete this section at least 30 minutes before every deployment.
 - [ ] **`SPRING_PROFILES_ACTIVE=prod`** is set (overridden in compose, but verify env file too)
 - [ ] **`BARTER_SWAGGER_ENABLED=false`** (locked in compose, but document the state)
 - [ ] **`BARTER_EMAIL_VERIFICATION_ENABLED=true`**
+- [ ] **Dedicated verification secret preflight passes** (do not print the value):
+  ```bash
+  bash deployment/scripts/deploy-prod.sh <TAG> <CADDY_SHA256_DIGEST> --preflight-only
+  ```
 - [ ] **`BARTER_SEED_DEMO_CONTENT=false`** (locked in compose)
 - [ ] **JWT_SECRET is a strong random value** (not the example placeholder):
   ```bash
@@ -199,11 +206,12 @@ Previous tag (rollback): _______________
 
 ```bash
 cd /opt/barter-platform
-bash deployment/scripts/deploy-prod.sh <TAG>
+bash deployment/scripts/deploy-prod.sh <TAG> <CADDY_SHA256_DIGEST>
 ```
 
 - [ ] Script completed with `=== Production deployment completed successfully ===`
 - [ ] Previous tag was printed — **record it above** before proceeding
+- [ ] Caddy health passed before backend activation; backend health passed before frontend/landing activation
 - [ ] No errors in the output
 
 ---

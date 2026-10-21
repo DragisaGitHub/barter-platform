@@ -103,7 +103,7 @@ This is intentionally single-node and does not require Redis, Kafka, or other di
 
 Configured endpoint groups:
 
-- Auth: login, register, refresh token, forgot password, reset password, resend verification code.
+- Auth: login, register, refresh token, forgot password, reset password, resend verification code, verify email.
 - User-generated actions: image upload, trade offer creation, trade message sending.
 - Optional launch-safe action: favorite add/remove.
 
@@ -122,10 +122,18 @@ When a limit is exceeded the API returns HTTP `429` with the standard error body
 | `BARTER_RATE_LIMITS_FORGOT_PASSWORD_LIMIT` / `BARTER_RATE_LIMITS_FORGOT_PASSWORD_WINDOW` | `5` / `15m` | Forgot-password requests per client IP. |
 | `BARTER_RATE_LIMITS_RESET_PASSWORD_LIMIT` / `BARTER_RATE_LIMITS_RESET_PASSWORD_WINDOW` | `10` / `15m` | Reset-password requests per client IP. |
 | `BARTER_RATE_LIMITS_RESEND_VERIFICATION_CODE_LIMIT` / `BARTER_RATE_LIMITS_RESEND_VERIFICATION_CODE_WINDOW` | `5` / `15m` | Verification-code resend requests per client IP. |
+| `BARTER_RATE_LIMITS_VERIFY_EMAIL_LIMIT` / `BARTER_RATE_LIMITS_VERIFY_EMAIL_WINDOW` | `100` / `15m` | Verification submissions per resolved client IP; deliberately higher to avoid a low shared-proxy/NAT quota. |
 | `BARTER_RATE_LIMITS_IMAGE_UPLOAD_LIMIT` / `BARTER_RATE_LIMITS_IMAGE_UPLOAD_WINDOW` | `30` / `10m` | Image uploads per authenticated user and IP. |
 | `BARTER_RATE_LIMITS_TRADE_OFFER_CREATE_LIMIT` / `BARTER_RATE_LIMITS_TRADE_OFFER_CREATE_WINDOW` | `20` / `10m` | Trade offers created per authenticated user and IP. |
 | `BARTER_RATE_LIMITS_TRADE_MESSAGE_SEND_LIMIT` / `BARTER_RATE_LIMITS_TRADE_MESSAGE_SEND_WINDOW` | `60` / `10m` | Trade messages sent per authenticated user and IP. |
 | `BARTER_RATE_LIMITS_FAVORITE_MUTATION_LIMIT` / `BARTER_RATE_LIMITS_FAVORITE_MUTATION_WINDOW` | `120` / `10m` | Favorite add/remove requests per authenticated user and IP. |
+
+The DEV and production Compose stacks configure `X-Real-IP`; their public Caddy edge overwrites
+it with the peer address before proxying API requests. The backend is not published directly.
+Do not enable an IP-header override on a direct backend deployment unless a trusted proxy strips
+client-supplied values and writes its own. The endpoint IP buckets are in-memory and per backend
+process (the current Compose deployment runs one instance); per-code attempts and per-account
+issuance caps are persisted in PostgreSQL and remain effective across restarts/instances.
 
 ## Observability verification
 

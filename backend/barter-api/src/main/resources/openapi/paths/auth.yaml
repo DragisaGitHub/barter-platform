@@ -144,8 +144,8 @@ verifyEmail:
         $ref: '../components/responses/BadRequest.yaml'
       '403':
         $ref: '../components/responses/Forbidden.yaml'
-      '404':
-        $ref: '../components/responses/NotFound.yaml'
+      '429':
+        $ref: '../components/responses/TooManyRequests.yaml'
 resendVerificationCode:
   post:
     tags:

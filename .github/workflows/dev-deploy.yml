@@ -15,6 +15,10 @@ on:
         description: Optional landing image override (tag or digest). Leave empty to use deployment/env/dev.env on the server.
         required: false
         type: string
+      caddy_digest:
+        description: Optional CA-remediated Caddy manifest digest (sha256 plus 64 lowercase hex characters). Leave empty to use deployment/env/dev.env.
+        required: false
+        type: string
 
 run-name: DEV deploy by @${{ github.actor }}
 
@@ -42,6 +46,7 @@ jobs:
       BACKEND_IMAGE: ${{ inputs.backend_image || '' }}
       FRONTEND_IMAGE: ${{ inputs.frontend_image || '' }}
       LANDING_IMAGE: ${{ inputs.landing_image || '' }}
+      CADDY_DIGEST: ${{ inputs.caddy_digest || '' }}
 
     steps:
       - name: Log deployment context
@@ -142,6 +147,14 @@ jobs:
 
           echo "CI is green for ${DEPLOY_REF} commit ${DEPLOY_SHA}; DEV Deploy may continue."
 
+      - name: Validate optional Caddy digest
+        run: |
+          set -euo pipefail
+          if [[ -n "${CADDY_DIGEST}" ]] && ! [[ "${CADDY_DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "Caddy digest must be sha256 followed by 64 lowercase hex characters." >&2
+            exit 1
+          fi
+
       - name: Start SSH agent
         uses: webfactory/ssh-agent@v0.10.0
         with:
@@ -175,6 +188,7 @@ jobs:
           printf -v BACKEND_IMAGE_Q '%q' "${BACKEND_IMAGE}"
           printf -v FRONTEND_IMAGE_Q '%q' "${FRONTEND_IMAGE}"
           printf -v LANDING_IMAGE_Q '%q' "${LANDING_IMAGE}"
+          printf -v CADDY_DIGEST_Q '%q' "${CADDY_DIGEST}"
           printf -v SENTRY_DSN_BACKEND_Q '%q' "${SENTRY_DSN_BACKEND}"
 
           ssh \
@@ -182,7 +196,7 @@ jobs:
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "${DEV_SSH_USER}@${DEV_SSH_HOST}" \
-            "export DEV_DEPLOY_PATH=${DEPLOY_PATH_Q}; export DEPLOY_SHA=${DEPLOY_SHA_Q}; export BACKEND_IMAGE=${BACKEND_IMAGE_Q}; export FRONTEND_IMAGE=${FRONTEND_IMAGE_Q}; export LANDING_IMAGE=${LANDING_IMAGE_Q}; export SENTRY_DSN_BACKEND=${SENTRY_DSN_BACKEND_Q}; bash -se" <<'EOF'
+            "export DEV_DEPLOY_PATH=${DEPLOY_PATH_Q}; export DEPLOY_SHA=${DEPLOY_SHA_Q}; export BACKEND_IMAGE=${BACKEND_IMAGE_Q}; export FRONTEND_IMAGE=${FRONTEND_IMAGE_Q}; export LANDING_IMAGE=${LANDING_IMAGE_Q}; export CADDY_DIGEST=${CADDY_DIGEST_Q}; export SENTRY_DSN_BACKEND=${SENTRY_DSN_BACKEND_Q}; bash -se" <<'EOF'
           set -euo pipefail
 
           cd "$DEV_DEPLOY_PATH"
@@ -201,6 +215,11 @@ jobs:
           if [[ -n "${LANDING_IMAGE}" ]]; then
             export LANDING_IMAGE
             echo "Using LANDING_IMAGE override: ${LANDING_IMAGE}"
+          fi
+
+          if [[ -n "${CADDY_DIGEST}" ]]; then
+            export CADDY_IMAGE="dragisahub1984/barter-caddy@${CADDY_DIGEST}"
+            echo "Using immutable CA-remediated Caddy digest."
           fi
 
           if ! git rev-parse --verify "${DEPLOY_SHA}^{commit}" >/dev/null 2>&1; then

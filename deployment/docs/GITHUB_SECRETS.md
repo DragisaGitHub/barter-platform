@@ -118,7 +118,7 @@ These secrets are available to all workflows, not just the production environmen
 | **Purpose** | Docker Hub account username for image push/pull authentication |
 | **Used by** | Docker Publish workflow (`docker-publish.yml`) — logs in to Docker Hub before pushing |
 | **Expected value** | `dragisahub1984` |
-| **Security note** | Use the same account that owns `dragisahub1984/barter-backend`, `dragisahub1984/barter-frontend`, `dragisahub1984/barter-landing` |
+| **Security note** | Use the same account that owns `dragisahub1984/barter-backend`, `dragisahub1984/barter-frontend`, `dragisahub1984/barter-landing`, and `dragisahub1984/barter-caddy`. Create the Caddy repository and grant the token push access before the first publish. |
 
 ---
 
@@ -160,6 +160,17 @@ These secrets are available to all workflows, not just the production environmen
 
 All production configuration is injected at runtime via `deployment/env/prod.env` on the server,
 not via GitHub environment variables.
+
+Production requires `BARTER_VERIFICATION_CODE_SECRET` in the server-only `deployment/env/prod.env`.
+It must contain at least 32 printable ASCII characters. Use the redirect-based procedure in
+`production-runbook.md` to write it directly into the protected server env file without displaying
+it. Do not commit it or put it in GitHub Actions, logs, or frontend build variables. The backend
+retains JWT fallback only for development
+and tests; production validation rejects a missing or weak dedicated key. Keep the value stable
+across releases; changing it invalidates outstanding verification codes.
+
+The PROD Deploy workflow also requires the **non-secret** `caddy_digest` input. Copy the immutable
+digest from the Docker Publish run summary; do not use a tag or place credentials in that input.
 
 ---
 

@@ -6,6 +6,7 @@ import com.barterplatform.api.model.ErrorResponse;
 import com.barterplatform.api.model.FieldErrorResponse;
 import com.barterplatform.common.exception.ApiException;
 import com.barterplatform.common.exception.ErrorCode;
+import com.barterplatform.common.exception.RateLimitException;
 import com.barterplatform.web.observability.CorrelationIdFilter;
 import io.sentry.Sentry;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
@@ -36,6 +38,21 @@ public class GlobalExceptionHandler {
     private static final String DEFAULT_VALIDATION_MESSAGE = "Please check the entered fields.";
     private static final String DEFAULT_PROCESSING_MESSAGE = "Request could not be processed.";
     private static final String DEFAULT_INTERNAL_MESSAGE = "An unexpected internal error occurred.";
+
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ErrorResponse> handleRateLimitException(
+            RateLimitException ex,
+            HttpServletRequest request) {
+        ResponseEntity<ErrorResponse> response = buildResponse(
+                ex.getStatus(),
+                ex.getCode(),
+                sanitizeMessage(ex.getMessage(), DEFAULT_PROCESSING_MESSAGE),
+                request,
+                List.of());
+        return ResponseEntity.status(ex.getStatus())
+                .header(HttpHeaders.RETRY_AFTER, Long.toString(ex.getRetryAfterSeconds()))
+                .body(response.getBody());
+    }
 
     @ExceptionHandler(ApiException.class)
     public ResponseEntity<ErrorResponse> handleApiException(
