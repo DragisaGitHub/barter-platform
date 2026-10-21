@@ -5,6 +5,8 @@ import com.barterplatform.domain.identity.enums.UserStatus;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,6 +18,10 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByEmail(String email);
 
     Optional<UserEntity> findByEmailIgnoreCase(String email);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select u from UserEntity u where lower(u.email) = lower(:email)")
+    Optional<UserEntity> findByEmailIgnoreCaseForUpdate(@Param("email") String email);
 
     Optional<UserEntity> findByUsername(String username);
 

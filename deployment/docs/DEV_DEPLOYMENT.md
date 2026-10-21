@@ -54,11 +54,14 @@ Do not delete these volumes unless you intentionally want Caddy to request fresh
 - Backend: `dragisahub1984/barter-backend`
 - Frontend: `dragisahub1984/barter-frontend`
 
-Default Compose tags use `:latest`, but you can override them in `deployment/env/dev.env`:
+Backend/frontend/landing DEV image tags may use `:latest`. Caddy must use the CA-remediated
+manifest digest published by Docker Publish. Set it in `deployment/env/dev.env` or pass the
+optional digest input to DEV Deploy:
 
 ```env
 BACKEND_IMAGE=dragisahub1984/barter-backend:latest
 FRONTEND_IMAGE=dragisahub1984/barter-frontend:latest
+CADDY_IMAGE=dragisahub1984/barter-caddy@sha256:<published-digest>
 CADDY_DOMAIN=barter-platform-dev.duckdns.org
 ```
 
@@ -77,7 +80,9 @@ The workflow runs for:
 - Git tag pushes matching `v*`, for example `v1.0.0`, `v1.0.1`, `v1.1.0`
 - manual `workflow_dispatch` runs from supported refs (`main` or `v*` tags)
 
-It has separate jobs for backend and frontend image publishing and uses Docker Buildx, Docker Hub login, Docker metadata, and GitHub Actions layer cache.
+It has separate jobs for backend, CA-remediated Caddy, frontend, and landing image publishing and
+uses Docker Buildx, Docker Hub login, Docker metadata, and GitHub Actions layer cache. The Caddy
+job publishes `linux/amd64` and records its immutable digest in the run summary.
 
 ### Main branch / DEV tags
 
@@ -86,11 +91,15 @@ On every push to `main`, the workflow pushes:
 ```text
 dragisahub1984/barter-backend:latest
 dragisahub1984/barter-backend:main-<full-git-sha>
+dragisahub1984/barter-caddy:latest (use the workflow's immutable digest in Compose)
 dragisahub1984/barter-frontend:latest
 dragisahub1984/barter-frontend:main-<full-git-sha>
 ```
 
-`latest` is intended mainly for DEV deployment convenience. The DEV server Compose env defaults to these `latest` images, so `deployment/scripts/deploy-dev.sh` pulls the newest DEV images before restarting containers. Before it does that, it now captures the currently running backend/frontend image references into `deployment/state/dev/` so operators have an immediate image-based rollback point.
+`latest` is intended mainly for application DEV deployment convenience. The DEV Compose Caddy
+reference is a manifest digest, not the mutable tag. `deployment/scripts/deploy-dev.sh` pulls Caddy
+and app services explicitly and updates Caddy before the backend; it does not use
+`--remove-orphans`. Before deployment it captures the running application image state for rollback.
 
 ### Versioned release tags
 
@@ -420,13 +429,9 @@ chmod +x deployment/scripts/deploy-dev.sh \
 ./deployment/scripts/deploy-dev.sh
 ```
 
-Manual equivalent:
-
-```bash
-docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml pull
-docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml up -d --remove-orphans
-docker compose --env-file deployment/env/dev.env -f deployment/compose/docker-compose.dev.yml ps
-```
+Use `deploy-dev.sh` for the normal DEV rollout. It updates Caddy, waits for health, then updates
+backend and frontend/landing. Avoid `--remove-orphans` and whole-project recreation; it can remove
+unrelated containers. Ensure `CADDY_IMAGE` is set to the published CA-remediated image digest.
 
 By default, DEV pulls:
 

@@ -37,6 +37,10 @@ openApiGenerate {
     ]
 }
 
+openApiValidate {
+    inputSpec = "$projectDir/src/main/resources/openapi/openapi.yaml"
+}
+
 sourceSets.main.java.srcDir layout.buildDirectory.dir("generated/openapi/src/main/java")
 
 tasks.named('openApiGenerate') {

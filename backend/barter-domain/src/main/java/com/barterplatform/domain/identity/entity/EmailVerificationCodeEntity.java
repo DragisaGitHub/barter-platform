@@ -26,6 +26,15 @@ public class EmailVerificationCodeEntity extends BaseEntity {
     @Column(name = "used_at")
     private OffsetDateTime usedAt;
 
+    @Column(name = "invalidated_at")
+    private OffsetDateTime invalidatedAt;
+
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts;
+
+    @Column(name = "counts_toward_issuance_limit", nullable = false)
+    private boolean countsTowardIssuanceLimit;
+
     @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 }

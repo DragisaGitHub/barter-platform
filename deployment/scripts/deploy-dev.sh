@@ -15,8 +15,8 @@ usage() {
   cat <<EOF
 Usage: $(basename "$0") [--dry-run] [--skip-state-capture] [--skip-pull]
 
-Pulls the configured backend/frontend images, captures the current running image state,
-recreates the DEV stack, and waits for backend/frontend health checks.
+Pulls configured Caddy/application images, captures current state, updates Caddy before the backend,
+then updates frontend/landing. Unrelated services and data volumes are preserved.
 
 Options:
   --dry-run             Print the actions without changing containers.
@@ -239,7 +239,7 @@ run_cmd docker --version
 run_cmd docker compose version
 
 log "Configured images"
-compose_cmd config | grep -A3 -B3 "image:" || true
+compose_cmd config --images | sort -u
 
 log "Current local images before pull"
 print_image_info "Backend latest before pull" "dragisahub1984/barter-backend:latest"
@@ -265,7 +265,7 @@ fi
 
 if [[ "${SKIP_PULL}" != "true" ]]; then
   log "Pulling configured images"
-  run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" pull
+  run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" pull caddy backend frontend landing
 else
   log "Skipping image pull"
 fi
@@ -274,8 +274,16 @@ log "Current local images after pull"
 print_image_info "Backend latest after pull" "dragisahub1984/barter-backend:latest"
 print_image_info "Frontend latest after pull" "dragisahub1984/barter-frontend:latest"
 
-log "Starting Barter Platform DEV stack"
-run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --force-recreate --remove-orphans
+log "Updating Caddy first"
+run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --no-deps --force-recreate caddy
+wait_for_service_health caddy "${HEALTH_TIMEOUT_SECONDS}"
+
+log "Updating backend after Caddy is healthy"
+run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --no-deps --force-recreate backend
+wait_for_service_health backend "${HEALTH_TIMEOUT_SECONDS}"
+
+log "Updating frontend and landing after backend is healthy"
+run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" up -d --no-deps --force-recreate frontend landing
 
 log "Current running containers after recreate"
 print_container_image_info backend
@@ -283,8 +291,8 @@ print_container_image_info frontend
 run_cmd docker compose --env-file "${ENV_FILE}" -f "${COMPOSE_FILE}" ps
 
 log "Waiting for service health"
-wait_for_service_health backend "${HEALTH_TIMEOUT_SECONDS}"
 wait_for_service_health frontend "${HEALTH_TIMEOUT_SECONDS}"
+wait_for_service_health landing "${HEALTH_TIMEOUT_SECONDS}"
 
 log "Recording deployment metadata"
 record_successful_deployment_metadata

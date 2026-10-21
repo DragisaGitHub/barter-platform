@@ -50,7 +50,10 @@ https://{$CADDY_DOMAIN:barter-platform-dev.duckdns.org } {
 	handle /api/* {
 		# Caddy reverse_proxy preserves Host/X-Forwarded-* context and supports
 		# WebSocket/HTTP upgrade automatically for future realtime endpoints.
-		reverse_proxy backend:8080
+		# Caddy is currently the public edge; configure trusted_proxies before adding an upstream proxy.
+			reverse_proxy backend:8080 {
+				header_up X-Real-IP {client_ip}
+			}
 	}
 
 	handle /actuator/health* {

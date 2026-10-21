@@ -55,6 +55,28 @@ export function VerifyEmailPage() {
 
   const currentEmail = methods.watch("email");
 
+  const showVerificationError = (error: unknown) => {
+    if (error instanceof AxiosError) {
+      const errorData = error.response?.data as ErrorResponse | undefined;
+      if (errorData?.code === "VERIFICATION_CODE_LOCKED") {
+        toast.error(t("auth:verificationCodeLocked"));
+        return;
+      }
+      if (errorData?.code === "VERIFICATION_CODE_EXPIRED") {
+        toast.error(t("auth:verificationCodeExpired"));
+        return;
+      }
+      if (errorData?.code === "RATE_LIMITED") {
+        const retryAfter = Number(error.response?.headers?.["retry-after"]);
+        if (Number.isFinite(retryAfter) && retryAfter > 0) {
+          toast.error(t("auth:verificationRateLimited", { seconds: Math.ceil(retryAfter) }));
+          return;
+        }
+      }
+    }
+    toast.error(parseApiError(error));
+  };
+
   const onSubmit = async (data: VerifyEmailFormData) => {
     setIsSubmitting(true);
     try {
@@ -80,10 +102,10 @@ export function VerifyEmailPage() {
             });
           });
         } else {
-          toast.error(parseApiError(error));
+          showVerificationError(error);
         }
       } else {
-        toast.error(t("auth:unexpectedError"));
+        showVerificationError(error);
       }
     } finally {
       setIsSubmitting(false);
@@ -102,7 +124,7 @@ export function VerifyEmailPage() {
       const result = await resendVerificationCode(email);
       toast.success(result.message ?? t("auth:verificationResent"));
     } catch (error) {
-      toast.error(parseApiError(error));
+      showVerificationError(error);
     } finally {
       setIsResending(false);
     }

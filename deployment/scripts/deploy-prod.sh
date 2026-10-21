@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 # deploy-prod.sh — Deploy a specific immutable release tag to production.
 #
-# Usage:  deploy-prod.sh <image-tag>
-# Example: deploy-prod.sh 1.0.0
+# Usage:  deploy-prod.sh <image-tag> <caddy-manifest-digest> [--preflight-only]
+# Example: deploy-prod.sh 1.0.0 sha256:<64-hex-digits>
 #
-# The tag must be a semver version (e.g. 1.0.0). Tags like "latest", "main",
-# "dev", "develop", "master" are rejected. The script updates BACKEND_IMAGE,
-# FRONTEND_IMAGE, and LANDING_IMAGE in env/prod.env, pulls the images, and
-# recreates the production stack. Health checks are performed after deploy.
+# The application tag must be semver; Caddy is pinned by immutable manifest digest.
+# Preflight validates production secrets and the fully resolved Compose configuration
+# before the backup, env-file update, or any service recreation.
 #
 # ⚠️  PRE-DEPLOYMENT CHECKLIST:
 #   1. Ensure a recent managed-PostgreSQL backup exists (Azure automated backup
@@ -20,13 +19,14 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOYMENT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 COMPOSE_FILE="${DEPLOYMENT_DIR}/compose/docker-compose.prod.yml"
-ENV_FILE="${DEPLOYMENT_DIR}/env/prod.env"
+ENV_FILE="${ENV_FILE:-${DEPLOYMENT_DIR}/env/prod.env}"
 HEALTH_TIMEOUT_SECONDS="${HEALTH_TIMEOUT_SECONDS:-300}"
 HEALTH_POLL_INTERVAL=5
 
 BACKEND_REPO="dragisahub1984/barter-backend"
 FRONTEND_REPO="dragisahub1984/barter-frontend"
 LANDING_REPO="dragisahub1984/barter-landing"
+CADDY_REPO="dragisahub1984/barter-caddy"
 
 # ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -53,6 +53,26 @@ read_env_value_from_file() {
   fi
 
   printf '%s' "${value}"
+}
+
+validate_verification_secret() {
+  local secret
+  local LC_ALL=C
+  secret="$(read_env_value_from_file BARTER_VERIFICATION_CODE_SECRET "${ENV_FILE}")"
+
+  if ! [[ "${secret}" =~ ^[[:graph:]]{32,}$ ]]; then
+    unset secret
+    fail "BARTER_VERIFICATION_CODE_SECRET must be set to at least 32 printable ASCII characters; value withheld."
+  fi
+
+  unset secret
+}
+
+validate_caddy_digest() {
+  local digest="$1"
+  if ! [[ "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+    fail "Caddy manifest digest must have the form sha256:<64 lowercase hex characters>."
+  fi
 }
 
 # ─── Tag Validation ────────────────────────────────────────────────────────
@@ -91,6 +111,24 @@ validate_prerequisites() {
   fi
 }
 
+validate_target_compose() {
+  local tag="$1"
+  local caddy_digest="$2"
+
+  log "Preflight: validate dedicated production verification secret"
+  validate_verification_secret
+  validate_caddy_digest "${caddy_digest}"
+
+  log "Preflight: validate resolved production Compose configuration"
+  CADDY_IMAGE="${CADDY_REPO}@${caddy_digest}" \
+    BACKEND_IMAGE="${BACKEND_REPO}:${tag}" \
+    FRONTEND_IMAGE="${FRONTEND_REPO}:${tag}" \
+    LANDING_IMAGE="${LANDING_REPO}:${tag}" \
+    docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" config --quiet \
+    || fail "Production Compose preflight failed; no services were changed."
+  echo "Production Compose preflight succeeded; secret value was not displayed."
+}
+
 # ─── Capture Currently Deployed Tag ───────────────────────────────────────
 
 read_current_tag() {
@@ -113,9 +151,20 @@ update_env_images() {
     -e "s|^LANDING_IMAGE=.*|LANDING_IMAGE=${LANDING_REPO}:${tag}|" \
     "${ENV_FILE}"
 
+  grep -q '^BACKEND_IMAGE=' "${ENV_FILE}" || printf 'BACKEND_IMAGE=%s:%s\n' "${BACKEND_REPO}" "${tag}" >> "${ENV_FILE}"
+  grep -q '^FRONTEND_IMAGE=' "${ENV_FILE}" || printf 'FRONTEND_IMAGE=%s:%s\n' "${FRONTEND_REPO}" "${tag}" >> "${ENV_FILE}"
+  grep -q '^LANDING_IMAGE=' "${ENV_FILE}" || printf 'LANDING_IMAGE=%s:%s\n' "${LANDING_REPO}" "${tag}" >> "${ENV_FILE}"
+
   echo "BACKEND_IMAGE  → ${BACKEND_REPO}:${tag}"
   echo "FRONTEND_IMAGE → ${FRONTEND_REPO}:${tag}"
   echo "LANDING_IMAGE  → ${LANDING_REPO}:${tag}"
+}
+
+update_env_caddy_image() {
+  local caddy_image="$1"
+  sed -i -e "s|^CADDY_IMAGE=.*|CADDY_IMAGE=${caddy_image}|" "${ENV_FILE}"
+  grep -q '^CADDY_IMAGE=' "${ENV_FILE}" || printf 'CADDY_IMAGE=%s\n' "${caddy_image}" >> "${ENV_FILE}"
+  echo "CADDY_IMAGE updated to the verified manifest digest."
 }
 
 # ─── Write Release Metadata to prod.env ───────────────────────────────────
@@ -205,31 +254,95 @@ run_health_checks() {
   wait_for_url "https://app.zameni.rs/api/v1/actuator/health/readiness" "Backend readiness"
 }
 
+wait_for_compose_health() {
+  local service="$1"
+  local elapsed=0
+  local container_id
+  local state
+
+  echo "Waiting for Compose service '${service}' to become healthy..."
+  while (( elapsed < HEALTH_TIMEOUT_SECONDS )); do
+    container_id="$(docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" ps -q "${service}" | head -n 1)"
+    if [[ -n "${container_id}" ]]; then
+      state="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "${container_id}" 2>/dev/null || true)"
+      case "${state}" in
+        healthy|running)
+          echo "Compose service '${service}' is ${state}."
+          return 0
+          ;;
+        unhealthy|exited|dead)
+          fail "Compose service '${service}' entered '${state}'; inspect its logs before continuing."
+          ;;
+      esac
+    fi
+    sleep "${HEALTH_POLL_INTERVAL}"
+    elapsed=$((elapsed + HEALTH_POLL_INTERVAL))
+  done
+
+  fail "Timed out after ${HEALTH_TIMEOUT_SECONDS}s waiting for Compose service '${service}'."
+}
+
 # ─── Main ──────────────────────────────────────────────────────────────────
 
 IMAGE_TAG="${1:-}"
+CADDY_DIGEST="${2:-}"
+PREFLIGHT_ONLY="${3:-}"
+if [[ -n "${PREFLIGHT_ONLY}" && "${PREFLIGHT_ONLY}" != "--preflight-only" ]]; then
+  fail "Unknown option '${PREFLIGHT_ONLY}'."
+fi
 validate_tag "${IMAGE_TAG}"
 validate_prerequisites
+validate_target_compose "${IMAGE_TAG}" "${CADDY_DIGEST}"
+if [[ "${PREFLIGHT_ONLY}" == "--preflight-only" ]]; then
+  echo "Preflight passed. No backup, env update, image pull, or service action was performed."
+  exit 0
+fi
 
 PREVIOUS_TAG="$(read_current_tag)"
+PREVIOUS_CADDY_IMAGE="$(read_env_value_from_file CADDY_IMAGE "${ENV_FILE}")"
 
 log "Production deployment started"
 echo "Tag:              ${IMAGE_TAG}"
 echo "Previous tag:     ${PREVIOUS_TAG:-unknown}  ← use this if rollback is needed"
+echo "Previous Caddy:   ${PREVIOUS_CADDY_IMAGE:-unknown}"
+echo "Target Caddy:     ${CADDY_REPO}@${CADDY_DIGEST}"
 echo "Compose file:     ${COMPOSE_FILE}"
 echo "Env file:         ${ENV_FILE}"
 echo "Started at (UTC): $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 run_pre_deploy_backup
 
+export CADDY_IMAGE="${CADDY_REPO}@${CADDY_DIGEST}"
+
+log "Pulling only target release services"
+CADDY_IMAGE="${CADDY_REPO}@${CADDY_DIGEST}" \
+  BACKEND_IMAGE="${BACKEND_REPO}:${IMAGE_TAG}" \
+  FRONTEND_IMAGE="${FRONTEND_REPO}:${IMAGE_TAG}" \
+  LANDING_IMAGE="${LANDING_REPO}:${IMAGE_TAG}" \
+  docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" pull caddy backend frontend landing
+
+log "Updating Caddy first (short planned edge interruption)"
+CADDY_IMAGE="${CADDY_REPO}@${CADDY_DIGEST}" \
+  docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d --no-deps --force-recreate caddy
+wait_for_compose_health caddy
+update_env_caddy_image "${CADDY_REPO}@${CADDY_DIGEST}"
+
+log "Updating backend only after Caddy is healthy"
+CADDY_IMAGE="${CADDY_REPO}@${CADDY_DIGEST}" BACKEND_IMAGE="${BACKEND_REPO}:${IMAGE_TAG}" \
+  docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d --no-deps --force-recreate backend
+wait_for_compose_health backend
+
+log "Updating frontend and landing after backend is healthy"
+CADDY_IMAGE="${CADDY_REPO}@${CADDY_DIGEST}" \
+  BACKEND_IMAGE="${BACKEND_REPO}:${IMAGE_TAG}" \
+  FRONTEND_IMAGE="${FRONTEND_REPO}:${IMAGE_TAG}" \
+  LANDING_IMAGE="${LANDING_REPO}:${IMAGE_TAG}" \
+  docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d --no-deps --force-recreate frontend landing
+wait_for_compose_health frontend
+wait_for_compose_health landing
+
 update_env_images "${IMAGE_TAG}"
 update_env_release_metadata "${IMAGE_TAG}"
-
-log "Pulling images"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" pull
-
-log "Recreating production stack"
-docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" up -d --force-recreate --remove-orphans
 
 log "Container status"
 docker compose -f "${COMPOSE_FILE}" --env-file "${ENV_FILE}" ps
@@ -239,6 +352,7 @@ run_health_checks
 log "Production deployment completed successfully"
 echo "Tag deployed:      ${IMAGE_TAG}"
 echo "Previous tag:      ${PREVIOUS_TAG:-unknown}  ← rollback target if needed"
+echo "Caddy image:       ${CADDY_REPO}@${CADDY_DIGEST}"
 echo "Backend image:     ${BACKEND_REPO}:${IMAGE_TAG}"
 echo "Frontend image:    ${FRONTEND_REPO}:${IMAGE_TAG}"
 echo "Landing image:     ${LANDING_REPO}:${IMAGE_TAG}"
@@ -251,5 +365,5 @@ echo "  curl -s https://app.zameni.rs/api/v1/actuator/health/readiness"
 echo
 if [[ -n "${PREVIOUS_TAG}" && "${PREVIOUS_TAG}" != "${IMAGE_TAG}" ]]; then
   echo "To roll back to the previous release:"
-  echo "  bash deployment/scripts/rollback-prod.sh ${PREVIOUS_TAG}"
+  echo "  bash deployment/scripts/rollback-prod.sh ${PREVIOUS_TAG} --confirm-migration-state-reviewed"
 fi

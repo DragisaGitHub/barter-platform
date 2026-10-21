@@ -48,6 +48,8 @@ public class RateLimitingFilter extends OncePerRequestFilter {
                 new RateLimitRule("auth-reset-password", "POST", "^/auth/reset-password$", false, RateLimitProperties::getResetPassword),
                 new RateLimitRule("auth-resend-verification-code", "POST", "^/auth/resend-verification-code$", false,
                         RateLimitProperties::getResendVerificationCode),
+                new RateLimitRule("auth-verify-email", "POST", "^/auth/verify-email$", false,
+                        RateLimitProperties::getVerifyEmail),
                 new RateLimitRule("image-upload", "POST", "^/catalog/items/[^/]+/images$", true,
                         RateLimitProperties::getImageUpload),
                 new RateLimitRule("trade-offer-create", "POST", "^/trade-offers$", true,

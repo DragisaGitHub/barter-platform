@@ -6,7 +6,7 @@ right action, executing it, verifying it succeeded, and documenting the incident
 > **Quick rollback command** (when you already know the previous tag):
 > ```bash
 > cd /opt/barter-platform
-> bash deployment/scripts/rollback-prod.sh <PREVIOUS_TAG>
+> bash deployment/scripts/rollback-prod.sh <PREVIOUS_TAG> --confirm-migration-state-reviewed
 > ```
 
 ---
@@ -96,12 +96,18 @@ For each migration found:
 | V*.sql — drops column | Destructive | ✗ **Requires DB restore** |
 | V*.sql — renames table/column | Destructive | ✗ **Requires DB restore** |
 | V*.sql — removes data | Destructive | ✗ **Requires DB restore** |
+| `V030__email_verification_attempt_limits.sql` | Additive state/indexes plus legacy-code invalidation | Forward-only; do not reverse |
+| `V031__mark_invalidated_legacy_codes_used.sql` | Marks V030-invalidated rows as used for old-image rollback compatibility | Forward-only data fix; do not reverse automatically |
 
 - [ ] **Are any destructive migrations present?**
   - NO → proceed to Part 3 directly
   - YES → **stop here**; confirm an Azure backup from BEFORE the forward deploy exists,
     then follow the database restore procedure in [`DISASTER_RECOVERY.md`](DISASTER_RECOVERY.md)
     before rolling back the application
+
+- [ ] **Review the database's applied Flyway versions** using a read-only query/approved operator
+  tool before invoking rollback. Do not run `flyway repair`, edit `flyway_schema_history`, or
+  reverse V030/V031. The rollback flag is an explicit acknowledgment that the migration state was reviewed.
 
 ---
 
@@ -139,7 +145,7 @@ Before changing anything, capture the current state.
 
 ```bash
 cd /opt/barter-platform
-bash deployment/scripts/rollback-prod.sh <PREVIOUS_TAG>
+bash deployment/scripts/rollback-prod.sh <PREVIOUS_TAG> --confirm-migration-state-reviewed
 ```
 
 The rollback script will:
@@ -150,7 +156,7 @@ The rollback script will:
 4. Warn about database migration risks
 5. Update `prod.env` with the rollback image tags
 6. Pull the rollback images
-7. Recreate all containers with `--force-recreate`
+7. Recreate only backend, frontend, and landing; Caddy and unrelated services remain running
 8. Run external health checks
 
 - [ ] Script printed `=== Production ROLLBACK completed successfully ===`
@@ -225,6 +231,11 @@ If the rollback script fails or health checks do not pass after rollback:
 3. Check if the issue is database-related (schema incompatibility with old code)
 4. If containers will not start at all → follow [`DISASTER_RECOVERY.md`](DISASTER_RECOVERY.md)
 5. If the issue is a missing database table/column → a DB restore is required
+
+For deployments that include V030/V031, do **not** reverse either migration or run destructive
+SQL automatically. Keep the database forward and first roll back only the application images; use
+a corrected forward application release when possible. A database restore is a separate, manually
+approved recovery and may discard writes made after the backup.
 
 ---
 

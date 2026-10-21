@@ -9,6 +9,10 @@ on:
           Must be a semver tag. "latest", "main", "dev" etc. are rejected.
         required: true
         type: string
+      caddy_digest:
+        description: Immutable Caddy manifest digest from Docker Publish (sha256 plus 64 lowercase hex characters).
+        required: true
+        type: string
 
 run-name: PROD deploy ${{ inputs.image_tag }} by @${{ github.actor }}
 
@@ -36,6 +40,7 @@ jobs:
         run: |
           echo "Actor:     ${GITHUB_ACTOR}"
           echo "Image tag: ${{ inputs.image_tag }}"
+          echo "Caddy digest: ${{ inputs.caddy_digest }}"
           echo "Workflow:  ${GITHUB_REF}"
           echo "Started:   $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
@@ -71,6 +76,16 @@ jobs:
           echo "NORMALIZED_TAG=${NORMALIZED_TAG}" >> "${GITHUB_ENV}"
           echo "Input tag: ${IMAGE_TAG}"
           echo "Normalized Docker image tag: ${NORMALIZED_TAG}"
+
+      - name: Validate Caddy digest
+        env:
+          CADDY_DIGEST: ${{ inputs.caddy_digest }}
+        run: |
+          set -euo pipefail
+          if ! [[ "${CADDY_DIGEST}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Caddy digest must be sha256 followed by 64 lowercase hex characters."
+            exit 1
+          fi
 
       - name: Validate required PROD deployment secrets
         env:
@@ -120,21 +135,19 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Ensure the remote scripts directory exists
+          # Ensure the remote directories for versioned deployment assets exist.
           printf -v DEPLOY_PATH_Q '%q' "${PROD_DEPLOY_PATH}"
           ssh \
             -p "${PROD_SSH_PORT}" \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "${PROD_SSH_USER}@${PROD_SSH_HOST}" \
-            "mkdir -p ${DEPLOY_PATH_Q}/deployment/scripts"
+            "mkdir -p ${DEPLOY_PATH_Q}/deployment/scripts ${DEPLOY_PATH_Q}/deployment/compose ${DEPLOY_PATH_Q}/deployment/docker/caddy"
 
-          # Sync all deployment scripts, preserving permissions.
-          # Exclude env files and any secret-like files to avoid accidental leakage.
+          # Sync scripts without deleting remote files or transferring env/secrets.
           rsync \
             --archive \
             --perms \
-            --delete \
             --exclude='*.env' \
             --exclude='*.env.*' \
             --exclude='.env*' \
@@ -144,19 +157,30 @@ jobs:
             deployment/scripts/ \
             "${PROD_SSH_USER}@${PROD_SSH_HOST}:${PROD_DEPLOY_PATH}/deployment/scripts/"
 
+          # Keep the active shared barter-platform Caddy routing authoritative.
+          rsync --archive --perms \
+            deployment/compose/docker-compose.prod.yml \
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}:${PROD_DEPLOY_PATH}/deployment/compose/"
+          rsync --archive --perms \
+            deployment/docker/caddy/Caddyfile.prod deployment/docker/caddy/Dockerfile \
+            "${PROD_SSH_USER}@${PROD_SSH_HOST}:${PROD_DEPLOY_PATH}/deployment/docker/caddy/"
+
       - name: Deploy on PROD server
+        env:
+          CADDY_DIGEST: ${{ inputs.caddy_digest }}
         run: |
           set -euo pipefail
 
           printf -v DEPLOY_PATH_Q '%q' "${PROD_DEPLOY_PATH}"
           printf -v NORMALIZED_TAG_Q '%q' "${NORMALIZED_TAG}"
+          printf -v CADDY_DIGEST_Q '%q' "${CADDY_DIGEST}"
 
           ssh \
             -p "${PROD_SSH_PORT}" \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=yes \
             "${PROD_SSH_USER}@${PROD_SSH_HOST}" \
-            "cd ${DEPLOY_PATH_Q} && chmod +x deployment/scripts/deploy-prod.sh && bash deployment/scripts/deploy-prod.sh ${NORMALIZED_TAG_Q}"
+            "cd ${DEPLOY_PATH_Q} && chmod +x deployment/scripts/deploy-prod.sh && bash deployment/scripts/deploy-prod.sh ${NORMALIZED_TAG_Q} ${CADDY_DIGEST_Q}"
 
       - name: Log completion
         if: always()

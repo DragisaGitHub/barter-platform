@@ -48,8 +48,10 @@
 | Mutable tag rejection (`latest`, `main`, …) | ✅ PASS | Case statement + regex guard |
 | Semver tag validation (no `v` prefix) | ✅ PASS | `^[0-9]+\.[0-9]+\.[0-9]+$` |
 | `prod.env` existence check | ✅ PASS | Fails fast with clear error message |
-| `docker compose pull` before `up` | ✅ PASS | Ensures images are downloaded |
-| `--force-recreate --remove-orphans` | ✅ PASS | Clean container recreation |
+| Target images pulled before activation | ✅ PASS | Pull is scoped to Caddy and application services |
+| Caddy-before-backend activation | ✅ PASS | Caddy health gates backend; backend health gates frontend/landing |
+| No orphan deletion or unrelated recreation | ✅ PASS | Explicit service targets; Compose identity/data volumes retained |
+| Production verification-secret preflight | ✅ PASS | Dedicated printable-ASCII key checked before backup or service changes |
 | `sed -i` updates all 3 image tags atomically | ✅ PASS | `BACKEND_IMAGE`, `FRONTEND_IMAGE`, `LANDING_IMAGE` |
 | `sed -i` works on first deployment (lines exist) | ✅ PASS | `prod.env.example` has placeholder values that `sed` can replace |
 | Health check polls all 3 endpoints | ✅ PASS | `zameni.rs/health`, `app.zameni.rs/health`, `app.zameni.rs/api/v1/actuator/health/readiness` |
@@ -157,7 +159,7 @@
 | No DB container in production | ✅ PASS | External managed PostgreSQL |
 | `sslmode=require` on DB connection | ✅ PASS | Documented in prod.env.example |
 | Rate limiting enabled by default | ✅ PASS | `BARTER_RATE_LIMITS_ENABLED: true` |
-| `X-Forwarded-For` trusted via Spring | ✅ PASS | `forward-headers-strategy: framework` |
+| Rate-limit client IP source | ✅ PASS | Caddy overwrites `X-Real-IP`; backend rate limits use that header. Spring forwarded-header handling is not a rate-limit trust source. |
 | Non-root container user (backend) | ✅ PASS | User `spring` in Dockerfile |
 | `server_tokens off` on nginx | ✅ PASS | Frontend and landing nginx configs |
 | JWT: short-lived access tokens (15 min) | ✅ PASS | |
@@ -218,7 +220,7 @@ v1.0.0 is the **first** deployment — there is no previous release to roll back
 
 | Rollback type | Estimate | Notes |
 |---------------|----------|-------|
-| Application rollback (if a v0.9.x existed) | 4–8 min | `bash rollback-prod.sh 0.9.0` — pulls + recreates containers |
+| Application rollback (if a v0.9.x existed) | 4–8 min | `bash rollback-prod.sh 0.9.0 --confirm-migration-state-reviewed` — pulls + recreates app services only |
 | Database restore (if needed) | 30–90 min | Manual: `pg_dump` restore from Azure backup |
 
 For v1.0.0 specifically: if the deployment fails, stop the containers and restore the DB from the pre-deployment snapshot.

@@ -10,6 +10,7 @@ This document covers first-time and ongoing production deployment of the Barter 
 | [GITHUB_SECRETS.md](GITHUB_SECRETS.md) | Every GitHub Actions secret — what it is and how to generate it |
 | [PRODUCTION_CHECKLIST.md](PRODUCTION_CHECKLIST.md) | Step-by-step pre/post deployment operator checklist |
 | [ROLLBACK_CHECKLIST.md](ROLLBACK_CHECKLIST.md) | When and how to rollback, including migration risk assessment |
+| [SECURITY_HOTFIX.md](SECURITY_HOTFIX.md) | CA trust changes, TLS verification, V030/V031 and hotfix-specific operations |
 | [DISASTER_RECOVERY.md](DISASTER_RECOVERY.md) | Recovery from VM failure, DB restore, DNS/TLS issues |
 | [README.md](README.md) | Index of all deployment documentation |
 
@@ -83,7 +84,7 @@ Wait for the **Docker Publish** workflow to complete before deploying.
 
 ```bash
 cd /opt/barter-platform
-bash deployment/scripts/rollback-prod.sh 0.9.0
+bash deployment/scripts/rollback-prod.sh 0.9.0 --confirm-migration-state-reviewed
 ```
 
 **Option B: Via deploy workflow with the old tag**
@@ -169,7 +170,19 @@ openssl rand -base64 32
 
 # Bootstrap admin password (one-time)
 openssl rand -base64 24
+
+# Dedicated email-verification HMAC key (write directly to the protected env file)
+umask 077
+sed -i '/^BARTER_VERIFICATION_CODE_SECRET=/d' /opt/barter-platform/deployment/env/prod.env
+{ printf '%s' 'BARTER_VERIFICATION_CODE_SECRET='; openssl rand -hex 32; } \
+  >> /opt/barter-platform/deployment/env/prod.env
+chmod 600 /opt/barter-platform/deployment/env/prod.env
 ```
+
+`BARTER_VERIFICATION_CODE_SECRET` must be at least 32 printable ASCII characters. Store the
+generated value directly in `prod.env` using a secure operator session/secret manager; never
+copy it into source control, GitHub Actions, terminal logs, or frontend build variables. Keep it
+stable across releases. The deploy preflight validates it without displaying the value.
 
 **Never commit `prod.env` to the repository.**
 
@@ -177,9 +190,11 @@ openssl rand -base64 24
 
 ## Image Tag Selection
 
-Production uses pinned image tags — never `:latest`.
+Production uses semver tags for application images and an immutable manifest digest for Caddy —
+never use `:latest` in production.
 
 ```env
+CADDY_IMAGE=dragisahub1984/barter-caddy@sha256:<digest-from-Docker-Publish>
 BACKEND_IMAGE=dragisahub1984/barter-backend:1.0.0
 FRONTEND_IMAGE=dragisahub1984/barter-frontend:1.0.0
 LANDING_IMAGE=dragisahub1984/barter-landing:1.0.0
@@ -202,14 +217,16 @@ cd /opt/barter-platform/deployment
 #    BARTER_BOOTSTRAP_ADMIN_EMAIL=admin@zameni.rs
 #    BARTER_BOOTSTRAP_ADMIN_PASSWORD=<generated-password>
 
-# 3. Pull images
-docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env pull
+# 3. Set CADDY_IMAGE to the immutable digest from Docker Publish and set the
+#    dedicated BARTER_VERIFICATION_CODE_SECRET in prod.env.
 
-# 4. Start the stack
-docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env up -d
+# 4. Run the same preflight and safe ordering used for subsequent releases.
+cd /opt/barter-platform
+bash deployment/scripts/deploy-prod.sh <RELEASE_TAG> <CADDY_SHA256_DIGEST>
 
-# 5. Wait for backend health (may take up to 3 minutes on first startup)
-docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env ps
+# 5. Check service health
+docker compose -f deployment/compose/docker-compose.prod.yml \
+  --env-file deployment/env/prod.env ps
 
 # 6. Verify health
 curl -s https://app.zameni.rs/api/v1/actuator/health/readiness
@@ -257,29 +274,25 @@ docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env restar
 
 ### Deploy a New Release
 
-Use `deploy-prod.sh` — it validates the tag, updates `prod.env`, pulls images, recreates the
-stack, and runs health checks. It also prints the previous tag so you have a rollback reference.
+Use `deploy-prod.sh` — it validates the dedicated verification secret and resolved Compose config
+before backup, env edits, image pulls, or service changes. It pulls only target services, updates
+Caddy first and waits for its health, then updates the backend and finally frontend/landing. It
+does not use `--remove-orphans` or recreate unrelated services.
 
 ```bash
 cd /opt/barter-platform
-bash deployment/scripts/deploy-prod.sh 1.1.0
+bash deployment/scripts/deploy-prod.sh 1.1.0 sha256:<64-lowercase-hex-digits>
 ```
+
+Copy the Caddy manifest digest from the Docker Publish run summary. A short edge interruption is
+expected while Caddy is recreated. The Caddy `/data` and `/config` volumes, external `wivaulty-edge`
+network, and active shared `Caddyfile.prod` remain unchanged.
 
 > ⚠️ **Before deploying**: confirm a recent managed-PostgreSQL backup exists (Azure automated
 > backup or a manual `pg_dump`) — especially for releases that include schema migrations.
 
-<details>
-<summary>Manual equivalent (advanced / emergency use only)</summary>
-
-```bash
-cd /opt/barter-platform/deployment
-
-# Update image tag(s) in prod.env, then:
-docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env pull
-docker compose -f compose/docker-compose.prod.yml --env-file env/prod.env up -d --force-recreate
-```
-
-</details>
+Do not substitute a whole-stack `docker compose up --force-recreate` for the script: it bypasses
+the secret preflight and ordered edge/backend activation and may recreate unrelated services.
 
 ### Check Logs
 
@@ -321,10 +334,14 @@ database migration risks, and runs the same health checks as a forward deploy.
 
 ```bash
 cd /opt/barter-platform
-bash deployment/scripts/rollback-prod.sh 1.0.0
+bash deployment/scripts/rollback-prod.sh 1.0.0 --confirm-migration-state-reviewed
 ```
 
-If the database has irreversible migrations in the new version, you must also restore the database from backup before rolling back.
+Image rollback does not reverse Flyway migrations. V030 is immutable; V031 marks the legacy rows
+V030 invalidated as used so older backend images cannot accept them. On release failure, keep the
+database/migrations in place and roll back only application images; prefer a forward application
+fix. Do not run destructive SQL or an automatic database rollback. Restore a pre-deployment backup
+only as a separately approved recovery after an explicit data-loss assessment.
 
 <details>
 <summary>Manual equivalent (advanced / emergency use only)</summary>

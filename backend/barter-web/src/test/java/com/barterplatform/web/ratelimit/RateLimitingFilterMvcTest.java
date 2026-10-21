@@ -36,6 +36,7 @@ class RateLimitingFilterMvcTest {
     void setUp() {
         properties = new RateLimitProperties();
         properties.setLogin(new RateLimitProperties.Policy(2, Duration.ofMinutes(1)));
+        properties.setVerifyEmail(new RateLimitProperties.Policy(2, Duration.ofMinutes(15)));
         properties.setTradeOfferCreate(new RateLimitProperties.Policy(1, Duration.ofMinutes(1)));
         properties.setFavoriteMutation(new RateLimitProperties.Policy(1, Duration.ofMinutes(1)));
         properties.setBetaFeedback(new RateLimitProperties.Policy(1, Duration.ofMinutes(1)));
@@ -96,6 +97,59 @@ class RateLimitingFilterMvcTest {
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .header("X-Forwarded-For", "198.51.100.5, 10.0.0.1"))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void verifyEmailLimitUsesEdgeOverwrittenClientIpRatherThanSharedProxyIp() throws Exception {
+        properties.setClientIpHeader("X-Real-IP");
+
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .header("X-Real-IP", "198.51.100.10")
+                        .with(request -> {
+                            request.setRemoteAddr("10.0.0.5");
+                            return request;
+                        }))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .header("X-Real-IP", "198.51.100.10")
+                        .with(request -> {
+                            request.setRemoteAddr("10.0.0.5");
+                            return request;
+                        }))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .header("X-Real-IP", "198.51.100.10")
+                        .with(request -> {
+                            request.setRemoteAddr("10.0.0.5");
+                            return request;
+                        }))
+                .andExpect(status().isTooManyRequests());
+
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .header("X-Real-IP", "198.51.100.11")
+                        .with(request -> {
+                            request.setRemoteAddr("10.0.0.5");
+                            return request;
+                        }))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void clientSuppliedForwardedForCannotBypassProductionVerificationLimit() throws Exception {
+        properties.setClientIpHeader("X-Real-IP");
+
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .header("X-Real-IP", "198.51.100.20")
+                        .header("X-Forwarded-For", "192.0.2.1"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .header("X-Real-IP", "198.51.100.20")
+                        .header("X-Forwarded-For", "192.0.2.2"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/auth/verify-email")
+                        .header("X-Real-IP", "198.51.100.20")
+                        .header("X-Forwarded-For", "203.0.113.99"))
                 .andExpect(status().isTooManyRequests());
     }
 
@@ -179,6 +233,7 @@ class RateLimitingFilterMvcTest {
 
         @PostMapping({
                 "/api/v1/auth/login",
+                "/api/v1/auth/verify-email",
                 "/api/v1/trade-offers",
                 "/api/v1/feedback/beta",
                 "/api/v1/catalog/items",
